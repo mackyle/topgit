@@ -1,0 +1,24 @@
+diff --git a/t/t6100-tag-reflog.sh b/t/t6100-tag-reflog.sh
+index 47ad325c..924ef50e 100755
+--- a/t/t6100-tag-reflog.sh
++++ b/t/t6100-tag-reflog.sh
+@@ -71,7 +71,8 @@ test_expect_success 'setup main' '
+ 	c7="$(git rev-parse --verify HEAD)" && test -n "$c7" &&
+ 	git update-ref --no-deref -m "detaching to c4" HEAD "$c4" HEAD &&
+ 	git update-ref --no-deref -m "attaching back to c7" HEAD "$c7" HEAD &&
+-	git symbolic-ref HEAD refs/heads/master &&
++	#git symbolic-ref HEAD refs/heads/master &&
++	printf "%s\n" "ref: refs/heads/master" >"`git rev-parse --git-dir`/HEAD" &&
+ 	echo "$hash2" >objs &&
+ 	echo "$hash5" >>objs &&
+ 	pack="$(git pack-objects <objs .git/objects/pack/pack)" && test -n "$pack" &&
+@@ -124,7 +125,8 @@ test_expect_success 'LASTOK GIT_2_5' 'setup linked' '
+ 	c1="$(git rev-parse --verify HEAD)" && test -n "$c1" &&
+ 	git update-ref --no-deref -m "detaching to linked c4" HEAD "$c4" HEAD &&
+ 	git update-ref --no-deref -m "attaching back to linked c1" HEAD "$c1" HEAD &&
+-	git symbolic-ref HEAD refs/heads/linked
++	#git symbolic-ref HEAD refs/heads/linked
++	printf "%s\n" "ref: refs/heads/linked" >"`git rev-parse --git-dir`/HEAD"
+ '
+ 
+ cat <<\EOT >HEAD_main.log || die
