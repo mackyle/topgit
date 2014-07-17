@@ -10,6 +10,7 @@
 # .deb build stamp
 /build-stamp
 
+/README.html
 /TG-PREFIX
 /config.mak
 /hooks/pre-commit
