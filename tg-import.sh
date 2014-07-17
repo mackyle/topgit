@@ -91,7 +91,7 @@ do
 		rev2=`expr "z$revpair" : 'z.*\.\.\(.*\)'`
 		;;
 	*)
-		die "Unknow range spec $revpair"
+		die "Unknown range spec $revpair"
 		;;
 	esac
 	git rev-parse --verify "$rev1^0" >/dev/null 2>&1 ||
