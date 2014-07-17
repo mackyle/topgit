@@ -40,7 +40,9 @@ fi
 
 
 setup_pager
-
+# We now collect the rest of the code in this file into a block
+# so we can redirect the output to the pager.
+{
 
 # put out the commit message
 # and put an empty line out, if the last one in the message was not an empty line
@@ -77,5 +79,8 @@ echo '-- '
 echo "tg: ($base_rev..) $name (depends on: $(cat_file "$name:.topdeps" $head_from | paste -s -d ' ' -))"
 branch_contains "$name" "$base_rev" ||
 	echo "tg: The patch is out-of-date wrt. the base! Run \`$tg update\`."
+
+} | "$TG_PAGER"
+# ... and then we pipe all the output through the pager
 
 # vim:noet

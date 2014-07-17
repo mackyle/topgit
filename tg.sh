@@ -432,11 +432,13 @@ do_help()
 		echo "Usage: tg ( help [<command>] | [-r <remote>] ($cmds) ...)"
 	elif [ -r "@cmddir@"/tg-$1 ] ; then
 		setup_pager
-		"@cmddir@"/tg-$1 -h 2>&1 || :
-		echo
-		if [ -r "@sharedir@/tg-$1.txt" ] ; then
-			cat "@sharedir@/tg-$1.txt"
-		fi
+		{
+			"@cmddir@"/tg-$1 -h 2>&1 || :
+			echo
+			if [ -r "@sharedir@/tg-$1.txt" ] ; then
+				cat "@sharedir@/tg-$1.txt"
+			fi
+		} | "$TG_PAGER"
 	else
 		echo "`basename $0`: no help for $1" 1>&2
 		do_help
@@ -453,35 +455,42 @@ isatty()
 }
 
 # setup_pager
-# Spawn pager process and redirect the rest of our output to it
+# Set TG_PAGER to a valid executable
+# After calling, code to be paged should be surrounded with {...} | "$TG_PAGER"
 setup_pager()
 {
-	isatty 1 || return 0
+	isatty 1 || { TG_PAGER=cat; return 0; }
 
-	# TG_PAGER = GIT_PAGER | PAGER | less
-	# NOTE: GIT_PAGER='' is significant
-	TG_PAGER=${GIT_PAGER-${PAGER-less}}
+	if [ -z "$TG_PAGER_IN_USE" ]; then
+		# TG_PAGER = GIT_PAGER | PAGER | less
+		# NOTE: GIT_PAGER='' is significant
+		if [ -n "${GIT_PAGER+set}" ]; then
+			TG_PAGER="$GIT_PAGER"
+		elif [ -n "${PAGER+set}" ]; then
+			TG_PAGER="$PAGER"
+		else
+			TG_PAGER="less"
+		fi
+		: ${TG_PAGER:=cat}
+	else
+		TG_PAGER=cat
+	fi
 
-	[ -z "$TG_PAGER"  -o  "$TG_PAGER" = "cat" ]  && return 0
-
-
-	# now spawn pager
-	export LESS="${LESS:-FRSX}"	# as in pager.c:pager_preexec()
-
-	# setup_pager should be called only once per command
-	pager_fifo="${tg_tmp_dir:-${HOME}}/.tg-pager"
-	mkfifo -m 600 "$pager_fifo"
-
-	"$TG_PAGER" < "$pager_fifo" &
-	exec > "$pager_fifo"		# dup2(pager_fifo.in, 1)
+	# Set pager default environment variables
+	# see pager.c:setup_pager
+	if [ -z "${LESS+set}" ]; then
+		export LESS="-FRSX"
+	fi
+	if [ -z "${LV+set}" ]; then
+		export LV="-c"
+	fi
 
 	# this is needed so e.g. `git diff` will still colorize it's output if
 	# requested in ~/.gitconfig with color.diff=auto
 	export GIT_PAGER_IN_USE=1
 
-	# atexit(close(1); wait pager)
-	# deliberately overwrites the global EXIT trap
-	trap "exec >&-; rm -rf \"${tg_tmp_dir:-${HOME}/.tg-pager}\"; wait" EXIT
+	# this is needed so we don't get nested pagers
+	export TG_PAGER_IN_USE=1
 }
 
 # get_temp NAME [-d]
