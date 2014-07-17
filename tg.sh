@@ -23,8 +23,8 @@ die()
 
 compare_versions()
 {
-	separator=$1
-	echo $3 | tr ${separator} '\n' | (for l in $(echo $2|tr ${separator} ' '); do
+	separator="$1"
+	echo "$3" | tr "${separator}" '\n' | (for l in $(echo "$2"|tr "${separator}" ' '); do
 	    read r || return 0
 	    [ $l -ge $r ] || return 1
 	    [ $l -gt $r ] && return 0
@@ -33,8 +33,8 @@ compare_versions()
 
 precheck() {
 	git_ver="$(git version | sed -e 's/^[^0-9][^0-9]*//')"
-	compare_versions . ${git_ver%%[!0-9.]*} ${GIT_MINIMUM_VERSION} \
-	    || die "git version >= " ${GIT_MINIMUM_VERSION} required
+	compare_versions . "${git_ver%%[!0-9.]*}" "${GIT_MINIMUM_VERSION}" \
+	    || die "git version >= ${GIT_MINIMUM_VERSION} required"
 }
 
 precheck
