@@ -432,7 +432,7 @@ do_help()
 		echo "Usage: tg ( help [<command>] | [-r <remote>] ($cmds) ...)"
 	elif [ -r "@cmddir@"/tg-$1 ] ; then
 		setup_pager
-		@cmddir@/tg-$1 -h 2>&1 || :
+		"@cmddir@"/tg-$1 -h 2>&1 || :
 		echo
 		if [ -r "@sharedir@/tg-$1.txt" ] ; then
 			cat "@sharedir@/tg-$1.txt"
