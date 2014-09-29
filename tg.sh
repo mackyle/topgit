@@ -433,13 +433,16 @@ do_help()
 			sep="|"
 		done
 
-		echo "TopGit v$TG_VERSION - A different patch queue manager"
+		echo "TopGit version $TG_VERSION - A different patch queue manager"
 		echo "Usage: tg ( help [<command>] | [-r <remote>] ($cmds) ...)"
-	elif [ -r "@cmddir@"/tg-$1 ] ; then
+		echo "Use \"tg help tg\" for overview of TopGit"
+	elif [ -r "@cmddir@"/tg-$1 -o -r "@sharedir@/tg-$1.txt" ] ; then
 		setup_pager
 		{
-			"@cmddir@"/tg-$1 -h 2>&1 || :
-			echo
+			if [ -r "@cmddir@"/tg-$1 ] ; then
+				"@cmddir@"/tg-$1 -h 2>&1 || :
+				echo
+			fi
 			if [ -r "@sharedir@/tg-$1.txt" ] ; then
 				cat "@sharedir@/tg-$1.txt"
 			fi
