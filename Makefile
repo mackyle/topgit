@@ -42,7 +42,11 @@ $(help_out): README create-help.sh
 	./create-help.sh $$CMD
 
 precheck:: tg
+ifeq ($(DESTDIR),)
 	./$+ precheck
+else
+	@echo skipping precheck because DESTDIR is set
+endif
 
 install:: all
 	install -d -m 755 "$(DESTDIR)$(bindir)"
