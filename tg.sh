@@ -37,6 +37,11 @@ precheck() {
 	    || die "git version >= ${GIT_MINIMUM_VERSION} required"
 }
 
+case "$1" in version|--version|-V)
+	echo "TopGit version $TG_VERSION"
+	exit 0
+esac
+
 precheck
 [ "$1" = "precheck" ] && exit 0
 
