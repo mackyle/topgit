@@ -3,7 +3,7 @@
 # (c) Petr Baudis <pasky@suse.cz>  2008
 # GPLv2
 
-TG_VERSION=0.11
+TG_VERSION=0.12
 
 # Update if you add any code that requires a newer version of git
 GIT_MINIMUM_VERSION=1.7.7.2
