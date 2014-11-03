@@ -11,7 +11,7 @@ hooks_in = hooks/pre-commit.sh
 
 commands_out = $(patsubst %.sh,%,$(commands_in))
 hooks_out = $(patsubst %.sh,%,$(hooks_in))
-help_out = $(patsubst %.sh,%.txt,$(commands_in))
+help_out = $(patsubst %.sh,%.txt,tg-help.sh $(commands_in))
 
 version := $(shell test -d .git && git describe --match "topgit-[0-9]*" --abbrev=4 --dirty 2>/dev/null | sed -e 's/^topgit-//' )
 
