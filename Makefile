@@ -1,4 +1,12 @@
+# NOTE: Requires GNU make
+
 all::
+
+# This should give a reasonable hint that GNU make is required in non-GNU make
+.error GNU_make_is_required:
+
+# This should be fatal in non-GNU make
+export MAKE
 
 prefix ?= $(HOME)
 bindir = $(prefix)/bin
