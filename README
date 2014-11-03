@@ -16,7 +16,14 @@ patch and providing some tools to maintain the branches.
 
 INSTALLATION
 ------------
+
 See the file ``INSTALL``.
+
+
+GIT REPOSITORY
+--------------
+
+The TopGit git repository can be found at <http://repo.or.cz/topgit/pro>.
 
 
 RATIONALE

@@ -20,6 +20,12 @@ The Makefile does not currently install the bash completion support in
 contrib/tg-completion.bash. Instructions for installing that file are at the
 top of that file.
 
+To install the html version of the help you need rst2html.py and then use
+"make html" followed by "make install-html".  The same use of prefix=
+applies here as well.
+
+The TopGit git repository can be found at: http://repo.or.cz/topgit/pro
+
 
 Other
 -----
