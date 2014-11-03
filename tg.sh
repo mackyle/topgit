@@ -413,6 +413,11 @@ switch_to_base()
 # Show the help messages.
 do_help()
 {
+	_www=
+	if [ "$1" = "-w" ]; then
+		_www=1
+		shift
+	fi
 	if [ -z "$1" ] ; then
 		# This is currently invoked in all kinds of circumstances,
 		# including when the user made a usage error. Should we end up
@@ -434,9 +439,29 @@ do_help()
 		done
 
 		echo "TopGit version $TG_VERSION - A different patch queue manager"
-		echo "Usage: tg ( help [<command>] | [-r <remote>] ($cmds) ...)"
+		echo "Usage: tg ( help [-w] [<command>] | [-r <remote>] ($cmds) ...)"
 		echo "Use \"tg help tg\" for overview of TopGit"
 	elif [ -r "@cmddir@"/tg-$1 -o -r "@sharedir@/tg-$1.txt" ] ; then
+		if [ -n "$_www" ]; then
+			nohtml=
+			if ! [ -r "@sharedir@/topgit.html" ]; then
+				echo "`basename $0`: missing html help file:" \
+					"@sharedir@/topgit.html" 1>&2
+				nohtml=1
+			fi
+			if ! [ -r "@sharedir@/tg-$1.html" ]; then
+				echo "`basename $0`: missing html help file:" \
+					"@sharedir@/tg-$1.html" 1>&2
+				nohtml=1
+			fi
+			if [ -n "$nohtml" ]; then
+				echo "`basename $0`: use" \
+					"\"`basename $0` help $1\" instead" 1>&2
+				exit 1
+			fi
+			git web--browse -c help.browser "@sharedir@/tg-$1.html"
+			exit
+		fi
 		setup_pager
 		{
 			if [ -r "@cmddir@"/tg-$1 ] ; then
@@ -565,7 +590,7 @@ shift
 
 case "$cmd" in
 help|--help|-h)
-	do_help "$1"
+	do_help "$@"
 	exit 0;;
 --hooks-path)
 	# Internal command

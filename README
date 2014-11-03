@@ -228,6 +228,8 @@ tg help
 	 $ tg help
 	 # to get help for a particular command:
 	 $ tg help <command>
+	 # to get help for a particular command in a browser window:
+	 $ tg help -w <command>
 
 tg create
 ~~~~~~~~~

@@ -12,6 +12,7 @@ hooks_in = hooks/pre-commit.sh
 commands_out = $(patsubst %.sh,%,$(commands_in))
 hooks_out = $(patsubst %.sh,%,$(hooks_in))
 help_out = $(patsubst %.sh,%.txt,tg-help.sh $(commands_in))
+html_out = $(patsubst %.sh,%.html,tg-help.sh tg-tg.sh $(commands_in))
 
 version := $(shell test -d .git && git describe --match "topgit-[0-9]*" --abbrev=4 --dirty 2>/dev/null | sed -e 's/^topgit-//' )
 
@@ -41,12 +42,29 @@ $(help_out): README create-help.sh
 	echo '[HELP]' $$CMD && \
 	./create-help.sh $$CMD
 
+.PHONY: html
+
+html:: topgit.html $(html_out)
+
+topgit.html: README
+	@echo '[HTML] topgit'
+	@rst2html.py README $@
+
+$(html_out): create-html.sh
+	@CMD=`echo $@ | sed -e 's/tg-//' -e 's/\.html//'` && \
+	echo '[HTML]' $$CMD && \
+	./create-html.sh $$CMD
+
+.PHONY: precheck
+
 precheck:: tg
 ifeq ($(DESTDIR),)
 	./$+ precheck
 else
 	@echo skipping precheck because DESTDIR is set
 endif
+
+.PHONY: install
 
 install:: all
 	install -d -m 755 "$(DESTDIR)$(bindir)"
@@ -60,8 +78,16 @@ install:: all
 	install -m 644 README "$(DESTDIR)$(sharedir)/tg-tg.txt"
 	install -m 644 leaves.awk "$(DESTDIR)$(sharedir)"
 
+.PHONY: install-html
+
+install-html:: html
+	install -d -m 755 "$(DESTDIR)$(sharedir)"
+	install -m 644 topgit.html $(html_out) "$(DESTDIR)$(sharedir)"
+
+.PHONY: clean
+
 clean::
-	rm -f tg $(commands_out) $(hooks_out) $(help_out)
+	rm -f tg $(commands_out) $(hooks_out) $(help_out) topgit.html $(html_out)
 	rm -f TG-PREFIX
 
 define TRACK_PREFIX
