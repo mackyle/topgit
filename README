@@ -846,7 +846,7 @@ tg delete
 ~~~~~~~~~
 	Remove a TopGit-controlled topic branch of the given name
 	(required argument). Normally, this command will remove only an
-	empty branch (base == head) without dependendents; use ``-f`` to
+	empty branch (base == head) without dependents; use ``-f`` to
 	remove a non-empty branch or a branch that is depended upon by
 	another branch.
 
@@ -1563,13 +1563,13 @@ tg update
 	``tg update`` is running (but remember, unless ``rerere.enabled`` has
 	been set to ``true`` it won't make any difference).
 
-	When ``-a`` (or ``--all``) is specifed, updates all topic branches
+	When ``-a`` (or ``--all``) is specified, updates all topic branches
 	matched by ``<pattern>``'s (see ``git-for-each-ref(1)`` for details),
 	or all if no ``<pattern>`` is given.  Any topic branches with missing
 	dependencies will be skipped entirely unless ``--skip-missing`` is
 	specified.
 
-	When ``--skip-missing`` is specifed, an attempt is made to update topic
+	When ``--skip-missing`` is specified, an attempt is made to update topic
 	branches with missing dependencies by skipping only the dependencies
 	that are missing.  Caveat utilitor.
 
