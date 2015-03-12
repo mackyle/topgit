@@ -54,9 +54,9 @@ $(help_out): README create-help.sh
 
 html:: topgit.html $(html_out)
 
-topgit.html: README
+topgit.html: README create-html-usage.pl
 	@echo '[HTML] topgit'
-	@rst2html.py README $@
+	@perl ./create-html-usage.pl < README | rst2html.py - $@
 
 $(html_out): create-html.sh
 	@CMD=`echo $@ | sed -e 's/tg-//' -e 's/\.html//'` && \
