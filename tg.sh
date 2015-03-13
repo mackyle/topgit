@@ -350,7 +350,7 @@ recurse_deps()
 branch_needs_update()
 {
 	if [ -n "$_dep_missing" ]; then
-		echo "! $_depchain"
+		echo "! $_dep $_depchain"
 		return 0
 	fi
 
