@@ -191,7 +191,7 @@ measure_branch()
 	# The caller should've verified $name is valid
 	_commits="$(git rev-list "$_bname" ^"$_base" -- | wc_l)"
 	_nmcommits="$(git rev-list --no-merges "$_bname" ^"$_base" -- | wc_l)"
-	if [ $_commits -gt 1 ]; then
+	if [ $_commits -ne 1 ]; then
 		_suffix="commits"
 	else
 		_suffix="commit"

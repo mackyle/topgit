@@ -335,6 +335,10 @@ tg info
 	Show summary information about the current or specified topic
 	branch.
 
+	Numbers in parenthesis after a branch name such as "(11/3 commits)"
+	indicate how many commits on the branch (11) and how many of those
+	are non-merge commits (3).
+
 tg patch
 ~~~~~~~~
 	Generate a patch from the current or specified topic branch.
