@@ -91,7 +91,7 @@ else
 	fi
 fi
 
-_alts=`wc -l < $_altfile`
+_alts=`wc_l < $_altfile`
 if [ $_alts = 0 ]; then
 	die "$no_branch_found"
 elif [ $_alts = 1 ]; then

@@ -126,7 +126,7 @@ collapsed_commit()
 	# Determine parent
 	parent="$(cut -f 1 "$playground/$name^parents" | \
 		while read p; do [ $(git cat-file -t $p 2> /dev/null) = tag ] && git cat-file tag $p | head -1 | cut -d' ' -f2 || echo $p; done)"
-	if [ "$(cat "$playground/$name^parents" | wc -l)" -gt 1 ]; then
+	if [ "$(cat "$playground/$name^parents" | wc_l)" -gt 1 ]; then
 		# Produce a merge commit first
 		parent="$({
 			echo "TopGit-driven merge of branches:"
@@ -342,11 +342,11 @@ fi
 if [ "$driver" = "collapse" ]; then
 	git update-ref "refs/heads/$output" "$(cat "$playground/$name")" ""
 
-	depcount="$(cat "$playground/^ticker" | wc -l)"
+	depcount="$(cat "$playground/^ticker" | wc_l)"
 	echo "Exported topic branch $name (total $depcount topics) to branch $output"
 
 elif [ "$driver" = "quilt" ]; then
-	depcount="$(cat "$output/series" | wc -l)"
+	depcount="$(cat "$output/series" | wc_l)"
 	echo "Exported topic branch $name (total $depcount topics) to directory $output"
 
 elif [ "$driver" = "linearize" ]; then
