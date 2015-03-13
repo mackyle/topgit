@@ -63,6 +63,10 @@ git fetch --prune "$name" \
 git for-each-ref "refs/remotes/$name/top-bases" |
 	while read rev type ref; do
 		branch="${ref#refs/remotes/$name/top-bases/}"
+		if ! git rev-parse "refs/remotes/$name/$branch" >/dev/null 2>&1; then
+			info "Skipping remote $name/top-bases/$branch that's missing its branch"
+			continue
+		fi
 		if git rev-parse "$branch" >/dev/null 2>&1; then
 			git rev-parse "refs/top-bases/$branch" >/dev/null 2>&1 ||
 				git update-ref "refs/top-bases/$branch" "$rev"
