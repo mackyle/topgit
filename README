@@ -400,7 +400,7 @@ tg remote
 tg summary
 ~~~~~~~~~~
 	Show overview of all TopGit-tracked topic branches and their
-	up-to-date status:
+	up-to-date status.  With a branch name limit output to that branch:
 
 		``>``
 			marks the current topic branch
@@ -444,6 +444,11 @@ tg summary
 	The --deps option outputs dependency information between
 	branches in a machine-readable format.  Feed this to ``tsort`` to
 	get the output from --sort.
+
+	The --rdeps option outputs dependency information in an indended
+	text format that clearly shows all the dependencies and their
+	relationship to one another.  By specifying a branch name the
+	dependency tree output can be limited to that for a single branch.
 
 	Options:
 	  -i		Use TopGit metadata from the index instead of the branch

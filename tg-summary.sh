@@ -1,18 +1,27 @@
 #!/bin/sh
 # TopGit - A different patch queue manager
-# (c) Petr Baudis <pasky@suse.cz>  2008
+# (C) Petr Baudis <pasky@suse.cz>  2008
+# (C) Kyle J. McKay <mackyle@gmail.com>  2015
 # GPLv2
 
 terse=
 graphviz=
 sort=
 deps=
+rdeps=
 head_from=
+branch=
 
 ## Parse options
 
+usage()
+{
+	echo "Usage: tg [...] summary [-t | --sort | --deps | --rdeps | --graphviz] [-i | -w] [branch]" >&2
+	exit 1
+}
+
 while [ -n "$1" ]; do
-	arg="$1"; shift
+	arg="$1"
 	case "$arg" in
 	-i|-w)
 		[ -z "$head_from" ] || die "-i and -w are mutually exclusive"
@@ -25,17 +34,58 @@ while [ -n "$1" ]; do
 		sort=1;;
 	--deps)
 		deps=1;;
+	--rdeps)
+		rdeps=1;;
+	-*)
+		usage;;
 	*)
-		echo "Usage: tg [...] summary [-t | --sort | --deps | --graphviz] [-i | -w]" >&2
-		exit 1;;
+		break;;
 	esac
+	shift
 done
+[ $# -le 1 ] || usage
+
+if [ $# -eq 1 ]; then
+	git rev-parse --short --verify "refs/heads/$1" >/dev/null 2>&1 || die "no such branch"
+	git rev-parse --short --verify "refs/top-bases/$1" >/dev/null 2>&1 ||
+		die "not a TopGit-controlled branch"
+	branch="${1#refs/heads/}"
+fi
+
+[ "$terse$graphviz$sort$deps" = "" ] ||
+	[ "$terse$graphviz$sort$deps$rdeps" = "1" ] ||
+	die "mutually exclusive options given"
+
+get_branch_list()
+{
+	if [ -n "$branch" ]; then
+		echo "$branch"
+	else
+		non_annihilated_branches
+	fi
+}
 
 curname="$(strip_ref "$(git symbolic-ref HEAD 2>/dev/null)")"
 
-[ "$terse$graphviz$sort$deps" = "" ] ||
-	[ "$terse$graphviz$sort$deps" = "1" ] ||
-	die "mutually exclusive options given"
+show_rdeps()
+{
+	printf '%s %s\n' "$(echo "$_depchain" | sed -e 's/[^ ][^ ]*/ /g')" "$_dep"
+}
+
+if [ -n "$rdeps" ]; then
+	no_remotes=1
+	showbreak=
+	get_branch_list |
+		while read b; do
+			[ -z "$showbreak" ] || echo
+			showbreak=1 
+			ref_exists "refs/heads/$b" || continue
+			echo "$b"
+			recurse_deps show_rdeps "$b" |
+				awk '{a[i++]=$0} END {for (j=i-1; j>=0;) print a[j--]}'
+		done
+	exit 0
+fi
 
 if [ -n "$graphviz" ]; then
 	cat <<EOT
@@ -109,7 +159,7 @@ if [ -n "$deps" ]; then
 	exit 0
 fi
 
-non_annihilated_branches |
+get_branch_list |
 	while read name; do
 		if [ -n "$terse" ]; then
 			echo "$name"
