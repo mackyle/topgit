@@ -1,9 +1,10 @@
 #!/bin/sh
 # TopGit - A different patch queue manager
-# (c) Petr Baudis <pasky@suse.cz>  2008
+# (C) Petr Baudis <pasky@suse.cz>  2008
+# (C) Kyle J. McKay <mackyle@gmail.com>  2014,2015
 # GPLv2
 
-TG_VERSION=0.12
+TG_VERSION=0.13
 
 # Update if you add any code that requires a newer version of git
 GIT_MINIMUM_VERSION=1.7.7.2
