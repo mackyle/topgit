@@ -258,8 +258,51 @@ is_sha1()
 	[ "$(git rev-parse "$1")" = "$1" ]
 }
 
+# recurse_deps_int NAME [BRANCHPATH...]
+# get recursive list of dependencies with leading 0 if branch exists 1 if missing
+recurse_deps_int()
+{
+	if ! ref_exists "$1"; then
+		[ -z "$2" ] || echo "1 0 $*"
+		continue;
+	fi
+
+	# If no_remotes is unset also check our base against remote base.
+	# Checking our head against remote head has to be done in the helper.
+	if test -z "$no_remotes" && has_remote "top-bases/$1"; then
+		echo "0 0 refs/remotes/$base_remote/top-bases/$1 $*"
+	fi
+
+	_is_tgish=0
+	if ref_exists "refs/top-bases/$1"; then
+		_is_tgish=1
+
+		# if the branch was annihilated, it is considered to have no dependencies
+		if ! branch_annihilated "$1"; then
+			#TODO: handle nonexisting .topdeps?
+			git cat-file blob "$1:.topdeps" |
+			while read _dname; do
+				# Shoo shoo, keep our environment alone!
+				(recurse_deps_int "$_dname" "$@")
+			done
+		fi
+	fi;
+
+	[ -z "$2" ] || echo "0 $_is_tgish $*"
+}
+
+# do_eval CMD
+# helper for recurse_deps so that a return statement executed inside CMD
+# does not return from recurse_deps.  This shouldn't be necessary, but it
+# seems that it actually is.
+do_eval()
+{
+	eval "$@"
+}
+
 # recurse_deps CMD NAME [BRANCHPATH...]
 # Recursively eval CMD on all dependencies of NAME.
+# Dependencies are visited in topological order.
 # CMD can refer to $_name for queried branch name,
 # $_dep for dependency name,
 # $_depchain for space-seperated branch backtrace,
@@ -274,45 +317,25 @@ is_sha1()
 recurse_deps()
 {
 	_cmd="$1"; shift
-	_name="$1"; # no shift
-	_depchain="$*"
 
 	_depsfile="$(get_temp tg-depsfile)"
-	# If no_remotes is unset check also our base against remote base.
-	# Checking our head against remote head has to be done in the helper.
-	if test -z "$no_remotes" && has_remote "top-bases/$_name"; then
-		echo "refs/remotes/$base_remote/top-bases/$_name" >>"$_depsfile"
-	fi
-
-	# if the branch was annihilated, it is considered to have no dependencies
-	if ! branch_annihilated "$_name"; then
-		#TODO: handle nonexisting .topdeps?
-		git cat-file blob "$_name:.topdeps" >>"$_depsfile";
-	fi;
+	recurse_deps_int "$@" >>"$_depsfile"
 
 	_ret=0
-	while read _dep; do
+	while read _ismissing _istgish _dep _name _deppath; do
+		_depchain="$_name${_deppath:+ $_deppath}"
+		_dep_is_tgish=
+		[ "$_istgish" = "0" ] || _dep_is_tgish=1
 		_dep_missing=
-		if ! ref_exists "$_dep" ; then
-			# All hope is lost. Inform driver and continue
-			missing_deps="$missing_deps $_dep"
+		if [ "$_ismissing" != "0" ]; then
 			_dep_missing=1
-			eval "$_cmd"
-			continue
+			case " $missing_deps " in *" $_dep "*) :;; *)
+				missing_deps="${missing_deps:+$missing_deps }$_dep"
+			esac
 		fi
-
-		_dep_is_tgish=1
-		ref_exists "refs/top-bases/$_dep"  ||
-			_dep_is_tgish=
-
-		# Shoo shoo, keep our environment alone!
-		[ -z "$_dep_is_tgish" ] ||
-			(recurse_deps "$_cmd" "$_dep" "$@") ||
-			_ret=$?
-
-		eval "$_cmd"
+		do_eval "$_cmd"
 	done <"$_depsfile"
-	missing_deps="${missing_deps# }"
+	rm -f "$_depsfile"
 	return $_ret
 }
 
