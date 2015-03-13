@@ -57,11 +57,13 @@ needs_update "$name" >"$depcheck" || :
 if [ -n "$missing_deps" ]; then
 	echo "MISSING: $missing_deps"
 fi
-if [ -s "$depcheck" ]; then
+depcheck2="$(get_temp tg-depcheck2)"
+sed '/^!/d' <"$depcheck" >"$depcheck2"
+if [ -s "$depcheck2" ]; then
 	echo "Needs update from:"
-	cat "$depcheck" |
+	cat "$depcheck2" |
 		sed 's/ [^ ]* *$//' | # last is $name
-		sed 's/^: //' | # don't distinguish base updates
+		sed 's/^[:] //' | # don't distinguish base updates
 		while read dep chain; do
 			echo -n "$dep "
 			[ -n "$chain" ] && echo -n "(<= $(echo "$chain" | sed 's/ / <= /')) "
@@ -70,7 +72,7 @@ if [ -s "$depcheck" ]; then
 			echo
 		done | sed 's/^/	/'
 else
-	echo "Up-to-date."
+	echo "Up-to-date${missing_deps:+ (except for missing dependencies)}."
 fi
 
 # vim:noet
