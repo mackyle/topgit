@@ -65,10 +65,10 @@ if [ -s "$depcheck2" ]; then
 		sed 's/ [^ ]* *$//' | # last is $name
 		sed 's/^[:] //' | # don't distinguish base updates
 		while read dep chain; do
-			echo -n "$dep "
-			[ -n "$chain" ] && echo -n "(<= $(echo "$chain" | sed 's/ / <= /')) "
+			printf '%s' "$dep "
+			[ -n "$chain" ] && printf '%s' "(<= $(echo "$chain" | sed 's/ / <= /')) "
 			dep_parent="${chain%% *}"
-			echo -n "($(measure_branch "$dep" "${dep2:-$name}"))"
+			printf '%s' "($(measure_branch "$dep" "${dep2:-$name}"))"
 			echo
 		done | sed 's/^/	/'
 else

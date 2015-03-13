@@ -101,7 +101,7 @@ fi
 
 echo Please select one of the following topic branches:
 cat -n $_altfile
-echo -n "Input the number: "
+printf '%s' "Input the number: "
 read n
 
 # Check the input
