@@ -297,7 +297,13 @@ tg annihilate
 	push it (except if given the ``-a`` option).  This way, you can
 	communicate that the branch is no longer wanted.
 
-	Normally, this command will remove only empty branch
+	When annihilating a branch that has dependents (i.e. branches
+	that depend on it), those depedents have the dependencies of
+	the branch being annihilated added to them if they do not already
+	have them as dependencies.  Essentially the DAG is repaired to
+	skip over the annihilated branch.
+
+	Normally, this command will remove only an empty branch
 	(base == head, except for changes to the .top* files); use
 	``-f`` to annihilate a non-empty branch.
 
