@@ -64,7 +64,15 @@ if [ -s "$depcheck2" ]; then
 	cat "$depcheck2" |
 		sed 's/ [^ ]* *$//' | # last is $name
 		sed 's/^[:] //' | # don't distinguish base updates
+		sed 's/^% /~/' | # but we may need special remote handling
 		while read dep chain; do
+			rmt=
+			dep2=
+			case "$dep" in "~"?*)
+				rmt=1
+				dep="${dep#?}"
+				#dep2="refs/remotes/$base_remote/$dep"
+			esac
 			printf '%s' "$dep "
 			[ -n "$chain" ] && printf '%s' "(<= $(echo "$chain" | sed 's/ / <= /')) "
 			dep_parent="${chain%% *}"
