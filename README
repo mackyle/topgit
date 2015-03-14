@@ -229,7 +229,7 @@ The ``tg`` tool has several subcommands:
 tg help
 ~~~~~~~
 	Our sophisticated integrated help facility.  Mostly duplicates
-	what is below, except for adding summary Usage lines::
+	what is below::
 
 	 # to list commands:
 	 $ tg help
@@ -237,6 +237,10 @@ tg help
 	 $ tg help <command>
 	 # to get help for a particular command in a browser window:
 	 $ tg help -w <command>
+	 # to get help on TopGit itself
+	 $ tg help tg
+	 # to get help on TopGit itself in a browser
+	 $ tg help -w tg
 
 tg create
 ~~~~~~~~~
