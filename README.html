@@ -386,6 +386,10 @@ patch and providing some tools to maintain the branches.</p>
 <h1>INSTALLATION</h1>
 <p>See the file <tt class="docutils literal"><span class="pre">INSTALL</span></tt>.</p>
 </div>
+<div class="section" id="git-repository">
+<h1>GIT REPOSITORY</h1>
+<p>The TopGit git repository can be found at &lt;<a class="reference external" href="http://repo.or.cz/topgit/pro">http://repo.or.cz/topgit/pro</a>&gt;.</p>
+</div>
 <div class="section" id="rationale">
 <h1>RATIONALE</h1>
 <p>Why not use something like StGIT or Guilt or <tt class="docutils literal"><span class="pre">rebase</span> <span class="pre">-i</span></tt> for maintaining
@@ -578,19 +582,27 @@ $ tg -r foo update
 <div class="section" id="tg-help">
 <h2>tg help</h2>
 <blockquote>
+<p><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">help</span> <span class="pre">[-w]</span> <span class="pre">[&lt;command&gt;]</span></tt></p>
 <p>Our sophisticated integrated help facility.  Mostly duplicates
-what is below, except for adding summary Usage lines:</p>
+what is below:</p>
 <pre class="literal-block">
 # to list commands:
 $ tg help
 # to get help for a particular command:
 $ tg help &lt;command&gt;
+# to get help for a particular command in a browser window:
+$ tg help -w &lt;command&gt;
+# to get help on TopGit itself
+$ tg help tg
+# to get help on TopGit itself in a browser
+$ tg help -w tg
 </pre>
 </blockquote>
 </div>
 <div class="section" id="tg-create">
 <h2>tg create</h2>
 <blockquote>
+<p><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">[...]</span> <span class="pre">create</span> <span class="pre">[&lt;name&gt;</span> <span class="pre">[&lt;dep&gt;...|-r</span> <span class="pre">&lt;rname&gt;]</span> <span class="pre">]</span></tt></p>
 <p>Create a new TopGit-controlled topic branch of the given name
 (required argument) and switch to it.  If no dependencies are
 specified (by extra arguments passed after the first one), the
@@ -615,6 +627,7 @@ remote branch.</p>
 <div class="section" id="tg-delete">
 <h2>tg delete</h2>
 <blockquote>
+<p><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">[...]</span> <span class="pre">delete</span> <span class="pre">[-f]</span> <span class="pre">&lt;name&gt;</span></tt></p>
 <p>Remove a TopGit-controlled topic branch of the given name
 (required argument). Normally, this command will remove only an
 empty branch (base == head) without dependendents; use <tt class="docutils literal"><span class="pre">-f</span></tt> to
@@ -639,6 +652,7 @@ on it.</p>
 <div class="section" id="tg-annihilate">
 <h2>tg annihilate</h2>
 <blockquote>
+<p><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">[...]</span> <span class="pre">annihilate</span> <span class="pre">[-f]</span></tt></p>
 <p>Make a commit on the current TopGit-controlled topic branch
 that makes it equal to its base, including the presence or
 absence of .topmsg and .topdeps.  Annihilated branches are not
@@ -646,7 +660,12 @@ displayed by <tt class="docutils literal"><span class="pre">tg</span> <span clas
 way.  However, the branch still exists, and <tt class="docutils literal"><span class="pre">tg</span> <span class="pre">push</span></tt> will
 push it (except if given the <tt class="docutils literal"><span class="pre">-a</span></tt> option).  This way, you can
 communicate that the branch is no longer wanted.</p>
-<p>Normally, this command will remove only empty branch
+<p>When annihilating a branch that has dependents (i.e. branches
+that depend on it), those dependents have the dependencies of
+the branch being annihilated added to them if they do not already
+have them as dependencies.  Essentially the DAG is repaired to
+skip over the annihilated branch.</p>
+<p>Normally, this command will remove only an empty branch
 (base == head, except for changes to the .top* files); use
 <tt class="docutils literal"><span class="pre">-f</span></tt> to annihilate a non-empty branch.</p>
 </blockquote>
@@ -654,6 +673,7 @@ communicate that the branch is no longer wanted.</p>
 <div class="section" id="tg-depend">
 <h2>tg depend</h2>
 <blockquote>
+<p><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">[...]</span> <span class="pre">depend</span> <span class="pre">add</span> <span class="pre">&lt;name&gt;</span></tt></p>
 <p>Change the dependencies of a TopGit-controlled topic branch.
 This should have several subcommands, but only <tt class="docutils literal"><span class="pre">add</span></tt> is
 supported right now.</p>
@@ -671,6 +691,7 @@ things related to the dependency addition, like adjusting
 <div class="section" id="tg-files">
 <h2>tg files</h2>
 <blockquote>
+<p><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">[...]</span> <span class="pre">files</span> <span class="pre">[-i</span> <span class="pre">|</span> <span class="pre">-w]</span> <span class="pre">[&lt;name&gt;]</span></tt></p>
 <p>List files changed by the current or specified topic branch.</p>
 <dl class="docutils">
 <dt>Options:</dt>
@@ -693,12 +714,18 @@ things related to the dependency addition, like adjusting
 <div class="section" id="tg-info">
 <h2>tg info</h2>
 <blockquote>
-Show summary information about the current or specified topic
-branch.</blockquote>
+<p><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">[...]</span> <span class="pre">info</span> <span class="pre">[&lt;name&gt;]</span></tt></p>
+<p>Show summary information about the current or specified topic
+branch.</p>
+<p>Numbers in parenthesis after a branch name such as &quot;(11/3 commits)&quot;
+indicate how many commits on the branch (11) and how many of those
+are non-merge commits (3).</p>
+</blockquote>
 </div>
 <div class="section" id="tg-patch">
 <h2>tg patch</h2>
 <blockquote>
+<p><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">[...]</span> <span class="pre">patch</span> <span class="pre">[-i</span> <span class="pre">|</span> <span class="pre">-w]</span> <span class="pre">[&lt;name&gt;]</span></tt></p>
 <p>Generate a patch from the current or specified topic branch.
 This means that the diff between the topic branch base and head
 (latest commit) is shown, appended to the description found in
@@ -727,6 +754,7 @@ them to files. (TODO)</p>
 <div class="section" id="tg-mail">
 <h2>tg mail</h2>
 <blockquote>
+<p><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">[...]</span> <span class="pre">mail</span> <span class="pre">[-s</span> <span class="pre">&lt;send-email-args&gt;]</span> <span class="pre">[-r</span> <span class="pre">&lt;reference-msgid&gt;]</span> <span class="pre">[-i</span> <span class="pre">|</span> <span class="pre">-w]</span> <span class="pre">[&lt;name&gt;]</span></tt></p>
 <p>Send a patch from the current or specified topic branch as
 email(s).</p>
 <p>Takes the patch given on the command line and emails it out.
@@ -771,6 +799,7 @@ mail.</p>
 <div class="section" id="tg-remote">
 <h2>tg remote</h2>
 <blockquote>
+<p><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">[...]</span> <span class="pre">remote</span> <span class="pre">[--populate]</span> <span class="pre">[&lt;remote&gt;]</span></tt></p>
 <p>Register the given remote as TopGit-controlled. This will create
 the namespace for the remote branch bases and teach <tt class="docutils literal"><span class="pre">git</span> <span class="pre">fetch</span></tt>
 to operate on them. However, from TopGit 0.8 onwards you need to
@@ -787,8 +816,9 @@ at branches of this remote for updates by default.</p>
 <div class="section" id="tg-summary">
 <h2>tg summary</h2>
 <blockquote>
+<p><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">[...]</span> <span class="pre">summary</span> <span class="pre">[-t</span> <span class="pre">|</span> <span class="pre">--sort</span> <span class="pre">|</span> <span class="pre">--deps</span> <span class="pre">|</span> <span class="pre">--rdeps</span> <span class="pre">|</span> <span class="pre">--graphviz]</span> <span class="pre">[-i</span> <span class="pre">|</span> <span class="pre">-w]</span> <span class="pre">[branch]</span></tt></p>
 <p>Show overview of all TopGit-tracked topic branches and their
-up-to-date status:</p>
+up-to-date status.  With a branch name limit output to that branch:</p>
 <blockquote>
 <dl class="docutils">
 <dt><tt class="docutils literal"><span class="pre">&gt;</span></tt></dt>
@@ -826,6 +856,10 @@ useful, but that has not yet been implemented.</p>
 <p>The --deps option outputs dependency information between
 branches in a machine-readable format.  Feed this to <tt class="docutils literal"><span class="pre">tsort</span></tt> to
 get the output from --sort.</p>
+<p>The --rdeps option outputs dependency information in an indended
+text format that clearly shows all the dependencies and their
+relationships to one another.  By specifying a branch name the
+dependency tree output can be limited to that for a single branch.</p>
 <dl class="docutils">
 <dt>Options:</dt>
 <dd><table class="first last docutils option-list" frame="void" rules="none">
@@ -851,6 +885,7 @@ get the output from --sort.</p>
 <div class="section" id="tg-checkout">
 <h2>tg checkout</h2>
 <blockquote>
+<p><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">[...]</span> <span class="pre">checkout</span> <span class="pre">[</span> <span class="pre">[</span> <span class="pre">push</span> <span class="pre">|</span> <span class="pre">pop</span> <span class="pre">]</span> <span class="pre">[</span> <span class="pre">-a</span> <span class="pre">]</span> <span class="pre">|</span> <span class="pre">goto</span> <span class="pre">&lt;pattern&gt;</span> <span class="pre">]</span></tt></p>
 <p>Switch to a topic branch.  You can use <tt class="docutils literal"><span class="pre">git</span> <span class="pre">checkout</span> <span class="pre">&lt;branch&gt;</span></tt>
 to get the same effect, but this command helps you navigate
 the dependency graph, or allows you to match the topic branch
@@ -903,6 +938,7 @@ one possibility, you will be prompted for your selection.</p>
 <div class="section" id="tg-export">
 <h2>tg export</h2>
 <blockquote>
+<p><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">[...]</span> <span class="pre">export</span> <span class="pre">([--collapse]</span> <span class="pre">&lt;newbranch&gt;</span> <span class="pre">[--force]</span> <span class="pre">|</span> <span class="pre">[-a</span> <span class="pre">|</span> <span class="pre">--all</span> <span class="pre">|</span> <span class="pre">-b</span> <span class="pre">&lt;branch1&gt;...]</span> <span class="pre">--quilt</span> <span class="pre">&lt;directory&gt;</span> <span class="pre">|</span> <span class="pre">--linearize</span> <span class="pre">&lt;newbranch&gt;</span> <span class="pre">[--force])</span></tt></p>
 <p>Export a tidied-up history of the current topic branch and its
 dependencies, suitable for feeding upstream.  Each topic branch
 corresponds to a single commit or patch in the cleaned up
@@ -1000,6 +1036,7 @@ series</div>
 <div class="section" id="tg-import">
 <h2>tg import</h2>
 <blockquote>
+<p><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">[...]</span> <span class="pre">import</span> <span class="pre">[-d</span> <span class="pre">&lt;base-branch&gt;]</span> <span class="pre">([-p</span> <span class="pre">&lt;prefix&gt;]</span> <span class="pre">&lt;range&gt;...</span> <span class="pre">|</span> <span class="pre">-s</span> <span class="pre">&lt;name&gt;</span> <span class="pre">&lt;commit&gt;)</span></tt></p>
 <p>Import commits within the given revision range into TopGit,
 creating one topic branch per commit. The dependencies are set
 up to form a linear sequence starting on your current branch --
@@ -1015,6 +1052,7 @@ more argument describing a <em>single</em> commit to import.</p>
 <div class="section" id="tg-update">
 <h2>tg update</h2>
 <blockquote>
+<p><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">[...]</span> <span class="pre">update</span> <span class="pre">[--skip]</span> <span class="pre">([&lt;name&gt;]</span> <span class="pre">|</span> <span class="pre">-a</span> <span class="pre">[&lt;pattern&gt;...])</span></tt></p>
 <p>Update the current, specified or all topic branches with respect
 to changes in the branches they depend on and remote branches.
 This is performed in two phases -- first, changes within the
@@ -1022,8 +1060,12 @@ dependencies are merged to the base, then the base is merged
 into the topic branch.  The output will guide you on what to do
 next in case of conflicts.</p>
 <p>When <tt class="docutils literal"><span class="pre">-a</span></tt> is specifed, updates all topic branches matched by
-<tt class="docutils literal"><span class="pre">&lt;pattern&gt;</span></tt>'s (see <tt class="docutils literal"><span class="pre">git-for-each-ref(1)</span></tt> for details), or all if
-no <tt class="docutils literal"><span class="pre">&lt;pattern&gt;</span></tt> is given.</p>
+<tt class="docutils literal"><span class="pre">&lt;pattern&gt;</span></tt>'s (see <tt class="docutils literal"><span class="pre">git-for-each-ref(1)</span></tt> for details), or all
+if no <tt class="docutils literal"><span class="pre">&lt;pattern&gt;</span></tt> is given.  Any topic branches with missing
+dependencies will be skipped entirely unless <tt class="docutils literal"><span class="pre">--skip</span></tt> is specified.</p>
+<p>When <tt class="docutils literal"><span class="pre">--skip</span></tt> is specifed, an attempt is made to update topic
+branches with missing dependencies by skipping only the dependencies
+that are missing.  Caveat utilitor</p>
 <p>After the update, if a single topic branch was specified, it is
 left as the current one; if <tt class="docutils literal"><span class="pre">-a</span></tt> was specified, it returns to
 the branch which was current at the beginning.</p>
@@ -1043,6 +1085,7 @@ dependencies by showing an <tt class="docutils literal"><span class="pre">!</spa
 <div class="section" id="tg-push">
 <h2>tg push</h2>
 <blockquote>
+<p><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">push</span> <span class="pre">[--dry-run]</span> <span class="pre">[--no-deps]</span> <span class="pre">[--tgish-only]</span> <span class="pre">[-r</span> <span class="pre">&lt;remote&gt;]</span> <span class="pre">[-a</span> <span class="pre">|</span> <span class="pre">--all</span> <span class="pre">|</span> <span class="pre">&lt;branch&gt;...]</span></tt></p>
 <p>If <tt class="docutils literal"><span class="pre">-a</span></tt> or <tt class="docutils literal"><span class="pre">--all</span></tt> was specified, pushes all non-annihilated
 TopGit-controlled topic branches, to a remote repository.
 Otherwise, pushes the specified topic branches -- or the
@@ -1060,14 +1103,17 @@ used.</p>
 <div class="section" id="tg-base">
 <h2>tg base</h2>
 <blockquote>
-Prints the base commit of each of the named topic branches, or
+<p><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">[...]</span> <span class="pre">base</span> <span class="pre">[</span> <span class="pre">branch...</span> <span class="pre">]</span></tt></p>
+<p>Prints the base commit of each of the named topic branches, or
 the current branch if no branches are named.  Prints an error
 message and exits with exit code 1 if the named branch is not
-a TopGit branch.</blockquote>
+a TopGit branch.</p>
+</blockquote>
 </div>
 <div class="section" id="tg-log">
 <h2>tg log</h2>
 <blockquote>
+<p><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">[...]</span> <span class="pre">log</span> <span class="pre">[&lt;name&gt;]</span> <span class="pre">[--</span> <span class="pre">&lt;git-log-option&gt;...]</span></tt></p>
 <p>Prints the git log of the named topgit branch -- or the current
 branch, if you don't specify a name.</p>
 <p>NOTE: if you have merged changes from a different repository, this
@@ -1077,6 +1123,7 @@ command might not list all interesting commits.</p>
 <div class="section" id="tg-prev">
 <h2>tg prev</h2>
 <blockquote>
+<p><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">prev</span> <span class="pre">[-i</span> <span class="pre">|</span> <span class="pre">-w]</span> <span class="pre">[&lt;name&gt;]</span></tt></p>
 <p>Outputs the direct dependencies for the current or named branch.</p>
 <dl class="docutils">
 <dt>Options:</dt>
@@ -1099,6 +1146,7 @@ command might not list all interesting commits.</p>
 <div class="section" id="tg-next">
 <h2>tg next</h2>
 <blockquote>
+<p><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">next</span> <span class="pre">[-i</span> <span class="pre">|</span> <span class="pre">-w]</span> <span class="pre">[&lt;name&gt;]</span></tt></p>
 <p>Outputs all branches which directly depend on the current or
 named branch.</p>
 <dl class="docutils">
