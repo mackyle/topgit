@@ -252,7 +252,7 @@ linearize()
 			if test "x$retmerge" != "x0"; then
 				echo fix up the merge, commit and then exit;
 				#todo error handling
-				sh -i </dev/tty;
+				"${SHELL:-/bin/sh}" -i </dev/tty;
 			fi;
 		fi;
 	else
@@ -264,7 +264,7 @@ linearize()
 			git rerere;
 			echo "fix up the merge and update the index.  Don't commit!"
 			#todo error handling
-			sh -i </dev/tty;
+			"${SHELL:-/bin/sh}" -i </dev/tty;
 		fi
 
 		result_tree=$(git write-tree)

@@ -109,7 +109,7 @@ update_branch() {
 						info "You are in a subshell. If you abort the merge,"
 						info "use \`exit 1\` to abort the recursive update altogether."
 						info "Use \`exit 2\` to skip updating this branch and continue."
-						if sh -i </dev/tty; then
+						if "${SHELL:-/bin/sh}" -i </dev/tty; then
 							# assume user fixed it
 							continue
 						else
