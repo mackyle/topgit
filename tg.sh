@@ -589,7 +589,7 @@ help|--help|-h)
 
 		root_dir="${root_dir%/}"
 		base_remote="$(git config topgit.remote 2>/dev/null)" || :
-		tg="tg"
+		tg="$0"
 
 		# make sure merging the .top* files will always behave sanely
 
@@ -618,7 +618,7 @@ if [ "$1" = "-r" ]; then
 		exit 1
 	fi
 	base_remote="$1"; shift
-	tg="$tg -r $base_remote"
+	tg="$0 -r $base_remote"
 	cmd="$1"
 fi
 
