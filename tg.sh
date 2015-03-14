@@ -281,7 +281,7 @@ recurse_deps_int()
 		# if the branch was annihilated, it is considered to have no dependencies
 		if ! branch_annihilated "$1"; then
 			#TODO: handle nonexisting .topdeps?
-			git cat-file blob "$1:.topdeps" |
+			git cat-file blob "$1:.topdeps" 2>/dev/null |
 			while read _dname; do
 				# Shoo shoo, keep our environment alone!
 				(recurse_deps_int "$_dname" "$@")
