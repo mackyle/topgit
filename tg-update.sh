@@ -7,7 +7,7 @@ name= # Branch to update
 all= # Update all branches
 pattern= # Branch selection filter for -a
 current= # Branch we are currently on
-
+skip= # skip missing dependencies
 
 ## Parse options
 
@@ -16,8 +16,10 @@ while [ -n "$1" ]; do
 	case "$arg" in
 	-a)
 		all=1;;
+	--skip)
+		skip=1;;
 	-*)
-		echo "Usage: tg [...] update ([<name>] | -a [<pattern>...])" >&2
+		echo "Usage: tg [...] update [--skip] ([<name>] | -a [<pattern>...])" >&2
 		exit 1;;
 	*)
 		if [ -z "$all" ]; then
@@ -45,7 +47,7 @@ fi
 ensure_clean_tree
 
 recursive_update() {
-	$tg update
+	$tg update ${skip:+--skip}
 	_ret=$?
 	[ $_ret -eq 3 ] && exit 3
 	return $_ret
@@ -59,10 +61,13 @@ update_branch() {
 	missing_deps=
 	needs_update "$_update_name" >"$_depcheck" || :
 	if [ -n "$missing_deps" ]; then
-		if [ -z "$all" ]; then
-			die "some dependencies are missing: $missing_deps"
+		msg="Some dependencies are missing: $missing_deps"
+		if [ -n "$skip" ]; then
+			info "$msg; skipping"
+		elif [ -z "$all" ]; then
+			die "$msg"
 		else
-			info "some dependencies are missing: $missing_deps; skipping"
+			info "$msg; skipping branch $_update_name"
 			return
 		fi
 	fi
@@ -90,6 +95,10 @@ update_branch() {
 				# in both cases.
 
 				if [ x"$action" = x+ ]; then
+					case " $missing_deps " in *" $dep "*)
+						info "Skipping recursing to missing dependency: $dep"
+						continue
+					esac
 					info "Recursing to $dep..."
 					git checkout -q "$dep"
 					(
@@ -126,7 +135,7 @@ update_branch() {
 				info "Updating base with $dep changes..."
 				if ! git merge "$dep"; then
 					if [ -z "$TG_RECURSIVE" ]; then
-						resume="\`git checkout $_update_name && $tg update\` again"
+						resume="\`git checkout $_update_name && $tg update${skip:+ --skip}\` again"
 					else # subshell
 						resume='exit'
 					fi
@@ -185,7 +194,7 @@ update_branch() {
 		if [ -z "$TG_RECURSIVE" ]; then
 			info "Please commit merge resolution. No need to do anything else"
 			info "You can abort this operation using \`git reset --hard\` now"
-			info "and retry this merge later using \`$tg update\`."
+			info "and retry this merge later using \`$tg update${skip:+ --skip}\`."
 		else # subshell
 			info "Please commit merge resolution and call exit."
 			info "You can abort this operation using \`git reset --hard\`."
