@@ -59,11 +59,11 @@ update_branch() {
 	missing_deps=
 	needs_update "$_update_name" >"$_depcheck" || :
 	if [ -n "$missing_deps" ]; then
-	   	if [ -z "$all" ]; then
-		       	die "some dependencies are missing: $missing_deps"
+		if [ -z "$all" ]; then
+			die "some dependencies are missing: $missing_deps"
 		else
-		       	info "some dependencies are missing: $missing_deps; skipping"
-		       	return
+			info "some dependencies are missing: $missing_deps; skipping"
+			return
 		fi
 	fi
 	if [ -s "$_depcheck" ]; then

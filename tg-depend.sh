@@ -5,11 +5,10 @@
 
 name=
 
-
 usage()
 {
-    echo "Usage: tg [...] depend add <name>" >&2
-    exit 1
+	echo "Usage: tg [...] depend add <name>" >&2
+	exit 1
 }
 
 ## Parse options

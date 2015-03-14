@@ -31,16 +31,16 @@ compare_versions()
 {
 	separator="$1"
 	echo "$3" | tr "${separator}" '\n' | (for l in $(echo "$2"|tr "${separator}" ' '); do
-	    read r || return 0
-	    [ $l -ge $r ] || return 1
-	    [ $l -gt $r ] && return 0
+		read r || return 0
+		[ $l -ge $r ] || return 1
+		[ $l -gt $r ] && return 0
 	done)
 }
 
 precheck() {
 	git_ver="$(git version | sed -e 's/^[^0-9][^0-9]*//')"
 	compare_versions . "${git_ver%%[!0-9.]*}" "${GIT_MINIMUM_VERSION}" \
-	    || die "git version >= ${GIT_MINIMUM_VERSION} required"
+		|| die "git version >= ${GIT_MINIMUM_VERSION} required"
 }
 
 case "$1" in version|--version|-V)
@@ -144,8 +144,7 @@ pretty_tree()
 setup_hook()
 {
 	hook_call="\"\$($tg --hooks-path)\"/$1 \"\$@\""
-	if [ -f "$git_dir/hooks/$1" ] &&
-	   fgrep -q "$hook_call" "$git_dir/hooks/$1"; then
+	if [ -f "$git_dir/hooks/$1" ] && fgrep -q "$hook_call" "$git_dir/hooks/$1"; then
 		# Another job well done!
 		return
 	fi
@@ -418,7 +417,7 @@ list_deps()
 				from=
 			cat_file "$name:.topdeps" $from | while read dep; do
 				dep_is_tgish=true
-				ref_exists "refs/top-bases/$dep"  ||
+				ref_exists "refs/top-bases/$dep" ||
 					dep_is_tgish=false
 				if ! "$dep_is_tgish" || ! branch_annihilated $dep; then
 					echo "$name $dep"
@@ -575,25 +574,33 @@ cmd="$1"
 [ -z "$tg__include" ] || cmd="include" # ensure setup happens
 case "$cmd" in
 help|--help|-h)
-        :;;
+	:;;
 *)
-        if [ -n "$cmd" ]; then
-            set -e
-            # suppress the merge log editor feature since git 1.7.10
-            export GIT_MERGE_AUTOEDIT=no
-            git_dir="$(git rev-parse --git-dir)"
-            root_dir="$(git rev-parse --show-cdup)"; root_dir="${root_dir:-.}"
-# Make sure root_dir doesn't end with a trailing slash.
-            root_dir="${root_dir%/}"
-            base_remote="$(git config topgit.remote 2>/dev/null)" || :
-            tg="tg"
-# make sure merging the .top* files will always behave sanely
-            setup_ours
-            setup_hook "pre-commit"
-            # create global temporary directories, inside GIT_DIR
-            tg_tmp_dir="$(mktemp -d "$git_dir/tg-tmp.XXXXXX")"
-            trap "rm -rf \"$tg_tmp_dir\"" EXIT
-        fi
+	if [ -n "$cmd" ]; then
+		set -e
+
+		# suppress the merge log editor feature since git 1.7.10
+
+		export GIT_MERGE_AUTOEDIT=no
+		git_dir="$(git rev-parse --git-dir)"
+		root_dir="$(git rev-parse --show-cdup)"; root_dir="${root_dir:-.}"
+
+		# Make sure root_dir doesn't end with a trailing slash.
+
+		root_dir="${root_dir%/}"
+		base_remote="$(git config topgit.remote 2>/dev/null)" || :
+		tg="tg"
+
+		# make sure merging the .top* files will always behave sanely
+
+		setup_ours
+		setup_hook "pre-commit"
+
+		# create global temporary directories, inside GIT_DIR
+
+		tg_tmp_dir="$(mktemp -d "$git_dir/tg-tmp.XXXXXX")"
+		trap "rm -rf \"$tg_tmp_dir\"" EXIT
+	fi
 esac
 
 ## Dispatch

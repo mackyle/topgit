@@ -169,7 +169,7 @@ get_branch_list |
 				from=
 			cat_file "$name:.topdeps" $from | while read dep; do
 				dep_is_tgish=true
-				ref_exists "refs/top-bases/$dep"  ||
+				ref_exists "refs/top-bases/$dep" ||
 					dep_is_tgish=false
 				if ! "$dep_is_tgish" || ! branch_annihilated $dep; then
 					if [ -n "$graphviz" ]; then

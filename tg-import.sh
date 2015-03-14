@@ -50,7 +50,7 @@ get_branch_name()
 	commit="$1"
 	titleScript='
 	s/[^-a-z.A-Z_0-9]/-/g
-        s/\.\.\.*/\./g
+	s/\.\.\.*/\./g
 	s/\.*$//
 	s/--*/-/g
 	s/^-//

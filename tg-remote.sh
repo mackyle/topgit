@@ -54,7 +54,7 @@ info "Populating local topic branches from remote '$name'..."
 ## top-bases are mapped under the same namespace refs/remotes/$name.
 ## If we put the 2nd refspec before the 1st one, stale refs reverse
 ## lookup would fail and "refs/remotes/$name/top-bases/XX" reverse
-## lookup as a non-exist "refs/heads/top-bases/XX", and  would be
+## lookup as a non-exist "refs/heads/top-bases/XX", and would be
 ## deleted by accident.
 git fetch --prune "$name" \
 	"+refs/top-bases/*:refs/remotes/$name/top-bases/*" \
