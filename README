@@ -302,7 +302,7 @@ tg annihilate
 	communicate that the branch is no longer wanted.
 
 	When annihilating a branch that has dependents (i.e. branches
-	that depend on it), those depedents have the dependencies of
+	that depend on it), those dependents have the dependencies of
 	the branch being annihilated added to them if they do not already
 	have them as dependencies.  Essentially the DAG is repaired to
 	skip over the annihilated branch.
@@ -455,7 +455,7 @@ tg summary
 
 	The --rdeps option outputs dependency information in an indended
 	text format that clearly shows all the dependencies and their
-	relationship to one another.  By specifying a branch name the
+	relationships to one another.  By specifying a branch name the
 	dependency tree output can be limited to that for a single branch.
 
 	Options:
