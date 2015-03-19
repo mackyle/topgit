@@ -143,7 +143,8 @@ pretty_tree()
 # setup_hook NAME
 setup_hook()
 {
-	hook_call="\"\$($tg --hooks-path)\"/$1 \"\$@\""
+	tgname="$(basename "$0")"
+	hook_call="\"\$(\"$tgname\" --hooks-path)\"/$1 \"\$@\""
 	if [ -f "$git_dir/hooks/$1" ] && fgrep -q "$hook_call" "$git_dir/hooks/$1"; then
 		# Another job well done!
 		return
@@ -155,7 +156,7 @@ setup_hook()
 		hook_call="exec $hook_call"
 	fi
 	# Don't call hook if tg is not installed
-	hook_call="if which \"$tg\" > /dev/null; then $hook_call; fi"
+	hook_call="if which \"$tgname\" > /dev/null; then $hook_call; fi"
 	# Insert call into the hook
 	{
 		echo "#!/bin/sh"
