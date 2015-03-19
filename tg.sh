@@ -590,12 +590,19 @@ help|--help|-h)
 
 		root_dir="${root_dir%/}"
 		base_remote="$(git config topgit.remote 2>/dev/null)" || :
-		tg="$0"
 
-		# make sure merging the .top* files will always behave sanely
+		# If not acting as include (i.e. a hook), set tg and do basic setup
 
-		setup_ours
-		setup_hook "pre-commit"
+		if [ -z "$tg__include" ]; then
+
+			tg="$0"
+
+			# make sure merging the .top* files will always behave sanely
+
+			setup_ours
+			setup_hook "pre-commit"
+
+		fi
 
 		# create global temporary directories, inside GIT_DIR
 
