@@ -453,7 +453,7 @@ tg summary
 	branches in a machine-readable format.  Feed this to ``tsort`` to
 	get the output from --sort.
 
-	The --rdeps option outputs dependency information in an indended
+	The --rdeps option outputs dependency information in an indented
 	text format that clearly shows all the dependencies and their
 	relationships to one another.  By specifying a branch name the
 	dependency tree output can be limited to that for a single branch.
