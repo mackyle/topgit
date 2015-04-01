@@ -578,6 +578,21 @@ $ tg -r foo update
 </div>
 <div class="section" id="usage">
 <h1>USAGE</h1>
+<p><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">[-C</span> <span class="pre">&lt;dir&gt;]</span> <span class="pre">[-r</span> <span class="pre">&lt;remote&gt;]</span> <span class="pre">&lt;subcommand&gt;</span> <span class="pre">[&lt;subcommand</span> <span class="pre">option/argument&gt;...]</span></tt></p>
+<blockquote>
+<table class="docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd><span class="option">-C <var>&lt;dir&gt;</var></span></kbd></td>
+<td>Change directory to &lt;dir&gt; before doing anything</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-r <var>&lt;remote&gt;</var></span></kbd></td>
+<td>Pretend <tt class="docutils literal"><span class="pre">topgit.remote</span></tt> is set to &lt;remote&gt;</td></tr>
+</tbody>
+</table>
+</blockquote>
 <p>The <tt class="docutils literal"><span class="pre">tg</span></tt> tool has several subcommands:</p>
 <div class="section" id="tg-help">
 <h2>tg help</h2>
@@ -619,7 +634,7 @@ In that case, after you commit the conflict resolution, you
 should call <tt class="docutils literal"><span class="pre">tg</span> <span class="pre">create</span></tt> again (without any arguments); it will
 detect that you are on a topic branch base ref and resume the
 topic branch creation operation.</p>
-<p>In an alternative use case, if <tt class="docutils literal"><span class="pre">-r</span> <span class="pre">BRANCH</span></tt> is given instead of a
+<p>In an alternative use case, if <tt class="docutils literal"><span class="pre">-r</span> <span class="pre">&lt;branch&gt;</span></tt> is given instead of a
 dependency list, the topic branch is created based on the given
 remote branch.</p>
 </blockquote>
@@ -811,6 +826,8 @@ origin-style remotes: it will seed the local topic branch system
 based on the remote topic branches.  <tt class="docutils literal"><span class="pre">--populate</span></tt> will also make
 <tt class="docutils literal"><span class="pre">tg</span> <span class="pre">remote</span></tt> automatically fetch the remote, and <tt class="docutils literal"><span class="pre">tg</span> <span class="pre">update</span></tt> look
 at branches of this remote for updates by default.</p>
+<p>Using <tt class="docutils literal"><span class="pre">--populate</span></tt> with a remote name causes the <tt class="docutils literal"><span class="pre">topgit.remote</span></tt>
+git configuration variable to be set to the given remote name.</p>
 </blockquote>
 </div>
 <div class="section" id="tg-summary">
@@ -856,7 +873,7 @@ useful, but that has not yet been implemented.</p>
 <p>The --deps option outputs dependency information between
 branches in a machine-readable format.  Feed this to <tt class="docutils literal"><span class="pre">tsort</span></tt> to
 get the output from --sort.</p>
-<p>The --rdeps option outputs dependency information in an indended
+<p>The --rdeps option outputs dependency information in an indented
 text format that clearly shows all the dependencies and their
 relationships to one another.  By specifying a branch name the
 dependency tree output can be limited to that for a single branch.</p>
