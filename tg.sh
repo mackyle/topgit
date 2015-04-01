@@ -472,7 +472,7 @@ do_help()
 		done
 
 		echo "TopGit version $TG_VERSION - A different patch queue manager"
-		echo "Usage: tg ( help [-w] [<command>] | [-r <remote>] ($cmds) ...)"
+		echo "Usage: tg ( help [-w] [<command>] | [-C <dir>] [-r <remote>] ($cmds) ...)"
 		echo "Use \"tg help tg\" for overview of TopGit"
 	elif [ -r "@cmddir@"/tg-$1 -o -r "@sharedir@/tg-$1.txt" ] ; then
 		if [ -n "$_www" ]; then
@@ -567,90 +567,136 @@ get_temp()
 	mktemp ${2-} "$tg_tmp_dir/$1.XXXXXX"
 }
 
+## Initial setup
+initial_setup()
+{
+	# suppress the merge log editor feature since git 1.7.10
+
+	export GIT_MERGE_AUTOEDIT=no
+	git_dir="$(git rev-parse --git-dir)"
+	root_dir="$(git rev-parse --show-cdup)"; root_dir="${root_dir:-.}"
+
+	# Make sure root_dir doesn't end with a trailing slash.
+
+	root_dir="${root_dir%/}"
+	[ -n "$base_remote" ] || base_remote="$(git config topgit.remote 2>/dev/null)" || :
+
+	# create global temporary directories, inside GIT_DIR
+
+	tg_tmp_dir="$(mktemp -d "$git_dir/tg-tmp.XXXXXX")"
+	trap "rm -rf \"$tg_tmp_dir\"" EXIT
+}
+
 ## Startup
 
 [ -d "@cmddir@" ] ||
 	die "No command directory: '@cmddir@'"
 
-## Initial setup
+if [ -n "$tg__include" ]; then
 
-cmd="$1"
-[ -z "$tg__include" ] || cmd="include" # ensure setup happens
-case "$cmd" in
-help|--help|-h)
-	:;;
-*)
-	if [ -n "$cmd" ]; then
-		set -e
+	# We were sourced from another script for our utility functions;
+	# this is set by hooks.  Skip the rest of the file.  A simple return doesn't
+	# work as expected in every shell.  See http://bugs.debian.org/516188
 
-		# suppress the merge log editor feature since git 1.7.10
+	# ensure setup happens
 
-		export GIT_MERGE_AUTOEDIT=no
-		git_dir="$(git rev-parse --git-dir)"
-		root_dir="$(git rev-parse --show-cdup)"; root_dir="${root_dir:-.}"
+	initial_setup
 
-		# Make sure root_dir doesn't end with a trailing slash.
+else
 
-		root_dir="${root_dir%/}"
-		base_remote="$(git config topgit.remote 2>/dev/null)" || :
+	set -e
 
-		# If not acting as include (i.e. a hook), set tg and do basic setup
+	tg="$0"
+	tgdir="$(dirname "$tg")"
+	tgname="$(basename "$tg")"
 
-		if [ -z "$tg__include" ]; then
+	# If tg contains a '/' but does not start with one then replace it with an absolute path
 
-			tg="$0"
+	case "$tg" in /*) :;; */*)
+		tgdir="$(cd "$(dirname "$0")" && pwd -P)"
+		tg="$tgdir/$tgname"
+	esac
+
+	cmd=
+	while :; do case "$1" in
+
+		help|--help|-h)
+			cmd=help
+			shift
+			break;;
+
+		--hooks-path)
+			cmd=hooks-path
+			shift
+			break;;
+
+		-r)
+			shift
+			if [ -z "$1" ]; then
+				echo "Option -r requires an argument." >&2
+				do_help
+				exit 1
+			fi
+			base_remote="$1"
+			tg="$tgdir/$tgname -r $base_remote"
+			shift;;
+
+		-C)
+			shift
+			if [ -z "$1" ]; then
+				echo "Option -C requires an argument." >&2
+				do_help
+				exit 1
+			fi
+			cd "$1"
+			shift;;
+
+		--)
+			shift
+			break;;
+
+		-*)
+			echo "Invalid option $1 (subcommand options must appear AFTER the subcommand)." >&2
+			do_help
+			exit 1;;
+
+		*)
+			break;;
+
+	esac; done
+
+	[ -n "$cmd" ] || { cmd="$1"; shift; }
+
+	## Dispatch
+
+	[ -n "$cmd" ] || { do_help; exit 1; }
+
+	case "$cmd" in
+
+		help)
+			do_help "$@"
+			exit 0;;
+
+		hooks-path)
+			# Internal command
+			echo "@hooksdir@";;
+
+		*)
+			[ -r "@cmddir@"/tg-$cmd ] || {
+				echo "Unknown subcommand: $cmd" >&2
+				do_help
+				exit 1
+			}
+
+			initial_setup
 
 			# make sure merging the .top* files will always behave sanely
 
 			setup_ours
 			setup_hook "pre-commit"
 
-		fi
-
-		# create global temporary directories, inside GIT_DIR
-
-		tg_tmp_dir="$(mktemp -d "$git_dir/tg-tmp.XXXXXX")"
-		trap "rm -rf \"$tg_tmp_dir\"" EXIT
-	fi
-esac
-
-## Dispatch
-
-# We were sourced from another script for our utility functions;
-# this is set by hooks.  Skip the rest of the file.  A simple return doesn't
-# work as expected in every shell.  See http://bugs.debian.org/516188
-if [ -z "$tg__include" ]; then
-
-if [ "$1" = "-r" ]; then
-	shift
-	if [ -z "$1" ]; then
-		echo "Option -r requires an argument." >&2
-		do_help
-		exit 1
-	fi
-	base_remote="$1"; shift
-	tg="$0 -r $base_remote"
-	cmd="$1"
-fi
-
-[ -n "$cmd" ] || { do_help; exit 1; }
-shift
-
-case "$cmd" in
-help|--help|-h)
-	do_help "$@"
-	exit 0;;
---hooks-path)
-	# Internal command
-	echo "@hooksdir@";;
-*)
-	[ -r "@cmddir@"/tg-$cmd ] || {
-		echo "Unknown subcommand: $cmd" >&2
-		do_help
-		exit 1
-	}
-	. "@cmddir@"/tg-$cmd;;
-esac
+			. "@cmddir@"/tg-$cmd;;
+	esac
 
 fi
 
