@@ -81,8 +81,8 @@ if [ -n "$rdeps" ]; then
 			showbreak=1 
 			ref_exists "refs/heads/$b" || continue
 			echo "$b"
-			recurse_deps show_rdeps "$b" |
-				awk '{a[i++]=$0} END {for (j=i-1; j>=0;) print a[j--]}'
+			recurse_preorder=1
+			recurse_deps show_rdeps "$b"
 		done
 	exit 0
 fi
