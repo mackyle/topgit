@@ -261,6 +261,8 @@ is_sha1()
 
 # recurse_deps_int NAME [BRANCHPATH...]
 # get recursive list of dependencies with leading 0 if branch exists 1 if missing
+# If no_remotes is non-empty, exclude remotes
+# If recurse_preorder is non-empty, do a preorder rather than postorder traversal
 recurse_deps_int()
 {
 	if ! ref_exists "$1"; then
@@ -277,6 +279,7 @@ recurse_deps_int()
 	_is_tgish=0
 	if ref_exists "refs/top-bases/$1"; then
 		_is_tgish=1
+	[ -z "$recurse_preorder" -o -z "$2" ] || echo "0 $_is_tgish $*"
 
 		# if the branch was annihilated, it is considered to have no dependencies
 		if ! branch_annihilated "$1"; then
@@ -289,7 +292,7 @@ recurse_deps_int()
 		fi
 	fi;
 
-	[ -z "$2" ] || echo "0 $_is_tgish $*"
+	[ -n "$recurse_preorder" -o -z "$2" ] || echo "0 $_is_tgish $*"
 }
 
 # do_eval CMD
