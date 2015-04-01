@@ -90,7 +90,7 @@ fi
 if [ -n "$graphviz" ]; then
 	cat <<EOT
 # GraphViz output; pipe to:
-#   | dot -Tpng -o <ouput>
+#   | dot -Tpng -o <output>
 # or
 #   | dot -Txlib
 
