@@ -223,6 +223,10 @@ SYNOPSIS
 
 USAGE
 -----
+``tg [-C <dir>] [-r <remote>] <subcommand> [<subcommand option/argument>...]``
+
+	-C <dir>	Change directory to <dir> before doing anything
+	-r <remote>	Pretend ``topgit.remote`` is set to <remote>
 
 The ``tg`` tool has several subcommands:
 
@@ -263,7 +267,7 @@ tg create
 	detect that you are on a topic branch base ref and resume the
 	topic branch creation operation.
 
-	In an alternative use case, if ``-r BRANCH`` is given instead of a
+	In an alternative use case, if ``-r <branch>`` is given instead of a
 	dependency list, the topic branch is created based on the given
 	remote branch.
 
@@ -404,6 +408,9 @@ tg remote
 	based on the remote topic branches.  ``--populate`` will also make
 	``tg remote`` automatically fetch the remote, and ``tg update`` look
 	at branches of this remote for updates by default.
+
+	Using ``--populate`` with a remote name causes the ``topgit.remote``
+	git configuration variable to be set to the given remote name.
 
 tg summary
 ~~~~~~~~~~
