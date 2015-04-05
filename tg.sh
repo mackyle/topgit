@@ -286,7 +286,7 @@ recurse_deps_int()
 			#TODO: handle nonexisting .topdeps?
 			git cat-file blob "$1:.topdeps" 2>/dev/null |
 			while read _dname; do
-				# Shoo shoo, keep our environment alone!
+				# Shoo shoo, leave our environment alone!
 				(recurse_deps_int "$_dname" "$@")
 			done
 		fi
@@ -316,7 +316,7 @@ do_eval()
 # of the whole function.
 # If recurse_deps() hits missing dependencies, it will append
 # them to space-separated $missing_deps list and skip them
-# affter calling CMD with _dep_missing set.
+# after calling CMD with _dep_missing set.
 # remote dependencies are processed if no_remotes is unset.
 recurse_deps()
 {
