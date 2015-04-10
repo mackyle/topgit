@@ -12,7 +12,7 @@ force= # Whether to annihilate non-empty branch, or branch where only the base i
 while [ -n "$1" ]; do
 	arg="$1"; shift
 	case "$arg" in
-	-f)
+	-f|--force)
 		force=1;;
 	*)
 		echo "Usage: tg [...] annihilate [-f]" >&2

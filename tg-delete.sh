@@ -12,7 +12,7 @@ name=
 while [ -n "$1" ]; do
 	arg="$1"; shift
 	case "$arg" in
-	-f)
+	-f|--force)
 		force=1;;
 	-*)
 		echo "Usage: tg [...] delete [-f] <name>" >&2

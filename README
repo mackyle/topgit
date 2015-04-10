@@ -695,6 +695,9 @@ tg push
 	dependencies will be pushed, and if ``--no-deps`` was specified,
 	no dependencies at all will be pushed.
 
+	The ``--dry-run`` and ``--force`` options are passed directly to
+	``git push`` if given.
+
 	The remote may be specified with the ``-r`` option. If no remote
 	was specified, the configured default TopGit remote will be
 	used.

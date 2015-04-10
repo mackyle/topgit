@@ -7,6 +7,7 @@
 recurse_deps=true
 tgish_deps_only=false
 dry_run=
+force=
 push_all=false
 
 while [ -n "$1" ]; do
@@ -16,12 +17,14 @@ while [ -n "$1" ]; do
 		recurse_deps=false;;
 	--dry-run)
 		dry_run=--dry-run;;
+	-f|--force)
+		force=--force;;
 	--tgish-only)
 		tgish_deps_only=true;;
 	-a|--all)
 		push_all=true;;
 	-h|--help)
-		echo "Usage: tg push [--dry-run] [--no-deps] [--tgish-only] [-r <remote>] [-a | --all | <branch>...]"
+		echo "Usage: tg push [--dry-run] [--force] [--no-deps] [--tgish-only] [-r <remote>] [-a | --all | <branch>...]"
 		exit 0;;
 	-r)
 		remote="$1"
@@ -87,4 +90,4 @@ for name in $branches; do
 done
 
 # remove multiple occurrences of the same branch
-sort -u "$_listfile" | xargs git push $dry_run "$remote"
+sort -u "$_listfile" | xargs git push $dry_run $force "$remote"
