@@ -638,6 +638,7 @@ else
 
 	explicit_remote=
 	explicit_dir=
+	gitcdopt=
 
 	cmd=
 	while :; do case "$1" in
@@ -676,6 +677,7 @@ else
 			fi
 			cd "$1"
 			explicit_dir="$1"
+			gitcdopt=" -C \"$explicit_dir\""
 			tg="$tgdir$tgname"
 			tgdisplay="$tgdisplaydir$tgname -C \"$explicit_dir\""
 			[ -z "$explicit_remote" ] || tg="$tg -r $explicit_remote"
