@@ -25,11 +25,12 @@ while [ -n "$1" ]; do
 done
 
 
-head="$(git symbolic-ref HEAD)"
+head="$(git symbolic-ref HEAD 2>/dev/null)"
 head="${head#refs/heads/}"
 
 [ -n "$name" ] ||
-	name="$head"
+	name="${head:-HEAD}"
+name="$(verify_topgit_branch "$name")"
 base_rev="$(git rev-parse --short --verify "refs/top-bases/$name" 2>/dev/null)" ||
 	die "not a TopGit-controlled branch"
 

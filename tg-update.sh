@@ -35,11 +35,7 @@ done
 
 current="$(strip_ref "$(git symbolic-ref HEAD 2>/dev/null)")"
 if [ -z "$all" ]; then
-	if [ -z "$name" ]; then
-		name="$current"
-		base_rev="$(git rev-parse --short --verify "refs/top-bases/$name" 2>/dev/null)" ||
-			die "not a TopGit-controlled branch"
-	fi
+	name="$(verify_topgit_branch "${name:-HEAD}")"
 else
 	[ -n "$current" ] || die "cannot return to detached tree; switch to another branch"
 fi

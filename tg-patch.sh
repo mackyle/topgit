@@ -29,7 +29,8 @@ head="$(git symbolic-ref HEAD)"
 head="${head#refs/heads/}"
 
 [ -n "$name" ] ||
-	name="$head"
+	name="${head:-HEAD}"
+name="$(verify_topgit_branch "$name")"
 base_rev="$(git rev-parse --short --verify "refs/top-bases/$name" 2>/dev/null)" ||
 	die "not a TopGit-controlled branch"
 

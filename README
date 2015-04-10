@@ -465,6 +465,9 @@ tg summary
 	relationships to one another.  By specifying a branch name the
 	dependency tree output can be limited to that for a single branch.
 
+	Note that the branch name can be specified as ``HEAD`` as a shortcut for
+	the TopGit-controlled branch that ``HEAD`` is a symbolic ref to.
+
 	Options:
 	  -i		Use TopGit metadata from the index instead of the branch
 	  -w		Use TopGit metadata from the working tree instead of the branch

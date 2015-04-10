@@ -220,6 +220,36 @@ has_remote()
 	[ -n "$base_remote" ] && ref_exists "remotes/$base_remote/$1"
 }
 
+# Return the verified TopGit branch name or die with an error.
+# As a convenience, if HEAD is given and HEAD is a symbolic ref to
+# refs/heads/... then ... will be verified instead.
+verify_topgit_branch()
+{
+	case "$1" in
+		refs/heads/*)
+			_verifyname="${1#refs/heads/}"
+			;;
+		refs/top-bases/*)
+			_verifyname="${1#refs/top-bases/}"
+			;;
+		HEAD)
+			_verifyname="$(git symbolic-ref HEAD 2>/dev/null || :)"
+			[ -n "$_verifyname" ] || die "HEAD is not a symbolic ref"
+			case "$_verifyname" in refs/heads/*) :;; *)
+				die "HEAD is not a symbolic ref to the refs/heads namespace"
+			esac
+			_verifyname="${_verifyname#refs/heads/}"
+			;;
+		*)
+			_verifyname="$1"
+			;;
+	esac
+	git rev-parse --short --verify "refs/heads/$_verifyname" >/dev/null 2>&1 || die "no such branch"
+	git rev-parse --short --verify "refs/top-bases/$_verifyname" >/dev/null 2>&1 ||
+		die "not a TopGit-controlled branch"
+	printf '%s' "$_verifyname"
+}
+
 branch_annihilated()
 {
 	_branch_name="$1";

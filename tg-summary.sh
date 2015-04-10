@@ -46,10 +46,7 @@ done
 [ $# -le 1 ] || usage
 
 if [ $# -eq 1 ]; then
-	git rev-parse --short --verify "refs/heads/$1" >/dev/null 2>&1 || die "no such branch"
-	git rev-parse --short --verify "refs/top-bases/$1" >/dev/null 2>&1 ||
-		die "not a TopGit-controlled branch"
-	branch="${1#refs/heads/}"
+	branch="$(verify_topgit_branch "$1")"
 fi
 
 [ "$terse$graphviz$sort$deps" = "" ] ||
