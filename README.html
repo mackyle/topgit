@@ -877,6 +877,8 @@ get the output from --sort.</p>
 text format that clearly shows all the dependencies and their
 relationships to one another.  By specifying a branch name the
 dependency tree output can be limited to that for a single branch.</p>
+<p>Note that the branch name can be specified as <tt class="docutils literal"><span class="pre">HEAD</span></tt> as a shortcut for
+the TopGit-controlled branch that <tt class="docutils literal"><span class="pre">HEAD</span></tt> is a symbolic ref to.</p>
 <dl class="docutils">
 <dt>Options:</dt>
 <dd><table class="first last docutils option-list" frame="void" rules="none">
@@ -1102,7 +1104,7 @@ dependencies by showing an <tt class="docutils literal"><span class="pre">!</spa
 <div class="section" id="tg-push">
 <h2>tg push</h2>
 <blockquote>
-<p><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">push</span> <span class="pre">[--dry-run]</span> <span class="pre">[--no-deps]</span> <span class="pre">[--tgish-only]</span> <span class="pre">[-r</span> <span class="pre">&lt;remote&gt;]</span> <span class="pre">[-a</span> <span class="pre">|</span> <span class="pre">--all</span> <span class="pre">|</span> <span class="pre">&lt;branch&gt;...]</span></tt></p>
+<p><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">push</span> <span class="pre">[--dry-run]</span> <span class="pre">[--force]</span> <span class="pre">[--no-deps]</span> <span class="pre">[--tgish-only]</span> <span class="pre">[-r</span> <span class="pre">&lt;remote&gt;]</span> <span class="pre">[-a</span> <span class="pre">|</span> <span class="pre">--all</span> <span class="pre">|</span> <span class="pre">&lt;branch&gt;...]</span></tt></p>
 <p>If <tt class="docutils literal"><span class="pre">-a</span></tt> or <tt class="docutils literal"><span class="pre">--all</span></tt> was specified, pushes all non-annihilated
 TopGit-controlled topic branches, to a remote repository.
 Otherwise, pushes the specified topic branches -- or the
@@ -1112,6 +1114,8 @@ non-TopGit-controlled) and bases pushed to it too.  If
 <tt class="docutils literal"><span class="pre">--tgish-only</span></tt> was specified, only TopGit-controlled
 dependencies will be pushed, and if <tt class="docutils literal"><span class="pre">--no-deps</span></tt> was specified,
 no dependencies at all will be pushed.</p>
+<p>The <tt class="docutils literal"><span class="pre">--dry-run</span></tt> and <tt class="docutils literal"><span class="pre">--force</span></tt> options are passed directly to
+<tt class="docutils literal"><span class="pre">git</span> <span class="pre">push</span></tt> if given.</p>
 <p>The remote may be specified with the <tt class="docutils literal"><span class="pre">-r</span></tt> option. If no remote
 was specified, the configured default TopGit remote will be
 used.</p>
