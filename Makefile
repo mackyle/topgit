@@ -50,7 +50,9 @@ $(help_out): README create-help.sh
 	echo '[HELP]' $$CMD && \
 	./create-help.sh $$CMD
 
-.PHONY: html
+.PHONY: html doc
+
+doc:: html
 
 html:: topgit.html $(html_out)
 
