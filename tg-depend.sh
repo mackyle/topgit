@@ -54,10 +54,10 @@ depend_add()
 
 	{ $tg summary --deps; echo "$current_name" "$name"; } |
 		tsort >/dev/null ||
-		die "tg: that dependency would introduce a dependency loop"
+		die "$tgname: that dependency would introduce a dependency loop"
 
 	grep -F -x -e "$name" "$root_dir/.topdeps" >/dev/null &&
-		die "tg: $current_name already depends on $name"
+		die "$tgname: $current_name already depends on $name"
 
 	echo "$name" >>"$root_dir/.topdeps"
 	git add -f "$root_dir/.topdeps"

@@ -119,7 +119,7 @@ update_branch() {
 								break
 							else
 								info "Ok, you aborted the merge. Now, you just need to"
-								info "switch back to some sane branch using \`git checkout\`."
+								info "switch back to some sane branch using \`git$gitcdopt checkout\`."
 								exit 3
 							fi
 						fi
@@ -135,12 +135,12 @@ update_branch() {
 				info "Updating base with $dep changes..."
 				if ! git merge "$dep"; then
 					if [ -z "$TG_RECURSIVE" ]; then
-						resume="\`git checkout $_update_name && $tg update${skip:+ --skip}\` again"
+						resume="\`$tgdisplay update${skip:+ --skip} $_update_name\` again"
 					else # subshell
 						resume='exit'
 					fi
 					info "Please commit merge resolution and call $resume."
-					info "It is also safe to abort this operation using \`git reset --hard\`,"
+					info "It is also safe to abort this operation using \`git$gitcdopt reset --hard\`,"
 					info "but please remember that you are on the base branch now;"
 					info "you will want to switch to some normal branch afterwards."
 					rm "$_depcheck"
@@ -172,8 +172,8 @@ update_branch() {
 			if ! git merge "$_rname"; then
 				info "Oops, you will need to help me out here a bit."
 				info "Please commit merge resolution and call:"
-				info "git checkout $_update_name && git merge <commitid>"
-				info "It is also safe to abort this operation using: git reset --hard $_update_name"
+				info "git$gitcdopt checkout $_update_name && git$gitcdopt merge <commitid>"
+				info "It is also safe to abort this operation using: git$gitcdopt reset --hard $_update_name"
 				exit 4
 			fi
 			# Go back but remember we want to merge with this, not base
@@ -193,11 +193,11 @@ update_branch() {
 	if ! git merge "$merge_with"; then
 		if [ -z "$TG_RECURSIVE" ]; then
 			info "Please commit merge resolution. No need to do anything else"
-			info "You can abort this operation using \`git reset --hard\` now"
-			info "and retry this merge later using \`$tg update${skip:+ --skip}\`."
+			info "You can abort this operation using \`git$gitcdopt reset --hard\` now"
+			info "and retry this merge later using \`$tgdisplay update${skip:+ --skip}\`."
 		else # subshell
 			info "Please commit merge resolution and call exit."
-			info "You can abort this operation using \`git reset --hard\`."
+			info "You can abort this operation using \`git$gitcdopt reset --hard\`."
 		fi
 		exit 4
 	fi
