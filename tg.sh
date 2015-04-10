@@ -289,11 +289,15 @@ is_sha1()
 	[ "$(git rev-parse "$1")" = "$1" ]
 }
 
-# recurse_deps_int NAME [BRANCHPATH...]
+# recurse_deps_internal NAME [BRANCHPATH...]
 # get recursive list of dependencies with leading 0 if branch exists 1 if missing
+# followed by a 1 if the branch is "tgish" or a 0 if not
+# then the branch name followed by its depedency chain (which might be empty)
+# An output line might look like this:
+#   0 1 t/foo/leaf t/foo/int t/stage
 # If no_remotes is non-empty, exclude remotes
 # If recurse_preorder is non-empty, do a preorder rather than postorder traversal
-recurse_deps_int()
+recurse_deps_internal()
 {
 	if ! ref_exists "$1"; then
 		[ -z "$2" ] || echo "1 0 $*"
@@ -317,7 +321,7 @@ recurse_deps_int()
 			git cat-file blob "$1:.topdeps" 2>/dev/null |
 			while read _dname; do
 				# Shoo shoo, leave our environment alone!
-				(recurse_deps_int "$_dname" "$@")
+				(recurse_deps_internal "$_dname" "$@")
 			done
 		fi
 	fi;
@@ -353,7 +357,7 @@ recurse_deps()
 	_cmd="$1"; shift
 
 	_depsfile="$(get_temp tg-depsfile)"
-	recurse_deps_int "$@" >>"$_depsfile"
+	recurse_deps_internal "$@" >>"$_depsfile"
 
 	_ret=0
 	while read _ismissing _istgish _dep _name _deppath; do
