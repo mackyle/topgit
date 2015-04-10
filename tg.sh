@@ -587,6 +587,14 @@ initial_setup()
 	trap "rm -rf \"$tg_tmp_dir\"" EXIT
 }
 
+# return the "realpath" for the item except the leaf is not resolved if it's
+# a symbolic link.  The directory part must exist, but the basename need not.
+get_abs_path()
+{
+	[ -n "$1" -a -d "$(dirname -- "$1")" ] || return 1
+	printf '%s' "$(cd -- "$(dirname -- "$1")" && pwd -P)/$(basename -- "$1")"
+}
+
 ## Startup
 
 [ -d "@cmddir@" ] ||
@@ -607,15 +615,29 @@ else
 	set -e
 
 	tg="$0"
-	tgdir="$(dirname "$tg")"
-	tgname="$(basename "$tg")"
+	tgdir="$(dirname -- "$tg")/"
+	tgname="$(basename -- "$tg")"
+	[ "$0" != "$tgname" ] || tgdir=""
 
 	# If tg contains a '/' but does not start with one then replace it with an absolute path
 
-	case "$tg" in /*) :;; */*)
-		tgdir="$(cd "$(dirname "$0")" && pwd -P)"
-		tg="$tgdir/$tgname"
+	case "$0" in /*) :;; */*)
+		tgdir="$(cd "$(dirname -- "$0")" && pwd -P)/"
+		tg="$tgdir$tgname"
 	esac
+
+	# If the tg in the PATH is the same as "$tg" just display the basename
+	# tgdisplay will include any explicit -C <dir> option whereas tg will not
+
+	tgdisplaydir="$tgdir"
+	tgdisplay="$tg"
+	if [ "$(get_abs_path "$tg")" = "$(get_abs_path "$(which "$tgname" || :)" || :)" ]; then
+		tgdisplaydir=""
+		tgdisplay="$tgname"
+	fi
+
+	explicit_remote=
+	explicit_dir=
 
 	cmd=
 	while :; do case "$1" in
@@ -638,7 +660,11 @@ else
 				exit 1
 			fi
 			base_remote="$1"
-			tg="$tgdir/$tgname -r $base_remote"
+			explicit_remote="$base_remote"
+			tg="$tgdir$tgname -r $explicit_remote"
+			tgdisplay="$tgdisplaydir$tgname"
+			[ -z "$explicit_dir" ] || tgdisplay="$tgdisplay -C \"$explicit_dir\""
+			tgdisplay="$tgdisplay -r $explicit_remote"
 			shift;;
 
 		-C)
@@ -649,6 +675,11 @@ else
 				exit 1
 			fi
 			cd "$1"
+			explicit_dir="$1"
+			tg="$tgdir$tgname"
+			tgdisplay="$tgdisplaydir$tgname -C \"$explicit_dir\""
+			[ -z "$explicit_remote" ] || tg="$tg -r $explicit_remote"
+			[ -z "$explicit_remote" ] || tgdisplay="$tgdisplay -r $explicit_remote"
 			shift;;
 
 		--)
