@@ -58,7 +58,7 @@ precheck
 cat_file()
 {
 	path="$1"
-	case "${2-}" in
+	case "$2" in
 	-w)
 		cat "$root_dir/${path#*:}"
 		;;
@@ -439,14 +439,14 @@ needs_update()
 # branch_empty NAME [-i | -w]
 branch_empty()
 {
-	[ "$(pretty_tree "$1" -b)" = "$(pretty_tree "$1" ${2-})" ]
+	[ "$(pretty_tree "$1" -b)" = "$(pretty_tree "$1" $2)" ]
 }
 
 # list_deps [-i | -w]
 # -i/-w apply only to HEAD
 list_deps()
 {
-	head_from=${1-}
+	head_from="$1"
 	head="$(git symbolic-ref -q HEAD)" ||
 		head="..detached.."
 
@@ -605,7 +605,7 @@ setup_pager()
 # temporary directory $tg_tmp_dir with pattern prefix NAME
 get_temp()
 {
-	mktemp ${2-} "$tg_tmp_dir/$1.XXXXXX"
+	mktemp $2 "$tg_tmp_dir/$1.XXXXXX"
 }
 
 ## Initial setup
