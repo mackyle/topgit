@@ -19,7 +19,7 @@ while [ -n "$1" ]; do
 	--skip)
 		skip=1;;
 	-*)
-		echo "Usage: tg [...] update [--skip] ([<name>] | -a [<pattern>...])" >&2
+		echo "Usage: ${tgname:-tg} [...] update [--skip] ([<name>] | -a [<pattern>...])" >&2
 		exit 1;;
 	*)
 		if [ -z "$all" ]; then

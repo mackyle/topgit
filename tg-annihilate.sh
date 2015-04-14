@@ -15,7 +15,7 @@ while [ -n "$1" ]; do
 	-f|--force)
 		force=1;;
 	*)
-		echo "Usage: tg [...] annihilate [-f]" >&2
+		echo "Usage: ${tgname:-tg} [...] annihilate [-f]" >&2
 		exit 1;;
 	esac
 done
@@ -40,14 +40,14 @@ git commit --no-verify -m"TopGit branch $name annihilated."
 
 # Propagate the dependencies through to dependents (if any), if they don't already have them
 dependencies="$(tg prev -w)"
-tg next | while read dependent; do
+$tg next | while read dependent; do
 	git checkout -f $dependent
 	for dependency in $dependencies; do
-		tg depend add "$dependency" 2>/dev/null
+		$tg depend add "$dependency" 2>/dev/null
 	done
 done
 
-info "If you have shared your work, you might want to run tg push $name now."
+info "If you have shared your work, you might want to run ${tgname:-tg} push $name now."
 git status
 
 # vim:noet

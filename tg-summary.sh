@@ -16,7 +16,7 @@ branch=
 
 usage()
 {
-	echo "Usage: tg [...] summary [-t | --sort | --deps | --rdeps | --graphviz] [-i | -w] [branch]" >&2
+	echo "Usage: ${tgname:-tg} [...] summary [-t | --sort | --deps | --rdeps | --graphviz] [-i | -w] [branch]" >&2
 	exit 1
 }
 

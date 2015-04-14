@@ -7,7 +7,7 @@ name=
 
 usage()
 {
-	echo "Usage: tg [...] depend add <name>" >&2
+	echo "Usage: ${tgname:-tg} [...] depend add <name>" >&2
 	exit 1
 }
 

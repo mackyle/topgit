@@ -20,7 +20,7 @@ while [ -n "$1" ]; do
 			break;;
 		esac;;
 	-|-h|--help)
-		echo "Usage: tg [...] log [<name>] [--] [<git-log-option>...]" >&2
+		echo "Usage: ${tgname:-tg} [...] log [<name>] [--] [<git-log-option>...]" >&2
 		exit 1;;
 	-?*)
 		if test="$(verify_topgit_branch "$arg" -f)"; then

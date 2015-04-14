@@ -13,7 +13,7 @@ GIT_MINIMUM_VERSION=1.7.7.2
 
 info()
 {
-	echo "${TG_RECURSIVE}$tgname: $*"
+	echo "${TG_RECURSIVE}${tgname:-tg}: $*"
 }
 
 die()
@@ -513,7 +513,7 @@ do_help()
 		done
 
 		echo "TopGit version $TG_VERSION - A different patch queue manager"
-		echo "Usage: tg ( help [-w] [<command>] | [-C <dir>] [-r <remote>] ($cmds) ...)"
+		echo "Usage: $tgname ( help [-w] [<command>] | [-C <dir>] [-r <remote>] ($cmds) ...)"
 		echo "Use \"$tgdisplaydir$tgname help tg\" for overview of TopGit"
 	elif [ -r "@cmddir@"/tg-$1 -o -r "@sharedir@/tg-$1.txt" ] ; then
 		if [ -n "$_www" ]; then

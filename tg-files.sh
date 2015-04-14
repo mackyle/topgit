@@ -16,7 +16,7 @@ while [ -n "$1" ]; do
 		[ -z "$head_from" ] || die "-i and -w are mutually exclusive"
 		head_from="$arg";;
 	-*)
-		echo "Usage: tg [...] files [-i | -w] [<name>]" >&2
+		echo "Usage: ${tgname:-tg} [...] files [-i | -w] [<name>]" >&2
 		exit 1;;
 	*)
 		[ -z "$name" ] || die "name already specified ($name)"

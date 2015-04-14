@@ -22,7 +22,7 @@ while [ -n "$1" ]; do
 	-s)
 		single="$1"; shift;;
 	-*)
-		echo "Usage: tg [...] import [-d <base-branch>] ([-p <prefix>] <range>... | -s <name> <commit>)" >&2
+		echo "Usage: ${tgname:-tg} [...] import [-d <base-branch>] ([-p <prefix>] <range>... | -s <name> <commit>)" >&2
 		exit 1;;
 	*)
 		ranges="$ranges $arg";;
@@ -65,7 +65,7 @@ process_commit()
 	commit="$1"
 	branch_name="$2"
 	info "---- Importing $commit to $branch_name"
-	tg create "$branch_name" $basedep
+	$tg create "$branch_name" $basedep
 	basedep=
 	get_commit_msg "$commit" > .topmsg
 	git add -f .topmsg .topdeps

@@ -8,7 +8,7 @@
 
 case "$1" in
 	-h|--help)
-		echo "Usage: tg [...] base [ branch... ]" >&2
+		echo "Usage: ${tgname:-tg} [...] base [ branch... ]" >&2
 		exit 0;;
 	*)
 		break;;

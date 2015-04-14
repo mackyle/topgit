@@ -39,7 +39,7 @@ while [ $# -gt 0 ]; do
 				shift
 			fi;;
 		*)
-			echo "Usage: tg [...] checkout [ [ push | pop ] [ -a ] | goto <pattern> ]" >&2
+			echo "Usage: ${tgname:-tg} [...] checkout [ [ push | pop ] [ -a ] | goto <pattern> ]" >&2
 			exit 1;;
 	esac
 done
@@ -60,7 +60,7 @@ _altfile="$(mktemp -t tg-co-alt.XXXXXX)"
 trap "rm -f \"$_depfile\" \"$_altfile\"" 0
 
 if [ -n "$goto" ]; then
-	tg summary -t | grep -e "$pattern" >$_altfile || :
+	$tg summary -t | grep -e "$pattern" >$_altfile || :
 	no_branch_found="No topic branch matches grep pattern '$pattern'"
 else
 	branch=`git symbolic-ref -q HEAD` || die "Working on a detached head"
@@ -74,12 +74,12 @@ else
 
 	if [ -z "$all" ]; then
 		if [ -n "$pop" ]; then
-			tg prev -w >$_altfile
+			$tg prev -w >$_altfile
 		else
-			tg next >$_altfile
+			$tg next >$_altfile
 		fi
 	else
-		tg summary --deps >$_depfile || die "tg summary failed"
+		$tg summary --deps >$_depfile || die "${tgname:-tg} summary failed"
 
 		if [ -n "$pop" ]; then
 			dir=pop

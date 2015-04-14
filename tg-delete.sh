@@ -15,7 +15,7 @@ while [ -n "$1" ]; do
 	-f|--force)
 		force=1;;
 	-*)
-		echo "Usage: tg [...] delete [-f] <name>" >&2
+		echo "Usage: ${tgname:-tg} [...] delete [-f] <name>" >&2
 		exit 1;;
 	*)
 		[ -z "$name" ] || die "name already specified ($name)"
@@ -41,7 +41,7 @@ baserev="$(git rev-parse --verify "refs/top-bases/$name" 2>/dev/null)" ||
 [ -z "$force" ] && { branch_empty "$name" || die "branch is non-empty: $name"; }
 
 # Quick'n'dirty check whether branch is required
-[ -z "$force" ] && { tg summary --deps | cut -d' ' -f2- | tr ' ' '\n' | fgrep -xq -- "$name" && die "some branch depends on $name"; }
+[ -z "$force" ] && { $tg summary --deps | cut -d' ' -f2- | tr ' ' '\n' | fgrep -xq -- "$name" && die "some branch depends on $name"; }
 
 ## Wipe out
 

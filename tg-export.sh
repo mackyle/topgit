@@ -50,7 +50,7 @@ while [ -n "$1" ]; do
 	--linearize)
 		driver=linearize;;
 	-*)
-		echo "Usage: tg [...] export ([--collapse] <newbranch> [--force] | [-a | --all | -b <branch1>...] --quilt <directory> | --linearize <newbranch> [--force])" >&2
+		echo "Usage: ${tgname:-tg} [...] export ([--collapse] <newbranch> [--force] | [-a | --all | -b <branch1>...] --quilt <directory> | --linearize <newbranch> [--force])" >&2
 		exit 1;;
 	*)
 		[ -z "$output" ] || die "output already specified ($output)"
@@ -289,7 +289,7 @@ if [ "$driver" = "collapse" ] || [ "$driver" = "linearize" ]; then
 	if ! ref_exists $output; then
 		:
 	elif ! "$forcebranch"; then
-		die "target branch '$output' already exists; first run: git branch -D $output, or run tg export with --force"
+		die "target branch '$output' already exists; first run: git$gitcdopt branch -D $output, or run $tgdisplay export with --force"
 	else
 		checkout_opt=-B
 	fi
