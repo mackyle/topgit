@@ -223,6 +223,7 @@ has_remote()
 # Return the verified TopGit branch name or die with an error.
 # As a convenience, if HEAD is given and HEAD is a symbolic ref to
 # refs/heads/... then ... will be verified instead.
+# if "$2" = "-f" then return an error rather than dying.
 verify_topgit_branch()
 {
 	case "$1" in
@@ -236,6 +237,7 @@ verify_topgit_branch()
 			_verifyname="$(git symbolic-ref HEAD 2>/dev/null || :)"
 			[ -n "$_verifyname" ] || die "HEAD is not a symbolic ref"
 			case "$_verifyname" in refs/heads/*) :;; *)
+				[ "$2" != "-f" ] || return 1
 				die "HEAD is not a symbolic ref to the refs/heads namespace"
 			esac
 			_verifyname="${_verifyname#refs/heads/}"
@@ -244,9 +246,14 @@ verify_topgit_branch()
 			_verifyname="$1"
 			;;
 	esac
-	git rev-parse --short --verify "refs/heads/$_verifyname" >/dev/null 2>&1 || die "no such branch"
-	git rev-parse --short --verify "refs/top-bases/$_verifyname" >/dev/null 2>&1 ||
+	if ! git rev-parse --short --verify "refs/heads/$_verifyname" >/dev/null 2>&1; then
+		[ "$2" != "-f" ] || return 1
+		die "no such branch"
+	fi
+	if ! git rev-parse --short --verify "refs/top-bases/$_verifyname" >/dev/null 2>&1; then
+		[ "$2" != "-f" ] || return 1
 		die "not a TopGit-controlled branch"
+	fi
 	printf '%s' "$_verifyname"
 }
 
