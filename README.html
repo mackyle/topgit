@@ -1104,7 +1104,7 @@ dependencies by showing an <tt class="docutils literal"><span class="pre">!</spa
 <div class="section" id="tg-push">
 <h2>tg push</h2>
 <blockquote>
-<p><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">push</span> <span class="pre">[--dry-run]</span> <span class="pre">[--force]</span> <span class="pre">[--no-deps]</span> <span class="pre">[--tgish-only]</span> <span class="pre">[-r</span> <span class="pre">&lt;remote&gt;]</span> <span class="pre">[-a</span> <span class="pre">|</span> <span class="pre">--all</span> <span class="pre">|</span> <span class="pre">&lt;branch&gt;...]</span></tt></p>
+<p><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">[...]</span> <span class="pre">push</span> <span class="pre">[--dry-run]</span> <span class="pre">[--force]</span> <span class="pre">[--no-deps]</span> <span class="pre">[--tgish-only]</span> <span class="pre">[-r</span> <span class="pre">&lt;remote&gt;]</span> <span class="pre">[-a</span> <span class="pre">|</span> <span class="pre">--all</span> <span class="pre">|</span> <span class="pre">&lt;branch&gt;...]</span></tt></p>
 <p>If <tt class="docutils literal"><span class="pre">-a</span></tt> or <tt class="docutils literal"><span class="pre">--all</span></tt> was specified, pushes all non-annihilated
 TopGit-controlled topic branches, to a remote repository.
 Otherwise, pushes the specified topic branches -- or the
@@ -1134,7 +1134,7 @@ a TopGit branch.</p>
 <div class="section" id="tg-log">
 <h2>tg log</h2>
 <blockquote>
-<p><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">[...]</span> <span class="pre">log</span> <span class="pre">[&lt;name&gt;]</span> <span class="pre">[--</span> <span class="pre">&lt;git-log-option&gt;...]</span></tt></p>
+<p><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">[...]</span> <span class="pre">log</span> <span class="pre">[&lt;name&gt;]</span> <span class="pre">[--]</span> <span class="pre">[&lt;git-log-option&gt;...]</span></tt></p>
 <p>Prints the git log of the named topgit branch -- or the current
 branch, if you don't specify a name.</p>
 <p>NOTE: if you have merged changes from a different repository, this
@@ -1144,7 +1144,7 @@ command might not list all interesting commits.</p>
 <div class="section" id="tg-prev">
 <h2>tg prev</h2>
 <blockquote>
-<p><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">prev</span> <span class="pre">[-i</span> <span class="pre">|</span> <span class="pre">-w]</span> <span class="pre">[&lt;name&gt;]</span></tt></p>
+<p><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">[...]</span> <span class="pre">prev</span> <span class="pre">[-i</span> <span class="pre">|</span> <span class="pre">-w]</span> <span class="pre">[&lt;name&gt;]</span></tt></p>
 <p>Outputs the direct dependencies for the current or named branch.</p>
 <dl class="docutils">
 <dt>Options:</dt>
@@ -1167,7 +1167,7 @@ command might not list all interesting commits.</p>
 <div class="section" id="tg-next">
 <h2>tg next</h2>
 <blockquote>
-<p><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">next</span> <span class="pre">[-i</span> <span class="pre">|</span> <span class="pre">-w]</span> <span class="pre">[&lt;name&gt;]</span></tt></p>
+<p><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">[...]</span> <span class="pre">next</span> <span class="pre">[-i</span> <span class="pre">|</span> <span class="pre">-w]</span> <span class="pre">[&lt;name&gt;]</span></tt></p>
 <p>Outputs all branches which directly depend on the current or
 named branch.</p>
 <dl class="docutils">
