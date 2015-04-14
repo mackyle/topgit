@@ -56,7 +56,7 @@ doc:: html
 
 html:: topgit.html $(html_out)
 
-topgit.html: README create-html-usage.pl
+topgit.html: README create-html-usage.pl $(wildcard tg-*.sh)
 	@echo '[HTML] topgit'
 	@perl ./create-html-usage.pl < README | rst2html.py - $@
 
