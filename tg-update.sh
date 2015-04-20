@@ -107,6 +107,9 @@ update_branch() {
 						info "Use \`exit 2\` to skip updating this branch and continue."
 						if "${SHELL:-/bin/sh}" -i </dev/tty; then
 							# assume user fixed it
+							# we could be left on a detached HEAD if we were resolving
+							# a conflict while merging a base in, fix it with a checkout
+							git checkout -q "$(strip_ref "$dep")"
 							continue
 						else
 							ret=$?
