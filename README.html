@@ -578,7 +578,7 @@ $ tg -r foo update
 </div>
 <div class="section" id="usage">
 <h1>USAGE</h1>
-<p><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">[-C</span> <span class="pre">&lt;dir&gt;]</span> <span class="pre">[-r</span> <span class="pre">&lt;remote&gt;]</span> <span class="pre">&lt;subcommand&gt;</span> <span class="pre">[&lt;subcommand</span> <span class="pre">option/argument&gt;...]</span></tt></p>
+<p><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">[-C</span> <span class="pre">&lt;dir&gt;]</span> <span class="pre">[-r</span> <span class="pre">&lt;remote&gt;</span> <span class="pre">|</span> <span class="pre">-u]</span> <span class="pre">&lt;subcommand&gt;</span> <span class="pre">[&lt;subcommand</span> <span class="pre">option/argument&gt;...]</span></tt></p>
 <blockquote>
 <table class="docutils option-list" frame="void" rules="none">
 <col class="option" />
@@ -590,6 +590,9 @@ $ tg -r foo update
 <tr><td class="option-group">
 <kbd><span class="option">-r <var>&lt;remote&gt;</var></span></kbd></td>
 <td>Pretend <tt class="docutils literal"><span class="pre">topgit.remote</span></tt> is set to &lt;remote&gt;</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-u</span></kbd></td>
+<td>Pretend <tt class="docutils literal"><span class="pre">topgit.remote</span></tt> is not set</td></tr>
 </tbody>
 </table>
 </blockquote>
@@ -740,7 +743,7 @@ are non-merge commits (3).</p>
 <div class="section" id="tg-patch">
 <h2>tg patch</h2>
 <blockquote>
-<p><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">[...]</span> <span class="pre">patch</span> <span class="pre">[-i</span> <span class="pre">|</span> <span class="pre">-w]</span> <span class="pre">[&lt;name&gt;]</span></tt></p>
+<p><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">[...]</span> <span class="pre">patch</span> <span class="pre">[-i</span> <span class="pre">|</span> <span class="pre">-w]</span> <span class="pre">[--binary]</span> <span class="pre">[&lt;name&gt;]</span></tt></p>
 <p>Generate a patch from the current or specified topic branch.
 This means that the diff between the topic branch base and head
 (latest commit) is shown, appended to the description found in
@@ -760,6 +763,9 @@ them to files. (TODO)</p>
 <tr><td class="option-group">
 <kbd><span class="option">-w</span></kbd></td>
 <td>base patch generation on working tree instead of branch</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--binary</span></kbd></td>
+<td>pass --binary to <tt class="docutils literal"><span class="pre">git</span> <span class="pre">diff-tree</span></tt> to enable binary patches</td></tr>
 </tbody>
 </table>
 </dd>
@@ -957,7 +963,7 @@ one possibility, you will be prompted for your selection.</p>
 <div class="section" id="tg-export">
 <h2>tg export</h2>
 <blockquote>
-<p><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">[...]</span> <span class="pre">export</span> <span class="pre">([--collapse]</span> <span class="pre">&lt;newbranch&gt;</span> <span class="pre">[--force]</span> <span class="pre">|</span> <span class="pre">[-a</span> <span class="pre">|</span> <span class="pre">--all</span> <span class="pre">|</span> <span class="pre">-b</span> <span class="pre">&lt;branch1&gt;...]</span> <span class="pre">--quilt</span> <span class="pre">&lt;directory&gt;</span> <span class="pre">|</span> <span class="pre">--linearize</span> <span class="pre">&lt;newbranch&gt;</span> <span class="pre">[--force])</span></tt></p>
+<p><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">[...]</span> <span class="pre">export</span> <span class="pre">([--collapse]</span> <span class="pre">&lt;newbranch&gt;</span> <span class="pre">[--force]</span> <span class="pre">|</span> <span class="pre">[-a</span> <span class="pre">|</span> <span class="pre">--all</span> <span class="pre">|</span> <span class="pre">-b</span> <span class="pre">&lt;branch1&gt;...]</span> <span class="pre">[--binary]</span> <span class="pre">--quilt</span> <span class="pre">&lt;directory&gt;</span> <span class="pre">|</span> <span class="pre">--linearize</span> <span class="pre">&lt;newbranch&gt;</span> <span class="pre">[--force])</span></tt></p>
 <p>Export a tidied-up history of the current topic branch and its
 dependencies, suitable for feeding upstream.  Each topic branch
 corresponds to a single commit or patch in the cleaned up
@@ -1028,7 +1034,8 @@ for-linus/series:
 <p>With <tt class="docutils literal"><span class="pre">--quilt</span></tt>, you can also pass the <tt class="docutils literal"><span class="pre">-b</span></tt> parameter followed
 by a comma-separated explicit list of branches to export, or
 the <tt class="docutils literal"><span class="pre">--all</span></tt> parameter (which can be shortened to <tt class="docutils literal"><span class="pre">-a</span></tt>) to
-export them all. These options are currently only supported
+export them all.  The <tt class="docutils literal"><span class="pre">--binary</span></tt> option enables producing Git
+binary patches.  These options are currently only supported
 with <tt class="docutils literal"><span class="pre">--quilt</span></tt>.</p>
 <p>In <tt class="docutils literal"><span class="pre">--quilt</span></tt> mode the patches are named like the originating
 topgit branch.  So usually they end up in subdirectories of the
