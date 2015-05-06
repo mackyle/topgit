@@ -100,6 +100,7 @@ get_tree_w()
 	(
 		# the file for --index-output needs to sit next to the
 		# current index file
+		cd "$root_dir"
 		: ${GIT_INDEX_FILE:="$git_dir/index"}
 		TMP_INDEX="$(mktemp "${GIT_INDEX_FILE}-tg.XXXXXX")"
 		git read-tree -m $i_tree --index-output="$TMP_INDEX" &&
