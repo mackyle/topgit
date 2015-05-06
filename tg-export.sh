@@ -14,6 +14,7 @@ numbered=false
 strip=false
 stripval=0
 allbranches=false
+binary=
 
 
 ## Parse options
@@ -29,6 +30,8 @@ while [ -n "$1" ]; do
 		forcebranch=true;;
 	--flatten)
 		flatten=true;;
+	--binary)
+		binary=1;;
 	--numbered)
 		flatten=true;
 		numbered=true;;
@@ -50,7 +53,7 @@ while [ -n "$1" ]; do
 	--linearize)
 		driver=linearize;;
 	-*)
-		echo "Usage: ${tgname:-tg} [...] export ([--collapse] <newbranch> [--force] | [-a | --all | -b <branch1>...] --quilt <directory> | --linearize <newbranch> [--force])" >&2
+		echo "Usage: ${tgname:-tg} [...] export ([--collapse] <newbranch> [--force] | [-a | --all | -b <branch1>...] [--binary] --quilt <directory> | --linearize <newbranch> [--force])" >&2
 		exit 1;;
 	*)
 		[ -z "$output" ] || die "output already specified ($output)"
@@ -68,6 +71,9 @@ done
 
 [ "$driver" = "quilt" ] || ! "$flatten" ||
 	die "--flatten works only with the quilt driver"
+
+[ "$driver" = "quilt" ] || [ -z "$binary" ] ||
+	die "--binary works only with the quilt driver"
 
 [ "$driver" = "quilt" ] || ! "$strip" ||
 	die "--strip works only with the quilt driver"
@@ -222,7 +228,7 @@ quilt()
 
 		echo "Exporting $_dep"
 		mkdir -p "$output/$dn";
-		$tg patch "$_dep" >"$output/$dn$bn"
+		$tg patch ${binary:+--binary} "$_dep" >"$output/$dn$bn"
 		echo "$dn$bn -p1" >>"$output/series"
 	fi
 }

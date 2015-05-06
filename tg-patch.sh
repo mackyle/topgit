@@ -4,9 +4,8 @@
 # GPLv2
 
 name=
-
 head_from=
-
+binary=
 
 ## Parse options
 
@@ -16,8 +15,10 @@ while [ -n "$1" ]; do
 	-i|-w)
 		[ -z "$head_from" ] || die "-i and -w are mutually exclusive"
 		head_from="$arg";;
+	--binary)
+		binary=1;;
 	-*)
-		echo "Usage: ${tgname:-tg} [...] patch [-i | -w] [<name>]" >&2
+		echo "Usage: ${tgname:-tg} [...] patch [-i | -w] [--binary] [<name>]" >&2
 		exit 1;;
 	*)
 		[ -z "$name" ] || die "name already specified ($name)"
@@ -73,7 +74,7 @@ t_tree=$(pretty_tree "$name" $head_from)
 if [ $b_tree = $t_tree ]; then
 	echo "No changes."
 else
-	git diff-tree -p --stat $b_tree $t_tree
+	git diff-tree -p --stat ${binary:+--binary} $b_tree $t_tree
 fi
 
 echo '-- '

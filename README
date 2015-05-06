@@ -362,6 +362,7 @@ tg patch
 	Options:
 	  -i		base patch generation on index instead of branch
 	  -w		base patch generation on working tree instead of branch
+	  --binary	pass --binary to ``git diff-tree`` to enable binary patches
 
 tg mail
 ~~~~~~~
@@ -612,7 +613,8 @@ tg export
 	With ``--quilt``, you can also pass the ``-b`` parameter followed
 	by a comma-separated explicit list of branches to export, or
 	the ``--all`` parameter (which can be shortened to ``-a``) to
-	export them all. These options are currently only supported
+	export them all.  The ``--binary`` option enables producing Git
+	binary patches.  These options are currently only supported
 	with ``--quilt``.
 
 	In ``--quilt`` mode the patches are named like the originating
