@@ -48,7 +48,7 @@ if has_remote "$name"; then
 		echo "* Local head is ahead of the remote head."
 fi
 
-git cat-file blob "$name:.topdeps" |
+git cat-file blob "$name:.topdeps" 2>/dev/null |
 	sed '1{ s/^/Depends: /; n; }; s/^/         /;'
 
 depcheck="$(get_temp tg-depcheck)"

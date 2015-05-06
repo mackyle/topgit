@@ -77,7 +77,7 @@ else
 fi
 
 echo '-- '
-echo "$tgname: ($base_rev..) $name (depends on: $(cat_file "$name:.topdeps" $head_from | paste -s -d ' ' -))"
+echo "$tgname: ($base_rev..) $name (depends on: $(cat_file "$name:.topdeps" $head_from 2>/dev/null | paste -s -d ' ' -))"
 branch_contains "$name" "$base_rev" ||
 	echo "$tgname: The patch is out-of-date wrt. the base! Run \`$tgdisplay update\`."
 

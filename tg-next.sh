@@ -36,7 +36,7 @@ non_annihilated_branches |
 		[ "x$parent" = "x$head" ] ||
 			from=
 
-		cat_file "$parent:.topdeps" $from | fgrep -qx "$name" ||
+		cat_file "$parent:.topdeps" $from 2>/dev/null | fgrep -qx "$name" ||
 			continue
 
 		echo "$parent"
