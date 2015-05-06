@@ -37,6 +37,10 @@ if [ -n "$rname" ]; then
 	! ref_exists "$name" || die "branch '$name' already exists"
 	has_remote "$rname" || die "no branch $rname in remote $base_remote"
 
+	if [ -n "$logrefupdates" ]; then
+		mkdir -p "$git_dir/logs/refs/top-bases/$(dirname "$name")" 2>/dev/null || :
+		{ >>"$git_dir/logs/refs/top-bases/$name" || :; } 2>/dev/null
+	fi
 	git update-ref "refs/top-bases/$name" "refs/remotes/$base_remote/top-bases/$rname"
 	git update-ref "refs/heads/$name" "refs/remotes/$base_remote/$rname"
 	info "Topic branch $name based on $base_remote : $rname set up."
@@ -113,6 +117,10 @@ done
 
 ## Set up the topic branch
 
+if [ -n "$logrefupdates" ]; then
+	mkdir -p "$git_dir/logs/refs/top-bases/$(dirname "$name")" 2>/dev/null || :
+	{ >>"$git_dir/logs/refs/top-bases/$name" || :; } 2>/dev/null
+fi
 git update-ref "refs/top-bases/$name" "HEAD" ""
 git checkout -b "$name"
 

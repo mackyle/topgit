@@ -617,6 +617,8 @@ initial_setup()
 	export GIT_MERGE_AUTOEDIT=no
 	git_dir="$(git rev-parse --git-dir)"
 	root_dir="$(git rev-parse --show-cdup)"; root_dir="${root_dir:-.}"
+	logrefupdates="$(git config --bool core.logallrefupdates 2>/dev/null || :)"
+	[ "$logrefupdates" = "true" ] || logrefupdates=
 
 	# Make sure root_dir doesn't end with a trailing slash.
 
