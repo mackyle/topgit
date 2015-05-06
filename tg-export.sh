@@ -230,10 +230,14 @@ quilt()
 linearize()
 {
 	if test ! -f "$playground/^BASE"; then
-		head="$(git rev-parse --verify "$_dep")"
+		if [ -n "$_dep_is_tgish" ]; then
+			head="$(git rev-parse --verify "refs/top-bases/$_dep")"
+		else
+			head="$(git rev-parse --verify "refs/heads/$_dep")"
+		fi
 		echo "$head" > "$playground/^BASE"
 		git checkout -q "$head"
-		return;
+		[ -n "$_dep_is_tgish" ] || return 0;
 	fi;
 
 	head=$(git rev-parse --verify HEAD)
