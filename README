@@ -223,10 +223,11 @@ SYNOPSIS
 
 USAGE
 -----
-``tg [-C <dir>] [-r <remote>] <subcommand> [<subcommand option/argument>...]``
+``tg [-C <dir>] [-r <remote> | -u] <subcommand> [<subcommand option/argument>...]``
 
 	-C <dir>	Change directory to <dir> before doing anything
 	-r <remote>	Pretend ``topgit.remote`` is set to <remote>
+	-u      	Pretend ``topgit.remote`` is not set
 
 The ``tg`` tool has several subcommands:
 

@@ -680,6 +680,7 @@ else
 	explicit_remote=
 	explicit_dir=
 	gitcdopt=
+	noremote=
 
 	cmd=
 	while :; do case "$1" in
@@ -701,12 +702,22 @@ else
 				do_help
 				exit 1
 			fi
+			unset noremote
 			base_remote="$1"
 			explicit_remote="$base_remote"
 			tg="$tgdir$tgname -r $explicit_remote"
 			tgdisplay="$tgdisplaydir$tgname"
 			[ -z "$explicit_dir" ] || tgdisplay="$tgdisplay -C \"$explicit_dir\""
 			tgdisplay="$tgdisplay -r $explicit_remote"
+			shift;;
+
+		-u)
+			unset base_remote explicit_remote
+			noremote=1
+			tg="$tgdir$tgname -u"
+			tgdisplay="$tgdisplaydir$tgname"
+			[ -z "$explicit_dir" ] || tgdisplay="$tgdisplay -C \"$explicit_dir\""
+			tgdisplay="$tgdisplay -u"
 			shift;;
 
 		-C)
@@ -723,6 +734,8 @@ else
 			tgdisplay="$tgdisplaydir$tgname -C \"$explicit_dir\""
 			[ -z "$explicit_remote" ] || tg="$tg -r $explicit_remote"
 			[ -z "$explicit_remote" ] || tgdisplay="$tgdisplay -r $explicit_remote"
+			[ -z "$noremote" ] || tg="$tg -u"
+			[ -z "$noremote" ] || tg="$tgdisplay -u"
 			shift;;
 
 		--)
@@ -739,7 +752,7 @@ else
 
 	esac; done
 
-	[ -n "$cmd" ] || { cmd="$1"; shift; }
+	[ -n "$cmd" ] || { cmd="$1"; shift || :; }
 
 	## Dispatch
 
@@ -763,6 +776,7 @@ else
 			}
 
 			initial_setup
+			[ -z "$noremote" ] || unset base_remote
 
 			# make sure merging the .top* files will always behave sanely
 
