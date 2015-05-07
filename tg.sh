@@ -546,7 +546,7 @@ do_help()
 			if [ -r "@sharedir@/tg-$1.txt" ] ; then
 				cat "@sharedir@/tg-$1.txt"
 			fi
-		} | "$TG_PAGER"
+		} | eval "$TG_PAGER"
 	else
 		echo "`basename $0`: no help for $1" 1>&2
 		do_help
@@ -562,9 +562,33 @@ isatty()
 	test -t $1
 }
 
+# pass "diff" to get pager.diff
+# if pager.$1 is a boolean false returns cat
+# if set to true or unset fails
+# otherwise succeeds and returns the value
+get_pager()
+{
+	if _x="$(git config --bool "pager.$1" 2>/dev/null)"; then
+		[ "$_x" != "true" ] || return 1
+		echo "cat"
+		return 0
+	fi
+	if _x="$(git config "pager.$1" 2>/dev/null)"; then
+		echo "$_x"
+		return 0
+	fi
+	return 1
+}
+
 # setup_pager
 # Set TG_PAGER to a valid executable
-# After calling, code to be paged should be surrounded with {...} | "$TG_PAGER"
+# After calling, code to be paged should be surrounded with {...} | eval "$TG_PAGER"
+# Preference is (same as Git):
+#   1. GIT_PAGER
+#   2. pager.$USE_PAGER_TYPE (but only if USE_PAGER_TYPE is set and so is pager.$USE_PAGER_TYPE)
+#   3. core.pager (only if set)
+#   4. PAGER
+#   5. less
 setup_pager()
 {
 	isatty 1 || { TG_PAGER=cat; return 0; }
@@ -574,6 +598,10 @@ setup_pager()
 		# NOTE: GIT_PAGER='' is significant
 		if [ -n "${GIT_PAGER+set}" ]; then
 			TG_PAGER="$GIT_PAGER"
+		elif [ -n "$USE_PAGER_TYPE" ] && _dp="$(get_pager "$USE_PAGER_TYPE")"; then
+			TG_PAGER="$_dp"
+		elif _cp="$(git config core.pager 2>/dev/null)"; then
+			TG_PAGER="$_cp"
 		elif [ -n "${PAGER+set}" ]; then
 			TG_PAGER="$PAGER"
 		else

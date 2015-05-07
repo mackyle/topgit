@@ -41,6 +41,7 @@ fi
 
 
 
+USE_PAGER_TYPE=diff
 setup_pager
 # We now collect the rest of the code in this file into a block
 # so we can redirect the output to the pager.
@@ -82,7 +83,7 @@ echo "$tgname: ($base_rev..) $name (depends on: $(cat_file "$name:.topdeps" $hea
 branch_contains "$name" "$base_rev" ||
 	echo "$tgname: The patch is out-of-date wrt. the base! Run \`$tgdisplay update\`."
 
-} | "$TG_PAGER"
+} | eval "$TG_PAGER"
 # ... and then we pipe all the output through the pager
 
 # vim:noet
