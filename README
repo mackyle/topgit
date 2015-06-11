@@ -592,7 +592,18 @@ tg export
 	fewer merges.
 
 	Note that you might get conflicts during linearization because
-	the patches are reordered to get a linear history.
+	the patches are reordered to get a linear history.  If linearization
+	would produce conflicts then using ``--quilt`` will also likely result
+	in conflicts when the exported quilt series is applied.  Since the
+	``--quilt`` mode simply runs a series of ``tg patch`` commands to
+	generate the patches in the exported quilt series and those patches
+	will end up being applied linearly, the same conflicts that would be
+	produced by the ``--linearize`` option will then occur at that time.
+
+	To avoid conflicts produced by ``--linearize`` (or by applying the
+	``--quilt`` output), use the default ``--collapse`` mode and then use
+	``git format-patch --topo-order`` on the result to produce
+	conflict-free patches.
 
 	When using the quilt mode::
 
