@@ -260,7 +260,7 @@ linearize()
 
 			git merge -s recursive "$_dep" || retmerge="$?";
 			if test "x$retmerge" != "x0"; then
-				echo fix up the merge, commit and then exit;
+				echo "fix up the merge, commit and then exit."
 				#todo error handling
 				"${SHELL:-/bin/sh}" -i </dev/tty;
 			fi;
@@ -272,7 +272,7 @@ linearize()
 
 		if test "x$retmerge" != "x0"; then
 			git rerere;
-			echo "fix up the merge and update the index.  Don't commit!"
+			echo "fix up the merge, update the index and then exit.  Don't commit!"
 			#todo error handling
 			"${SHELL:-/bin/sh}" -i </dev/tty;
 		fi
