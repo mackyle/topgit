@@ -130,9 +130,10 @@ collapsed_commit()
 	>"$playground/^body"
 
 	# Determine parent
-	parent="$(cut -f 1 "$playground/$name^parents" | \
-		while read p; do [ $(git cat-file -t $p 2> /dev/null) = tag ] && git cat-file tag $p | head -1 | cut -d' ' -f2 || echo $p; done)"
-	if [ "$(cat "$playground/$name^parents" | wc_l)" -gt 1 ]; then
+	[ -s "$playground/$name^parents" ] || git rev-parse --verify "refs/top-bases/$name" >> "$playground/$name^parents"
+	parent="$(cut -f 1 "$playground/$name^parents" 2> /dev/null | \
+		while read p; do [ "$(git cat-file -t $p 2> /dev/null)" = tag ] && git cat-file tag $p | head -1 | cut -d' ' -f2 || echo $p; done)"
+	if [ "$(cat "$playground/$name^parents" 2> /dev/null | wc_l)" -gt 1 ]; then
 		# Produce a merge commit first
 		parent="$({
 			echo "TopGit-driven merge of branches:"
