@@ -27,7 +27,7 @@ while [ -n "$1" ]; do
 	-b)
 		branches="$1"; shift;;
 	--force)
-		forcebranch=true;;
+		forcebranch=1;;
 	--flatten)
 		flatten=true;;
 	--binary)
@@ -299,7 +299,7 @@ if [ "$driver" = "collapse" ] || [ "$driver" = "linearize" ]; then
 		die "no target branch specified"
 	if ! ref_exists $output; then
 		:
-	elif ! "$forcebranch"; then
+	elif [ -z "$forcebranch" ]; then
 		die "target branch '$output' already exists; first run: git$gitcdopt branch -D $output, or run $tgdisplay export with --force"
 	else
 		checkout_opt=-B
@@ -351,7 +351,9 @@ fi
 
 
 if [ "$driver" = "collapse" ]; then
-	git update-ref "refs/heads/$output" "$(cat "$playground/$name")" ""
+	cmd='git update-ref "refs/heads/$output" "$(cat "$playground/$name")"'
+	[ -n "$forcebranch" ] || cmd="$cmd \"\""
+	eval "$cmd"
 
 	depcount="$(cat "$playground/^ticker" | wc_l)"
 	echo "Exported topic branch $name (total $depcount topics) to branch $output"
