@@ -759,6 +759,7 @@ else
 				exit 1
 			fi
 			cd "$1"
+			unset GIT_DIR
 			explicit_dir="$1"
 			gitcdopt=" -C \"$explicit_dir\""
 			tg="$tgdir$tgname"
