@@ -1014,7 +1014,17 @@ and the two methods may choose different ones.)  The result
 might be more appropriate for merging upstream, as it contains
 fewer merges.</p>
 <p>Note that you might get conflicts during linearization because
-the patches are reordered to get a linear history.</p>
+the patches are reordered to get a linear history.  If linearization
+would produce conflicts then using <tt class="docutils literal"><span class="pre">--quilt</span></tt> will also likely result
+in conflicts when the exported quilt series is applied.  Since the
+<tt class="docutils literal"><span class="pre">--quilt</span></tt> mode simply runs a series of <tt class="docutils literal"><span class="pre">tg</span> <span class="pre">patch</span></tt> commands to
+generate the patches in the exported quilt series and those patches
+will end up being applied linearly, the same conflicts that would be
+produced by the <tt class="docutils literal"><span class="pre">--linearize</span></tt> option will then occur at that time.</p>
+<p>To avoid conflicts produced by <tt class="docutils literal"><span class="pre">--linearize</span></tt> (or by applying the
+<tt class="docutils literal"><span class="pre">--quilt</span></tt> output), use the default <tt class="docutils literal"><span class="pre">--collapse</span></tt> mode and then use
+<tt class="docutils literal"><span class="pre">git</span> <span class="pre">format-patch</span> <span class="pre">--topo-order</span></tt> on the result to produce
+conflict-free patches.</p>
 <p>When using the quilt mode:</p>
 <pre class="literal-block">
 master$ tg export --quilt for-linus
