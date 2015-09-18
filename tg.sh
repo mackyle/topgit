@@ -9,6 +9,13 @@ TG_VERSION=0.16.1
 # Update if you add any code that requires a newer version of git
 GIT_MINIMUM_VERSION=1.7.7.2
 
+## SHA-1 pattern
+
+octet='[0-9a-f][0-9a-f]'
+octet4="$octet$octet$octet$octet"
+octet19="$octet4$octet4$octet4$octet4$octet$octet$octet"
+octet20="$octet4$octet4$octet4$octet4$octet4"
+
 ## Auxiliary functions
 
 info()
@@ -51,6 +58,29 @@ esac
 precheck
 [ "$1" = "precheck" ] && exit 0
 
+# cat_deps BRANCHNAME
+# Caches result
+cat_deps()
+{
+	if [ -f "$tg_tmp_dir/cached/$1/.tpd" ]; then
+		_line=
+		while IFS= read -r _line || [ -n "$_line" ]; do
+			printf '%s\n' "$_line"
+		done <"$tg_tmp_dir/cached/$1/.tpd"
+		return
+	fi
+	[ -d "$tg_tmp_dir/cached/$1" ] || mkdir -p "$tg_tmp_dir/cached/$1" 2>/dev/null || :
+	if [ -d "$tg_tmp_dir/cached/$1" ]; then
+		git cat-file blob "$1:.topdeps" 2>/dev/null >"$tg_tmp_dir/cached/$1/.tpd"
+		_line=
+		while IFS= read -r _line || [ -n "$_line" ]; do
+			printf '%s\n' "$_line"
+		done <"$tg_tmp_dir/cached/$1/.tpd"
+	else
+		git cat-file blob "$1:.topdeps" 2>/dev/null
+	fi
+}
+
 # cat_file TOPIC:PATH [FROM]
 # cat the file PATH from branch TOPIC when FROM is empty.
 # FROM can be -i or -w, than the file will be from the index or worktree,
@@ -67,7 +97,14 @@ cat_file()
 		git cat-file blob ":${path#*:}"
 		;;
 	'')
-		git cat-file blob "$path"
+		case "$path" in
+		*:.topdeps)
+			cat_deps "${path%:.topdeps}"
+			;;
+		*)
+			git cat-file blob "$path"
+			;;
+		esac
 		;;
 	*)
 		die "Wrong argument to cat_file: '$2'"
@@ -209,9 +246,41 @@ branch_contains()
 
 # ref_exists REF
 # Whether REF is a valid ref name
+# Caches result
 ref_exists()
 {
+	_result=
+	{ read -r _result <"$tg_tmp_dir/cached/$1/.ref"; } 2>/dev/null || :
+	[ -z "$_result" ] || return $_result;
 	git rev-parse --verify "$@" >/dev/null 2>&1
+	_result=$?
+	[ -d "$tg_tmp_dir/cached/$1" ] || mkdir -p "$tg_tmp_dir/cached/$1" 2>/dev/null && \
+	echo $_result >"$tg_tmp_dir/cached/$1/.ref" 2>/dev/null || :
+	return $_result
+}
+
+# rev_parse_tree REF
+# Runs git rev-parse REF^{tree}
+# Caches result
+rev_parse_tree()
+{
+	if [ -f "$tg_tmp_dir/cached/$1/.rpt" ]; then
+		if IFS= read -r _result <"$tg_tmp_dir/cached/$1/.rpt"; then
+			printf '%s\n' "$_result"
+			return 0
+		fi
+		return 1
+	fi
+	[ -d "$tg_tmp_dir/cached/$1" ] || mkdir -p "$tg_tmp_dir/cached/$1" 2>/dev/null || :
+	if [ -d "$tg_tmp_dir/cached/$1" ]; then
+		git rev-parse "$1^{tree}" >"$tg_tmp_dir/cached/$1/.rpt" 2>/dev/null || :
+		if IFS= read -r _result <"$tg_tmp_dir/cached/$1/.rpt"; then
+			printf '%s\n' "$_result"
+			return 0
+		fi
+		return 1
+	fi
+	git rev-parse "$1^{tree}" 2>/dev/null
 }
 
 # has_remote BRANCH
@@ -258,14 +327,23 @@ verify_topgit_branch()
 	printf '%s' "$_verifyname"
 }
 
+# Caches result
 branch_annihilated()
 {
 	_branch_name="$1";
 
+	_result=
+	{ read -r _result <"$tg_tmp_dir/cached/$_branch_name/.ann"; } 2>/dev/null || :
+	[ -z "$_result" ] || return $_result;
+
 	# use the merge base in case the base is ahead.
 	mb="$(git merge-base "refs/top-bases/$_branch_name" "$_branch_name" 2> /dev/null)";
 
-	test -z "$mb" || test "$(git rev-parse "$mb^{tree}")" = "$(git rev-parse "$_branch_name^{tree}")";
+	test -z "$mb" || test "$(rev_parse_tree "$mb")" = "$(rev_parse_tree "$_branch_name")"
+	_result=$?
+	[ -d "$tg_tmp_dir/cached/$_branch_name" ] || mkdir -p "$tg_tmp_dir/cached/$_branch_name" 2>/dev/null && \
+	echo $_result >"$tg_tmp_dir/cached/$_branch_name/.ann" 2>/dev/null || :
+	return $_result
 }
 
 non_annihilated_branches()
@@ -294,7 +372,8 @@ ensure_clean_tree()
 # Whether REF is a SHA1 (compared to a symbolic name).
 is_sha1()
 {
-	[ "$(git rev-parse "$1")" = "$1" ]
+	case "$1" in $octet20) return 0;; esac
+	return 1
 }
 
 # recurse_deps_internal NAME [BRANCHPATH...]
@@ -326,7 +405,7 @@ recurse_deps_internal()
 		# if the branch was annihilated, it is considered to have no dependencies
 		if ! branch_annihilated "$1"; then
 			#TODO: handle nonexisting .topdeps?
-			git cat-file blob "$1:.topdeps" 2>/dev/null |
+			cat_deps "$1" |
 			while read _dname; do
 				# Shoo shoo, leave our environment alone!
 				(recurse_deps_internal "$_dname" "$@")
