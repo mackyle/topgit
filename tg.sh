@@ -309,7 +309,7 @@ recurse_deps_internal()
 {
 	if ! ref_exists "$1"; then
 		[ -z "$2" ] || echo "1 0 $*"
-		continue;
+		return;
 	fi
 
 	# If no_remotes is unset also check our base against remote base.
