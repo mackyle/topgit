@@ -55,9 +55,9 @@ if [ -z "$push$pop$goto" ]; then
 	push=1
 fi
 
-_depfile="$(mktemp -t tg-co-deps.XXXXXX)"
-_altfile="$(mktemp -t tg-co-alt.XXXXXX)"
-trap "rm -f \"$_depfile\" \"$_altfile\"" 0
+[ -n "$tg_tmp_dir" ] || die "tg-checkout must be run via '$tg checkout'"
+_depfile="$(mktemp "$tg_tmp_dir/tg-co-deps.XXXXXX")"
+_altfile="$(mktemp "$tg_tmp_dir/tg-co-alt.XXXXXX")"
 
 if [ -n "$goto" ]; then
 	$tg summary -t | grep -e "$pattern" >$_altfile || :
