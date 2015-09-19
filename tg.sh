@@ -734,8 +734,14 @@ initial_setup()
 
 	# create global temporary directories, inside GIT_DIR
 
+	tg_tmp_dir=
+	trap 'rm -rf "$tg_tmp_dir"' EXIT
+	trap 'exit 129' HUP
+	trap 'exit 130' INT
+	trap 'exit 131' QUIT
+	trap 'exit 134' ABRT
+	trap 'exit 143' TERM
 	tg_tmp_dir="$(mktemp -d "$git_dir/tg-tmp.XXXXXX")"
-	trap "rm -rf \"$tg_tmp_dir\"" EXIT
 }
 
 # return the "realpath" for the item except the leaf is not resolved if it's
