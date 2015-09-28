@@ -142,7 +142,7 @@ author_addr="${author%> *}>"
 	[ "$(git config --bool format.signoff)" = true ] && echo "Signed-off-by: $author_addr"
 } >"$root_dir/.topmsg"
 git add -f "$root_dir/.topmsg"
-
+echo "tg create $name" > "$git_dir/MERGE_MSG"
 
 
 info "Topic branch $name set up. Please fill .topmsg now and make initial commit."
