@@ -91,11 +91,18 @@ if [ -z "$branches" ] && ! "$allbranches"; then
 		die "not on a TopGit-controlled branch"
 fi
 
-
+read -r nowsecs nowtzoff <<EOT
+$(date '+%s %z')
+EOT
 playground="$(get_temp tg-export -d)"
 
 
 ## Collapse driver
+
+bump_timestamp()
+{
+	nowsecs=$(( $nowsecs + 1 ))
+}
 
 create_tg_commit()
 {
@@ -106,6 +113,9 @@ create_tg_commit()
 	# Get commit message and authorship information
 	git cat-file blob "$name:.topmsg" | git mailinfo "$playground/^msg" /dev/null > "$playground/^info"
 
+	unset GIT_AUTHOR_NAME
+	unset GIT_AUTHOR_EMAIL
+
 	GIT_AUTHOR_NAME="$(sed -n '/^Author/ s/Author: //p' "$playground/^info")"
 	GIT_AUTHOR_EMAIL="$(sed -n '/^Email/ s/Email: //p' "$playground/^info")"
 	GIT_AUTHOR_DATE="$(sed -n '/^Date/ s/Date: //p' "$playground/^info")"
@@ -113,11 +123,20 @@ create_tg_commit()
 
 	test -n "$GIT_AUTHOR_NAME" && export GIT_AUTHOR_NAME
 	test -n "$GIT_AUTHOR_EMAIL" && export GIT_AUTHOR_EMAIL
-	test -n "$GIT_AUTHOR_DATE" && export GIT_AUTHOR_DATE
+
+	GIT_COMMITTER_DATE="$nowsecs $nowtzoff"
+	: ${GIT_AUTHOR_DATE:=$GIT_COMMITTER_DATE}
+	export GIT_AUTHOR_DATE
+	export GIT_COMMITTER_DATE
 
 	(printf '%s\n\n' "$SUBJECT"; cat "$playground/^msg") |
 	git stripspace |
 	git commit-tree "$tree" -p "$parent"
+
+	unset GIT_AUTHOR_NAME
+	unset GIT_AUTHOR_EMAIL
+	unset GIT_AUTHOR_DATE
+	unset GIT_COMMITTER_DATE
 }
 
 # collapsed_commit NAME
@@ -139,7 +158,9 @@ collapsed_commit()
 			echo "TopGit-driven merge of branches:"
 			echo
 			cut -f 2 "$playground/$name^parents"
-		} | git commit-tree "$(pretty_tree "$name" -b)" \
+		} | GIT_AUTHOR_DATE="$nowsecs $nowtzoff" \
+			GIT_COMMITTER_DATE="$nowsecs $nowtzoff" \
+			git commit-tree "$(pretty_tree "$name" -b)" \
 			$(for p in $parent; do echo -p $p; done))"
 	fi
 
@@ -169,6 +190,7 @@ collapse()
 		# First time hitting this dep; the common case
 		echo "Collapsing $_dep"
 		commit="$(collapsed_commit "$_dep")"
+		bump_timestamp
 		mkdir -p "$playground/$(dirname "$_dep")"
 		echo "$commit" >"$playground/$_dep"
 	fi
@@ -286,6 +308,7 @@ linearize()
 			echo "skip empty commit $_dep";
 		else
 			newcommit=$(create_tg_commit "$_dep" "$result_tree" HEAD)
+			bump_timestamp
 			git update-ref HEAD $newcommit $head
 			echo "exported commit $_dep";
 		fi
