@@ -417,7 +417,10 @@ tg remote
 tg summary
 ~~~~~~~~~~
 	Show overview of all TopGit-tracked topic branches and their
-	up-to-date status.  With a branch name limit output to that branch:
+	up-to-date status.  With a branch name limit output to that branch.
+	Using ``--rdeps`` changes the default from all branches to just the
+	current ``HEAD`` branch but using ``--all`` as the branch name will
+	show ``--rdeps`` for all branches.
 
 		``>``
 			marks the current topic branch
@@ -464,8 +467,9 @@ tg summary
 
 	The --rdeps option outputs dependency information in an indented
 	text format that clearly shows all the dependencies and their
-	relationships to one another.  By specifying a branch name the
-	dependency tree output can be limited to that for a single branch.
+	relationships to one another.  When --rdeps is given the default is
+	to just display information for HEAD, but that can be changed by using
+	--all as the branch name.
 
 	Note that the branch name can be specified as ``HEAD`` as a shortcut for
 	the TopGit-controlled branch that ``HEAD`` is a symbolic ref to.

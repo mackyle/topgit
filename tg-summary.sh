@@ -16,10 +16,11 @@ branch=
 
 usage()
 {
-	echo "Usage: ${tgname:-tg} [...] summary [-t | --sort | --deps | --rdeps | --graphviz] [-i | -w] [branch]" >&2
+	echo "Usage: ${tgname:-tg} [...] summary [-t | --sort | --deps | --rdeps | --graphviz] [-i | -w] [--all | branch]" >&2
 	exit 1
 }
 
+head=
 while [ -n "$1" ]; do
 	arg="$1"
 	case "$arg" in
@@ -35,7 +36,10 @@ while [ -n "$1" ]; do
 	--deps)
 		deps=1;;
 	--rdeps)
+		head=HEAD
 		rdeps=1;;
+	--all)
+		break;;
 	-*)
 		usage;;
 	*)
@@ -44,6 +48,8 @@ while [ -n "$1" ]; do
 	shift
 done
 [ $# -le 1 ] || usage
+[ $# -ne 1 -o "$1" != "--all" ] || { shift; head=; }
+[ $# -ne 0 -o -z "$head" ] || set -- "$head"
 
 if [ $# -eq 1 ]; then
 	branch="$(verify_topgit_branch "$1")"
