@@ -11,16 +11,17 @@ deps=
 rdeps=
 head_from=
 branch=
+head=
+exclude=
 
 ## Parse options
 
 usage()
 {
-	echo "Usage: ${tgname:-tg} [...] summary [-t | --sort | --deps | --rdeps | --graphviz] [-i | -w] [--all | branch]" >&2
+	echo "Usage: ${tgname:-tg} [...] summary [-t | --sort | --deps | --rdeps | --graphviz] [-i | -w] [--exclude branch]... [--all | branch]" >&2
 	exit 1
 }
 
-head=
 while [ -n "$1" ]; do
 	arg="$1"
 	case "$arg" in
@@ -40,6 +41,13 @@ while [ -n "$1" ]; do
 		rdeps=1;;
 	--all)
 		break;;
+	--exclude=*)
+		[ -n "${1#--exclude=}" ] || die "--exclude= requires a branch name"
+		exclude="$exclude ${1#--exclude=}";;
+	--exclude)
+		shift
+		[ -n "$1" -a "$1" != "--all" ] || die "--exclude requires a branch name"
+		exclude="$exclude $1";;
 	-*)
 		usage;;
 	*)
@@ -47,6 +55,7 @@ while [ -n "$1" ]; do
 	esac
 	shift
 done
+[ -z "$exclude" ] || exclude="$exclude "
 [ $# -le 1 ] || usage
 [ $# -ne 1 -o "$1" != "--all" ] || { shift; head=; }
 [ $# -ne 0 -o -z "$head" ] || set -- "$head"
@@ -72,6 +81,7 @@ curname="$(strip_ref "$(git symbolic-ref HEAD 2>/dev/null)")"
 
 show_rdeps()
 {
+	case "$exclude" in *" $_dep "*) return; esac
 	printf '%s %s\n' "$(echo "$_depchain" | sed -e 's/[^ ][^ ]*/ /g')" "$_dep"
 }
 
@@ -80,6 +90,7 @@ if [ -n "$rdeps" ]; then
 	showbreak=
 	get_branch_list |
 		while read b; do
+			case "$exclude" in *" $branch "*) continue; esac
 			[ -z "$showbreak" ] || echo
 			showbreak=1 
 			ref_exists "refs/heads/$b" || continue
@@ -158,12 +169,18 @@ process_branch()
 }
 
 if [ -n "$deps" ]; then
-	list_deps $head_from
+	case "$exclude" in *" ${branch:-..all..} "*) exit 0; esac
+	list_deps $head_from $branch |
+		while read name dep; do
+			case "$exclude" in *" $dep "*) continue; esac
+			echo "$name $dep"
+		done
 	exit 0
 fi
 
 get_branch_list |
 	while read name; do
+		case "$exclude" in *" $name "*) continue; esac
 		if [ -n "$terse" ]; then
 			echo "$name"
 		elif [ -n "$graphviz$sort" ]; then

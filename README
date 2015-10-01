@@ -471,6 +471,12 @@ tg summary
 	to just display information for HEAD, but that can be changed by using
 	--all as the branch name.
 
+	With --exclude branch, branch can be excluded from the output meaning
+	it will be skipped and its name will be omitted from any dependency
+	output.  The --exclude option may be repeated to omit more than one
+	branch from the output.  Limiting the output to a single branch that
+	has been excluded will result in no output at all.
+
 	Note that the branch name can be specified as ``HEAD`` as a shortcut for
 	the TopGit-controlled branch that ``HEAD`` is a symbolic ref to.
 
@@ -478,8 +484,6 @@ tg summary
 	  -i		Use TopGit metadata from the index instead of the branch
 	  -w		Use TopGit metadata from the working tree instead of the branch
 
-	| TODO: Speed up by an order of magnitude
-	| TODO: Text graph view
 
 tg checkout
 ~~~~~~~~~~~

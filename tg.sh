@@ -522,15 +522,16 @@ branch_empty()
 	[ "$(pretty_tree "$1" -b)" = "$(pretty_tree "$1" $2)" ]
 }
 
-# list_deps [-i | -w]
+# list_deps [-i | -w] [BRANCH]
 # -i/-w apply only to HEAD
 list_deps()
 {
-	head_from="$1"
+	head_from=
+	[ "$1" != "-i" -a "$1" != "-w" ] || { head_from="$1"; shift; }
 	head="$(git symbolic-ref -q HEAD)" ||
 		head="..detached.."
 
-	git for-each-ref refs/top-bases |
+	git for-each-ref refs/top-bases"${1:+/$1}" |
 		while read rev type ref; do
 			name="${ref#refs/top-bases/}"
 			if branch_annihilated "$name"; then
