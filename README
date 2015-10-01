@@ -330,6 +330,8 @@ tg depend
 	``.topmsg``, prepare them in the index before calling ``tg depend
 	add``.
 
+	You have enabled ``git rerere`` haven't you?
+
 	| TODO: Subcommand for removing dependencies, obviously
 
 tg files
@@ -615,6 +617,8 @@ tg export
 	followed by ``git format-patch`` on the rebased result to produce a
 	conflict-free patch set.
 
+	You have enabled ``git rerere`` haven't you?
+
 	When using the quilt mode::
 
 	 master$ tg export --quilt for-linus
@@ -681,6 +685,8 @@ tg update
 	dependencies are merged to the base, then the base is merged
 	into the topic branch.  The output will guide you on what to do
 	next in case of conflicts.
+
+	You have enabled ``git rerere`` haven't you?
 
 	When ``-a`` is specifed, updates all topic branches matched by
 	``<pattern>``'s (see ``git-for-each-ref(1)`` for details), or all
