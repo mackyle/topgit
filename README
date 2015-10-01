@@ -270,7 +270,8 @@ tg create
 
 	In an alternative use case, if ``-r <branch>`` is given instead of a
 	dependency list, the topic branch is created based on the given
-	remote branch.
+	remote branch.  With just ``-r`` the remote branch name is assumed
+	to be the same as the local topic branch being created.
 
 tg delete
 ~~~~~~~~~
