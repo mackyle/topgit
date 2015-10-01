@@ -611,8 +611,9 @@ tg export
 
 	To avoid conflicts produced by ``--linearize`` (or by applying the
 	``--quilt`` output), use the default ``--collapse`` mode and then use
-	``git format-patch --topo-order`` on the result to produce
-	conflict-free patches.
+	``git rebase -m`` on the collapsed branch (with a suitable <upstream>)
+	followed by ``git format-patch`` on the rebased result to produce a
+	conflict-free patch set.
 
 	When using the quilt mode::
 
