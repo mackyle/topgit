@@ -10,21 +10,40 @@ binary=
 ## Parse options
 
 while [ -n "$1" ]; do
-	arg="$1"; shift
+	arg="$1"
 	case "$arg" in
+	--)
+		case "$2" in
+		-*)
+			shift; break;;
+		*)
+			break;;
+		esac;;
+	-|-h|--help)
+		echo "Usage: ${tgname:-tg} [...] patch [-i | -w] [--binary] [<name>] [--] [<git-diff-tree-option>...]" >&2
+		exit 1;;
 	-i|-w)
 		[ -z "$head_from" ] || die "-i and -w are mutually exclusive"
 		head_from="$arg";;
 	--binary)
 		binary=1;;
-	-*)
-		echo "Usage: ${tgname:-tg} [...] patch [-i | -w] [--binary] [<name>]" >&2
-		exit 1;;
+	-?*)
+		if test="$(verify_topgit_branch "$arg" -f)"; then
+			[ -z "$name" ] || die "name already specified ($name)"
+			name="$arg"
+		else
+			break
+		fi;;
 	*)
 		[ -z "$name" ] || die "name already specified ($name)"
 		name="$arg";;
 	esac
+	shift
 done
+
+quotearg() {
+	printf '%s' "$1" | sed 's/\(['\''!]\)/'\'\\\\\\1\''/g'
+}
 
 head="$(git symbolic-ref HEAD)"
 head="${head#refs/heads/}"
@@ -75,7 +94,25 @@ t_tree=$(pretty_tree "$name" $head_from)
 if [ $b_tree = $t_tree ]; then
 	echo "No changes."
 else
-	git diff-tree -p --stat ${binary:+--binary} $b_tree $t_tree
+	hasdd=
+	for a; do
+		[ "$a" != "--" ] || { hasdd=1; break; }
+	done
+	if [ -z "$hasdd" ]; then
+		git diff-tree -p --stat --summary ${binary:+--binary} "$@" $b_tree $t_tree
+	else
+		cmd="git diff-tree -p --stat --summary ${binary:+--binary}"
+		while [ $# -gt 0 -a "$1" != "--" ]; do
+			cmd="$cmd '$(quotearg "$1")'"
+			shift
+		done
+		cmd="$cmd '$(quotearg "$b_tree")' '$(quotearg "$t_tree")'"
+		while [ $# -gt 0 ]; do
+			cmd="$cmd '$(quotearg "$1")'"
+			shift
+		done
+		eval "$cmd"
+	fi
 fi
 
 echo '-- '
