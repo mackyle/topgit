@@ -251,7 +251,7 @@ ref_exists()
 {
 	_result=
 	{ read -r _result <"$tg_tmp_dir/cached/$1/.ref"; } 2>/dev/null || :
-	[ -z "$_result" ] || return $_result;
+	[ -z "$_result" ] || return $_result
 	git rev-parse --verify "$@" >/dev/null 2>&1
 	_result=$?
 	[ -d "$tg_tmp_dir/cached/$1" ] || mkdir -p "$tg_tmp_dir/cached/$1" 2>/dev/null && \
@@ -330,14 +330,14 @@ verify_topgit_branch()
 # Caches result
 branch_annihilated()
 {
-	_branch_name="$1";
+	_branch_name="$1"
 
 	_result=
 	{ read -r _result <"$tg_tmp_dir/cached/$_branch_name/.ann"; } 2>/dev/null || :
-	[ -z "$_result" ] || return $_result;
+	[ -z "$_result" ] || return $_result
 
 	# use the merge base in case the base is ahead.
-	mb="$(git merge-base "refs/top-bases/$_branch_name" "$_branch_name" 2> /dev/null)";
+	mb="$(git merge-base "refs/top-bases/$_branch_name" "$_branch_name" 2> /dev/null)"
 
 	test -z "$mb" || test "$(rev_parse_tree "$mb")" = "$(rev_parse_tree "$_branch_name")"
 	_result=$?
@@ -388,7 +388,7 @@ recurse_deps_internal()
 {
 	if ! ref_exists "$1"; then
 		[ -z "$2" ] || echo "1 0 $*"
-		return;
+		return
 	fi
 
 	# If no_remotes is unset also check our base against remote base.
@@ -411,7 +411,7 @@ recurse_deps_internal()
 				(recurse_deps_internal "$_dname" "$@")
 			done
 		fi
-	fi;
+	fi
 
 	[ -n "$recurse_preorder" -o -z "$2" ] || echo "0 $_is_tgish $*"
 }
@@ -535,7 +535,7 @@ list_deps()
 		while read rev type ref; do
 			name="${ref#refs/top-bases/}"
 			if branch_annihilated "$name"; then
-				continue;
+				continue
 			fi
 
 			from=$head_from

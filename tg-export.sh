@@ -33,7 +33,7 @@ while [ -n "$1" ]; do
 	--binary)
 		binary=1;;
 	--numbered)
-		flatten=true;
+		flatten=true
 		numbered=true;;
 	--strip*)
 		val=${arg#*=}
@@ -67,7 +67,7 @@ done
 	die "-b works only with the quilt driver"
 
 [ "$driver" = "quilt" ] || ! "$numbered" ||
-	die "--numbered works only with the quilt driver";
+	die "--numbered works only with the quilt driver"
 
 [ "$driver" = "quilt" ] || ! "$flatten" ||
 	die "--flatten works only with the quilt driver"
@@ -79,10 +79,10 @@ done
 	die "--strip works only with the quilt driver"
 
 [ "$driver" = "quilt" ] || ! "$allbranches" ||
-	die "--all works only with the quilt driver";
+	die "--all works only with the quilt driver"
 
 [ -z "$branches" ] || ! "$allbranches" ||
-	die "-b conflicts with the --all option";
+	die "-b conflicts with the --all option"
 
 if [ -z "$branches" ] && ! "$allbranches"; then
 	# this check is only needed when no branches have been passed
@@ -165,10 +165,10 @@ collapsed_commit()
 	fi
 
 	if branch_empty "$name"; then
-		echo "$parent";
+		echo "$parent"
 	else
 		create_tg_commit "$name" "$(pretty_tree $name)" "$parent"
-	fi;
+	fi
 
 	echo "$name" >>"$playground/^ticker"
 }
@@ -237,20 +237,20 @@ quilt()
 		return
 	fi
 
-	mkdir -p "$playground/$(dirname "$_dep")";
-	touch "$playground/$_dep";
+	mkdir -p "$playground/$(dirname "$_dep")"
+	touch "$playground/$_dep"
 
 	if branch_empty "$_dep"; then
-		echo "Skip empty patch $_dep";
+		echo "Skip empty patch $_dep"
 	else
 		if "$numbered"; then
-			number="$(echo $(($(cat "$playground/^number" 2>/dev/null) + 1)))";
-			bn="$(printf "%04u-$bn" $number)";
-			echo "$number" >"$playground/^number";
-		fi;
+			number="$(echo $(($(cat "$playground/^number" 2>/dev/null) + 1)))"
+			bn="$(printf "%04u-$bn" $number)"
+			echo "$number" >"$playground/^number"
+		fi
 
 		echo "Exporting $_dep"
-		mkdir -p "$output/$dn";
+		mkdir -p "$output/$dn"
 		$tg patch ${binary:+--binary} "$_dep" >"$output/$dn$bn"
 		echo "$dn$bn -p1" >>"$output/series"
 	fi
@@ -266,39 +266,39 @@ linearize()
 		fi
 		echo "$head" > "$playground/^BASE"
 		git checkout -q "$head"
-		[ -n "$_dep_is_tgish" ] || return 0;
-	fi;
+		[ -n "$_dep_is_tgish" ] || return 0
+	fi
 
 	head=$(git rev-parse --verify HEAD)
 
 	if [ -z "$_dep_is_tgish" ]; then
 		# merge in $_dep unless already included
-		rev="$(git rev-parse --verify "$_dep")";
-		common="$(git merge-base --all HEAD "$_dep")";
+		rev="$(git rev-parse --verify "$_dep")"
+		common="$(git merge-base --all HEAD "$_dep")"
 		if test "$rev" = "$common"; then
 			# already included, just skip
-			:;
+			:
 		else
-			retmerge=0;
+			retmerge=0
 
-			git merge -s recursive "$_dep" || retmerge="$?";
+			git merge -s recursive "$_dep" || retmerge="$?"
 			if test "x$retmerge" != "x0"; then
 				echo "fix up the merge, commit and then exit."
 				#todo error handling
-				"${SHELL:-/bin/sh}" -i </dev/tty;
-			fi;
-		fi;
+				"${SHELL:-/bin/sh}" -i </dev/tty
+			fi
+		fi
 	else
-		retmerge=0;
+		retmerge=0
 
-		git merge-recursive "$(pretty_tree "$_dep" -b)" -- HEAD "$(pretty_tree "refs/heads/$_dep")" || retmerge="$?";
+		git merge-recursive "$(pretty_tree "$_dep" -b)" -- HEAD "$(pretty_tree "refs/heads/$_dep")" || retmerge="$?"
 
 		if test "x$retmerge" != "x0"; then
-			git rerere;
+			git rerere
 			echo "fix up the merge, update the index and then exit.  Don't commit!"
 			#todo error handling
-			"${SHELL:-/bin/sh}" -i </dev/tty;
-			git rerere;
+			"${SHELL:-/bin/sh}" -i </dev/tty
+			git rerere
 		fi
 
 		result_tree=$(git write-tree)
@@ -306,12 +306,12 @@ linearize()
 		# It can happen that the patch is non-empty but still after
 		# linearizing there is no change.  So compare the trees.
 		if test "x$result_tree" = "x$(git rev-parse $head^{tree})"; then
-			echo "skip empty commit $_dep";
+			echo "skip empty commit $_dep"
 		else
 			newcommit=$(create_tg_commit "$_dep" "$result_tree" HEAD)
 			bump_timestamp
 			git update-ref HEAD $newcommit $head
-			echo "exported commit $_dep";
+			echo "exported commit $_dep"
 		fi
 	fi
 }
@@ -391,10 +391,10 @@ elif [ "$driver" = "linearize" ]; then
 
 	echo $name
 	if test $(git rev-parse "$(pretty_tree $name)^{tree}") != $(git rev-parse "HEAD^{tree}"); then
-		echo "Warning: Exported result doesn't match";
-		echo "tg-head=$(git rev-parse "$name"), exported=$(git rev-parse "HEAD")";
-		#git diff $head HEAD;
-	fi;
+		echo "Warning: Exported result doesn't match"
+		echo "tg-head=$(git rev-parse "$name"), exported=$(git rev-parse "HEAD")"
+		#git diff $head HEAD
+	fi
 
 fi
 
