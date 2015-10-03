@@ -298,6 +298,7 @@ linearize()
 			echo "fix up the merge, update the index and then exit.  Don't commit!"
 			#todo error handling
 			"${SHELL:-/bin/sh}" -i </dev/tty;
+			git rerere;
 		fi
 
 		result_tree=$(git write-tree)
