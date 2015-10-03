@@ -98,8 +98,10 @@ update_branch() {
 					info "Recursing to $dep..."
 					git checkout -q "$dep"
 					(
-					export TG_RECURSIVE="[$dep] $TG_RECURSIVE"
-					export PS1="[$dep] $PS1"
+					TG_RECURSIVE="[$dep] $TG_RECURSIVE"
+					PS1="[$dep] $PS1"
+					export TG_RECURSIVE
+					export PS1
 					while ! recursive_update; do
 						# The merge got stuck! Let the user fix it up.
 						info "You are in a subshell. If you abort the merge,"

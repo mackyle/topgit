@@ -695,18 +695,22 @@ setup_pager()
 	# Set pager default environment variables
 	# see pager.c:setup_pager
 	if [ -z "${LESS+set}" ]; then
-		export LESS="-FRSX"
+		LESS="-FRSX"
+		export LESS
 	fi
 	if [ -z "${LV+set}" ]; then
-		export LV="-c"
+		LV="-c"
+		export LV
 	fi
 
 	# this is needed so e.g. `git diff` will still colorize it's output if
 	# requested in ~/.gitconfig with color.diff=auto
-	export GIT_PAGER_IN_USE=1
+	GIT_PAGER_IN_USE=1
+	export GIT_PAGER_IN_USE
 
 	# this is needed so we don't get nested pagers
-	export TG_PAGER_IN_USE=1
+	TG_PAGER_IN_USE=1
+	export TG_PAGER_IN_USE
 }
 
 # get_temp NAME [-d]
@@ -722,7 +726,8 @@ initial_setup()
 {
 	# suppress the merge log editor feature since git 1.7.10
 
-	export GIT_MERGE_AUTOEDIT=no
+	GIT_MERGE_AUTOEDIT=no
+	export GIT_MERGE_AUTOEDIT
 	git_dir="$(git rev-parse --git-dir)"
 	root_dir="$(git rev-parse --show-cdup)"; root_dir="${root_dir:-.}"
 	logrefupdates="$(git config --bool core.logallrefupdates 2>/dev/null || :)"
