@@ -150,8 +150,9 @@ process_branch()
 		branch_contains "refs/top-bases/$name" "refs/remotes/$base_remote/top-bases/$name" &&
 		branch_contains "refs/heads/$name" "refs/remotes/$base_remote/$name"
 	} || rem_update='R'
-	[ "$rem_update" = 'R' ] || branch_contains "refs/remotes/$base_remote/$name" "refs/heads/$name" 2>/dev/null ||
-		rem_update='L'
+	[ "$remote" != 'r' -o "$rem_update" = 'R' ] || {
+		branch_contains "refs/remotes/$base_remote/$name" "refs/heads/$name" 2>/dev/null
+	} || rem_update='L'
 	deps_update=' '
 	needs_update "$name" >/dev/null || deps_update='D'
 	deps_missing=' '
