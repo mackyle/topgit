@@ -245,12 +245,42 @@ branch_contains()
 	[ -z "$(git rev-list --max-count=1 ^"$1" "$2" --)" ]
 }
 
-# ref_exists REF
+create_ref_cache()
+{
+	[ -n "$tg_ref_cache" -a ! -s "$tg_ref_cache" ] || return 0
+	_remotespec=
+	[ -z "$base_remote" ] || _remotespec="refs/remotes/$base_remote"
+	printf '1'
+	git for-each-ref --format='%(refname) %(objectname)' \
+		refs/heads refs/top-bases $_remotespec >"$tg_ref_cache"
+}
+
+remove_ref_cache()
+{
+	[ -n "$tg_ref_cache" -a -s "$tg_ref_cache" ] || return 0
+	>"$tg_ref_cache"
+}
+
+rev_parse()
+{
+	if [ -n "$tg_ref_cache" -a -s "$tg_ref_cache" ]; then
+		if read _refnm _revhs && [ -n "$_revhs" ]; then
+			printf '%s\n' "$_revhs"
+			return 0
+		fi <<-~EOT~
+			$(sed -ne "\\~^$1 ~p" <"$tg_ref_cache")
+		~EOT~
+		return 1
+	fi
+	git rev-parse --quiet --verify "$1" 2>/dev/null
+}
+
+# ref_exists_rev REF
 # Whether REF is a valid ref name
 # REF must be fully qualified and start with refs/heads/, refs/top-bases/
 # or, if $base_remote is set, refs/remotes/$base_remote/
-# Caches result
-ref_exists()
+# Caches result and outputs HASH on success
+ref_exists_rev()
 {
 	case "$1" in
 		refs/*)
@@ -259,16 +289,28 @@ ref_exists()
 			printf '%s' "$1"
 			return;;
 		*)
-			die "ref_exists requires fully-qualified ref name"
+			die "ref_exists_rev requires fully-qualified ref name"
 	esac
 	_result=
-	{ read -r _result <"$tg_tmp_dir/cached/$1/.ref"; } 2>/dev/null || :
-	[ -z "$_result" ] || return $_result
-	git rev-parse --verify "$1" >/dev/null 2>&1
+	_result_rev=
+	{ read -r _result _result_rev <"$tg_tmp_dir/cached/$1/.ref"; } 2>/dev/null || :
+	[ -z "$_result" ] || { printf '%s' "$_result_rev"; return $_result; }
+	_result_rev="$(rev_parse "$1")"
 	_result=$?
 	[ -d "$tg_tmp_dir/cached/$1" ] || mkdir -p "$tg_tmp_dir/cached/$1" 2>/dev/null && \
-	echo $_result >"$tg_tmp_dir/cached/$1/.ref" 2>/dev/null || :
+	echo $_result $_result_rev >"$tg_tmp_dir/cached/$1/.ref" 2>/dev/null || :
+	printf '%s' "$_result_rev"
 	return $_result
+}
+
+# ref_exists REF
+# Whether REF is a valid ref name
+# REF must be fully qualified and start with refs/heads/, refs/top-bases/
+# or, if $base_remote is set, refs/remotes/$base_remote/
+# Caches result
+ref_exists()
+{
+	ref_exists_rev "$1" >/dev/null
 }
 
 # rev_parse_tree REF
@@ -328,11 +370,11 @@ verify_topgit_branch()
 			_verifyname="$1"
 			;;
 	esac
-	if ! git rev-parse --short --verify "refs/heads/$_verifyname" >/dev/null 2>&1; then
+	if ! rev_parse "refs/heads/$_verifyname" >/dev/null; then
 		[ "$2" != "-f" ] || return 1
 		die "no such branch"
 	fi
-	if ! git rev-parse --short --verify "refs/top-bases/$_verifyname" >/dev/null 2>&1; then
+	if ! rev_parse "refs/top-bases/$_verifyname" >/dev/null; then
 		[ "$2" != "-f" ] || return 1
 		die "not a TopGit-controlled branch"
 	fi
@@ -340,21 +382,28 @@ verify_topgit_branch()
 }
 
 # Caches result
+# $1 = branch name (i.e. "t/foo/bar")
+# $2 = optional result of rev-parse "refs/heads/$1"
+# $3 = optional result of rev-parse "refs/top-bases/$1"
 branch_annihilated()
 {
 	_branch_name="$1"
+	_rev="${2:-$(rev_parse "refs/heads/$_branch_name")}"
+	_rev_base="${3:-$(rev_parse "refs/top-bases/$_branch_name")}"
 
 	_result=
-	{ read -r _result <"$tg_tmp_dir/cached/$_branch_name/.ann"; } 2>/dev/null || :
-	[ -z "$_result" ] || return $_result
+	_result_rev=
+	_result_rev_base=
+	{ read -r _result _result_rev _result_rev_base <"$tg_cache_dir/$_branch_name/.ann"; } 2>/dev/null || :
+	[ -z "$_result" -o "$_result_rev" != "$_rev" -o "$_result_rev_base" != "$_rev_base" ] || return $_result
 
 	# use the merge base in case the base is ahead.
-	mb="$(git merge-base "refs/top-bases/$_branch_name" "$_branch_name" 2> /dev/null)"
+	mb="$(git merge-base "$_rev_base" "$_rev" 2>/dev/null)"
 
-	test -z "$mb" || test "$(rev_parse_tree "$mb")" = "$(rev_parse_tree "$_branch_name")"
+	test -z "$mb" || test "$(rev_parse_tree "$mb")" = "$(rev_parse_tree "$_rev")"
 	_result=$?
-	[ -d "$tg_tmp_dir/cached/$_branch_name" ] || mkdir -p "$tg_tmp_dir/cached/$_branch_name" 2>/dev/null && \
-	echo $_result >"$tg_tmp_dir/cached/$_branch_name/.ann" 2>/dev/null || :
+	[ -d "$tg_cache_dir/$_branch_name" ] || mkdir -p "$tg_cache_dir/$_branch_name" 2>/dev/null && \
+	echo $_result $_rev $_rev_base >"$tg_cache_dir/$_branch_name/.ann" 2>/dev/null || :
 	return $_result
 }
 
@@ -363,7 +412,7 @@ non_annihilated_branches()
 	git for-each-ref --format='%(objectname) %(refname)' refs/top-bases |
 		while read rev ref; do
 			name="${ref#refs/top-bases/}"
-			if branch_annihilated "$name"; then
+			if branch_annihilated "$name" "" "$rev"; then
 				continue
 			fi
 			echo "$name"
@@ -397,7 +446,8 @@ is_sha1()
 # If recurse_preorder is non-empty, do a preorder rather than postorder traversal
 recurse_deps_internal()
 {
-	if ! ref_exists "refs/heads/$1"; then
+	_ref_hash=
+	if ! _ref_hash="$(ref_exists_rev "refs/heads/$1")"; then
 		[ -z "$2" ] || echo "1 0 $*"
 		return
 	fi
@@ -409,12 +459,13 @@ recurse_deps_internal()
 	fi
 
 	_is_tgish=0
-	if ref_exists "refs/top-bases/$1"; then
+	_ref_hash_base=
+	if _ref_hash_base="$(ref_exists_rev "refs/top-bases/$1")"; then
 		_is_tgish=1
 	[ -z "$recurse_preorder" -o -z "$2" ] || echo "0 $_is_tgish $*"
 
 		# if the branch was annihilated, it is considered to have no dependencies
-		if ! branch_annihilated "$1"; then
+		if [ -n "$_is_tgish" ] && ! branch_annihilated "$1" "$_ref_hash" "$_ref_hash_base"; then
 			#TODO: handle nonexisting .topdeps?
 			cat_deps "$1" |
 			while read _dname; do
@@ -454,8 +505,10 @@ recurse_deps()
 {
 	_cmd="$1"; shift
 
+	_my_ref_cache="$(create_ref_cache)"
 	_depsfile="$(get_temp tg-depsfile)"
 	recurse_deps_internal "$@" >>"$_depsfile"
+	[ -z "$_my_ref_cache" ] || remove_ref_cache
 
 	_ret=0
 	while read _ismissing _istgish _dep _name _deppath; do
@@ -527,7 +580,7 @@ branch_needs_update()
 # them to space-separated $missing_deps list and skip them.
 needs_update()
 {
-	recurse_deps branch_needs_update "$@"
+	recurse_deps branch_needs_update "$1"
 }
 
 # branch_empty NAME [-i | -w]
@@ -548,7 +601,7 @@ list_deps()
 	git for-each-ref --format='%(objectname) %(refname)' refs/top-bases"${1:+/$1}" |
 		while read rev ref; do
 			name="${ref#refs/top-bases/}"
-			if branch_annihilated "$name"; then
+			if branch_annihilated "$name" "" "$rev"; then
 				continue
 			fi
 
@@ -747,10 +800,15 @@ initial_setup()
 	logrefupdates="$(git config --bool core.logallrefupdates 2>/dev/null || :)"
 	[ "$logrefupdates" = "true" ] || logrefupdates=
 
-	# Make sure root_dir doesn't end with a trailing slash.
+	# make sure root_dir doesn't end with a trailing slash.
 
 	root_dir="${root_dir%/}"
 	[ -n "$base_remote" ] || base_remote="$(git config topgit.remote 2>/dev/null)" || :
+
+	# make sure global cache directory exists inside GIT_DIR
+
+	tg_cache_dir="$git_dir/tg-cache"
+	[ -d "$tg_cache_dir" ] || mkdir "$tg_cache_dir"
 
 	# create global temporary directories, inside GIT_DIR
 
@@ -762,6 +820,7 @@ initial_setup()
 	trap 'exit 134' ABRT
 	trap 'exit 143' TERM
 	tg_tmp_dir="$(mktemp -d "$git_dir/tg-tmp.XXXXXX")"
+	tg_ref_cache="$tg_tmp_dir/tg~ref-cache"
 }
 
 # return the "realpath" for the item except the leaf is not resolved if it's
