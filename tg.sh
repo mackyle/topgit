@@ -175,7 +175,7 @@ pretty_tree()
 	name=$1
 	source=${2#?}
 	git ls-tree --full-tree "$(get_tree_$source "$name")" |
-		awk -F '	' '$2 !~ /^.top/' |
+		LC_ALL=C sed -ne '/	\.top.*$/!p' |
 		git mktree
 }
 
