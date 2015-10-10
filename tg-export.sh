@@ -291,7 +291,7 @@ linearize()
 	else
 		retmerge=0
 
-		git merge-recursive "$(pretty_tree "$_dep" -b)" -- HEAD "$(pretty_tree "refs/heads/$_dep")" || retmerge="$?"
+		git merge-recursive "$(pretty_tree "$_dep" -b)" -- HEAD "$(pretty_tree "$_dep")" || retmerge="$?"
 
 		if test "x$retmerge" != "x0"; then
 			git rerere
@@ -321,7 +321,7 @@ linearize()
 if [ "$driver" = "collapse" ] || [ "$driver" = "linearize" ]; then
 	[ -n "$output" ] ||
 		die "no target branch specified"
-	if ! ref_exists $output; then
+	if ! ref_exists "refs/heads/$output"; then
 		:
 	elif [ -z "$forcebranch" ]; then
 		die "target branch '$output' already exists; first run: git$gitcdopt branch -D $output, or run $tgdisplay export with --force"

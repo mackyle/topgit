@@ -35,16 +35,16 @@ fi
 git cat-file blob "$name:.topmsg" | grep ^Subject: || :
 
 echo "Base: $base_rev"
-branch_contains "$name" "$base_rev" ||
+branch_contains "refs/heads/$name" "refs/top-bases/$name" ||
 	echo "* Base is newer than head! Please run \`$tgdisplay update\`."
 
 if has_remote "$name"; then
 	echo "Remote Mate: $base_remote/$name"
-	branch_contains "$base_rev" "refs/remotes/$base_remote/top-bases/$name" ||
+	branch_contains "refs/top-bases/$name" "refs/remotes/$base_remote/top-bases/$name" ||
 		echo "* Local base is out of date wrt. the remote base."
-	branch_contains "$name" "refs/remotes/$base_remote/$name" ||
+	branch_contains "refs/heads/$name" "refs/remotes/$base_remote/$name" ||
 		echo "* Local head is out of date wrt. the remote head."
-	branch_contains "refs/remotes/$base_remote/$name" "$name" ||
+	branch_contains "refs/remotes/$base_remote/$name" "refs/heads/$name" ||
 		echo "* Local head is ahead of the remote head."
 fi
 

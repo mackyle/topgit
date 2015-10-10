@@ -146,19 +146,19 @@ process_branch()
 	rem_update=' '
 	[ "$remote" != 'r' ] || ! ref_exists "refs/remotes/$base_remote/top-bases/$name" || {
 		branch_contains "refs/top-bases/$name" "refs/remotes/$base_remote/top-bases/$name" &&
-		branch_contains "$name" "refs/remotes/$base_remote/$name"
+		branch_contains "refs/heads/$name" "refs/remotes/$base_remote/$name"
 	} || rem_update='R'
-	[ "$rem_update" = 'R' ] || branch_contains "refs/remotes/$base_remote/$name" "$name" 2>/dev/null ||
+	[ "$rem_update" = 'R' ] || branch_contains "refs/remotes/$base_remote/$name" "refs/heads/$name" 2>/dev/null ||
 		rem_update='L'
 	deps_update=' '
 	needs_update "$name" >/dev/null || deps_update='D'
 	deps_missing=' '
 	[ -z "$missing_deps" ] || deps_missing='!'
 	base_update=' '
-	branch_contains "$name" "refs/top-bases/$name" || base_update='B'
+	branch_contains "refs/heads/$name" "refs/top-bases/$name" || base_update='B'
 
-	if [ "$(git rev-parse "$name")" != "$rev" ]; then
-		subject="$(cat_file "$name:.topmsg" $from | sed -n 's/^Subject: //p')"
+	if [ "$(git rev-parse "refs/heads/$name")" != "$rev" ]; then
+		subject="$(cat_file "refs/heads/$name:.topmsg" $from | sed -n 's/^Subject: //p')"
 	else
 		# No commits yet
 		subject="(No commits)"
@@ -187,7 +187,7 @@ get_branch_list |
 			from=$head_from
 			[ "$name" = "$curname" ] ||
 				from=
-			cat_file "$name:.topdeps" $from | while read dep; do
+			cat_file "refs/heads/$name:.topdeps" $from | while read dep; do
 				dep_is_tgish=true
 				ref_exists "refs/top-bases/$dep" ||
 					dep_is_tgish=false

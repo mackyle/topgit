@@ -37,7 +37,7 @@ done
 
 if [ -n "$rname" ]; then
 	[ -n "$name" ] || die "no branch name given"
-	! ref_exists "$name" || die "branch '$name' already exists"
+	! ref_exists "refs/heads/$name" || die "branch '$name' already exists"
 	if [ -z "$base_remote" ]; then
 		die "no remote location given. Either use -r remote argument or set topgit.remote"
 	fi
@@ -78,10 +78,10 @@ fi
 [ -n "$merge" -o -n "$restarted" ] || merge="$deps "
 
 for d in $deps; do
-	ref_exists "$d"  ||
+	ref_exists "refs/heads/$d"  ||
 		die "unknown branch dependency '$d'"
 done
-! ref_exists "$name"  ||
+! ref_exists "refs/heads/$name"  ||
 	die "branch '$name' already exists"
 
 # Clean up any stale stuff

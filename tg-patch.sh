@@ -69,7 +69,7 @@ setup_pager
 # put out the commit message
 # and put an empty line out, if the last one in the message was not an empty line
 # and put out "---" if the commit message does not have one yet
-cat_file "$name:.topmsg" $head_from |
+cat_file "refs/heads/$name:.topmsg" $head_from |
 	awk '
 /^---/ {
     has_3dash=1;
@@ -116,8 +116,8 @@ else
 fi
 
 echo '-- '
-echo "$tgname: ($base_rev..) $name (depends on: $(cat_file "$name:.topdeps" $head_from 2>/dev/null | paste -s -d ' ' -))"
-branch_contains "$name" "$base_rev" ||
+echo "$tgname: ($base_rev..) $name (depends on: $(cat_file "refs/heads/$name:.topdeps" $head_from 2>/dev/null | paste -s -d ' ' -))"
+branch_contains "refs/heads/$name" "refs/top-bases/$name" ||
 	echo "$tgname: The patch is out-of-date wrt. the base! Run \`$tgdisplay update\`."
 
 } | eval "$TG_PAGER"

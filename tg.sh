@@ -98,8 +98,9 @@ cat_file()
 		;;
 	'')
 		case "$path" in
-		*:.topdeps)
-			cat_deps "${path%:.topdeps}"
+		refs/heads/*:.topdeps)
+			_temp="${path%:.topdeps}"
+			cat_deps "${_temp#refs/heads/}"
 			;;
 		*)
 			git cat-file blob "$path"
@@ -115,7 +116,7 @@ cat_file()
 # get tree for the committed topic
 get_tree_()
 {
-	echo "$1"
+	echo "refs/heads/$1"
 }
 
 # get tree for the base
@@ -246,13 +247,24 @@ branch_contains()
 
 # ref_exists REF
 # Whether REF is a valid ref name
+# REF must be fully qualified and start with refs/heads/, refs/top-bases/
+# or, if $base_remote is set, refs/remotes/$base_remote/
 # Caches result
 ref_exists()
 {
+	case "$1" in
+		refs/*)
+			:;;
+		$octet20)
+			printf '%s' "$1"
+			return;;
+		*)
+			die "ref_exists requires fully-qualified ref name"
+	esac
 	_result=
 	{ read -r _result <"$tg_tmp_dir/cached/$1/.ref"; } 2>/dev/null || :
 	[ -z "$_result" ] || return $_result
-	git rev-parse --verify "$@" >/dev/null 2>&1
+	git rev-parse --verify "$1" >/dev/null 2>&1
 	_result=$?
 	[ -d "$tg_tmp_dir/cached/$1" ] || mkdir -p "$tg_tmp_dir/cached/$1" 2>/dev/null && \
 	echo $_result >"$tg_tmp_dir/cached/$1/.ref" 2>/dev/null || :
@@ -287,7 +299,7 @@ rev_parse_tree()
 # Whether BRANCH has a remote equivalent (accepts top-bases/ too)
 has_remote()
 {
-	[ -n "$base_remote" ] && ref_exists "remotes/$base_remote/$1"
+	[ -n "$base_remote" ] && ref_exists "refs/remotes/$base_remote/$1"
 }
 
 # Return the verified TopGit branch name or die with an error.
@@ -348,8 +360,7 @@ branch_annihilated()
 
 non_annihilated_branches()
 {
-	_pattern="$@"
-	git for-each-ref --format='%(objectname) %(refname)' ${_pattern:-refs/top-bases} |
+	git for-each-ref --format='%(objectname) %(refname)' refs/top-bases |
 		while read rev ref; do
 			name="${ref#refs/top-bases/}"
 			if branch_annihilated "$name"; then
@@ -386,7 +397,7 @@ is_sha1()
 # If recurse_preorder is non-empty, do a preorder rather than postorder traversal
 recurse_deps_internal()
 {
-	if ! ref_exists "$1"; then
+	if ! ref_exists "refs/heads/$1"; then
 		[ -z "$2" ] || echo "1 0 $*"
 		return
 	fi
@@ -483,21 +494,24 @@ branch_needs_update()
 		branch_annihilated "$_dep" && return 0
 
 		if has_remote "$_dep"; then
-			branch_contains "$_dep" "refs/remotes/$base_remote/$_dep" || _dep_base_update=%
+			branch_contains "refs/heads/$_dep" "refs/remotes/$base_remote/$_dep" || _dep_base_update=%
 		fi
 		# This can possibly override the remote check result;
 		# we want to sync with our base first
-		branch_contains "$_dep" "refs/top-bases/$_dep" || _dep_base_update=:
+		branch_contains "refs/heads/$_dep" "refs/top-bases/$_dep" || _dep_base_update=:
 	fi
 
 	if [ -n "$_dep_base_update" ]; then
 		# _dep needs to be synced with its base/remote
 		echo "$_dep_base_update $_dep $_depchain"
 		_ret=1
-	elif [ -n "$_name" ] && ! branch_contains "refs/top-bases/$_name" "$_dep"; then
-		# Some new commits in _dep
-		echo "$_dep $_depchain"
-		_ret=1
+	elif [ -n "$_name" ]; then
+		case "$_dep" in refs/*) _fulldep="$_dep";; *) _fulldep="refs/heads/$_dep";; esac
+		if ! branch_contains "refs/top-bases/$_name" "$_fulldep"; then
+			# Some new commits in _dep
+			echo "$_dep $_depchain"
+			_ret=1
+		fi
 	fi
 }
 
@@ -541,7 +555,7 @@ list_deps()
 			from=$head_from
 			[ "refs/heads/$name" = "$head" ] ||
 				from=
-			cat_file "$name:.topdeps" $from | while read dep; do
+			cat_file "refs/heads/$name:.topdeps" $from | while read dep; do
 				dep_is_tgish=true
 				ref_exists "refs/top-bases/$dep" ||
 					dep_is_tgish=false

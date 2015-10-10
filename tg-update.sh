@@ -164,7 +164,7 @@ update_branch() {
 
 	if has_remote "$_update_name"; then
 		_rname="refs/remotes/$base_remote/$_update_name"
-		if branch_contains "$_update_name" "$_rname"; then
+		if branch_contains "refs/heads/$_update_name" "$_rname"; then
 			info "The $_update_name head is up-to-date wrt. its remote branch."
 		else
 			info "Reconciling remote branch updates with $_update_name base..."
@@ -186,7 +186,7 @@ update_branch() {
 
 	## Third, update our head with the base
 
-	if branch_contains "$_update_name" "$merge_with"; then
+	if branch_contains "refs/heads/$_update_name" "$merge_with"; then
 		info "The $_update_name head is up-to-date wrt. the base."
 		return 0
 	fi

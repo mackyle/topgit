@@ -52,7 +52,7 @@ if [ -z "$branches" ]; then
 fi
 
 for name in $branches; do
-	ref_exists "$name" || die "detached HEAD? Can't push $name"
+	ref_exists "refs/heads/$name" || die "detached HEAD? Can't push $name"
 done
 
 _listfile="$(get_temp tg-push-listfile)"
@@ -80,7 +80,7 @@ for name in $branches; do
 	_dep="$name"
 	_dep_is_tgish=1
 	_dep_missing=
-	ref_exists "top-bases/$_dep" ||
+	ref_exists "refs/top-bases/$_dep" ||
 		_dep_is_tgish=
 	push_branch "$name"
 
