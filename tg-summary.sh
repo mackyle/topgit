@@ -82,7 +82,7 @@ curname="$(strip_ref "$(git symbolic-ref HEAD 2>/dev/null)")"
 show_rdeps()
 {
 	case "$exclude" in *" $_dep "*) return; esac
-	printf '%s %s\n' "$(echo "$_depchain" | sed -e 's/[^ ][^ ]*/ /g')" "$_dep"
+	printf '%s %s\n' "$_depchain" "$_dep"
 }
 
 if [ -n "$rdeps" ]; then
@@ -94,9 +94,11 @@ if [ -n "$rdeps" ]; then
 			[ -z "$showbreak" ] || echo
 			showbreak=1 
 			ref_exists "refs/heads/$b" || continue
-			echo "$b"
-			recurse_preorder=1
-			recurse_deps show_rdeps "$b"
+			{
+				echo "$b"
+				recurse_preorder=1
+				recurse_deps show_rdeps "$b"
+			} | sed -e 's/[^ ][^ ]*[ ]/  /g'
 		done
 	exit 0
 fi
