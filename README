@@ -543,7 +543,7 @@ tg checkout
 
 	If any of the above commands can find more than one possible
 	branch to switch to, you will be presented with the matches
-	and ask to select one of them.
+	and asked to select one of them.
 
 	The ``<pattern>`` of ``tg checkout goto`` is optional.  If you don't
 	supply it, all the available topic branches are listed and you
