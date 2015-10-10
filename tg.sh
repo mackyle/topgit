@@ -62,22 +62,27 @@ precheck
 # Caches result
 cat_deps()
 {
-	if [ -f "$tg_tmp_dir/cached/$1/.tpd" ]; then
-		_line=
-		while IFS= read -r _line || [ -n "$_line" ]; do
-			printf '%s\n' "$_line"
-		done <"$tg_tmp_dir/cached/$1/.tpd"
-		return
+	_rev="$(ref_exists_rev "refs/heads/$1")" || return 0
+	if [ -s "$tg_cache_dir/$1/.tpd" ]; then
+		if read _rev_match && [ "$_rev" = "$_rev_match" ]; then
+			_line=
+			while IFS= read -r _line || [ -n "$_line" ]; do
+				printf '%s\n' "$_line"
+			done
+			return 0
+		fi <"$tg_cache_dir/$1/.tpd"
 	fi
-	[ -d "$tg_tmp_dir/cached/$1" ] || mkdir -p "$tg_tmp_dir/cached/$1" 2>/dev/null || :
-	if [ -d "$tg_tmp_dir/cached/$1" ]; then
-		git cat-file blob "$1:.topdeps" 2>/dev/null >"$tg_tmp_dir/cached/$1/.tpd"
+	[ -d "$tg_cache_dir/$1" ] || mkdir -p "$tg_cache_dir/$1" 2>/dev/null || :
+	if [ -d "$tg_cache_dir/$1" ]; then
+		printf '%s\n' "$_rev" >"$tg_cache_dir/$1/.tpd"
 		_line=
+		git cat-file blob "$_rev:.topdeps" 2>/dev/null |
 		while IFS= read -r _line || [ -n "$_line" ]; do
+			printf '%s\n' "$_line" >&3
 			printf '%s\n' "$_line"
-		done <"$tg_tmp_dir/cached/$1/.tpd"
+		done 3>>"$tg_cache_dir/$1/.tpd"
 	else
-		git cat-file blob "$1:.topdeps" 2>/dev/null
+		git cat-file blob "$_rev:.topdeps" 2>/dev/null
 	fi
 }
 
@@ -245,6 +250,13 @@ branch_contains()
 	[ -z "$(git rev-list --max-count=1 ^"$1" "$2" --)" ]
 }
 
+create_ref_dirs()
+{
+	[ ! -s "$tg_tmp_dir/tg~ref-dirs-created" -a -s "$tg_ref_cache" ] || return 0
+	sed -e 's/ .*$//;'"s~^~$tg_tmp_dir/cached/~" <"$tg_ref_cache" | xargs mkdir -p
+	echo 1 >"$tg_tmp_dir/tg~ref-dirs-created"
+}
+
 create_ref_cache()
 {
 	[ -n "$tg_ref_cache" -a ! -s "$tg_ref_cache" ] || return 0
@@ -253,6 +265,7 @@ create_ref_cache()
 	printf '1'
 	git for-each-ref --format='%(refname) %(objectname)' \
 		refs/heads refs/top-bases $_remotespec >"$tg_ref_cache"
+	create_ref_dirs
 }
 
 remove_ref_cache()
@@ -297,7 +310,8 @@ ref_exists_rev()
 	[ -z "$_result" ] || { printf '%s' "$_result_rev"; return $_result; }
 	_result_rev="$(rev_parse "$1")"
 	_result=$?
-	[ -d "$tg_tmp_dir/cached/$1" ] || mkdir -p "$tg_tmp_dir/cached/$1" 2>/dev/null && \
+	[ -d "$tg_tmp_dir/cached/$1" ] || mkdir -p "$tg_tmp_dir/cached/$1" 2>/dev/null
+	[ ! -d "$tg_tmp_dir/cached/$1" ] || \
 	echo $_result $_result_rev >"$tg_tmp_dir/cached/$1/.ref" 2>/dev/null || :
 	printf '%s' "$_result_rev"
 	return $_result
@@ -370,11 +384,11 @@ verify_topgit_branch()
 			_verifyname="$1"
 			;;
 	esac
-	if ! rev_parse "refs/heads/$_verifyname" >/dev/null; then
+	if ! ref_exists "refs/heads/$_verifyname"; then
 		[ "$2" != "-f" ] || return 1
 		die "no such branch"
 	fi
-	if ! rev_parse "refs/top-bases/$_verifyname" >/dev/null; then
+	if ! ref_exists "refs/top-bases/$_verifyname"; then
 		[ "$2" != "-f" ] || return 1
 		die "not a TopGit-controlled branch"
 	fi
@@ -388,8 +402,8 @@ verify_topgit_branch()
 branch_annihilated()
 {
 	_branch_name="$1"
-	_rev="${2:-$(rev_parse "refs/heads/$_branch_name")}"
-	_rev_base="${3:-$(rev_parse "refs/top-bases/$_branch_name")}"
+	_rev="${2:-$(ref_exists_rev "refs/heads/$_branch_name")}"
+	_rev_base="${3:-$(ref_exists_rev "refs/top-bases/$_branch_name")}"
 
 	_result=
 	_result_rev=
@@ -402,7 +416,8 @@ branch_annihilated()
 
 	test -z "$mb" || test "$(rev_parse_tree "$mb")" = "$(rev_parse_tree "$_rev")"
 	_result=$?
-	[ -d "$tg_cache_dir/$_branch_name" ] || mkdir -p "$tg_cache_dir/$_branch_name" 2>/dev/null && \
+	[ -d "$tg_cache_dir/$_branch_name" ] || mkdir -p "$tg_cache_dir/$_branch_name" 2>/dev/null
+	[ ! -d "$tg_cache_dir/$_branch_name" ] || \
 	echo $_result $_rev $_rev_base >"$tg_cache_dir/$_branch_name/.ann" 2>/dev/null || :
 	return $_result
 }
@@ -978,6 +993,16 @@ else
 
 			setup_ours
 			setup_hook "pre-commit"
+
+			_use_ref_cache=
+			tg_read_only=1
+			case "$cmd" in
+				summary|info|export)
+					_use_ref_cache=1;;
+				annihilate|create|delete|depend|import|update)
+					tg_read_only=;;
+			esac
+			[ -z "$_use_ref_cache" ] || create_ref_cache >/dev/null
 
 			. "@cmddir@"/tg-$cmd;;
 	esac
