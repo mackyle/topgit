@@ -349,8 +349,8 @@ branch_annihilated()
 non_annihilated_branches()
 {
 	_pattern="$@"
-	git for-each-ref ${_pattern:-refs/top-bases} |
-		while read rev type ref; do
+	git for-each-ref --format='%(objectname) %(refname)' ${_pattern:-refs/top-bases} |
+		while read rev ref; do
 			name="${ref#refs/top-bases/}"
 			if branch_annihilated "$name"; then
 				continue
@@ -531,8 +531,8 @@ list_deps()
 	head="$(git symbolic-ref -q HEAD)" ||
 		head="..detached.."
 
-	git for-each-ref refs/top-bases"${1:+/$1}" |
-		while read rev type ref; do
+	git for-each-ref --format='%(objectname) %(refname)' refs/top-bases"${1:+/$1}" |
+		while read rev ref; do
 			name="${ref#refs/top-bases/}"
 			if branch_annihilated "$name"; then
 				continue

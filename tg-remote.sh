@@ -60,8 +60,8 @@ git fetch --prune "$name" \
 	"+refs/top-bases/*:refs/remotes/$name/top-bases/*" \
 	"+refs/heads/*:refs/remotes/$name/*"
 
-git for-each-ref "refs/remotes/$name/top-bases" |
-	while read rev type ref; do
+git for-each-ref --format='%(objectname) %(refname)' "refs/remotes/$name/top-bases" |
+	while read rev ref; do
 		branch="${ref#refs/remotes/$name/top-bases/}"
 		if ! git rev-parse "refs/remotes/$name/$branch" >/dev/null 2>&1; then
 			info "Skipping remote $name/top-bases/$branch that's missing its branch"
