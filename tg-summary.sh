@@ -160,7 +160,7 @@ process_branch()
 	base_update=' '
 	branch_contains "refs/heads/$name" "refs/top-bases/$name" || base_update='B'
 
-	if [ "$(git rev-parse "refs/heads/$name")" != "$rev" ]; then
+	if [ "$(ref_exists_rev "refs/heads/$name")" != "$(ref_exists_rev "refs/top-bases/$name")" ]; then
 		subject="$(cat_file "refs/heads/$name:.topmsg" $from | sed -n 's/^Subject: //p')"
 	else
 		# No commits yet
