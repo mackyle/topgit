@@ -247,7 +247,21 @@ measure_branch()
 # Whether B1 is a superset of B2.
 branch_contains()
 {
-	[ -z "$(git rev-list --max-count=1 ^"$1" "$2" --)" ]
+	_revb1="$(ref_exists_rev "$1")" || return 0
+	_revb2="$(ref_exists_rev "$2")" || return 0
+	if [ -s "$tg_cache_dir/$1/.bc/$2/.d" ]; then
+		if read _result _rev_matchb1 _rev_matchb2 && \
+			[ "$_revb1" = "$_rev_matchb1" -a "$_revb2" = "$_rev_matchb2" ]; then
+			return $_result
+		fi <"$tg_cache_dir/$1/.bc/$2/.d"
+	fi
+	[ -d "$tg_cache_dir/$1/.bc/$2" ] || mkdir -p "$tg_cache_dir/$1/.bc/$2" 2>/dev/null || :
+	_result=0
+	[ -z "$(git rev-list --max-count=1 ^"$_revb1" "$_revb2" --)" ] || _result=$?
+	if [ -d "$tg_cache_dir/$1/.bc/$2" ]; then
+		echo "$_result" "$_revb1" "$_revb2" >"$tg_cache_dir/$1/.bc/$2/.d"
+	fi
+	return $_result
 }
 
 create_ref_dirs()
