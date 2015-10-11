@@ -632,7 +632,20 @@ needs_update()
 # branch_empty NAME [-i | -w]
 branch_empty()
 {
-	[ "$(pretty_tree "$1" -b)" = "$(pretty_tree "$1" $2)" ]
+	if [ -z "$2" ]; then
+		_rev="$(ref_exists_rev "refs/heads/$1")" || return 0
+		_result=
+		_result_rev=
+		{ read -r _result _result_rev <"$tg_cache_dir/$1/.mt"; } 2>/dev/null || :
+		[ -z "$_result" -o "$_result_rev" != "$_rev" ] || return $_result
+		_result=0
+		[ "$(pretty_tree "$1" -b)" = "$(pretty_tree "$1" $2)" ] || _result=$?
+		[ -d "$tg_cache_dir/$1" ] || mkdir -p "$tg_cache_dir/$1" 2>/dev/null
+		[ ! -d "$tg_cache_dir/$1" ] || echo $_result $_rev >"$tg_cache_dir/$1/.mt"
+		return $_result
+	else
+		[ "$(pretty_tree "$1" -b)" = "$(pretty_tree "$1" $2)" ]
+	fi
 }
 
 # list_deps [-i | -w] [BRANCH]
