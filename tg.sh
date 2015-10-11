@@ -58,32 +58,45 @@ esac
 precheck
 [ "$1" = "precheck" ] && exit 0
 
-# cat_deps BRANCHNAME
-# Caches result
-cat_deps()
+
+cat_depsmsg_internal()
 {
 	_rev="$(ref_exists_rev "refs/heads/$1")" || return 0
-	if [ -s "$tg_cache_dir/$1/.tpd" ]; then
+	if [ -s "$tg_cache_dir/$1/.$2" ]; then
 		if read _rev_match && [ "$_rev" = "$_rev_match" ]; then
 			_line=
 			while IFS= read -r _line || [ -n "$_line" ]; do
 				printf '%s\n' "$_line"
 			done
 			return 0
-		fi <"$tg_cache_dir/$1/.tpd"
+		fi <"$tg_cache_dir/$1/.$2"
 	fi
 	[ -d "$tg_cache_dir/$1" ] || mkdir -p "$tg_cache_dir/$1" 2>/dev/null || :
 	if [ -d "$tg_cache_dir/$1" ]; then
-		printf '%s\n' "$_rev" >"$tg_cache_dir/$1/.tpd"
+		printf '%s\n' "$_rev" >"$tg_cache_dir/$1/.$2"
 		_line=
-		git cat-file blob "$_rev:.topdeps" 2>/dev/null |
+		git cat-file blob "$_rev:.$2" 2>/dev/null |
 		while IFS= read -r _line || [ -n "$_line" ]; do
 			printf '%s\n' "$_line" >&3
 			printf '%s\n' "$_line"
-		done 3>>"$tg_cache_dir/$1/.tpd"
+		done 3>>"$tg_cache_dir/$1/.$2"
 	else
-		git cat-file blob "$_rev:.topdeps" 2>/dev/null
+		git cat-file blob "$_rev:.$2" 2>/dev/null
 	fi
+}
+
+# cat_deps BRANCHNAME
+# Caches result
+cat_deps()
+{
+	cat_depsmsg_internal "$1" topdeps
+}
+
+# cat_msg BRANCHNAME
+# Caches result
+cat_msg()
+{
+	cat_depsmsg_internal "$1" topmsg
 }
 
 # cat_file TOPIC:PATH [FROM]
@@ -106,6 +119,10 @@ cat_file()
 		refs/heads/*:.topdeps)
 			_temp="${path%:.topdeps}"
 			cat_deps "${_temp#refs/heads/}"
+			;;
+		refs/heads/*:.topmsg)
+			_temp="${path%:.topmsg}"
+			cat_msg "${_temp#refs/heads/}"
 			;;
 		*)
 			git cat-file blob "$path"
