@@ -504,19 +504,17 @@ recurse_deps_internal()
 
 	_is_tgish=0
 	_ref_hash_base=
-	if _ref_hash_base="$(ref_exists_rev "refs/top-bases/$1")"; then
-		_is_tgish=1
+	! _ref_hash_base="$(ref_exists_rev "refs/top-bases/$1")" || _is_tgish=1
 	[ -z "$recurse_preorder" -o -z "$2" ] || echo "0 $_is_tgish $*"
 
-		# if the branch was annihilated, it is considered to have no dependencies
-		if [ -n "$_is_tgish" ] && ! branch_annihilated "$1" "$_ref_hash" "$_ref_hash_base"; then
-			#TODO: handle nonexisting .topdeps?
-			cat_deps "$1" |
-			while read _dname; do
-				# Shoo shoo, leave our environment alone!
-				(recurse_deps_internal "$_dname" "$@")
-			done
-		fi
+	# if the branch was annihilated, it is considered to have no dependencies
+	if [ -n "$_is_tgish" ] && ! branch_annihilated "$1" "$_ref_hash" "$_ref_hash_base"; then
+		#TODO: handle nonexisting .topdeps?
+		cat_deps "$1" |
+		while read _dname; do
+			# Shoo shoo, leave our environment alone!
+			(recurse_deps_internal "$_dname" "$@")
+		done
 	fi
 
 	[ -n "$recurse_preorder" -o -z "$2" ] || echo "0 $_is_tgish $*"
