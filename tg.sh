@@ -323,7 +323,7 @@ rev_parse()
 # Whether REF is a valid ref name
 # REF must be fully qualified and start with refs/heads/, refs/top-bases/
 # or, if $base_remote is set, refs/remotes/$base_remote/
-# Caches result and outputs HASH on success
+# Caches result if $tg_read_only and outputs HASH on success
 ref_exists_rev()
 {
 	case "$1" in
@@ -335,6 +335,7 @@ ref_exists_rev()
 		*)
 			die "ref_exists_rev requires fully-qualified ref name"
 	esac
+	[ -n "$tg_read_only" ] || { git rev-parse --quiet --verify "$1" 2>/dev/null; return; }
 	_result=
 	_result_rev=
 	{ read -r _result _result_rev <"$tg_tmp_dir/cached/$1/.ref"; } 2>/dev/null || :
@@ -360,9 +361,10 @@ ref_exists()
 
 # rev_parse_tree REF
 # Runs git rev-parse REF^{tree}
-# Caches result
+# Caches result if $tg_read_only
 rev_parse_tree()
 {
+	[ -n "$tg_read_only" ] || { git rev-parse "$1^{tree}" 2>/dev/null; return; }
 	if [ -f "$tg_tmp_dir/cached/$1/.rpt" ]; then
 		if IFS= read -r _result <"$tg_tmp_dir/cached/$1/.rpt"; then
 			printf '%s\n' "$_result"
@@ -551,10 +553,14 @@ recurse_deps()
 {
 	_cmd="$1"; shift
 
+	_was_read_only="$tg_read_only"
+	[ -n "$_was_read_only" ] || rm -rf "$tg_tmp_dir/cached" "$tg_tmp_dir/tg~ref-dirs-created"
+	tg_read_only=1
 	_my_ref_cache="$(create_ref_cache)"
 	_depsfile="$(get_temp tg-depsfile)"
 	recurse_deps_internal "$@" >>"$_depsfile"
 	[ -z "$_my_ref_cache" ] || remove_ref_cache
+	tg_read_only="$_was_read_only"
 
 	_ret=0
 	while read _ismissing _istgish _dep _name _deppath; do
