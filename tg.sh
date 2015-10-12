@@ -415,11 +415,11 @@ verify_topgit_branch()
 	esac
 	if ! ref_exists "refs/heads/$_verifyname"; then
 		[ "$2" != "-f" ] || return 1
-		die "no such branch"
+		die "no such branch: $_verifyname"
 	fi
 	if ! ref_exists "refs/top-bases/$_verifyname"; then
 		[ "$2" != "-f" ] || return 1
-		die "not a TopGit-controlled branch"
+		die "not a TopGit-controlled branch: $_verifyname"
 	fi
 	printf '%s' "$_verifyname"
 }
