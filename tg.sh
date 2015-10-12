@@ -309,15 +309,10 @@ remove_ref_cache()
 rev_parse()
 {
 	if [ -n "$tg_ref_cache" -a -s "$tg_ref_cache" ]; then
-		if read _refnm _revhs && [ -n "$_revhs" ]; then
-			printf '%s\n' "$_revhs"
-			return 0
-		fi <<-~EOT~
-			$(sed -ne "\\~^$1 ~p" <"$tg_ref_cache")
-		~EOT~
-		return 1
+		LC_ALL=C awk -v r="$1" 'BEGIN {e=1}; $1 == r {print $2; e=0; exit}; END {exit e}' <"$tg_ref_cache"
+	else
+		git rev-parse --quiet --verify "$1" 2>/dev/null
 	fi
-	git rev-parse --quiet --verify "$1" 2>/dev/null
 }
 
 # ref_exists_rev REF
