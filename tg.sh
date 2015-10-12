@@ -535,6 +535,41 @@ do_eval()
 	eval "$@"
 }
 
+# becomes read-only for caching purposes
+# assigns new value to tg_read_only
+# become_cacheable/undo_become_cacheable calls may be nested
+become_cacheable()
+{
+	_old_tg_read_only="$tg_read_only"
+	if [ -z "$tg_read_only" ]; then
+		rm -rf "$tg_tmp_dir/cached" "$tg_tmp_dir/tg~ref-dirs-created"
+		tg_read_only=1
+	fi
+	_my_ref_cache="$(create_ref_cache)"
+	_my_ref_cache="${_my_ref_cache:+1}"
+	tg_read_only="undo${_my_ref_cache:-0}-$_old_tg_read_only"
+}
+
+# restores tg_read_only and ref_cache to state before become_cacheable call
+# become_cacheable/undo_bocome_cacheable calls may be nested
+undo_become_cacheable()
+{
+	case "$tg_read_only" in
+		"undo"[01]"-"*)
+			_suffix="${tg_read_only#undo?-}"
+			[ "${tg_read_only%$_suffix}" = "undo0-" ] || remove_ref_cache
+			tg_read_only="$_suffix"
+	esac
+}
+
+# just call this, no undo, sets tg_read_only= and removes ref cache and cached results
+become_non_cacheable()
+{
+	remove_ref_cache
+	tg_read_only=
+	rm -rf "$tg_tmp_dir/cached" "$tg_tmp_dir/tg~ref-dirs-created"
+}
+
 # recurse_deps CMD NAME [BRANCHPATH...]
 # Recursively eval CMD on all dependencies of NAME.
 # Dependencies are visited in topological order.
@@ -553,14 +588,10 @@ recurse_deps()
 {
 	_cmd="$1"; shift
 
-	_was_read_only="$tg_read_only"
-	[ -n "$_was_read_only" ] || rm -rf "$tg_tmp_dir/cached" "$tg_tmp_dir/tg~ref-dirs-created"
-	tg_read_only=1
-	_my_ref_cache="$(create_ref_cache)"
+	become_cacheable
 	_depsfile="$(get_temp tg-depsfile)"
 	recurse_deps_internal "$@" >>"$_depsfile"
-	[ -z "$_my_ref_cache" ] || remove_ref_cache
-	tg_read_only="$_was_read_only"
+	undo_become_cacheable
 
 	_ret=0
 	while read _ismissing _istgish _dep _name _deppath; do
