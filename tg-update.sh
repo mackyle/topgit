@@ -50,6 +50,9 @@ recursive_update() {
 }
 
 update_branch() {
+	# We are cacheable until the first change
+	become_cacheable
+
 	_update_name="$1"
 	## First, take care of our base
 
@@ -83,6 +86,7 @@ update_branch() {
 			while read depline; do
 				action="$(echo "$depline" | cut -c 1)"
 				dep="$(echo "$depline" | cut -c 2-)"
+				become_non_cacheable
 
 				# We do not distinguish between dependencies out-of-date
 				# and base/remote out-of-date cases for $dep here,
@@ -168,6 +172,7 @@ update_branch() {
 			info "The $_update_name head is up-to-date wrt. its remote branch."
 		else
 			info "Reconciling remote branch updates with $_update_name base..."
+			become_non_cacheable
 			# *DETACH* our HEAD now!
 			git checkout -q "refs/top-bases/$_update_name"
 			if ! git merge "$_rname"; then
@@ -191,6 +196,7 @@ update_branch() {
 		return 0
 	fi
 	info "Updating $_update_name against new base..."
+	become_non_cacheable
 	if ! git merge "$merge_with"; then
 		if [ -z "$TG_RECURSIVE" ]; then
 			info "Please commit merge resolution. No need to do anything else"
@@ -203,6 +209,10 @@ update_branch() {
 		exit 4
 	fi
 }
+
+# We are "read-only" and cacheable until the first change
+tg_read_only=1
+create_ref_cache
 
 [ -z "$all" ] && { update_branch $name; exit; }
 
