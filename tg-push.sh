@@ -74,6 +74,7 @@ push_branch()
 		echo "top-bases/$_dep" >> "$_listfile"
 }
 
+no_remotes=1
 for name in $branches; do
 	# current branch
 	# re-use push_branch, which expects some pre-defined variables
@@ -86,7 +87,7 @@ for name in $branches; do
 
 	# deps but only if branch is tgish
 	$recurse_deps && [ -n "$_dep_is_tgish" ] &&
-		no_remotes=1 recurse_deps push_branch "$name"
+		recurse_deps push_branch "$name"
 done
 
 # remove multiple occurrences of the same branch
