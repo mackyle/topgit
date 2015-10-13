@@ -18,7 +18,7 @@ exclude=
 
 usage()
 {
-	echo "Usage: ${tgname:-tg} [...] summary [-t | --sort | --deps | --rdeps | --graphviz] [-i | -w] [--exclude branch]... [--all | branch...]" >&2
+	echo "Usage: ${tgname:-tg} [...] summary [-t | --list | --sort | --deps | --rdeps | --graphviz] [-i | -w] [--exclude branch]... [--all | branch...]" >&2
 	exit 1
 }
 
@@ -28,7 +28,7 @@ while [ -n "$1" ]; do
 	-i|-w)
 		[ -z "$head_from" ] || die "-i and -w are mutually exclusive"
 		head_from="$arg";;
-	-t)
+	-t|--list)
 		terse=1;;
 	--graphviz)
 		graphviz=1;;
