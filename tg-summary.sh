@@ -10,7 +10,7 @@ sort=
 deps=
 rdeps=
 head_from=
-branch=
+branches=
 head=
 exclude=
 
@@ -18,7 +18,7 @@ exclude=
 
 usage()
 {
-	echo "Usage: ${tgname:-tg} [...] summary [-t | --sort | --deps | --rdeps | --graphviz] [-i | -w] [--exclude branch]... [--all | branch]" >&2
+	echo "Usage: ${tgname:-tg} [...] summary [-t | --sort | --deps | --rdeps | --graphviz] [-i | -w] [--exclude branch]... [--all | branch...]" >&2
 	exit 1
 }
 
@@ -56,22 +56,26 @@ while [ -n "$1" ]; do
 	shift
 done
 [ -z "$exclude" ] || exclude="$exclude "
-[ $# -le 1 ] || usage
-[ $# -ne 1 -o "$1" != "--all" ] || { shift; head=; }
-[ $# -ne 0 -o -z "$head" ] || set -- "$head"
-
-if [ $# -eq 1 ]; then
-	branch="$(verify_topgit_branch "$1")"
+if [ "$1" = "--all" ]; then
+      [ $# -eq 1 ] || usage
+      shift
+      head=
 fi
+[ $# -ne 0 -o -z "$head" ] || set -- "$head"
 
 [ "$terse$graphviz$sort$deps" = "" ] ||
 	[ "$terse$graphviz$sort$deps$rdeps" = "1" ] ||
 	die "mutually exclusive options given"
 
+for b; do
+	[ "$b" != "--all" ] || usage
+	branches="$branches $(verify_topgit_branch "$b")"
+done
+
 get_branch_list()
 {
-	if [ -n "$branch" ]; then
-		echo "$branch"
+	if [ -n "$branches" ]; then
+		printf '%s\n' $branches
 	else
 		non_annihilated_branches
 	fi
@@ -90,7 +94,7 @@ if [ -n "$rdeps" ]; then
 	showbreak=
 	get_branch_list |
 		while read b; do
-			case "$exclude" in *" $branch "*) continue; esac
+			case "$exclude" in *" $b "*) continue; esac
 			[ -z "$showbreak" ] || echo
 			showbreak=1 
 			ref_exists "refs/heads/$b" || continue
@@ -172,12 +176,23 @@ process_branch()
 }
 
 if [ -n "$deps" ]; then
-	case "$exclude" in *" ${branch:-..all..} "*) exit 0; esac
-	list_deps $head_from $branch |
-		while read name dep; do
-			case "$exclude" in *" $dep "*) continue; esac
-			echo "$name $dep"
-		done
+	if [ -n "$branches" ]; then
+		get_branch_list |
+			while read b; do
+				case "$exclude" in *" $b "*) continue; esac
+				list_deps $head_from $b |
+					while read name dep; do
+						case "$exclude" in *" $dep "*) continue; esac
+						echo "$name $dep"
+					done
+			done
+	else
+		list_deps $head_from |
+			while read name dep; do
+				case "$exclude" in *" $dep "*) continue; esac
+				echo "$name $dep"
+			done
+	fi
 	exit 0
 fi
 
