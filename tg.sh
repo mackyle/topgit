@@ -1095,10 +1095,19 @@ else
 			initial_setup
 			[ -z "$noremote" ] || unset base_remote
 
-			# make sure merging the .top* files will always behave sanely
+			nomergesetup=
+			case "$cmd" in info|log|summary|tag)
+				# avoid merge setup where not necessary
 
-			setup_ours
-			setup_hook "pre-commit"
+				nomergesetup=1
+			esac
+
+			if [ -z "$nomergesetup" ]; then
+				# make sure merging the .top* files will always behave sanely
+
+				setup_ours
+				setup_hook "pre-commit"
+			fi
 
 			_use_ref_cache=
 			tg_read_only=1
