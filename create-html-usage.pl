@@ -14,8 +14,8 @@ sub get_tg_usage($)
 	if ( -x "$mydir/tg-$name" ) {
 		my $usage = `"$mydir/tg-$name" -h 2>&1`;
 		chomp $usage;
-		$usage =~ s/^Usage:\s*//i;
-		return $usage;
+		$usage =~ s/^(Usage|\s+Or):\s*//mig;
+		return split "\n", $usage;
 	} elsif ($name eq "help") {
 		return "tg help [-w] [<command>]";
 	}
@@ -26,10 +26,10 @@ while (my $line = <>) {
 	if (defined($last)) {
 		print $last;
 		if ($line =~ /^[~]+$/ && $last =~ /^tg ([^\s]+)$/) {
-			my $usage = get_tg_usage($1);
-			if (defined($usage)) {
+			my @usage = get_tg_usage($1);
+			if (@usage) {
 				print $line;
-				print "\t", '``', $usage, '``', "\n";
+				print map({"\t| ".'``'.$_.'``'."\n"} @usage);
 				$line = "\n";
 			}
 		}

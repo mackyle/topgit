@@ -759,6 +759,61 @@ tg log
 	NOTE: if you have merged changes from a different repository, this
 	command might not list all interesting commits.
 
+tg tag
+~~~~~~
+	Creates a TopGit annotated/signed tag or lists the reflog of one.
+
+	A TopGit annotated tag records the current state of one or more TopGit
+	branches and their dependencies and may be used to revert to the tagged
+	state at any point in the future.
+
+	When reflogs are enabled (the default in a non-bare repository) and
+	combined with the ``--force`` option a single tag name may be used as a
+	sort of TopGit branch state stash.  The special branch name ``--all``
+	may be used to tag the state of all current TopGit branches to
+	facilitate this function and has the side-effect of surpressing the
+	out-of-date check allowing out-of-date branches to be included.
+
+	As a special feature, ``--stash`` may be used as the tag name in which
+	case ``--all`` is implied if no branch name is listed (instead of the
+	normal default of ``HEAD``), ``--force`` and ``--no-edit`` (use
+	``--edit`` to change that) are automatically activated and the tag will
+	be saved to ``refs/tgstash`` instead of ``refs/tags/<tagname>``.
+	The ``--stash`` tag name may also be used with the ``-g``/``--reflog``
+	option.
+
+	A TopGit annotated/signed tag is simply a Git annotated/signed tag with
+	a "TOPGIT REFS" section appended to the end of the tag message (and
+	preceding the signature for signed tags).  PEM-style begin and end
+	lines surround one line per ref where the format of each line is
+	full-hash SP ref-name.  A line will be included for each branch given
+	on the command line and each ref they depend on either directly or
+	indirectly.
+
+	If more than one TopGit branch is given on the command line, a new
+	commit will be created that has an empty tree and all of the given
+	TopGit branches as parents and that commit will be tagged.  If a single
+	TopGit branch is given, then it will be tagged.
+
+	All the options for creating a tag serve the same purpose as their Git
+	equivalents except for two.  The ``--refs`` option suppresses tag
+	creation entirely and emits the "TOPGIT REFS" section that would have
+	been included with the tag.  If the ``--no-edit`` option is given and
+	no message is supplied (via the ``-m`` or ``-F`` option) then the
+	default message created by TopGit will be used without running the
+	editor.
+
+	With ``-g`` or ``--reflog`` show the reflog for a tag.  TopGit tags
+	are created with a reflog if core.logallrefupdates is enabled (the
+	default for non-bare repositories).  Unfortunately Git is incapable
+	of showing a tag's reflog (using git log -g) as it will first resolve
+	the tag before checking to see if it has a reflog.  Git can, however,
+	show reflogs for lightweight tags (using git log -g) just fine but
+	that's not helpful here.  Use the ``-g`` or ``--reflog`` option to see
+	the reflog for an actual tag object.  This also works on non-TopGit
+	annotated/signed tags as well providing they have a reflog.  The number
+	of entries shown may be limited with the ``-n`` option.
+
 tg prev
 ~~~~~~~
 	Outputs the direct dependencies for the current or named branch.

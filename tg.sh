@@ -878,6 +878,26 @@ get_temp()
 	mktemp $2 "$tg_tmp_dir/$1.XXXXXX"
 }
 
+# $1 => strftime format string to use
+# $2 => raw timestamp as seconds since epoch
+# $3 => optional time zone string (empty/absent for local time zone)
+strftime()
+{
+	if [ -n "$daterawopt" ]; then
+		if [ -n "$3" ]; then
+			TZ="$3" date "$daterawopt$2" "+$1"
+		else
+			date "$daterawopt$2" "+$1"
+		fi
+	else
+		if [ -n "$3" ]; then
+			TZ="$3" perl -MPOSIX=strftime -le 'print strftime($ARGV[0],localtime($ARGV[1]))' "$1" "$2"
+		else
+			perl -MPOSIX=strftime -le 'print strftime($ARGV[0],localtime($ARGV[1]))' "$1" "$2"
+		fi
+	fi
+}
+
 ## Initial setup
 initial_setup()
 {
@@ -889,6 +909,17 @@ initial_setup()
 	root_dir="$(git rev-parse --show-cdup)"; root_dir="${root_dir:-.}"
 	logrefupdates="$(git config --bool core.logallrefupdates 2>/dev/null || :)"
 	[ "$logrefupdates" = "true" ] || logrefupdates=
+
+	# date option to format raw epoch seconds values
+	daterawopt=
+	_testes='951807788'
+	_testdt='2000-02-29 07:03:08 UTC'
+	_testfm='%Y-%m-%d %H:%M:%S %Z'
+	if [ "$(TZ=UTC date "-d@$_testes" "+$_testfm" 2>/dev/null)" = "$_testdt" ]; then
+		daterawopt='-d@'
+	elif [ "$(TZ=UTC date "-r$_testes" "+$_testfm" 2>/dev/null)" = "$_testdt" ]; then
+		daterawopt='-r'
+	fi
 
 	# make sure root_dir doesn't end with a trailing slash.
 
@@ -1072,7 +1103,7 @@ else
 			_use_ref_cache=
 			tg_read_only=1
 			case "$cmd" in
-				summary|info|export)
+				summary|info|export|tag)
 					_use_ref_cache=1;;
 				annihilate|create|delete|depend|import|update)
 					tg_read_only=;;
