@@ -488,8 +488,11 @@ is_sha1()
 #   0 1 t/foo/leaf t/foo/int t/stage
 # If no_remotes is non-empty, exclude remotes
 # If recurse_preorder is non-empty, do a preorder rather than postorder traversal
+# any branch names in the space-separated recurse_deps_exclude variable
+# are skipped (along with their dependencies)
 recurse_deps_internal()
 {
+	case " $recurse_deps_exclude " in *" $1 "*) return 0; esac
 	_ref_hash=
 	if ! _ref_hash="$(ref_exists_rev "refs/heads/$1")"; then
 		[ -z "$2" ] || echo "1 0 $*"
@@ -578,6 +581,8 @@ become_non_cacheable()
 # them to space-separated $missing_deps list and skip them
 # after calling CMD with _dep_missing set.
 # remote dependencies are processed if no_remotes is unset.
+# any branch names in the space-separated recurse_deps_exclude variable
+# are skipped (along with their dependencies)
 recurse_deps()
 {
 	_cmd="$1"; shift
