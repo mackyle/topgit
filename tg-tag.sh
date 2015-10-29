@@ -274,6 +274,8 @@ run_editor()
 
 show_dep()
 {
+	case " $seen_deps " in *" $_dep "*) return 0; esac
+	seen_deps="${seen_deps:+$seen_deps }$_dep"
 	printf 'refs/heads/%s refs/heads/%s\n' "$_dep" "$_dep"
 	[ -z "$_dep_is_tgish" ] || \
 	printf 'refs/top-bases/%s refs/top-bases/%s\n' "$_dep" "$_dep"
@@ -282,9 +284,12 @@ show_dep()
 show_deps()
 {
 	no_remotes=1
+	recurse_deps_exclude=
 	for _b; do
+		seen_deps=
 		_dep="$_b"; _dep_is_tgish=1; show_dep
 		recurse_deps show_dep "$_b"
+		recurse_deps_exclude="$recurse_deps_exclude $seen_deps"
 	done
 }
 
