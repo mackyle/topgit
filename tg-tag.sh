@@ -194,6 +194,17 @@ if [ -n "$reflog" ]; then
 	showref="$(git rev-parse --abbrev-ref=strict "$refname")"
 	[ -s "$git_dir/logs/$refname" ] || \
 	die "no reflog present for ref: $refname"
+	hashcolor=
+	resetcolor=
+	if git config --get-colorbool color.tgtag; then
+		metacolor="$(git config --get-color color.tgtag.meta)"
+		[ -n "$metacolor" ] || metacolor="$(git config --get-color color.diff.meta "bold")"
+		hashcolor="$(git config --get-color color.tgtag.commit)"
+		[ -n "$hashcolor" ] || hashcolor="$(git config --get-color color.diff.commit "yellow")"
+		datecolor="$(git config --get-color color.tgtag.date "bold blue")"
+		timecolor="$(git config --get-color color.tgtag.time "green")"
+		resetcolor="$(git config --get-color "" reset)"
+	fi
 	setup_pager
 	cut -f 1 <"$git_dir/logs/$refname" | cut -d ' ' -f 2- | \
 	awk '{a[i++]=$0} END {for (j=i-1; j>=0;) print a[j--]}' | \
@@ -212,7 +223,8 @@ if [ -n "$reflog" ]; then
 			obj="${newrev#????????}"
 			obj="${newrev%$obj}"
 			extra=
-			[ "$type" = "tag" ] || extra="($type) "
+			[ "$type" = "tag" ] || \
+			extra="$hashcolor($metacolor$type$resetcolor$hashcolor)$resetcolor "
 			msg=
 			if [ "$type" = "tag" ]; then
 				msg="$(git cat-file tag "$obj" | \
@@ -224,10 +236,11 @@ if [ -n "$reflog" ]; then
 				$(strftime "%Y-%m-%d %H:%M:%S" "$es")
 			EOT
 			if [ "$lastdate" != "$newdate" ]; then
-				printf '=== %s ===\n' "$newdate"
+				printf '%s=== %s ===%s\n' "$datecolor" "$newdate" "$resetcolor"
 				lastdate="$newdate"
 			fi
-			printf '%s %s %s%s@{%s}: %s\n' "$obj" "$newtime" \
+			printf '%s %s %s%s@{%s}: %s\n' "$hashcolor$obj$reseutcolor" \
+				"$timecolor$newtime$resetcolor" \
 				"$extra" "$showref" "$stashnum" "$msg"
 			if [ -n "$maxcount" ]; then
 				maxcount=$(( $maxcount - 1 ))
