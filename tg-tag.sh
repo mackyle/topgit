@@ -191,6 +191,7 @@ case "$refname" in refs/tags/*) tagname="${refname#refs/tags/}";; *) reftype=ref
 if [ -n "$reflog" ]; then
 	git rev-parse --verify --quiet "$refname" -- >/dev/null || \
 	die "no such ref: $refname"
+	showref="$(git rev-parse --abbrev-ref=strict "$refname")"
 	[ -s "$git_dir/logs/$refname" ] || \
 	die "no reflog present for ref: $refname"
 	setup_pager
@@ -227,7 +228,7 @@ if [ -n "$reflog" ]; then
 				lastdate="$newdate"
 			fi
 			printf '%s %s %s%s@{%s}: %s\n' "$obj" "$newtime" \
-				"$extra" "$tagname" "$stashnum" "$msg"
+				"$extra" "$showref" "$stashnum" "$msg"
 			if [ -n "$maxcount" ]; then
 				maxcount=$(( $maxcount - 1 ))
 				[ $maxcount -gt 0 ] || break
