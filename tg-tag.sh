@@ -242,6 +242,7 @@ if [ $# -eq 1 ] && [ "$1" = "--all" ]; then
 	set -- $(git for-each-ref --format="%(refname)" refs/top-bases |
 		sed -e 's,^refs/top-bases/,,')
 	outofdateok=1
+	[ $# -ge 1 ] || die "no TopGit branches found"
 fi
 branches=
 for b; do
