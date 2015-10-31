@@ -23,6 +23,11 @@ info()
 	echo "${TG_RECURSIVE}${tgname:-tg}: $*"
 }
 
+warn()
+{
+	info "warning: $*" >&2
+}
+
 die()
 {
 	info "fatal: $*" >&2
@@ -1101,7 +1106,7 @@ else
 			[ -z "$noremote" ] || unset base_remote
 
 			nomergesetup=
-			case "$cmd" in info|log|summary|tag)
+			case "$cmd" in info|log|summary|rebase|tag)
 				# avoid merge setup where not necessary
 
 				nomergesetup=1

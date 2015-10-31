@@ -625,9 +625,9 @@ tg export
 
 	To avoid conflicts produced by ``--linearize`` (or by applying the
 	``--quilt`` output), use the default ``--collapse`` mode and then use
-	``git rebase -m`` on the collapsed branch (with a suitable <upstream>)
-	followed by ``git format-patch`` on the rebased result to produce a
-	conflict-free patch set.
+	``tg rebase`` (or ``git rebase -m`` directly) on the collapsed branch
+	(with a suitable <upstream>) followed by ``git format-patch`` on the
+	rebased result to produce a conflict-free patch set.
 
 	You have enabled ``git rerere`` haven't you?
 
@@ -820,6 +820,41 @@ tg tag
 	of entries shown may be limited with the ``-n`` option.  If the tagname
 	is omitted then ``--stash`` is assumed and ``--reflog-message`` will
 	be implied (use ``--no-reflog-message`` to change that).
+
+tg rebase
+~~~~~~~~~
+	Provides a ``git rebase`` rerere auto continue function.  It may be
+	used as a drop-in replacement front-end for ``git rebase -m`` that
+	automatically continues the rebase when ``git rerere`` information is
+	sufficient to resolve all conflicts.
+
+	You have enabled ``git rerere`` haven't you?
+
+	If the ``-m`` or ``--merge`` option is not present then ``tg rebase``
+	will complain and not do anything.
+
+	When ``git rerere`` is enabled, previously resolved conflicts are
+	remembered and can be automatically staged (see ``rerere.autoUpdate``).
+
+	However, even with auto staging, ``git rebase`` still stops and
+	requires an explicit ``git rebase --continue`` to keep going.
+
+	In the case where ``git rebase -m`` is being used to flatten history
+	(such as after a ``tg export --collapse`` prior to a
+	``git format-patch``), there's a good chance all conflicts have already
+	been resolved during normal merge maintenance operations so there's no
+	reason ``git rebase`` could not automatically continue, but there's no
+	option to make it do so.
+
+	The ``tg rebase`` command provides a ``git rebase --auto-continue``
+	function.
+
+	All the same rebase options can be used (they are simply passed through
+	to Git unchanged).  However, the ``rerere.autoUpdate`` option is
+	automatically temporarily enabled while running ``git rebase`` and
+	should ``git rebase`` stop asking one to resolve and continue, but all
+	conflicts have already been resolved and staged using rerere
+	information, then ``git rebase --continue`` will be automatically run.
 
 tg prev
 ~~~~~~~
