@@ -761,7 +761,8 @@ do_help()
 		done
 
 		echo "TopGit version $TG_VERSION - A different patch queue manager"
-		echo "Usage: $tgname ( help [-w] [<command>] | [-C <dir>] [-r <remote>] ($cmds) ...)"
+		echo "Usage: $tgname [-C <dir>] [-r <remote> | -u] [-c <name>=<val>] ($cmds) ..."
+		echo "   Or: $tgname help [-w] [<command>]"
 		echo "Use \"$tgdisplaydir$tgname help tg\" for overview of TopGit"
 	elif [ -r "@cmddir@"/tg-$1 -o -r "@sharedir@/tg-$1.txt" ] ; then
 		if [ -n "$_www" ]; then
@@ -1063,6 +1064,18 @@ else
 			[ -z "$explicit_remote" ] || tgdisplay="$tgdisplay -r $explicit_remote"
 			[ -z "$noremote" ] || tg="$tg -u"
 			[ -z "$noremote" ] || tg="$tgdisplay -u"
+			shift;;
+
+		-c)
+			shift
+			if [ -z "$1" ]; then
+				echo "Option -c requires an argument." >&2
+				do_help
+				exit 1
+			fi
+			param="'$(printf '%s\n' "$1" | sed "s/[']/'\\\\''/g")'"
+			GIT_CONFIG_PARAMETERS="${GIT_CONFIG_PARAMETERS:+$GIT_CONFIG_PARAMETERS }$param"
+			export GIT_CONFIG_PARAMETERS
 			shift;;
 
 		--)
