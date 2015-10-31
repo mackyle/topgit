@@ -92,6 +92,7 @@ BEGIN      { in_hunk = 0; }
 		# therefore no endless loop in the cycle-check
 		no_remotes=1 recurse_deps check_cycle_name "$newly_added"
 	done
+test $? -eq 0
 
 # check for repetitions of deps
 depdir="$(get_temp tg-depdir -d)" ||
