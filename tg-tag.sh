@@ -6,7 +6,7 @@
 lf="$(printf '\n.')" && lf="${lf%?}"
 tab="$(printf '\t.')" && tab="${tab%?}"
 USAGE="Usage: ${tgname:-tg} [...] tag [-s | -u <key-id>] [-f] [--no-edit] [-m <msg> | -F <file>] (<tagname> | --refs) [<branch>...]"
-USAGE="$USAGE$lf   Or: ${tgname:-tg} [...] tag (-g | --reflog) [--reflog-message] [--no-type] [-n <number> | -number] <tagname>"
+USAGE="$USAGE$lf   Or: ${tgname:-tg} [...] tag (-g | --reflog) [--reflog-message] [--no-type] [-n <number> | -number] [<tagname>]"
 
 usage()
 {
@@ -35,6 +35,7 @@ defbranch=HEAD
 stash=
 reflogmsg=
 notype=
+setreflogmsg=
 
 is_numeric()
 {
@@ -59,6 +60,11 @@ while [ $# -gt 0 ]; do case "$1" in
 		;;
 	--reflog-message)
 		reflogmsg=1
+		setreflogmsg=1
+		;;
+	--no-reflog-message)
+		reflogmsg=
+		setreflogmsg=1
 		;;
 	--no-type)
 		notype=1
@@ -183,11 +189,12 @@ esac; shift; done
 [ -n "$noedit" ] || noedit="$defnoedit"
 [ "$noedit" != "0" ] || noedit=
 [ -z "$reflog" -o -z "$signed$keyid$force$msg$msgfile$noedit$refsonly$outofdateok" ] || usage 1
-[ -n "$reflog" -o -z "$reflogmsg$notype$maxcount" ] || usage 1
+[ -n "$reflog" -o -z "$setreflogmsg$notype$maxcount" ] || usage 1
 [ -z "$maxcount" ] || is_numeric "$maxcount" || die "invalid count: $maxcount"
 [ -z "$maxcount" ] || [ $maxcount -gt 0 ] || die "invalid count: $maxcount"
 [ -z "$msg" -o -z "$msgfile" ] || die "only one -F or -m option is allowed."
 [ -z "$refsonly" ] || set -- refs..only "$@"
+[ $# -gt 0 -o -z "$reflog" ] || set -- --stash
 [ -n "$1" ] || { echo "Tag name required" >&2; usage 1; }
 tagname="$1"
 shift
@@ -198,6 +205,7 @@ reftype=tag
 case "$refname" in refs/tags/*) tagname="${refname#refs/tags/}";; *) reftype=ref; esac
 [ -z "$reflog" -o $# -eq 0 ] || usage 1
 if [ -n "$reflog" ]; then
+	[ "$tagname" != "refs/tgstash" -o -n "$setreflogmsg" ] || reflogmsg=1
 	git rev-parse --verify --quiet "$refname" -- >/dev/null || \
 	die "no such ref: $refname"
 	showref="$(git rev-parse --abbrev-ref=strict "$refname")"

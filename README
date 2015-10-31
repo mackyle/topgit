@@ -805,7 +805,7 @@ tg tag
 
 	With ``-g`` or ``--reflog`` show the reflog for a tag.  Unlike
 	``git log -g``, ``tg tag --reflog`` normally shows the message from the
-	tag (if a tag) or the commmit (if a commit) if available rather than
+	tag (if a tag) or the commit (if a commit) if available rather than
 	the message from the reflog itself.  With ``--reflog-message`` only
 	show the message (if any) from the reflog.  Non-tag entries are
 	annotated with their type unless ``--no-type`` is given.  TopGit tags
@@ -817,7 +817,9 @@ tg tag
 	that's not helpful here.  Use the ``-g`` or ``--reflog`` option to see
 	the reflog for an actual tag object.  This also works on non-TopGit
 	annotated/signed tags as well provided they have a reflog.  The number
-	of entries shown may be limited with the ``-n`` option.
+	of entries shown may be limited with the ``-n`` option.  If the tagname
+	is omitted then ``--stash`` is assumed and ``--reflog-message`` will
+	be implied (use ``--no-reflog-message`` to change that).
 
 tg prev
 ~~~~~~~
