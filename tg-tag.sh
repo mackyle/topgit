@@ -4,8 +4,9 @@
 # GPLv2
 
 lf="$(printf '\n.')" && lf="${lf%?}"
+tab="$(printf '\t.')" && tab="${tab%?}"
 USAGE="Usage: ${tgname:-tg} [...] tag [-s | -u <key-id>] [-f] [--no-edit] [-m <msg> | -F <file>] (<tagname> | --refs) [<branch>...]"
-USAGE="$USAGE$lf   Or: ${tgname:-tg} [...] tag (-g | --reflog) [-n <number> | -number] <tagname>"
+USAGE="$USAGE$lf   Or: ${tgname:-tg} [...] tag (-g | --reflog) [--reflog-message] [--no-type] [-n <number> | -number] <tagname>"
 
 usage()
 {
@@ -32,6 +33,8 @@ reflog=
 outofdateok=
 defbranch=HEAD
 stash=
+reflogmsg=
+notype=
 
 is_numeric()
 {
@@ -53,6 +56,12 @@ while [ $# -gt 0 ]; do case "$1" in
 		;;
 	-g|--reflog)
 		reflog=1
+		;;
+	--reflog-message)
+		reflogmsg=1
+		;;
+	--no-type)
+		notype=1
 		;;
 	-s|--sign)
 		signed=1
@@ -174,7 +183,7 @@ esac; shift; done
 [ -n "$noedit" ] || noedit="$defnoedit"
 [ "$noedit" != "0" ] || noedit=
 [ -z "$reflog" -o -z "$signed$keyid$force$msg$msgfile$noedit$refsonly$outofdateok" ] || usage 1
-[ -n "$reflog" -o -z "$maxcount" ] || usage 1
+[ -n "$reflog" -o -z "$reflogmsg$notype$maxcount" ] || usage 1
 [ -z "$maxcount" ] || is_numeric "$maxcount" || die "invalid count: $maxcount"
 [ -z "$maxcount" ] || [ $maxcount -gt 0 ] || die "invalid count: $maxcount"
 [ -z "$msg" -o -z "$msgfile" ] || die "only one -F or -m option is allowed."
@@ -206,15 +215,18 @@ if [ -n "$reflog" ]; then
 		resetcolor="$(git config --get-color "" reset)"
 	fi
 	setup_pager
-	cut -f 1 <"$git_dir/logs/$refname" | cut -d ' ' -f 2- | \
+	sed 's/[^ ][^ ]* //' <"$git_dir/logs/$refname" | \
 	awk '{a[i++]=$0} END {for (j=i-1; j>=0;) print a[j--]}' | \
 	git cat-file --batch-check='%(objectname) %(objecttype) %(rest)' | \
 	{
 		stashnum=-1
 		lastdate=
-		while read -r newrev type cmmttr; do
+		while read -r newrev type rest; do
 			stashnum=$(( $stashnum + 1 ))
 			[ "$type" != "missing" ] || continue
+			IFS="$tab" read -r cmmttr msg <<-~EOT~
+				$rest
+				~EOT~
 			ne="${cmmttr% *}"
 			ne="${ne% *}"
 			es="${cmmttr#$ne}"
@@ -223,14 +235,17 @@ if [ -n "$reflog" ]; then
 			obj="${newrev#????????}"
 			obj="${newrev%$obj}"
 			extra=
-			[ "$type" = "tag" ] || \
+			[ "$type" = "tag" -o -n "$notype" ] || \
 			extra="$hashcolor($metacolor$type$resetcolor$hashcolor)$resetcolor "
-			msg=
-			if [ "$type" = "tag" ]; then
-				msg="$(git cat-file tag "$obj" | \
-					sed '1,/^$/d' | sed '/^$/,$d')"
-			elif [ "$type" = "commit" ]; then
-				msg="$(git log -n 1 --format='format:%s' "$obj" --)"
+			if [ -z "$reflogmsg" -o -z "$msg" ]; then
+				objmsg=
+				if [ "$type" = "tag" ]; then
+					objmsg="$(git cat-file tag "$obj" | \
+						sed '1,/^$/d' | sed '/^$/,$d')"
+				elif [ "$type" = "commit" ]; then
+					objmsg="$(git log -n 1 --format='format:%s' "$obj" --)"
+				fi
+				[ -z "$objmsg" ] || msg="$objmsg"
 			fi
 			read newdate newtime <<-EOT
 				$(strftime "%Y-%m-%d %H:%M:%S" "$es")
