@@ -348,10 +348,15 @@ elif [ -n "$msg" ]; then
 else
 	case "$branches" in
 	*" "*)
-		printf '%s\n' "tag tg branches" ""
-		for b in $branches; do
-			printf '%s\n' "$b"
-		done
+		if [ ${#branches} -le 60 ]; then
+			printf '%s\n' "tag tg branches $branches"
+			printf '%s\n' "$updmsg"
+		else
+			printf '%s\n' "tag $(( $(printf '%s' "$branches" | wc -w) )) tg branches" ""
+			for b in $branches; do
+				printf '%s\n' "$b"
+			done
+		fi
 		;;
 	*)
 		printf '%s\n' "tag tg branch $branches"
@@ -402,7 +407,7 @@ if [ -n "$logrefupdates" ]; then
 	mkdir -p "$git_dir/logs/$(dirname "$refname")" 2>/dev/null || :
 	{ >>"$git_dir/logs/$refname" || :; } 2>/dev/null
 fi
-if [ "$reftype" = "tag" ]; then
+if [ "$reftype" = "tag" -a -n "$signed" ]; then
 	git tag -F "$git_dir/TGTAG_FINALMSG" ${signed:+-s} ${force:+-f} \
 		${keyid:+-u} ${keyid} "$tagname" "$tagtarget"
 else
@@ -418,7 +423,20 @@ else
 			cat "$git_dir/TGTAG_FINALMSG"
 		} | git mktag)" || die "git mktag failed"
 	old="$(git rev-parse --verify --short --quiet "$refname" || :)"
-	git update-ref -m "tg tag update" "$refname" "$newtag"
-	[ -z "$old" ] || printf "Updated ref '%s' (was %s)\n" "$refname" "$old"
+	updmsg=
+	case "$branches" in
+	*" "*)
+		if [ ${#branches} -le 100 ]; then
+			updmsg="$(printf '%s\n' "tgtag: $branches")"
+		else
+			updmsg="$(printf '%s\n' "tgtag: $(( $(printf '%s' "$branches" | wc -w) )) branches")"
+		fi
+		;;
+	*)
+		updmsg="$(printf '%s\n' "tgtag: $branches")"
+		;;
+	esac
+	git update-ref -m "$updmsg" "$refname" "$newtag"
+	[ -z "$old" ] || printf "Updated $reftype '%s' (was %s)\n" "$tagname" "$old"
 fi
 rm -f "$git_dir/TAG_EDITMSG" "$git_dir/TGTAG_FINALMSG"
