@@ -857,7 +857,7 @@ setup_pager()
 	# Set pager default environment variables
 	# see pager.c:setup_pager
 	if [ -z "${LESS+set}" ]; then
-		LESS="-FRSX"
+		LESS="-FRX"
 		export LESS
 	fi
 	if [ -z "${LV+set}" ]; then
