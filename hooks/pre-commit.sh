@@ -77,7 +77,7 @@ BEGIN      { in_hunk = 0; }
 /^[^@ +-]/ { in_hunk = 0; }
 ' |
 	while read newly_added; do
-		ref_exists "$newly_added" ||
+		ref_exists "refs/heads/$newly_added" ||
 			die "Invalid branch as dependent: $newly_added"
 
 		# check for self as dep
