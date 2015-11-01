@@ -659,7 +659,7 @@ tg export
 	topgit branch.  So usually they end up in subdirectories of the
 	output directory.  With the ``--flatten`` option the names are
 	mangled so that they end up directly in the output dir (slashes
-	are substituted by underscores).  With the ``--strip[=N]`` option
+	are replaced with underscores).  With the ``--strip[=N]`` option
 	the first ``N`` subdirectories (all if no ``N`` is given) get
 	stripped off.  Names are always ``--strip``'d before being
 	``--flatten``'d.  With the option ``--numbered`` (which implies
