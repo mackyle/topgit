@@ -216,8 +216,17 @@ setup_hook()
 		return
 	fi
 	# Prepare incantation
-	if [ -x "$git_dir/hooks/$1" ]; then
+	hook_chain=
+	if [ -s "$git_dir/hooks/$1" -a -x "$git_dir/hooks/$1" ]; then
 		hook_call="$hook_call"' || exit $?'
+		if ! LC_ALL=C sed -n 1p <"$git_dir/hooks/$1" | LC_ALL=C fgrep -qx "#!@SHELL_PATH@"; then
+			chain_num=
+			while [ -e "$git_dir/hooks/$1-chain$chain_num" ]; do
+				chain_num=$(( $chain_num + 1 ))
+			done
+			cp -p "$git_dir/hooks/$1" "$git_dir/hooks/$1-chain$chain_num"
+			hook_chain=1
+		fi
 	else
 		hook_call="exec $hook_call"
 	fi
@@ -227,7 +236,11 @@ setup_hook()
 	{
 		echo "#!@SHELL_PATH@"
 		echo "$hook_call"
-		[ ! -s "$git_dir/hooks/$1" ] || cat "$git_dir/hooks/$1"
+		if [ -n "$hook_chain" ]; then
+			echo "exec \"\$0-chain$chain_num\" \"\$@\""
+		else
+			[ ! -s "$git_dir/hooks/$1" ] || cat "$git_dir/hooks/$1"
+		fi
 	} >"$git_dir/hooks/$1+"
 	chmod a+x "$git_dir/hooks/$1+"
 	mv "$git_dir/hooks/$1+" "$git_dir/hooks/$1"
