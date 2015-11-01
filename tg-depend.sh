@@ -13,7 +13,7 @@ usage()
 
 ## Parse options
 
-subcmd="$1"; shift || :
+subcmd="$1"
 case "$subcmd" in
 	-h|"")
 		usage;;
@@ -22,6 +22,7 @@ case "$subcmd" in
 	*)
 		die "unknown subcommand ($subcmd)";;
 esac
+shift
 
 while [ -n "$1" ]; do
 	arg="$1"; shift

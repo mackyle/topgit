@@ -1102,7 +1102,7 @@ else
 
 	esac; done
 
-	[ -n "$cmd" ] || { cmd="$1"; shift || :; }
+	[ -n "$cmd" -o $# -lt 1 ] || { cmd="$1"; shift; }
 
 	## Dispatch
 
