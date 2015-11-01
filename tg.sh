@@ -225,7 +225,7 @@ setup_hook()
 	hook_call="if which \"$tgname\" > /dev/null; then $hook_call; fi"
 	# Insert call into the hook
 	{
-		echo "#!/bin/sh"
+		echo "#!@SHELL_PATH@"
 		echo "$hook_call"
 		[ ! -s "$git_dir/hooks/$1" ] || cat "$git_dir/hooks/$1"
 	} >"$git_dir/hooks/$1+"

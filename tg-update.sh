@@ -111,7 +111,7 @@ update_branch() {
 						info "You are in a subshell. If you abort the merge,"
 						info "use \`exit 1\` to abort the recursive update altogether."
 						info "Use \`exit 2\` to skip updating this branch and continue."
-						if "${SHELL:-/bin/sh}" -i </dev/tty; then
+						if "${SHELL:-@SHELL_PATH@}" -i </dev/tty; then
 							# assume user fixed it
 							# we could be left on a detached HEAD if we were resolving
 							# a conflict while merging a base in, fix it with a checkout

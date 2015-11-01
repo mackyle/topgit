@@ -285,7 +285,7 @@ linearize()
 			if test "x$retmerge" != "x0"; then
 				echo "fix up the merge, commit and then exit."
 				#todo error handling
-				"${SHELL:-/bin/sh}" -i </dev/tty
+				"${SHELL:-@SHELL_PATH@}" -i </dev/tty
 			fi
 		fi
 	else
@@ -297,7 +297,7 @@ linearize()
 			git rerere
 			echo "fix up the merge, update the index and then exit.  Don't commit!"
 			#todo error handling
-			"${SHELL:-/bin/sh}" -i </dev/tty
+			"${SHELL:-@SHELL_PATH@}" -i </dev/tty
 			git rerere
 		fi
 

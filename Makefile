@@ -22,9 +22,15 @@ hooks_out = $(patsubst %.sh,%,$(hooks_in))
 help_out = $(patsubst %.sh,%.txt,tg-help.sh $(commands_in))
 html_out = $(patsubst %.sh,%.html,tg-help.sh tg-tg.sh $(commands_in))
 
+ifndef SHELL_PATH
+	SHELL_PATH = /bin/sh
+endif
+SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
+
 version := $(shell test -d .git && git describe --match "topgit-[0-9]*" --abbrev=4 --dirty 2>/dev/null | sed -e 's/^topgit-//' )
 
 -include config.mak
+SHELL = $(SHELL_PATH)
 
 ifneq ($(strip $(version)),)
 	version_arg = -e s/TG_VERSION=.*/TG_VERSION=$(version)/
@@ -32,14 +38,21 @@ endif
 
 .PHONY: FORCE
 
-all::	precheck $(commands_out) $(hooks_out) $(help_out)
+all::	shell_compatibility_test precheck $(commands_out) $(hooks_out) $(help_out)
+
+please_set_SHELL_PATH_to_a_more_modern_shell:
+	@$$(:)
+
+shell_compatibility_test: please_set_SHELL_PATH_to_a_more_modern_shell
 
 tg $(commands_out) $(hooks_out): % : %.sh Makefile TG-PREFIX
 	@echo "[SED] $@"
-	@sed -e 's#@cmddir@#$(cmddir)#g;' \
+	@sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
+		-e 's#@cmddir@#$(cmddir)#g;' \
 		-e 's#@hooksdir@#$(hooksdir)#g' \
 		-e 's#@bindir@#$(bindir)#g' \
 		-e 's#@sharedir@#$(sharedir)#g' \
+		-e 's|@SHELL_PATH@|$(SHELL_PATH_SQ)|' \
 		$(version_arg) \
 		$@.sh >$@+ && \
 	chmod +x $@+ && \
@@ -48,7 +61,7 @@ tg $(commands_out) $(hooks_out): % : %.sh Makefile TG-PREFIX
 $(help_out): README create-help.sh
 	@CMD=`echo $@ | sed -e 's/tg-//' -e 's/\.txt//'` && \
 	echo '[HELP]' $$CMD && \
-	./create-help.sh $$CMD
+	$(SHELL_PATH) ./create-help.sh $$CMD
 
 .PHONY: html doc
 
@@ -63,7 +76,7 @@ topgit.html: README create-html-usage.pl $(wildcard tg-*.sh)
 $(html_out): create-html.sh
 	@CMD=`echo $@ | sed -e 's/tg-//' -e 's/\.html//'` && \
 	echo '[HTML]' $$CMD && \
-	./create-html.sh $$CMD
+	$(SHELL_PATH) ./create-html.sh $$CMD
 
 .PHONY: precheck
 
@@ -101,7 +114,7 @@ clean::
 	rm -f TG-PREFIX
 
 define TRACK_PREFIX
-$(bindir):$(cmddir):$(hooksdir):$(sharedir):$(version)
+$(bindir):$(cmddir):$(hooksdir):$(sharedir):$(SHELL_PATH):$(version)
 endef
 export TRACK_PREFIX
 
