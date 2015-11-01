@@ -274,7 +274,7 @@ linearize()
 	if [ -z "$_dep_is_tgish" ]; then
 		# merge in $_dep unless already included
 		rev="$(git rev-parse --verify "$_dep")"
-		common="$(git merge-base --all HEAD "$_dep")"
+		common="$(git merge-base --all HEAD "$_dep" || :)"
 		if test "$rev" = "$common"; then
 			# already included, just skip
 			:
