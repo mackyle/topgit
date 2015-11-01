@@ -303,13 +303,6 @@ if [ -z "$outofdateok" ]; then
 fi
 [ -z "$out_of_date" ] || die "all branches to be tagged must be up-to-date"
 
-run_editor()
-{
-	_editor="$GIT_EDITOR"
-	[ -n "$_editor" ] || _editor="$(git var GIT_EDITOR)" || return $?
-	eval "$_editor" '"$@"'
-}
-
 show_dep()
 {
 	case " $seen_deps " in *" $_dep "*) return 0; esac
@@ -387,7 +380,7 @@ EOT
 		} >>"$git_dir/TAG_EDITMSG"
 		stripcomments=1
 		run_editor "$git_dir/TAG_EDITMSG" || \
-		die "there was a problem with the editor '$_editor'"
+		die "there was a problem with the editor '$tg_editor'"
 	fi
 fi
 git stripspace ${stripcomments:+ --strip-comments} \

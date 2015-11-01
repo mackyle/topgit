@@ -732,6 +732,16 @@ switch_to_base()
 	git symbolic-ref HEAD "$_base"
 }
 
+# run editor with arguments
+# the editor setting will be cached in $tg_editor (which is eval'd)
+# result non-zero if editor fails or GIT_EDITOR cannot be determined
+run_editor()
+{
+	tg_editor="$GIT_EDITOR"
+	[ -n "$tg_editor" ] || tg_editor="$(git var GIT_EDITOR)" || return $?
+	eval "$tg_editor" '"$@"'
+}
+
 # Show the help messages.
 do_help()
 {
