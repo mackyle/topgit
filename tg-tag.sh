@@ -200,17 +200,34 @@ tagname="$1"
 shift
 [ "$tagname" != "--stash" ] || tagname=refs/tgstash
 refname="$tagname"
-case "$refname" in HEAD|refs/*) :;; *) refname="refs/tags/$refname"; esac
+case "$refname" in HEAD|refs/*) :;; *)
+	if reftest="$(git rev-parse --revs-only --symbolic-full-name "$refname" -- 2>/dev/null)" && \
+	   [ -n "$reftest" ]; then
+		if [ -n "$reflog" ]; then
+			refname="$reftest"
+		else
+			case "$reftest" in
+			refs/tags/*|refs/tgstash)
+				refname="$reftest"
+				;;
+			*)
+				refname="refs/tags/$refname"
+			esac
+		fi
+	else
+		refname="refs/tags/$refname"
+	fi
+esac
 reftype=tag
-case "$refname" in refs/tags/*) tagname="${refname#refs/tags/}";; *) reftype=ref; esac
+case "$refname" in refs/tags/*) tagname="${refname#refs/tags/}";; *) reftype=ref; tagname="$refname"; esac
 [ -z "$reflog" -o $# -eq 0 ] || usage 1
 if [ -n "$reflog" ]; then
 	[ "$tagname" != "refs/tgstash" -o -n "$setreflogmsg" ] || reflogmsg=1
 	git rev-parse --verify --quiet "$refname" -- >/dev/null || \
 	die "no such ref: $refname"
-	showref="$(git rev-parse --abbrev-ref=strict "$refname")"
 	[ -s "$git_dir/logs/$refname" ] || \
-	die "no reflog present for ref: $refname"
+	die "no reflog present for $reftype: $tagname"
+	showref="$(git rev-parse --abbrev-ref=strict "$refname")"
 	hashcolor=
 	resetcolor=
 	if git config --get-colorbool color.tgtag; then
