@@ -240,8 +240,7 @@ if [ -n "$reflog" ]; then
 			es="${cmmttr#$ne}"
 			es="${es% *}"
 			es="${es# }"
-			obj="${newrev#????????}"
-			obj="${newrev%$obj}"
+			obj="$(git rev-parse --verify --quiet --short "$newrev")"
 			extra=
 			[ "$type" = "tag" -o -n "$notype" ] || \
 			extra="$hashcolor($metacolor$type$resetcolor$hashcolor)$resetcolor "
