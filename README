@@ -857,6 +857,68 @@ tg rebase
 	conflicts have already been resolved and staged using rerere
 	information, then ``git rebase --continue`` will be automatically run.
 
+tg revert
+~~~~~~~~~
+	Provides the ability to revert one or more TopGit branches and their
+	dependents to a previous state contained within a tag created using the
+	``tg tag`` command.  In addition to the actual revert mode operation a
+	list mode operation is also provided to examine a tag's ref contents.
+
+	The default mode (``-l`` or ``--list``) shows the state of one or more
+	of the refs/branches stored in the tag data.  When no refs are given on
+	the command line, all refs in the tag data are shown.  With the special
+	ref name ``--heads`` then the indepedent heads contained in the tag
+	data are shown.  The ``--deps`` option shows the specified refs and all
+	of their dependents in single list with no duplicates.  The ``--rdeps``
+	option shows a display similar to ``tg summary --rdeps`` for each ref
+	or all independent heads if no ref is given on the command line.
+
+	The revert mode has three submodes, dry-run mode (``-n`` or
+	``--dry-run``), force mode (``-f`` or ``--force``) and interactive mode
+	(``-i`` or ``--interactive``).  If ``--dry-run`` (or ``-n``) is given
+	no ref updates will actually be performed but what would have been
+	updated is shown instead.  If ``--interactive`` (or ``-i``) is given
+	then the editor is invoked on an instruction sheet allowing manual
+	selection of the refs to be updated before proceeding.  Since revert is
+	potentially a destructive operation, at least one of the submodes must
+	be specified explicitly.  If no refs are listed on the command line
+	then all refs in the tag data are reverted.  Otherwise the listed refs
+	and all of their dependents (unless ``--no-deps`` is given) are
+	reverted.  Unless ``--no-stash`` is given a new stash will be created
+	using ``tg tag --stash`` (except, of course, in dry-run mode) just
+	before actually performing the updates to facilitate recovery from
+	accidents.
+
+	Both modes accept fully-qualified (i.e. starts with ``refs/``) ref
+	names as well as unqualified names (which will be assumed to be located
+	under ``refs/heads/``).  In revert mode a tgish ref will always have
+	both its ``refs/heads/`` and ``refs/top-bases/`` values included no
+	matter how it's listed unless ``--no-deps`` is given and the ref is
+	fully qualified (i.e. starts with ``refs/``) or one or the other of its
+	values was removed from the instruction sheet in interactive mode.  In
+	list mode a tgish ref will always have both its ``refs/heads/`` and
+	``refs/top-bases/`` values included only when using the ``--deps`` or
+	``--rdeps`` options.
+
+	The ``--tgish-only`` option excludes non-tgish refs (i.e. refs that do
+	not have a ``refs/heads/<name>``, ``refs/top-bases/<name>`` pair).
+
+	The ``--exclude`` option (which can be repeated) excludes specific
+	refs.  If the name given to ``--exclude`` is not fully-qualified (i.e.
+	starts with ``refs/``) then it will exclude both members of a tgish ref
+	pair.
+
+	The ``--quiet`` (or ``-q``) option may be used in revert mode to
+	suppress non-dry-run ref change status messages.
+
+	The special tag name ``--stash`` (as well as with ``@{n}`` suffixes)
+	can be used to refer to ``refs/tgstash``.
+
+	NOTE:  If HEAD points to a ref that is updated by a revert operation
+	then NO WARNING whatsoever will be issued, but the index and working
+	tree will always be left completely untouched (and the reflog for
+	the pointed-to ref can always be used to find the previous value).
+
 tg prev
 ~~~~~~~
 	Outputs the direct dependencies for the current or named branch.

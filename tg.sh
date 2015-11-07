@@ -324,11 +324,13 @@ remove_ref_cache()
 	>"$tg_ref_cache"
 }
 
+# setting tg_ref_cache_only to non-empty will force non-$tg_ref_cache lookups to fail
 rev_parse()
 {
 	if [ -n "$tg_ref_cache" -a -s "$tg_ref_cache" ]; then
 		LC_ALL=C awk -v r="$1" 'BEGIN {e=1}; $1 == r {print $2; e=0; exit}; END {exit e}' <"$tg_ref_cache"
 	else
+		[ -z "$tg_ref_cache_only" ] || return 1
 		git rev-parse --quiet --verify "$1" -- 2>/dev/null
 	fi
 }
@@ -359,6 +361,35 @@ ref_exists_rev()
 	[ -d "$tg_tmp_dir/cached/$1" ] || mkdir -p "$tg_tmp_dir/cached/$1" 2>/dev/null
 	[ ! -d "$tg_tmp_dir/cached/$1" ] || \
 	echo $_result $_result_rev >"$tg_tmp_dir/cached/$1/.ref" 2>/dev/null || :
+	printf '%s' "$_result_rev"
+	return $_result
+}
+
+# Same as ref_exists_rev but output is abbreviated hash
+ref_exists_rev_short()
+{
+	case "$1" in
+		refs/*)
+			:;;
+		$octet20)
+			:;;
+		*)
+			die "ref_exists_rev_short requires fully-qualified ref name"
+	esac
+	[ -n "$tg_read_only" ] || { git rev-parse --quiet --verify --short "$1" -- 2>/dev/null; return; }
+	_result=
+	_result_rev=
+	{ read -r _result _result_rev <"$tg_tmp_dir/cached/$1/.rfs"; } 2>/dev/null || :
+	[ -z "$_result" ] || { printf '%s' "$_result_rev"; return $_result; }
+	_result_rev="$(rev_parse "$1")"
+	_result=$?
+	if [ $_result -eq 0 ]; then
+		_result_rev="$(git rev-parse --verify --short --quiet "$_result_rev" --)"
+		_result=$?
+	fi
+	[ -d "$tg_tmp_dir/cached/$1" ] || mkdir -p "$tg_tmp_dir/cached/$1" 2>/dev/null
+	[ ! -d "$tg_tmp_dir/cached/$1" ] || \
+	echo $_result $_result_rev >"$tg_tmp_dir/cached/$1/.rfs" 2>/dev/null || :
 	printf '%s' "$_result_rev"
 	return $_result
 }
@@ -1142,7 +1173,7 @@ else
 			[ -z "$noremote" ] || unset base_remote
 
 			nomergesetup=
-			case "$cmd" in info|log|summary|rebase|tag)
+			case "$cmd" in info|log|summary|rebase|revert|tag)
 				# avoid merge setup where not necessary
 
 				nomergesetup=1
