@@ -5,7 +5,7 @@
 
 lf="$(printf '\n.')" && lf="${lf%?}"
 tab="$(printf '\t.')" && tab="${tab%?}"
-USAGE="Usage: ${tgname:-tg} [...] tag [-s | -u <key-id>] [-f] [--no-edit] [-m <msg> | -F <file>] (<tagname> | --refs) [<branch>...]"
+USAGE="Usage: ${tgname:-tg} [...] tag [-s | -u <key-id>] [-f] [-q] [--no-edit] [-m <msg> | -F <file>] (<tagname> | --refs) [<branch>...]"
 USAGE="$USAGE$lf   Or: ${tgname:-tg} [...] tag (-g | --reflog) [--reflog-message] [--no-type] [-n <number> | -number] [<tagname>]"
 
 usage()
@@ -36,6 +36,7 @@ stash=
 reflogmsg=
 notype=
 setreflogmsg=
+quiet=
 
 is_numeric()
 {
@@ -54,6 +55,9 @@ is_numeric()
 while [ $# -gt 0 ]; do case "$1" in
 	-h|--help)
 		usage
+		;;
+	-q|--quiet)
+		quiet=1
 		;;
 	-g|--reflog)
 		reflog=1
@@ -425,6 +429,7 @@ if [ -n "$logrefupdates" ]; then
 	{ >>"$git_dir/logs/$refname" || :; } 2>/dev/null
 fi
 if [ "$reftype" = "tag" -a -n "$signed" ]; then
+	[ -z "$quiet" ] || exec >/dev/null
 	git tag -F "$git_dir/TGTAG_FINALMSG" ${signed:+-s} ${force:+-f} \
 		${keyid:+-u} ${keyid} "$tagname" "$tagtarget"
 else
@@ -454,6 +459,6 @@ else
 		;;
 	esac
 	git update-ref -m "$updmsg" "$refname" "$newtag"
-	[ -z "$old" ] || printf "Updated $reftype '%s' (was %s)\n" "$tagname" "$old"
+	[ -z "$old" -o -n "$quiet" ] || printf "Updated $reftype '%s' (was %s)\n" "$tagname" "$old"
 fi
 rm -f "$git_dir/TAG_EDITMSG" "$git_dir/TGTAG_FINALMSG"
