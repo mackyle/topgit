@@ -329,7 +329,7 @@ rev_parse()
 	if [ -n "$tg_ref_cache" -a -s "$tg_ref_cache" ]; then
 		LC_ALL=C awk -v r="$1" 'BEGIN {e=1}; $1 == r {print $2; e=0; exit}; END {exit e}' <"$tg_ref_cache"
 	else
-		git rev-parse --quiet --verify "$1" 2>/dev/null
+		git rev-parse --quiet --verify "$1" -- 2>/dev/null
 	fi
 }
 
@@ -349,7 +349,7 @@ ref_exists_rev()
 		*)
 			die "ref_exists_rev requires fully-qualified ref name"
 	esac
-	[ -n "$tg_read_only" ] || { git rev-parse --quiet --verify "$1" 2>/dev/null; return; }
+	[ -n "$tg_read_only" ] || { git rev-parse --quiet --verify "$1" -- 2>/dev/null; return; }
 	_result=
 	_result_rev=
 	{ read -r _result _result_rev <"$tg_tmp_dir/cached/$1/.ref"; } 2>/dev/null || :
@@ -378,7 +378,7 @@ ref_exists()
 # Caches result if $tg_read_only
 rev_parse_tree()
 {
-	[ -n "$tg_read_only" ] || { git rev-parse "$1^{tree}" 2>/dev/null; return; }
+	[ -n "$tg_read_only" ] || { git rev-parse --verify "$1^{tree}" -- 2>/dev/null; return; }
 	if [ -f "$tg_tmp_dir/cached/$1/.rpt" ]; then
 		if IFS= read -r _result <"$tg_tmp_dir/cached/$1/.rpt"; then
 			printf '%s\n' "$_result"
@@ -388,14 +388,14 @@ rev_parse_tree()
 	fi
 	[ -d "$tg_tmp_dir/cached/$1" ] || mkdir -p "$tg_tmp_dir/cached/$1" 2>/dev/null || :
 	if [ -d "$tg_tmp_dir/cached/$1" ]; then
-		git rev-parse "$1^{tree}" >"$tg_tmp_dir/cached/$1/.rpt" 2>/dev/null || :
+		git rev-parse --verify "$1^{tree}" -- >"$tg_tmp_dir/cached/$1/.rpt" 2>/dev/null || :
 		if IFS= read -r _result <"$tg_tmp_dir/cached/$1/.rpt"; then
 			printf '%s\n' "$_result"
 			return 0
 		fi
 		return 1
 	fi
-	git rev-parse "$1^{tree}" 2>/dev/null
+	git rev-parse --verify "$1^{tree}" -- 2>/dev/null
 }
 
 # has_remote BRANCH

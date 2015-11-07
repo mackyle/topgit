@@ -94,9 +94,9 @@ do
 		die "Unknown range spec $revpair"
 		;;
 	esac
-	git rev-parse --verify "$rev1^0" >/dev/null 2>&1 ||
+	git rev-parse --verify "$rev1^0" -- >/dev/null 2>&1 ||
 		die "Not a valid rev $rev1 ($revpair)"
-	git rev-parse --verify "$rev2^0" >/dev/null 2>&1 ||
+	git rev-parse --verify "$rev2^0" -- >/dev/null 2>&1 ||
 		die "Not a valid rev $rev2 ($revpair)"
 	git cherry -v "$rev1" "$rev2" |
 	while read sign rev comment

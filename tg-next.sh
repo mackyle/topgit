@@ -25,7 +25,7 @@ while [ -n "$1" ]; do
 	esac
 done
 
-head="$(git rev-parse --abbrev-ref=loose HEAD)"
+head="$(git rev-parse --revs-only --abbrev-ref=loose HEAD --)"
 [ -n "$name" ] ||
 	name="$head"
 

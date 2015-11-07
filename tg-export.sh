@@ -87,7 +87,7 @@ done
 if [ -z "$branches" ] && ! "$allbranches"; then
 	# this check is only needed when no branches have been passed
 	name="$(git symbolic-ref HEAD | sed 's#^refs/heads/##')"
-	base_rev="$(git rev-parse --short --verify "refs/top-bases/$name" 2>/dev/null)" ||
+	base_rev="$(git rev-parse --short --verify "refs/top-bases/$name" -- 2>/dev/null)" ||
 		die "not on a TopGit-controlled branch"
 fi
 
@@ -149,7 +149,7 @@ collapsed_commit()
 	>"$playground/^body"
 
 	# Determine parent
-	[ -s "$playground/$name^parents" ] || git rev-parse --verify "refs/top-bases/$name" >> "$playground/$name^parents"
+	[ -s "$playground/$name^parents" ] || git rev-parse --verify "refs/top-bases/$name" -- >> "$playground/$name^parents"
 	parent="$(cut -f 1 "$playground/$name^parents" 2> /dev/null | \
 		while read p; do [ "$(git cat-file -t $p 2> /dev/null)" = tag ] && git cat-file tag $p | head -1 | cut -d' ' -f2 || echo $p; done)"
 	if [ "$(cat "$playground/$name^parents" 2> /dev/null | wc_l)" -gt 1 ]; then
@@ -184,7 +184,7 @@ collapse()
 
 	elif [ -z "$_dep_is_tgish" ]; then
 		# This dep is not for rewrite
-		commit="$(git rev-parse --verify "$_dep")"
+		commit="$(git rev-parse --verify "$_dep" --)"
 
 	else
 		# First time hitting this dep; the common case
@@ -260,20 +260,20 @@ linearize()
 {
 	if test ! -f "$playground/^BASE"; then
 		if [ -n "$_dep_is_tgish" ]; then
-			head="$(git rev-parse --verify "refs/top-bases/$_dep")"
+			head="$(git rev-parse --verify "refs/top-bases/$_dep" --)"
 		else
-			head="$(git rev-parse --verify "refs/heads/$_dep")"
+			head="$(git rev-parse --verify "refs/heads/$_dep" --)"
 		fi
 		echo "$head" > "$playground/^BASE"
 		git checkout -q "$head"
 		[ -n "$_dep_is_tgish" ] || return 0
 	fi
 
-	head=$(git rev-parse --verify HEAD)
+	head=$(git rev-parse --verify HEAD --)
 
 	if [ -z "$_dep_is_tgish" ]; then
 		# merge in $_dep unless already included
-		rev="$(git rev-parse --verify "$_dep")"
+		rev="$(git rev-parse --verify "$_dep" --)"
 		common="$(git merge-base --all HEAD "$_dep" || :)"
 		if test "$rev" = "$common"; then
 			# already included, just skip
@@ -305,7 +305,7 @@ linearize()
 		# testing branch_empty might not always give the right answer.
 		# It can happen that the patch is non-empty but still after
 		# linearizing there is no change.  So compare the trees.
-		if test "x$result_tree" = "x$(git rev-parse $head^{tree})"; then
+		if test "x$result_tree" = "x$(git rev-parse --verify $head^{tree} --)"; then
 			echo "skip empty commit $_dep"
 		else
 			newcommit=$(create_tg_commit "$_dep" "$result_tree" HEAD)
@@ -390,9 +390,9 @@ elif [ "$driver" = "linearize" ]; then
 	git checkout -q $checkout_opt $output
 
 	echo $name
-	if test $(git rev-parse "$(pretty_tree $name)^{tree}") != $(git rev-parse "HEAD^{tree}"); then
+	if test $(git rev-parse --verify "$(pretty_tree $name)^{tree}" --) != $(git rev-parse --verify "HEAD^{tree}" --); then
 		echo "Warning: Exported result doesn't match"
-		echo "tg-head=$(git rev-parse "$name"), exported=$(git rev-parse "HEAD")"
+		echo "tg-head=$(git rev-parse --verify "$name" --), exported=$(git rev-parse --verify "HEAD" --)"
 		#git diff $head HEAD
 	fi
 

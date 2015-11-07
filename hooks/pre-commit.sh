@@ -21,7 +21,7 @@ if head_=$(git symbolic-ref -q HEAD); then
 	case "$head_" in
 		refs/heads/*)
 			head_="${head_#refs/heads/}"
-			git rev-parse -q --verify "refs/top-bases/$head_" >/dev/null || exit 0;;
+			git rev-parse -q --verify "refs/top-bases/$head_" -- >/dev/null || exit 0;;
 		*)
 			exit 0;;
 	esac

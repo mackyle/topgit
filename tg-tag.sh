@@ -227,7 +227,7 @@ if [ -n "$reflog" ]; then
 	die "no such ref: $refname"
 	[ -s "$git_dir/logs/$refname" ] || \
 	die "no reflog present for $reftype: $tagname"
-	showref="$(git rev-parse --abbrev-ref=strict "$refname")"
+	showref="$(git rev-parse --revs-only --abbrev-ref=strict "$refname" --)"
 	hashcolor=
 	resetcolor=
 	if git config --get-colorbool color.tgtag; then
@@ -257,7 +257,7 @@ if [ -n "$reflog" ]; then
 			es="${cmmttr#$ne}"
 			es="${es% *}"
 			es="${es# }"
-			obj="$(git rev-parse --verify --quiet --short "$newrev")"
+			obj="$(git rev-parse --verify --quiet --short "$newrev" --)"
 			extra=
 			[ "$type" = "tag" -o -n "$notype" ] || \
 			extra="$hashcolor($metacolor$type$resetcolor$hashcolor)$resetcolor "
@@ -439,7 +439,7 @@ else
 				"tagger $id" ""
 			cat "$git_dir/TGTAG_FINALMSG"
 		} | git mktag)" || die "git mktag failed"
-	old="$(git rev-parse --verify --short --quiet "$refname" || :)"
+	old="$(git rev-parse --verify --short --quiet "$refname" -- || :)"
 	updmsg=
 	case "$branches" in
 	*" "*)

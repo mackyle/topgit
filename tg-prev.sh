@@ -25,11 +25,11 @@ while [ -n "$1" ]; do
 	esac
 done
 
-head="$(git rev-parse --abbrev-ref=loose HEAD)"
+head="$(git rev-parse --revs-only --abbrev-ref=loose HEAD --)"
 [ -n "$name" ] ||
 	name="${head:-HEAD}"
 name="$(verify_topgit_branch "$name")"
-base_rev="$(git rev-parse --short --verify "refs/top-bases/$name" 2>/dev/null)" ||
+base_rev="$(git rev-parse --short --verify "refs/top-bases/$name" -- 2>/dev/null)" ||
 	die "not a TopGit-controlled branch"
 
 # select .topdeps source for HEAD branch

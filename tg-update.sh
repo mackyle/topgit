@@ -183,7 +183,7 @@ update_branch() {
 				exit 4
 			fi
 			# Go back but remember we want to merge with this, not base
-			merge_with="$(git rev-parse HEAD)"
+			merge_with="$(git rev-parse --verify HEAD --)"
 			git checkout -q "$_update_name"
 		fi
 	fi

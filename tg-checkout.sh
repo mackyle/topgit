@@ -16,7 +16,7 @@ all=
 pattern=
 
 checkout() {
-	_head="$(git rev-parse --abbrev-ref=loose HEAD)"
+	_head="$(git rev-parse --revs-only --abbrev-ref=loose HEAD --)"
 	ref_exists "refs/top-bases/$_head" && branch_annihilated "$_head" && _checkout_opts="-f"
 	git checkout ${_checkout_opts} "$1"
 }
@@ -64,7 +64,7 @@ if [ -n "$goto" ]; then
 	no_branch_found="No topic branch matches grep pattern '$pattern'"
 else
 	branch=`git symbolic-ref -q HEAD` || die "Working on a detached head"
-	branch=`git rev-parse --abbrev-ref $branch`
+	branch=`git rev-parse --revs-only --abbrev-ref $branch --`
 
 	if [ -n "$pop" ]; then
 		no_branch_found="$branch does not depend on any topic"

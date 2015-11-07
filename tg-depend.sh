@@ -39,12 +39,12 @@ done
 ## Sanity checks
 
 [ -n "$name" ] || die "no branch name specified"
-branchrev="$(git rev-parse --verify "$name" 2>/dev/null)" ||
+branchrev="$(git rev-parse --verify "$name" -- 2>/dev/null)" ||
 	die "invalid branch name: $name"
 
 # Check that we are on a TopGit branch.
 current_name="$(strip_ref "$(git symbolic-ref HEAD 2>/dev/null)")"
-current_base_rev="$(git rev-parse --short --verify "refs/top-bases/$current_name" 2>/dev/null)" ||
+current_base_rev="$(git rev-parse --short --verify "refs/top-bases/$current_name" -- 2>/dev/null)" ||
 	die "not a TopGit-controlled branch"
 
 ## Record new dependency

@@ -63,12 +63,12 @@ git fetch --prune "$name" \
 git for-each-ref --format='%(objectname) %(refname)' "refs/remotes/$name/top-bases" |
 	while read rev ref; do
 		branch="${ref#refs/remotes/$name/top-bases/}"
-		if ! git rev-parse "refs/remotes/$name/$branch" >/dev/null 2>&1; then
+		if ! git rev-parse --verify "refs/remotes/$name/$branch" -- >/dev/null 2>&1; then
 			info "Skipping remote $name/top-bases/$branch that's missing its branch"
 			continue
 		fi
-		if git rev-parse "$branch" >/dev/null 2>&1; then
-			git rev-parse "refs/top-bases/$branch" >/dev/null 2>&1 || {
+		if git rev-parse --verify "$branch" -- >/dev/null 2>&1; then
+			git rev-parse --verify "refs/top-bases/$branch" -- >/dev/null 2>&1 || {
 				if [ -n "$logrefupdates" ]; then
 					mkdir -p "$git_dir/logs/refs/top-bases/$(dirname "$branch")" 2>/dev/null || :
 					{ >>"$git_dir/logs/refs/top-bases/$branch" || :; } 2>/dev/null
@@ -84,7 +84,7 @@ git for-each-ref --format='%(objectname) %(refname)' "refs/remotes/$name/top-bas
 			{ >>"$git_dir/logs/refs/top-bases/$branch" || :; } 2>/dev/null
 		fi
 		git update-ref "refs/top-bases/$branch" "$rev"
-		git update-ref "refs/heads/$branch" "$(git rev-parse "$name/$branch")"
+		git update-ref "refs/heads/$branch" "$(git rev-parse --verify "$name/$branch" --)"
 	done
 
 git config "topgit.remote" "$name"

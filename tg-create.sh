@@ -96,7 +96,7 @@ if [ -n "$merge" -a -z "$restarted" ]; then
 	merge="${merge#* }"
 	info "Creating $name base from $branch..."
 	# We create a detached head so that we can abort this operation
-	git checkout -q "$(git rev-parse "$branch")"
+	git checkout -q "$(git rev-parse --verify "$branch" --)"
 fi
 
 

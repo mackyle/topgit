@@ -27,13 +27,13 @@ done
 ## Sanity checks
 
 [ -n "$name" ] || die "no branch name specified"
-branchrev="$(git rev-parse --verify "$name" 2>/dev/null)" ||
+branchrev="$(git rev-parse --verify "$name" -- 2>/dev/null)" ||
 	if [ -n "$force" ]; then
 		info "invalid branch name: $name; assuming it has been deleted already"
 	else
 		die "invalid branch name: $name"
 	fi
-baserev="$(git rev-parse --verify "refs/top-bases/$name" 2>/dev/null)" ||
+baserev="$(git rev-parse --verify "refs/top-bases/$name" -- 2>/dev/null)" ||
 	die "not a TopGit topic branch: $name"
 ! git symbolic-ref HEAD >/dev/null || [ "$(git symbolic-ref HEAD)" != "refs/heads/$name" ] ||
 	die "cannot delete your current branch"
