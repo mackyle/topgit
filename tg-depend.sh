@@ -62,7 +62,7 @@ depend_add()
 
 	echo "$name" >>"$root_dir/.topdeps"
 	git add -f "$root_dir/.topdeps"
-	git commit -m"New TopGit dependency: $name"
+	git commit -m ".topdeps: add new dependency $name"
 	$tg update
 }
 
