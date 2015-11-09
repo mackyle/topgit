@@ -978,11 +978,33 @@ get_temp()
 	mktemp $2 "$tg_tmp_dir/$1.XXXXXX"
 }
 
+# automatically called by strftime
+# does nothing if already setup
+# may be called explicitly if the first call would otherwise be in a subshell
+# so that the setup is only done once before subshells start being spawned
+setup_strftime()
+{
+	[ -z "$strftime_is_setup" ] || return 0
+
+	# date option to format raw epoch seconds values
+	daterawopt=
+	_testes='951807788'
+	_testdt='2000-02-29 07:03:08 UTC'
+	_testfm='%Y-%m-%d %H:%M:%S %Z'
+	if [ "$(TZ=UTC date "-d@$_testes" "+$_testfm" 2>/dev/null)" = "$_testdt" ]; then
+		daterawopt='-d@'
+	elif [ "$(TZ=UTC date "-r$_testes" "+$_testfm" 2>/dev/null)" = "$_testdt" ]; then
+		daterawopt='-r'
+	fi
+	strftime_is_setup=1
+}
+
 # $1 => strftime format string to use
 # $2 => raw timestamp as seconds since epoch
 # $3 => optional time zone string (empty/absent for local time zone)
 strftime()
 {
+	setup_strftime
 	if [ -n "$daterawopt" ]; then
 		if [ -n "$3" ]; then
 			TZ="$3" date "$daterawopt$2" "+$1"
@@ -1013,17 +1035,6 @@ initial_setup()
 	tgnosequester=
 	[ "$tgsequester" != "false" ] || tgnosequester=1
 	unset tgsequester
-
-	# date option to format raw epoch seconds values
-	daterawopt=
-	_testes='951807788'
-	_testdt='2000-02-29 07:03:08 UTC'
-	_testfm='%Y-%m-%d %H:%M:%S %Z'
-	if [ "$(TZ=UTC date "-d@$_testes" "+$_testfm" 2>/dev/null)" = "$_testdt" ]; then
-		daterawopt='-d@'
-	elif [ "$(TZ=UTC date "-r$_testes" "+$_testfm" 2>/dev/null)" = "$_testdt" ]; then
-		daterawopt='-r'
-	fi
 
 	# make sure root_dir doesn't end with a trailing slash.
 

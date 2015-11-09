@@ -244,6 +244,7 @@ if [ -n "$reflog" ]; then
 		timecolor="$(git config --get-color color.tgtag.time "green")"
 		resetcolor="$(git config --get-color "" reset)"
 	fi
+	setup_strftime
 	output()
 	{
 		sed 's/[^ ][^ ]* //' <"$git_dir/logs/$refname" | \
