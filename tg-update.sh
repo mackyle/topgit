@@ -1,6 +1,7 @@
 #!/bin/sh
 # TopGit - A different patch queue manager
-# (c) Petr Baudis <pasky@suse.cz>  2008
+# Copyright (C) Petr Baudis <pasky@suse.cz>  2008
+# All rights reserved.
 # GPLv2
 
 name= # Branch to update
@@ -14,7 +15,7 @@ skip= # skip missing dependencies
 while [ -n "$1" ]; do
 	arg="$1"; shift
 	case "$arg" in
-	-a)
+	-a|--all)
 		all=1;;
 	--skip)
 		skip=1;;
