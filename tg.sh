@@ -974,6 +974,10 @@ initial_setup()
 	root_dir="$(git rev-parse --show-cdup)"; root_dir="${root_dir:-.}"
 	logrefupdates="$(git config --bool core.logallrefupdates 2>/dev/null || :)"
 	[ "$logrefupdates" = "true" ] || logrefupdates=
+	tgsequester="$(git config --bool topgit.sequester 2>/dev/null || :)"
+	tgnosequester=
+	[ "$tgsequester" != "false" ] || tgnosequester=1
+	unset tgsequester
 
 	# date option to format raw epoch seconds values
 	daterawopt=
