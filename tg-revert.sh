@@ -325,7 +325,6 @@ msg="tgrevert: $reftype $tagname ($(( $(wc -l <"$insn") )) command(s))"
 refwidth="$(git config --get --int core.abbrev 2>/dev/null || :)"
 [ -n "$refwidth" ] || refwidth=7
 [ $refwidth -ge 4 -a $refwidth -le 40 ] || refwidth=7
-nullsha="0000000000000000000000000000000000000000"
 nullref="$(printf '%.*s' $refwidth "$nullsha")"
 notewidth=$(( $refwidth + 4 + $refwidth ))
 cut -d ' ' -f 3 <"$insn" | LC_ALL=C sort -u -b -k1,1 | join - "$trf" | \
