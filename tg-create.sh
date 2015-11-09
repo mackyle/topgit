@@ -15,10 +15,11 @@ msg=
 msgfile=
 noedit=
 nocommit=
+nodeps=
 continue=
 topmsg=
 
-USAGE="Usage: ${tgname:-tg} [... -r remote] create [-m <msg> | -F <file>] [-n] [--no-commit] [<name> [<dep>...|-r [<rname>]] ]"
+USAGE="Usage: ${tgname:-tg} [... -r remote] create [-m <msg> | -F <file>] [-n] [--no-commit] [--no-deps] [<name> [<dep>...|-r [<rname>]] ]"
 
 usage()
 {
@@ -55,6 +56,9 @@ while [ $# -gt 0 ]; do case "$1" in
 	-n|--no-edit)
 		noedit=1
 		nocommit=1
+		;;
+	--no-deps)
+		nodeps=1
 		;;
 	--continue)
 		continue=1
@@ -102,12 +106,14 @@ while [ $# -gt 0 ]; do case "$1" in
 		;;
 esac; shift; done
 [ $# -gt 0 -o -z "$rname" ] || set -- "$rname"
-[ $# -gt 0 -o -n "$remote$msgfile$msg$nocommit" ] || continue=1
-[ -z "$continue" -o "$#$remote$msgfile$msg$nocommit" = "0" ] || usage 1
+[ $# -gt 0 -o -n "$remote$msgfile$msg$nocommit$nodeps" ] || continue=1
+[ -z "$continue" -o "$#$remote$msgfile$msg$nocommit$nodeps" = "0" ] || usage 1
 [ -n "$continue" -o $# -eq 0 ] || { name="$1"; shift; }
 [ -n "$continue" -o -n "$name" ] || { warn "no branch name given"; usage 1; }
 [ -z "$remote" -o -n "$rname" ] || rname="$name"
+[ -z "$remote" -o -z "$msg$msgfile$nocommit$nodeps" ] || { warn "-r may not be combined with other options"; usage 1; }
 [ $# -eq 0 -o -z "$remote" ] || { warn "deps not allowed with -r"; usage 1; }
+[ $# -le 1 -o -z "$nodeps" ] || { warn "--no-deps requires at most one <dep>"; usage 1; }
 [ -z "$msg" -o -z "$msgfile" ] || die "only one -F or -m option is allowed"
 [ -z "$continue" ] || is_active || die "no tg create is currently active"
 
@@ -151,9 +157,9 @@ if [ -z "$deps" ]; then
 	else
 		# The common case
 		[ -z "$name" ] && die "no branch name given"
-		head="$(git symbolic-ref HEAD)"
+		head="$(git symbolic-ref --quiet HEAD || :)"
 		deps="${head#refs/heads/}"
-		[ "$deps" != "$head" ] || die "refusing to auto-depend on non-head ref ($head)"
+		[ "$deps" != "$head" ] || die "refusing to auto-depend on non-branch ref (${head:-detached HEAD})"
 		info "Automatically marking dependency on $deps"
 	fi
 fi
@@ -277,7 +283,11 @@ fi
 git update-ref "refs/top-bases/$name" "HEAD" ""
 git checkout -b "$name"
 
-printf '%s\n' $deps >"$root_dir/.topdeps"
+if [ -n "$nodeps" ]; then
+	>"$root_dir/.topdeps"
+else
+	printf '%s\n' $deps >"$root_dir/.topdeps"
+fi
 git add -f "$root_dir/.topdeps"
 printf '%s\n' "$topmsg" >"$root_dir/.topmsg"
 git add -f "$root_dir/.topmsg"

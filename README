@@ -283,18 +283,44 @@ tg create
 	to ``.topmsg`` before invoking the editor.
 
 	The main task of ``tg create`` is to set up the topic branch base
-	from the dependencies.  This may fail due to merge conflicts.
-	In that case, after you commit the conflict resolution, you
-	should call ``tg create`` again (without any arguments or with the
-	single argument ``--continue``); it will then detect that you are on a
-	topic branch base ref and resume the topic branch creation operation.
+	from the dependencies.  This may fail due to merge conflicts if more
+	than one dependencie is given.	In that case, after you commit the
+	conflict resolution, you should call ``tg create`` again (without any
+	arguments or with the single argument ``--continue``); it will then
+	detect that you are on a topic branch base ref and resume the topic
+	branch creation operation.
+
+	With the ``--no-deps`` option at most one dependency may be listed and
+	the newly created TopGit-controlled branch will have an empty
+	``.topdeps`` file.  This may be desirable in order to create a TopGit-
+	controlled branch that has no changes of its own and serves merely to
+	mark the common dependency that all other TopGit-controlled branches
+	in some set of TopGit-controlled branches depend on.  A plain,
+	non-TopGit-controlled branch can be used for the same purpose, but the
+	advantage of a TopGit-controlled branch with no dependencies is that it
+	will be pushed with ``tg push``, it will show up in the ``tg summary``
+	output with the subject from its ``.topmsg`` thereby documenting what
+	it's for and finally it can be setup with ``tg create -r`` and/or
+	``tg remote --populate`` to facilitate sharing.
+
+	For example, ``tg create --no-deps release v2.1`` will create a TopGit-
+	controlled ``release`` branch based off the ``v2.1`` tag that can then
+	be used as a base for creation of other TopGit-controlled branches.
+	Then when the time comes to move the base for an entire set of changes
+	up to ``v2.2`` the command ``git update-ref top-bases/release v2.2^0``
+	can be used followed by ``tg update --all``.  Note that it's only safe
+	to update ``top-bases/release`` directly in this manner because a) it
+	has no depedencies since it was created with the ``--no-deps`` option
+	and b) the old ``top-bases/release`` value can be fast-forwarded to the
+	new ``top-bases/release`` value.
 
 	In an alternative use case, if ``-r <branch>`` is given instead of a
 	dependency list, the topic branch is created based on the given
 	remote branch.  With just ``-r`` the remote branch name is assumed
 	to be the same as the local topic branch being created.  Since no
 	new commits are created in this mode (only two refs will be updated)
-	the editor will never be run for this use case.
+	the editor will never be run for this use case.  Note that no other
+	options may be combined with ``-r``.
 
 tg delete
 ~~~~~~~~~
