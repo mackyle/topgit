@@ -255,24 +255,46 @@ tg create
 	specified (by extra arguments passed after the first one), the
 	current branch is assumed to be the only dependency.
 
-	After ``tg create``, you should insert the patch description into
-	the ``.topmsg`` file, which will already contain some prefilled
-	bits.  You can set the ``topgit.to``, ``topgit.cc`` and ``topgit.bcc``
+	By default ``tg create`` opens an editor on the new ``.topmsg`` file
+	and then commits the new ``.topmsg`` and ``.topdeps`` files
+	automatically with a suitable default commit message.  The commit
+	message can be changed with the ``-m`` (or ``--message``) or ``-F``
+	(or ``--file``) option.  The automatic commit can be suppressed by
+	using the ``--no-ccmmit`` option.  Running the editor on the new
+	``.topmsg`` file can be suppressed by using ``-n`` (or ``--no-edit``)
+	which also suppresses the automatic commit.  If more than one
+	dependency is listed, the automatic commit will not take place until
+	AFTER all the listed dependencies have been merged into a base commit
+	which may require some manual merge resolutions if there are conflicts.
+
+	Previous versions of TopGit behaved as though the ``--no-edit`` option
+	was always given on the command line.
+
+	The default behavior has been changed to promote a separation between
+	commits that modify ``.topmsg`` and/or ``.topdeps`` and commits that
+	modify other files.  This facilitates cleaner cherry picking and other
+	patch maintenance activities.
+
+	You should edit the patch description (contained in the ``.topmsg``
+	file) as appropriate.  It will already contain some prefilled bits.
+	You can set the ``topgit.to``, ``topgit.cc`` and ``topgit.bcc``
 	git configuration variables (see ``man git-config``) in order to
 	have ``tg create`` add these headers with the given default values
-	to ``.topmsg``.
+	to ``.topmsg`` before invoking the editor.
 
 	The main task of ``tg create`` is to set up the topic branch base
 	from the dependencies.  This may fail due to merge conflicts.
 	In that case, after you commit the conflict resolution, you
-	should call ``tg create`` again (without any arguments); it will
-	detect that you are on a topic branch base ref and resume the
-	topic branch creation operation.
+	should call ``tg create`` again (without any arguments or with the
+	single argument ``--continue``); it will then detect that you are on a
+	topic branch base ref and resume the topic branch creation operation.
 
 	In an alternative use case, if ``-r <branch>`` is given instead of a
 	dependency list, the topic branch is created based on the given
 	remote branch.  With just ``-r`` the remote branch name is assumed
-	to be the same as the local topic branch being created.
+	to be the same as the local topic branch being created.  Since no
+	new commits are created in this mode (only two refs will be updated)
+	the editor will never be run for this use case.
 
 tg delete
 ~~~~~~~~~

@@ -8,30 +8,90 @@ restarted= # Set to 1 if we are picking up in the middle of base setup
 merge= # List of branches to be merged; subset of $deps
 name=
 rname= # Remote branch to base this one on
-remomte=
+remote=
+msg=
+msgfile=
+noedit=
+nocommit=
+continue=
 
+USAGE="Usage: ${tgname:-tg} [... -r remote] create [-m <msg> | -F <file>] [-n] [--no-commit] [<name> [<dep>...|-r [<rname>]] ]"
+
+usage()
+{
+	if [ "${1:-0}" != 0 ]; then
+		printf '%s\n' "$USAGE" >&2
+	else
+		printf '%s\n' "$USAGE"
+	fi
+	exit ${1:-0}
+}
 
 ## Parse options
 
-while [ -n "$1" ]; do
-	arg="$1"; shift
-	case "$arg" in
+while [ $# -gt 0 ]; do case "$1" in
+	-h|--help)
+		usage
+		;;
+	--no-commit)
+		nocommit=1
+		;;
+	-n|--no-edit)
+		noedit=1
+		nocommit=1
+		;;
+	--continue)
+		continue=1
+		;;
+	-m|--message|--message=*)
+		case "$1" in --message=*)
+			x="$1"
+			shift
+			set -- --message "${x#--message=}" "$@"
+		esac
+		if [ $# -lt 2 ]; then
+			echo "The $1 option requires an argument" >&2
+			usage 1
+		fi
+		shift
+		msg="$1"
+		;;
+	-F|--file|--file=*)
+		case "$1" in --file=*)
+			x="$1"
+			shift
+			set -- --file "${x#--file=}" "$@"
+		esac
+		if [ $# -lt 2 ]; then
+			echo "The $1 option requires an argument" >&2
+			usage 1
+		fi
+		shift
+		msgfile="$1"
+		;;
 	-r)
 		remote=1
-		rname="${1-$name}"; [ $# -eq 0 ] || shift;;
-	-*)
-		echo "Usage: ${tgname:-tg} [... -r remote] create [<name> [<dep>...|-r [<rname>]] ]" >&2
-		exit 1;;
+		rname="$1"; [ $# -eq 0 ] || shift;;
+		;;
+	--)
+		shift
+		break
+		;;
+	-?*)
+		echo "Unknown option: $1" >&2
+		usage 1
+		;;
 	*)
-		if [ -z "$name" ]; then
-			name="$arg"
-		else
-			deps="$deps $arg"
-		fi;;
-	esac
-done
-[ -z "$remote" -o -z "$deps" ] || die "deps not allowed with -r"
-[ -z "$remote" -o -n "$name" ] || name="$rname"
+		break
+		;;
+esac; shift; done
+[ $# -gt 0 -o -z "$rname" ] || set -- "$rname"
+[ $# -gt 0 -o -n "$remote$msgfile$msg$nocommit" ] || continue=1
+[ -z "$continue" -o "$#$remote$msgfile$msg$nocommit" = "0" ] || usage 1
+[ -n "$continue" -o $# -eq 0 ] || { name="$1"; shift; }
+[ -n "$continue" -o -n "$name" ] || { warn "no branch name given"; usage 1; }
+[ -z "$remote" -o -n "$rname" ] || rname="$name"
+[ $# -eq 0 -o -z "$remote" ] || { warn "deps not allowed with -r"; usage 1; }
 
 ## Fast-track creating branches based on remote ones
 
@@ -56,7 +116,7 @@ fi
 
 ## Auto-guess dependencies
 
-deps="${deps# }"
+deps="$*"
 if [ -z "$deps" ]; then
 	if [ -z "$name" -a -s "$git_dir/top-name" -a -s "$git_dir/top-deps" -a -s "$git_dir/top-merge" ]; then
 		# We are setting up the base branch now; resume merge!
