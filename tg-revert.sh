@@ -1,6 +1,7 @@
 #!/bin/sh
 # TopGit revert command
-# (C) 2015 Kyle J. McKay <mackyle@gmail.com>
+# Copyright (C) 2015 Kyle J. McKay <mackyle@gmail.com>
+# All rights reserved.
 # GPLv2
 
 lf="$(printf '\n.')" && lf="${lf%?}"
@@ -42,7 +43,7 @@ while [ $# -gt 0 ]; do case "$1" in
 	-l|--list)
 		list=1
 		;;
-	--deps)
+	--deps|--deps-only)
 		deps=1
 		;;
 	--rdeps)

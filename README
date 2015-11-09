@@ -456,9 +456,9 @@ tg summary
 ~~~~~~~~~~
 	Show overview of all TopGit-tracked topic branches and their
 	up-to-date status.  With a branch name limit output to that branch.
-	Using ``--rdeps`` changes the default from all branches to just the
-	current ``HEAD`` branch but using ``--all`` as the branch name will
-	show ``--rdeps`` for all branches.
+	Using ``--deps-only`` or ``--rdeps`` changes the default from all
+	branches to just the current ``HEAD`` branch but using ``--all`` as
+	the branch name will show results for all branches instead of ``HEAD``.
 
 		``>``
 			marks the current topic branch
@@ -499,21 +499,30 @@ tg summary
 	In more complex scenarios, a text graph view would be much more
 	useful, but that has not yet been implemented.
 
-	The --deps option outputs dependency information between
+	The ``--deps`` option outputs dependency information between
 	branches in a machine-readable format.  Feed this to ``tsort`` to
 	get the output from --sort.
 
-	The --rdeps option outputs dependency information in an indented
-	text format that clearly shows all the dependencies and their
-	relationships to one another.  When --rdeps is given the default is
-	to just display information for HEAD, but that can be changed by using
-	--all as the branch name.
+	The ``--deps-only`` option outputs a sorted list of the unique branch
+	names given on the command line plus all of their recursive dependents
+	(subject to ``--exclude`` of course).  When ``--deps-only`` is given
+	the default is to just display information for ``HEAD``, but that can
+	be changed by using ``--all`` as the branch name.  Each branch name
+	will appear only once in the output no matter how many times it's
+	visited while tracing the dependency graph or how many branch names are
+	given on the command line to process.
 
-	With --exclude branch, branch can be excluded from the output meaning
-	it will be skipped and its name will be omitted from any dependency
-	output.  The --exclude option may be repeated to omit more than one
-	branch from the output.  Limiting the output to a single branch that
-	has been excluded will result in no output at all.
+	The ``--rdeps`` option outputs dependency information in an indented
+	text format that clearly shows all the dependencies and their
+	relationships to one another.  When ``--rdeps`` is given the default is
+	to just display information for ``HEAD``, but that can be changed by
+	using ``--all`` as the branch name.
+
+	With ``--exclude branch``, branch can be excluded from the output
+	meaning	it will be skipped and its name will be omitted from any
+	dependency output.  The ``--exclude`` option may be repeated to omit
+	more than one branch from the output.  Limiting the output to a single
+	branch that has been excluded will result in no output at all.
 
 	Note that the branch name can be specified as ``HEAD`` as a shortcut for
 	the TopGit-controlled branch that ``HEAD`` is a symbolic ref to.

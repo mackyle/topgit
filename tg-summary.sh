@@ -1,13 +1,15 @@
 #!/bin/sh
 # TopGit - A different patch queue manager
-# (C) Petr Baudis <pasky@suse.cz>  2008
-# (C) Kyle J. McKay <mackyle@gmail.com>  2015
+# Copyright (C) Petr Baudis <pasky@suse.cz>  2008
+# Copyright (C) Kyle J. McKay <mackyle@gmail.com>  2015
+# All rights reserved.
 # GPLv2
 
 terse=
 graphviz=
 sort=
 deps=
+depsonly=
 rdeps=
 head_from=
 branches=
@@ -18,7 +20,7 @@ exclude=
 
 usage()
 {
-	echo "Usage: ${tgname:-tg} [...] summary [-t | --list | --sort | --deps | --rdeps | --graphviz] [-i | -w] [--exclude branch]... [--all | branch...]" >&2
+	echo "Usage: ${tgname:-tg} [...] summary [-t | --list | --sort | --deps | --deps-only | --rdeps | --graphviz] [-i | -w] [--exclude branch]... [--all | branch...]" >&2
 	exit 1
 }
 
@@ -28,7 +30,7 @@ while [ -n "$1" ]; do
 	-i|-w)
 		[ -z "$head_from" ] || die "-i and -w are mutually exclusive"
 		head_from="$arg";;
-	-t|--list)
+	-t|--list|-l)
 		terse=1;;
 	--graphviz)
 		graphviz=1;;
@@ -36,6 +38,9 @@ while [ -n "$1" ]; do
 		sort=1;;
 	--deps)
 		deps=1;;
+	--deps-only)
+		head=HEAD
+		depsonly=1;;
 	--rdeps)
 		head=HEAD
 		rdeps=1;;
@@ -63,8 +68,8 @@ if [ "$1" = "--all" ]; then
 fi
 [ $# -ne 0 -o -z "$head" ] || set -- "$head"
 
-[ "$terse$graphviz$sort$deps" = "" ] ||
-	[ "$terse$graphviz$sort$deps$rdeps" = "1" ] ||
+[ "$terse$graphviz$sort$deps$depsonly" = "" ] ||
+	[ "$terse$graphviz$sort$deps$depsonly$rdeps" = "1" ] ||
 	die "mutually exclusive options given"
 
 for b; do
@@ -81,7 +86,31 @@ get_branch_list()
 	fi
 }
 
-curname="$(strip_ref "$(git symbolic-ref HEAD 2>/dev/null)")"
+show_dep() {
+	case "$exclude" in *" $_dep "*) return; esac
+	case " $seen_deps " in *" $_dep "*) return 0; esac
+	seen_deps="${seen_deps:+$seen_deps }$_dep"
+	printf '%s\n' "$_dep"
+}
+
+show_deps()
+{
+	no_remotes=1
+	recurse_deps_exclude=
+	get_branch_list | while read _b; do
+		case "$exclude" in *" $_b "*) continue; esac
+		case " $recurse_deps_exclude " in *" $_b "*) continue; esac
+		seen_deps=
+		_dep="$_b"; _dep_is_tgish=1; show_dep
+		recurse_deps show_dep "$_b"
+		recurse_deps_exclude="$recurse_deps_exclude $seen_deps"
+	done
+}
+
+if [ -n "$depsonly" ]; then
+	show_deps | LC_ALL=C sort -u -b -k1,1
+	exit 0
+fi
 
 show_rdeps()
 {
@@ -106,6 +135,8 @@ if [ -n "$rdeps" ]; then
 		done
 	exit 0
 fi
+
+curname="$(strip_ref "$(git symbolic-ref HEAD 2>/dev/null)")"
 
 if [ -n "$graphviz" ]; then
 	cat <<EOT
