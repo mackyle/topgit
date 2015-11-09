@@ -333,7 +333,7 @@ rev_parse()
 		LC_ALL=C awk -v r="$1" 'BEGIN {e=1}; $1 == r {print $2; e=0; exit}; END {exit e}' <"$tg_ref_cache"
 	else
 		[ -z "$tg_ref_cache_only" ] || return 1
-		git rev-parse --quiet --verify "$1" -- 2>/dev/null
+		git rev-parse --quiet --verify "$1^0" -- 2>/dev/null
 	fi
 }
 
@@ -353,7 +353,7 @@ ref_exists_rev()
 		*)
 			die "ref_exists_rev requires fully-qualified ref name"
 	esac
-	[ -n "$tg_read_only" ] || { git rev-parse --quiet --verify "$1" -- 2>/dev/null; return; }
+	[ -n "$tg_read_only" ] || { git rev-parse --quiet --verify "$1^0" -- 2>/dev/null; return; }
 	_result=
 	_result_rev=
 	{ read -r _result _result_rev <"$tg_tmp_dir/cached/$1/.ref"; } 2>/dev/null || :
@@ -378,7 +378,7 @@ ref_exists_rev_short()
 		*)
 			die "ref_exists_rev_short requires fully-qualified ref name"
 	esac
-	[ -n "$tg_read_only" ] || { git rev-parse --quiet --verify --short "$1" -- 2>/dev/null; return; }
+	[ -n "$tg_read_only" ] || { git rev-parse --quiet --verify --short "$1^0" -- 2>/dev/null; return; }
 	_result=
 	_result_rev=
 	{ read -r _result _result_rev <"$tg_tmp_dir/cached/$1/.rfs"; } 2>/dev/null || :

@@ -281,7 +281,7 @@ linearize()
 		else
 			retmerge=0
 
-			git merge -s recursive "$_dep" || retmerge="$?"
+			git merge -s recursive "$_dep^0" || retmerge="$?"
 			if test "x$retmerge" != "x0"; then
 				echo "fix up the merge, commit and then exit."
 				#todo error handling

@@ -139,7 +139,7 @@ update_branch() {
 				# only on the _dependencies_, not our branch itself!)
 
 				info "Updating base with $dep changes..."
-				if ! git merge "$dep"; then
+				if ! git merge "$dep^0"; then
 					if [ -z "$TG_RECURSIVE" ]; then
 						resume="\`$tgdisplay update${skip:+ --skip} $_update_name\` again"
 					else # subshell
@@ -176,7 +176,7 @@ update_branch() {
 			become_non_cacheable
 			# *DETACH* our HEAD now!
 			git checkout -q "refs/top-bases/$_update_name"
-			if ! git merge "$_rname"; then
+			if ! git merge "$_rname^0"; then
 				info "Oops, you will need to help me out here a bit."
 				info "Please commit merge resolution and call:"
 				info "git$gitcdopt checkout $_update_name && git$gitcdopt merge <commitid>"
@@ -198,7 +198,7 @@ update_branch() {
 	fi
 	info "Updating $_update_name against new base..."
 	become_non_cacheable
-	if ! git merge "$merge_with"; then
+	if ! git merge "$merge_with^0"; then
 		if [ -z "$TG_RECURSIVE" ]; then
 			info "Please commit merge resolution. No need to do anything else"
 			info "You can abort this operation using \`git$gitcdopt reset --hard\` now"
