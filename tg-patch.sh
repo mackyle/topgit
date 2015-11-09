@@ -1,6 +1,7 @@
 #!/bin/sh
 # TopGit - A different patch queue manager
-# (c) Petr Baudis <pasky@suse.cz>  2008
+# Copyright (C) Petr Baudis <pasky@suse.cz>  2008
+# All rights reserved.
 # GPLv2
 
 name=
@@ -60,10 +61,9 @@ fi
 
 
 
-USE_PAGER_TYPE=diff
-setup_pager
-# We now collect the rest of the code in this file into a block
+# We now collect the rest of the code in this file into a function
 # so we can redirect the output to the pager.
+output()
 {
 
 # put out the commit message
@@ -120,7 +120,9 @@ echo "$tgname: ($base_rev..) $name (depends on: $(cat_file "refs/heads/$name:.to
 branch_contains "refs/heads/$name" "refs/top-bases/$name" ||
 	echo "$tgname: The patch is out-of-date wrt. the base! Run \`$tgdisplay update\`."
 
-} | eval "$TG_PAGER"
-# ... and then we pipe all the output through the pager
+}
+USE_PAGER_TYPE=diff
+page output "$@"
+# ... and then we run it through the pager with the page function
 
 # vim:noet

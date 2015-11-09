@@ -1,7 +1,8 @@
 #!/bin/sh
 # TopGit - A different patch queue manager
-# (C) Petr Baudis <pasky@suse.cz>  2008
-# (C) Kyle J. McKay <mackyle@gmail.com>  2014,2015
+# Copyright (C) Petr Baudis <pasky@suse.cz>  2008
+# Copyright (C) Kyle J. McKay <mackyle@gmail.com>  2014,2015
+# All rights reserved.
 # GPLv2
 
 TG_VERSION=0.18.1
@@ -840,7 +841,7 @@ do_help()
 			git web--browse -c help.browser "@sharedir@/tg-$1.html"
 			exit
 		fi
-		setup_pager
+		output()
 		{
 			if [ -r "@cmddir@"/tg-$1 ] ; then
 				"@cmddir@"/tg-$1 -h 2>&1 || :
@@ -849,7 +850,8 @@ do_help()
 			if [ -r "@sharedir@/tg-$1.txt" ] ; then
 				cat "@sharedir@/tg-$1.txt"
 			fi
-		} | eval "$TG_PAGER"
+		}
+		page output "$1"
 	else
 		echo "`basename $0`: no help for $1" 1>&2
 		do_help
@@ -886,16 +888,20 @@ get_pager()
 # setup_pager
 # Set TG_PAGER to a valid executable
 # After calling, code to be paged should be surrounded with {...} | eval "$TG_PAGER"
+# See also the following "page" function for ease of use
+# emptypager will be set to 1 (otherwise empty) if TG_PAGER was set to "cat" to not be empty
 # Preference is (same as Git):
 #   1. GIT_PAGER
 #   2. pager.$USE_PAGER_TYPE (but only if USE_PAGER_TYPE is set and so is pager.$USE_PAGER_TYPE)
 #   3. core.pager (only if set)
 #   4. PAGER
-#   5. less
+#   5. git var GIT_PAGER
+#   6. less
 setup_pager()
 {
-	isatty 1 || { TG_PAGER=cat; return 0; }
+	isatty 1 || { emptypager=1; TG_PAGER=cat; return 0; }
 
+	emptypager=
 	if [ -z "$TG_PAGER_IN_USE" ]; then
 		# TG_PAGER = GIT_PAGER | PAGER | less
 		# NOTE: GIT_PAGER='' is significant
@@ -908,10 +914,16 @@ setup_pager()
 		elif [ -n "${PAGER+set}" ]; then
 			TG_PAGER="$PAGER"
 		else
-			TG_PAGER="less"
+			_gp="$(git var GIT_PAGER 2>/dev/null || :)"
+			[ "$_gp" != ":" ] || _gp=
+			TG_PAGER="${_gp:-less}"
 		fi
-		: ${TG_PAGER:=cat}
+		if [ -z "$TG_PAGER" ]; then
+			emptypager=1
+			TG_PAGER=cat
+		fi
 	else
+		emptypager=1
 		TG_PAGER=cat
 	fi
 
@@ -934,6 +946,28 @@ setup_pager()
 	# this is needed so we don't get nested pagers
 	TG_PAGER_IN_USE=1
 	export TG_PAGER_IN_USE
+}
+
+# page eval_arg [arg ...]
+#
+# Calls setup_pager then evals the first argument passing it all the rest
+# where the output is piped through eval "$TG_PAGER" unless emptypager is set
+# by setup_pager (in which case the output is left as-is).
+#
+# To handle arbitrary paging duties, collect lines to be paged into a
+# function and then call page with the function name or perhaps func_name "$@".
+#
+# If no arguments at all are passed in do nothing (return with success).
+page()
+{
+	[ $# -gt 0 ] || return 0
+	setup_pager
+	_evalarg="$1"; shift
+	if [ -n "$emptypager" ]; then
+		eval "$_evalarg" '"$@"'
+	else
+		eval "$_evalarg" '"$@"' | eval "$TG_PAGER"
+	fi
 }
 
 # get_temp NAME [-d]

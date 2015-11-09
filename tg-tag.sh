@@ -1,6 +1,7 @@
 #!/bin/sh
 # TopGit tag command
-# (C) 2015 Kyle J. McKay <mackyle@gmail.com>
+# Copyright (C) 2015 Kyle J. McKay <mackyle@gmail.com>
+# All rights reserved.
 # GPLv2
 
 lf="$(printf '\n.')" && lf="${lf%?}"
@@ -243,54 +244,57 @@ if [ -n "$reflog" ]; then
 		timecolor="$(git config --get-color color.tgtag.time "green")"
 		resetcolor="$(git config --get-color "" reset)"
 	fi
-	setup_pager
-	sed 's/[^ ][^ ]* //' <"$git_dir/logs/$refname" | \
-	awk '{a[i++]=$0} END {for (j=i-1; j>=0;) print a[j--]}' | \
-	git cat-file --batch-check='%(objectname) %(objecttype) %(rest)' | \
+	output()
 	{
-		stashnum=-1
-		lastdate=
-		while read -r newrev type rest; do
-			stashnum=$(( $stashnum + 1 ))
-			[ "$type" != "missing" ] || continue
-			IFS="$tab" read -r cmmttr msg <<-~EOT~
-				$rest
-				~EOT~
-			ne="${cmmttr% *}"
-			ne="${ne% *}"
-			es="${cmmttr#$ne}"
-			es="${es% *}"
-			es="${es# }"
-			obj="$(git rev-parse --verify --quiet --short "$newrev" --)"
-			extra=
-			[ "$type" = "tag" -o -n "$notype" ] || \
-			extra="$hashcolor($metacolor$type$resetcolor$hashcolor)$resetcolor "
-			if [ -z "$reflogmsg" -o -z "$msg" ]; then
-				objmsg=
-				if [ "$type" = "tag" ]; then
-					objmsg="$(git cat-file tag "$obj" | \
-						sed '1,/^$/d' | sed '/^$/,$d')"
-				elif [ "$type" = "commit" ]; then
-					objmsg="$(git log -n 1 --format='format:%s' "$obj" --)"
+		sed 's/[^ ][^ ]* //' <"$git_dir/logs/$refname" | \
+		awk '{a[i++]=$0} END {for (j=i-1; j>=0;) print a[j--]}' | \
+		git cat-file --batch-check='%(objectname) %(objecttype) %(rest)' | \
+		{
+			stashnum=-1
+			lastdate=
+			while read -r newrev type rest; do
+				stashnum=$(( $stashnum + 1 ))
+				[ "$type" != "missing" ] || continue
+				IFS="$tab" read -r cmmttr msg <<-~EOT~
+					$rest
+					~EOT~
+				ne="${cmmttr% *}"
+				ne="${ne% *}"
+				es="${cmmttr#$ne}"
+				es="${es% *}"
+				es="${es# }"
+				obj="$(git rev-parse --verify --quiet --short "$newrev" --)"
+				extra=
+				[ "$type" = "tag" -o -n "$notype" ] || \
+				extra="$hashcolor($metacolor$type$resetcolor$hashcolor)$resetcolor "
+				if [ -z "$reflogmsg" -o -z "$msg" ]; then
+					objmsg=
+					if [ "$type" = "tag" ]; then
+						objmsg="$(git cat-file tag "$obj" | \
+							sed '1,/^$/d' | sed '/^$/,$d')"
+					elif [ "$type" = "commit" ]; then
+						objmsg="$(git log -n 1 --format='format:%s' "$obj" --)"
+					fi
+					[ -z "$objmsg" ] || msg="$objmsg"
 				fi
-				[ -z "$objmsg" ] || msg="$objmsg"
-			fi
-			read newdate newtime <<-EOT
-				$(strftime "%Y-%m-%d %H:%M:%S" "$es")
-			EOT
-			if [ "$lastdate" != "$newdate" ]; then
-				printf '%s=== %s ===%s\n' "$datecolor" "$newdate" "$resetcolor"
-				lastdate="$newdate"
-			fi
-			printf '%s %s %s%s@{%s}: %s\n' "$hashcolor$obj$reseutcolor" \
-				"$timecolor$newtime$resetcolor" \
-				"$extra" "$showref" "$stashnum" "$msg"
-			if [ -n "$maxcount" ]; then
-				maxcount=$(( $maxcount - 1 ))
-				[ $maxcount -gt 0 ] || break
-			fi
-		done
-	} | eval "$TG_PAGER"
+				read newdate newtime <<-EOT
+					$(strftime "%Y-%m-%d %H:%M:%S" "$es")
+				EOT
+				if [ "$lastdate" != "$newdate" ]; then
+					printf '%s=== %s ===%s\n' "$datecolor" "$newdate" "$resetcolor"
+					lastdate="$newdate"
+				fi
+				printf '%s %s %s%s@{%s}: %s\n' "$hashcolor$obj$reseutcolor" \
+					"$timecolor$newtime$resetcolor" \
+					"$extra" "$showref" "$stashnum" "$msg"
+				if [ -n "$maxcount" ]; then
+					maxcount=$(( $maxcount - 1 ))
+					[ $maxcount -gt 0 ] || break
+				fi
+			done
+		}
+	}
+	page output
 	exit 0
 fi
 [ -z "$signed" -o "$reftype" = "tag" ] || die "signed tags must be under refs/tags"
