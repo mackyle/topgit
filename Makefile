@@ -63,9 +63,11 @@ $(help_out): README create-help.sh
 	echo '[HELP]' $$CMD && \
 	$(SHELL_PATH) ./create-help.sh $$CMD
 
-.PHONY: html doc
+.PHONY: doc install-doc html
 
 doc:: html
+
+install-doc:: install-html
 
 html:: topgit.html $(html_out)
 
