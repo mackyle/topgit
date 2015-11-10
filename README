@@ -575,11 +575,15 @@ tg checkout
 				Check out a branch that this branch
 				directly depends on.
 
-	    ``tg checkout goto <pattern>``
+	    ``tg checkout [goto] [--] <pattern>``
 				Check out a topic branch that
 				matches ``<pattern>``.  ``<pattern>``
 				is used as a sed pattern to filter
-				all the topic branches.
+				all the topic branches.  Both ``goto`` and
+				``--`` may be omitted provided ``<pattern>``
+				is not ``push``, ``pop``, ``-a``, ``--all``,
+				``goto``, ``..``, ``--``, ``next``, ``child``,
+				``prev``, ``parent``, ``-h`` or ``--help``.
 
 	    ``tg checkout next``
 				An alias for ``push``.

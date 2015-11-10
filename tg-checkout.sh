@@ -1,8 +1,13 @@
 #!/bin/sh
 # TopGit - A different patch queue manager
+# Copyright (C) 2013 Per Cederqvist <ceder@lysator.liu.se>
+# Copyright (C) 2015 Kyle J. McKay <mackyle@gmail.com>
+# All rights reserved.
 # GPLv2
 
 ## Parse options
+
+USAGE="Usage: ${tgname:-tg} [...] checkout [ [ push | pop ] [ -a ] | [goto] [--] <pattern> ]"
 
 # Subcommands.
 push=
@@ -26,21 +31,30 @@ while [ $# -gt 0 ]; do
 	shift
 
 	case "$arg" in
-		-a)
+		-h|--help)
+			printf '%s\n' "$USAGE"
+			exit 0;;
+		-a|--all)
 			all=1;;
 		child|next|push)
 			push=1;;
 		parent|prev|pop|..)
 			pop=1;;
-		goto)
+		goto|--)
 			goto=1
+			[ "$arg" = "--" -o "$1" != "--" ] || shift
 			if [ $# -gt 0 ]; then
 				pattern="$1"
 				shift
 			fi;;
 		*)
-			echo "Usage: ${tgname:-tg} [...] checkout [ [ push | pop ] [ -a ] | goto <pattern> ]" >&2
-			exit 1;;
+			if [ -z "$all$push$pop$goto" -a -n "$arg" ]; then
+				goto=1
+				pattern="$arg"
+			else
+				printf '%s\n' "$USAGE" >&2
+				exit 1
+			fi;;
 	esac
 done
 
@@ -54,6 +68,8 @@ if [ -z "$push$pop$goto" ]; then
 	# make sense as the default command, I suppose.
 	push=1
 fi
+
+[ "$push$pop$goto" = "1" ] || { err "incompatible options"; printf '%s\n' "$USAGE" >&2; exit 1; }
 
 [ -n "$tg_tmp_dir" ] || die "tg-checkout must be run via '$tg checkout'"
 _depfile="$(mktemp "$tg_tmp_dir/tg-co-deps.XXXXXX")"
