@@ -30,6 +30,11 @@ warn()
 	info "warning: $*" >&2
 }
 
+err()
+{
+	info "error: $*" >&2
+}
+
 die()
 {
 	info "fatal: $*" >&2
