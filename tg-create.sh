@@ -164,6 +164,9 @@ if [ -z "$deps" ]; then
 	fi
 fi
 
+# Non-remote branch set up requires a clean tree
+[ -n "$restarted" ] || ensure_clean_tree
+
 [ -n "$merge" -o -n "$restarted" ] || merge="$deps "
 
 for d in $deps; do
