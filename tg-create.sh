@@ -109,11 +109,11 @@ esac; shift; done
 [ $# -gt 0 -o -n "$remote$msgfile$msg$nocommit$nodeps" ] || continue=1
 [ -z "$continue" -o "$#$remote$msgfile$msg$nocommit$nodeps" = "0" ] || usage 1
 [ -n "$continue" -o $# -eq 0 ] || { name="$1"; shift; }
-[ -n "$continue" -o -n "$name" ] || { warn "no branch name given"; usage 1; }
+[ -n "$continue" -o -n "$name" ] || { err "no branch name given"; usage 1; }
 [ -z "$remote" -o -n "$rname" ] || rname="$name"
-[ -z "$remote" -o -z "$msg$msgfile$nocommit$nodeps" ] || { warn "-r may not be combined with other options"; usage 1; }
-[ $# -eq 0 -o -z "$remote" ] || { warn "deps not allowed with -r"; usage 1; }
-[ $# -le 1 -o -z "$nodeps" ] || { warn "--no-deps requires at most one <dep>"; usage 1; }
+[ -z "$remote" -o -z "$msg$msgfile$nocommit$nodeps" ] || { err "-r may not be combined with other options"; usage 1; }
+[ $# -eq 0 -o -z "$remote" ] || { err "deps not allowed with -r"; usage 1; }
+[ $# -le 1 -o -z "$nodeps" ] || { err "--no-deps allows at most one <dep>"; usage 1; }
 [ -z "$msg" -o -z "$msgfile" ] || die "only one -F or -m option is allowed"
 [ -z "$continue" ] || is_active || die "no tg create is currently active"
 
