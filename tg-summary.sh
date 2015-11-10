@@ -14,13 +14,14 @@ rdeps=
 head_from=
 branches=
 head=
+heads=
 exclude=
 
 ## Parse options
 
 usage()
 {
-	echo "Usage: ${tgname:-tg} [...] summary [-t | --list | --sort | --deps | --deps-only | --rdeps | --graphviz] [-i | -w] [--exclude branch]... [--all | branch...]" >&2
+	echo "Usage: ${tgname:-tg} [...] summary [-t | --list | --heads | --sort | --deps | --deps-only | --rdeps | --graphviz] [-i | -w] [--exclude branch]... [--all | branch...]" >&2
 	exit 1
 }
 
@@ -32,6 +33,8 @@ while [ -n "$1" ]; do
 		head_from="$arg";;
 	-t|--list|-l)
 		terse=1;;
+	--heads)
+		heads=1;;
 	--graphviz)
 		graphviz=1;;
 	--sort)
@@ -66,10 +69,12 @@ if [ "$1" = "--all" ]; then
       shift
       head=
 fi
+[ "$heads$rdeps" != "11" ] || head=
 [ $# -ne 0 -o -z "$head" ] || set -- "$head"
 
-[ "$terse$graphviz$sort$deps$depsonly" = "" ] ||
-	[ "$terse$graphviz$sort$deps$depsonly$rdeps" = "1" ] ||
+[ "$terse$heads$graphviz$sort$deps$depsonly" = "" ] ||
+	[ "$terse$heads$graphviz$sort$deps$depsonly$rdeps" = "1" ] ||
+		[ "$terse$heads$graphviz$sort$deps$depsonly$rdeps" = "11" -a "$heads$rdeps" = "11" ] ||
 	die "mutually exclusive options given"
 
 for b; do
@@ -85,6 +90,25 @@ get_branch_list()
 		non_annihilated_branches
 	fi
 }
+
+show_heads()
+{
+	topics="$(get_temp topics)"
+	get_branch_list | sed -e 's,^\(.*\)$,refs/heads/\1 \1,' |
+	git cat-file --batch-check='%(objectname) %(rest)' |
+	sort -u -b -k1,1 >"$topics"
+	git merge-base --independent $(cut -d ' ' -f 1 <"$topics") |
+	sort -u -b -k1,1 | join - "$topics" | sort -u -b -k2,2 |
+	while read rev name; do
+		case "$exclude" in *" $name "*) continue; esac
+		printf '%s\n' "$name"
+	done
+}
+
+if [ -n "$heads" -a -z "$rdeps" ]; then
+	show_heads
+	exit 0
+fi
 
 show_dep() {
 	case "$exclude" in *" $_dep "*) return; esac
@@ -121,18 +145,23 @@ show_rdeps()
 if [ -n "$rdeps" ]; then
 	no_remotes=1
 	showbreak=
-	get_branch_list |
-		while read b; do
-			case "$exclude" in *" $b "*) continue; esac
-			[ -z "$showbreak" ] || echo
-			showbreak=1 
-			ref_exists "refs/heads/$b" || continue
-			{
-				echo "$b"
-				recurse_preorder=1
-				recurse_deps show_rdeps "$b"
-			} | sed -e 's/[^ ][^ ]*[ ]/  /g'
-		done
+	{
+		if [ -n "$heads" ]; then
+			show_heads
+		else
+			get_branch_list
+		fi
+	} | while read b; do
+		case "$exclude" in *" $b "*) continue; esac
+		[ -z "$showbreak" ] || echo
+		showbreak=1 
+		ref_exists "refs/heads/$b" || continue
+		{
+			echo "$b"
+			recurse_preorder=1
+			recurse_deps show_rdeps "$b"
+		} | sed -e 's/[^ ][^ ]*[ ]/  /g'
+	done
 	exit 0
 fi
 

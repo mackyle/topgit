@@ -537,11 +537,16 @@ tg summary
 			indicates that it is out-of-date with respect to
 			its base
 
-	This can take a long time to accurately determine all the
-	relevant information about each branch; you can pass ``-t`` to get
-	just a terse list of topic branch names quickly.  Alternately,
-	you can pass ``--graphviz`` to get a dot-suitable output to draw a
-	dependency graph between the topic branches.
+	This can take a longish time to accurately determine all the
+	relevant information about each branch; you can pass ``-t`` (or ``-l``
+	or ``--list``) to get just a terse list of topic branch names quickly.
+
+	Passing ``--heads`` shows independent topic branch names and when
+	combined with ``--rdeps`` behaves as though ``--rdeps`` were run with
+	the output of ``--heads``.
+
+	Alternatively, you can pass ``--graphviz`` to get a dot-suitable output
+	for drawing a dependency graph between the topic branches.
 
 	You can also use the ``--sort`` option to sort the branches using
 	a topological sort.  This is especially useful if each
@@ -567,7 +572,7 @@ tg summary
 	text format that clearly shows all the dependencies and their
 	relationships to one another.  When ``--rdeps`` is given the default is
 	to just display information for ``HEAD``, but that can be changed by
-	using ``--all`` as the branch name.
+	using ``--all`` as the branch name or by adding the ``--heads`` option.
 
 	With ``--exclude branch``, branch can be excluded from the output
 	meaning	it will be skipped and its name will be omitted from any
