@@ -555,16 +555,16 @@ recurse_deps_internal()
 		return
 	fi
 
-	# If no_remotes is unset also check our base against remote base.
-	# Checking our head against remote head has to be done in the helper.
-	if test -z "$no_remotes" && has_remote "top-bases/$1"; then
-		echo "0 0 refs/remotes/$base_remote/top-bases/$1 $*"
-	fi
-
 	_is_tgish=0
 	_ref_hash_base=
 	! _ref_hash_base="$(ref_exists_rev "refs/top-bases/$1")" || _is_tgish=1
 	[ -z "$recurse_preorder" -o -z "$2" ] || echo "0 $_is_tgish $*"
+
+	# If no_remotes is unset also check our base against remote base.
+	# Checking our head against remote head has to be done in the helper.
+	if [ -n "$_is_tgish" -a -z "$no_remotes" ] && has_remote "top-bases/$1"; then
+		echo "0 0 refs/remotes/$base_remote/top-bases/$1 $*"
+	fi
 
 	# if the branch was annihilated, it is considered to have no dependencies
 	if [ -n "$_is_tgish" ] && ! branch_annihilated "$1" "$_ref_hash" "$_ref_hash_base"; then
