@@ -85,8 +85,8 @@ update_branch() {
 			sed 's/^\([^+]\)/-\1/' | # now each line is +branch or -branch (+ == recurse)
 			uniq -s 1 | # fold branch lines; + always comes before - and thus wins within uniq
 			while read depline; do
-				action="$(echo "$depline" | cut -c 1)"
-				dep="$(echo "$depline" | cut -c 2-)"
+				dep="${depline#?}"
+				action="${depline%$dep}"
 				become_non_cacheable
 
 				# We do not distinguish between dependencies out-of-date
