@@ -259,7 +259,7 @@ while [ -n "$merge" ]; do
 	merge="${merge#* }"
 	info "Merging $name base with $branch..."
 
-	if ! git merge "$branch^0"; then
+	if ! git merge -m "tgcreate: merge $branch into top-bases/$name" "$branch^0"; then
 		info "Please commit merge resolution and call: $tgdisplay create"
 		info "It is also safe to abort this operation using:"
 		info "git$gitcdopt reset --hard some_branch"
