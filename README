@@ -11,7 +11,8 @@ branches easier. In fact, it is designed especially for the case where
 you maintain a queue of third-party patches on top of another (perhaps
 Git-controlled) project and want to easily organize, maintain and submit
 them -- TopGit achieves that by keeping a separate topic branch for each
-patch and providing some tools to maintain the branches.
+patch and providing some tools to maintain the branches.  See the USAGE_
+section for command line details.
 
 
 INSTALLATION
@@ -231,6 +232,30 @@ USAGE
 	-c <name=val>	Pass config option to git, may be repeated
 
 The ``tg`` tool has several subcommands:
+
+	:`tg annihilate`_:  Mark a TopGit-controlled branch as defunct
+	:`tg base`_:	    Show base commit for one or more TopGit branches
+	:`tg checkout`_:    Shortcut for git checkout with name matching
+	:`tg create`_:	    Create a new TopGit-controlled branch
+	:`tg delete`_:	    Delete a TopGit-controlled branch cleanly
+	:`tg depend`_:	    Add a new dependency to a TopGit-controlled branch
+	:`tg export`_:	    Export TopGit branch patches to files or a branch
+	:`tg files`_:	    Show files changed by a TopGit branch
+	:`tg help`_:	    Show TopGit help optionally using a browser
+	:`tg import`_:	    Import patch file(s) to separate TopGit branches
+	:`tg info`_:	    Show status information about a TopGit branch
+	:`tg log`_:	    Run git log limiting revisions to a TopGit branch
+	:`tg mail`_:	    Shortcut for git send-email with ``tg patch`` output
+	:`tg next`_:	    Show branches directly depending on a TopGit branch
+	:`tg patch`_:	    Generate a patch file for a TopGit branch
+	:`tg prev`_:	    Show non-annihilated TopGit dependencies for a branch
+	:`tg push`_:	    Run git push on TopGit branch(es) and depedencies
+	:`tg rebase`_:	    Auto continue git rebase if rerere resolves conflicts
+	:`tg remote`_:	    Set up remote for fetching/pushing TopGit branches
+	:`tg revert`_:	    Revert ref(s) to a state stored in a `tg tag`
+	:`tg summary`_:	    Show various information about TopGit branches
+	:`tg tag`_:	    Create tag that records current TopGit branch state
+	:`tg update`_:	    Update TopGit branch(es) with respect to dependencies
 
 tg help
 ~~~~~~~
