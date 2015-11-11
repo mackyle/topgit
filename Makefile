@@ -38,7 +38,7 @@ endif
 
 .PHONY: FORCE
 
-all::	shell_compatibility_test precheck $(commands_out) $(hooks_out) $(help_out)
+all::	shell_compatibility_test precheck $(commands_out) $(hooks_out) $(help_out) tg-tg.txt
 
 please_set_SHELL_PATH_to_a_more_modern_shell:
 	@$$(:)
@@ -71,6 +71,10 @@ install-doc:: install-html
 
 html:: topgit.html $(html_out)
 
+tg-tg.txt: README create-html-usage.pl $(wildcard tg-*.sh)
+	@echo '[HELP] tg'
+	@perl ./create-html-usage.pl --text < README > $@
+
 topgit.html: README create-html-usage.pl $(wildcard tg-*.sh)
 	@echo '[HTML] topgit'
 	@perl ./create-html-usage.pl < README | rst2html.py - $@
@@ -99,8 +103,7 @@ install:: all
 	install -d -m 755 "$(DESTDIR)$(hooksdir)"
 	install $(hooks_out) "$(DESTDIR)$(hooksdir)"
 	install -d -m 755 "$(DESTDIR)$(sharedir)"
-	install -m 644 $(help_out) "$(DESTDIR)$(sharedir)"
-	install -m 644 README "$(DESTDIR)$(sharedir)/tg-tg.txt"
+	install -m 644 $(help_out) tg-tg.txt "$(DESTDIR)$(sharedir)"
 	install -m 644 leaves.awk "$(DESTDIR)$(sharedir)"
 
 .PHONY: install-html
