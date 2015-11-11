@@ -16,12 +16,13 @@ branches=
 head=
 heads=
 exclude=
+tgish=
 
 ## Parse options
 
 usage()
 {
-	echo "Usage: ${tgname:-tg} [...] summary [-t | --list | --heads | --sort | --deps | --deps-only | --rdeps | --graphviz] [-i | -w] [--exclude branch]... [--all | branch...]" >&2
+	echo "Usage: ${tgname:-tg} [...] summary [-t | --list | --heads | --sort | --deps | --deps-only | --rdeps | --graphviz] [-i | -w] [--tgish-only] [--exclude branch]... [--all | branch...]" >&2
 	exit 1
 }
 
@@ -41,6 +42,8 @@ while [ -n "$1" ]; do
 		sort=1;;
 	--deps)
 		deps=1;;
+	--tgish-only)
+		tgish=1;;
 	--deps-only)
 		head=HEAD
 		depsonly=1;;
@@ -114,6 +117,7 @@ show_dep() {
 	case "$exclude" in *" $_dep "*) return; esac
 	case " $seen_deps " in *" $_dep "*) return 0; esac
 	seen_deps="${seen_deps:+$seen_deps }$_dep"
+	[ -z "$tgish" -o -n "$_dep_is_tgish" ] || return 0
 	printf '%s\n' "$_dep"
 }
 
@@ -139,6 +143,7 @@ fi
 show_rdeps()
 {
 	case "$exclude" in *" $_dep "*) return; esac
+	[ -z "$tgish" -o -n "$_dep_is_tgish" ] || return 0
 	printf '%s %s\n' "$_depchain" "$_dep"
 }
 
@@ -243,6 +248,7 @@ if [ -n "$deps" ]; then
 				list_deps $head_from $b |
 					while read name dep; do
 						case "$exclude" in *" $dep "*) continue; esac
+						[ -z "$tgish" ] || ref_exists "refs/top-bases/$dep" || continue
 						echo "$name $dep"
 					done
 			done
@@ -250,6 +256,7 @@ if [ -n "$deps" ]; then
 		list_deps $head_from |
 			while read name dep; do
 				case "$exclude" in *" $dep "*) continue; esac
+				[ -z "$tgish" ] || ref_exists "refs/top-bases/$dep" || continue
 				echo "$name $dep"
 			done
 	fi
@@ -269,6 +276,7 @@ get_branch_list |
 				dep_is_tgish=true
 				ref_exists "refs/top-bases/$dep" ||
 					dep_is_tgish=false
+				[ -z "$tgish" ] || [ "$dep_is_tgish" = "true" ] || continue
 				if ! "$dep_is_tgish" || ! branch_annihilated $dep; then
 					if [ -n "$graphviz" ]; then
 						echo "\"$name\" -> \"$dep\";"

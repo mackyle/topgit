@@ -580,6 +580,10 @@ tg summary
 	more than one branch from the output.  Limiting the output to a single
 	branch that has been excluded will result in no output at all.
 
+	The ``--tgish-only`` option behaves as though any non-TopGit-controlled
+	dependencies encountered during processing had been listed after an
+	``--exclude`` option.
+
 	Note that the branch name can be specified as ``HEAD`` as a shortcut for
 	the TopGit-controlled branch that ``HEAD`` is a symbolic ref to.
 
