@@ -86,9 +86,7 @@ done
 
 if [ -z "$branches" ] && ! "$allbranches"; then
 	# this check is only needed when no branches have been passed
-	name="$(git symbolic-ref HEAD | sed 's#^refs/heads/##')"
-	base_rev="$(git rev-parse --short --verify "refs/top-bases/$name" -- 2>/dev/null)" ||
-		die "not on a TopGit-controlled branch"
+	name="$(verify_topgit_branch HEAD)"
 fi
 
 read -r nowsecs nowtzoff <<EOT

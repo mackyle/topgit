@@ -34,7 +34,7 @@ while [ -n "$1" ]; do
 done
 [ -z "$pattern" ] && pattern=refs/top-bases
 
-current="$(strip_ref "$(git symbolic-ref HEAD 2>/dev/null)")"
+current="$(strip_ref "$(git symbolic-ref -q HEAD || :)")"
 if [ -z "$all" ]; then
 	name="$(verify_topgit_branch "${name:-HEAD}")"
 else
@@ -74,7 +74,7 @@ update_branch() {
 	if [ -s "$_depcheck" ]; then
 		# We need to switch to the base branch
 		# ...but only if we aren't there yet (from failed previous merge)
-		_HEAD="$(git symbolic-ref HEAD)"
+		_HEAD="$(git symbolic-ref -q HEAD || :)"
 		if [ "$_HEAD" = "${_HEAD#refs/top-bases/}" ]; then
 			switch_to_base "$_update_name"
 		fi

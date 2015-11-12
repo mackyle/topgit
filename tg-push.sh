@@ -47,7 +47,7 @@ if [ -z "$branches" ]; then
 	if $push_all; then
 		branches="$(non_annihilated_branches)"
 	else
-		branches="$(git symbolic-ref HEAD | sed 's#^refs/heads/##')"
+		branches="$(verify_topgit_branch HEAD)"
 	fi
 fi
 

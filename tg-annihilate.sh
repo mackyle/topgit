@@ -23,11 +23,7 @@ done
 
 ## Sanity checks
 
-name="$(git symbolic-ref HEAD | sed 's#^refs/heads/##')"
-branchrev="$(git rev-parse --verify "$name" -- 2>/dev/null)" ||
-	die "invalid branch name: $name"
-baserev="$(git rev-parse --verify "refs/top-bases/$name" -- 2>/dev/null)" ||
-	die "not a TopGit topic branch: $name"
+name="$(verify_topgit_branch HEAD)"
 
 [ -z "$force" ] && { branch_empty "$name" || die "branch is non-empty: $name"; }
 

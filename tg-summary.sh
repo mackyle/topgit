@@ -170,7 +170,7 @@ if [ -n "$rdeps" ]; then
 	exit 0
 fi
 
-curname="$(strip_ref "$(git symbolic-ref HEAD 2>/dev/null)")"
+curname="$(strip_ref "$(git symbolic-ref -q HEAD || :)")"
 
 if [ -n "$graphviz" ]; then
 	cat <<EOT

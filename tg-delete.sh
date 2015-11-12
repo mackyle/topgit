@@ -35,7 +35,7 @@ branchrev="$(git rev-parse --verify "$name" -- 2>/dev/null)" ||
 	fi
 baserev="$(git rev-parse --verify "refs/top-bases/$name" -- 2>/dev/null)" ||
 	die "not a TopGit topic branch: $name"
-! git symbolic-ref HEAD >/dev/null || [ "$(git symbolic-ref HEAD)" != "refs/heads/$name" ] ||
+! headsym="$(git symbolic-ref -q HEAD)" || [ "$headsym" != "refs/heads/$name" ] ||
 	die "cannot delete your current branch"
 
 [ -z "$force" ] && { branch_empty "$name" || die "branch is non-empty: $name"; }
