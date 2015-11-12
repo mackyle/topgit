@@ -13,13 +13,16 @@ rname= # Remote branch to base this one on
 remote=
 msg=
 msgfile=
+topmsg=
+topmsgfile=
 noedit=
 nocommit=
 nodeps=
 continue=
 topmsg=
+warntop=
 
-USAGE="Usage: ${tgname:-tg} [... -r remote] create [-m <msg> | -F <file>] [-n] [--no-commit] [--no-deps] [<name> [<dep>...|-r [<rname>]] ]"
+USAGE="Usage: ${tgname:-tg} [... -r remote] create [-m <msg> | -F <file>] [--topmsg <msg> | --topmsg-file <file>] [-n] [--no-commit] [--no-deps] [<name> [<dep>...|-r [<rname>]] ]"
 
 usage()
 {
@@ -41,6 +44,7 @@ is_active()
 	[ -s "$git_dir/tg-create/topmsg" ] || return 1
 	[ -f "$git_dir/tg-create/nocommit" ] || return 1
 	[ -f "$git_dir/tg-create/noedit" ] || return 1
+	[ -f "$git_dir/tg-create/warntop" ] || return 1
 	return 0
 }
 
@@ -76,6 +80,24 @@ while [ $# -gt 0 ]; do case "$1" in
 		shift
 		msg="$1"
 		;;
+	--tm|--tm=*|--topmsg|--topmsg=*)
+		case "$1" in
+		--tm=*)
+			x="$1"
+			shift
+			set -- --tm "${x#--tm=}" "$@";;
+		--topmsg=*)
+			x="$1"
+			shift
+			set -- --topmsg "${x#--topmsg=}" "$@";;
+		esac
+		if [ $# -lt 2 ]; then
+			echo "The $1 option requires an argument" >&2
+			usage 1
+		fi
+		shift
+		topmsg="$1"
+		;;
 	-F|--file|--file=*)
 		case "$1" in --file=*)
 			x="$1"
@@ -88,6 +110,24 @@ while [ $# -gt 0 ]; do case "$1" in
 		fi
 		shift
 		msgfile="$1"
+		;;
+	--tF|--tF=*|--topmsg-file|--topmsg-file=*)
+		case "$1" in
+		 --tF=*)
+			x="$1"
+			shift
+			set -- --tF "${x#--tF=}" "$@";;
+		 --topmsg-file=*)
+			x="$1"
+			shift
+			set -- --topmsg-file "${x#--topmsg-file=}" "$@";;
+		esac
+		if [ $# -lt 2 ]; then
+			echo "The $1 option requires an argument" >&2
+			usage 1
+		fi
+		shift
+		topmsgfile="$1"
 		;;
 	-r)
 		remote=1
@@ -106,16 +146,17 @@ while [ $# -gt 0 ]; do case "$1" in
 		;;
 esac; shift; done
 [ $# -gt 0 -o -z "$rname" ] || set -- "$rname"
-[ $# -gt 0 -o -n "$remote$msgfile$msg$nocommit$nodeps" ] || continue=1
-[ -z "$continue" -o "$#$remote$msgfile$msg$nocommit$nodeps" = "0" ] || usage 1
+[ $# -gt 0 -o -n "$remote$msg$msgfile$topmsg$topmsgfile$nocommit$nodeps" ] || continue=1
+[ -z "$continue" -o "$#$remote$msg$msgfile$topmsg$topmsgfile$nocommit$nodeps" = "0" ] || usage 1
 [ -n "$continue" -o $# -eq 0 ] || { name="$1"; shift; }
 [ -n "$continue" -o -n "$name" ] || { err "no branch name given"; usage 1; }
 [ -z "$remote" -o -n "$rname" ] || rname="$name"
-[ -z "$remote" -o -z "$msg$msgfile$nocommit$nodeps" ] || { err "-r may not be combined with other options"; usage 1; }
+[ -z "$remote" -o -z "$msg$msgfile$topmsg$topmsgfile$nocommit$nodeps" ] || { err "-r may not be combined with other options"; usage 1; }
 [ $# -eq 0 -o -z "$remote" ] || { err "deps not allowed with -r"; usage 1; }
 [ $# -le 1 -o -z "$nodeps" ] || { err "--no-deps allows at most one <dep>"; usage 1; }
 [ -z "$msg" -o -z "$msgfile" ] || die "only one -F or -m option is allowed"
 [ -z "$continue" ] || is_active || die "no tg create is currently active"
+[ "$msgfile" != "-" -o "$topmsgfile" != "-" ] || { err "--message-file and --topmsg-file may not both be '-'"; usage 1; }
 
 ## Fast-track creating branches based on remote ones
 
@@ -152,6 +193,7 @@ if [ -z "$deps" ]; then
 		topmsg="$(cat "$git_dir/tg-create/topmsg")"
 		nocommit="$(cat "$git_dir/tg-create/nocommit")"
 		noedit="$(cat "$git_dir/tg-create/noedit")"
+		warntop="$(cat "$git_dir/tg-create/warntop")"
 		restarted=1
 		info "Resuming $name setup..."
 	else
@@ -183,6 +225,16 @@ rm -rf "$git_dir/tg-create"
 
 
 # Get messages
+
+tab="$(printf '\t.')" && tab="${tab%?}"
+get_subject()
+{
+	sed -n '1,/^$/p' |
+	grep -i "^Subject[ $tab]*:" |
+	sed -n "s/^[^: $tab][^: $tab]*[ $tab]*:[ $tab]*//; s/[ $tab][ $tab]*\$//; 1p" ||
+	:
+}
+
 if [ -z "$restarted" ]; then
 	>"$git_dir/TG_EDITMSG"
 	if [ -n "$msgfile" ]; then
@@ -200,21 +252,35 @@ if [ -z "$restarted" ]; then
 	msg="$(cat "$git_dir/TG_EDITMSG")"
 	rm -f "$git_dir/TG_EDITMSG"
 
-	author="$(git var GIT_AUTHOR_IDENT)"
-	author_addr="${author%> *}>"
-	{
-		echo "From: $author_addr"
-		! header="$(git config topgit.to)" || echo "To: $header"
-		! header="$(git config topgit.cc)" || echo "Cc: $header"
-		! header="$(git config topgit.bcc)" || echo "Bcc: $header"
-		! subject_prefix="$(git config topgit.subjectprefix)" || subject_prefix="$subject_prefix "
-		echo "Subject: [${subject_prefix}PATCH] $name"
-		echo
-		echo '<patch description>'
-		echo
-		echo "Signed-off-by: $author_addr"
-		[ "$(git config --bool format.signoff)" = true ] && echo "Signed-off-by: $author_addr"
-	} | git stripspace >"$git_dir/TG_EDITMSG"
+	>"$git_dir/TG_EDITMSG"
+	if [ -n "$topmsgfile" ]; then
+		if [ "$topmsgfile" = "-" ]; then
+			git stripspace >"$git_dir/TG_EDITMSG"
+		else
+			git stripspace <"$topmsgfile" >"$git_dir/TG_EDITMSG"
+		fi
+	elif [ -n "$topmsg" ]; then
+		printf '%s\n' "$topmsg" | git stripspace >"$git_dir/TG_EDITMSG"
+	fi
+	if [ -s "$git_dir/TG_EDITMSG" ]; then
+		noedit=1
+	else
+		author="$(git var GIT_AUTHOR_IDENT)"
+		author_addr="${author%> *}>"
+		{
+			echo "From: $author_addr"
+			! header="$(git config topgit.to)" || echo "To: $header"
+			! header="$(git config topgit.cc)" || echo "Cc: $header"
+			! header="$(git config topgit.bcc)" || echo "Bcc: $header"
+			! subject_prefix="$(git config topgit.subjectprefix)" || subject_prefix="$subject_prefix "
+			echo "Subject: [${subject_prefix}PATCH] $name"
+			echo
+			echo '<patch description>'
+			echo
+			echo "Signed-off-by: $author_addr"
+			[ "$(git config --bool format.signoff)" = true ] && echo "Signed-off-by: $author_addr"
+		} | git stripspace >"$git_dir/TG_EDITMSG"
+	fi
 	if [ -z "$noedit" ]; then
 		cat <<EOT >>"$git_dir/TG_EDITMSG"
 
@@ -233,6 +299,15 @@ EOT
 		git stripspace -s <"$git_dir/TG_EDITMSG" >"$git_dir/TG_EDITMSG"+
 		mv -f "$git_dir/TG_EDITMSG"+ "$git_dir/TG_EDITMSG"
 		[ -s "$git_dir/TG_EDITMSG" ] || die "nothing to do"
+	fi
+	subj="$(get_subject <"$git_dir/TG_EDITMSG")"
+	if [ -z "$subj" ]; then
+		subj="$(sed -n "s/^[ $tab][ $tab]*//; 1p" <"$git_dir/TG_EDITMSG")";
+		case "$subj" in "["*) :;; *) subj="[PATCH] $subj"; esac
+		printf '%s\n' "Subject: $subj" "" >"$git_dir/TG_EDITMSG"+
+		sed -n '2,$p' <"$git_dir/TG_EDITMSG" | git stripspace >>"$git_dir/TG_EDITMSG"+
+		mv -f "$git_dir/TG_EDITMSG"+ "$git_dir/TG_EDITMSG"
+		warntop=1
 	fi
 	topmsg="$(cat "$git_dir/TG_EDITMSG")"
 	rm -f "$git_dir/TG_EDITMSG"
@@ -272,6 +347,7 @@ while [ -n "$merge" ]; do
 		printf '%s\n' "$topmsg" >"$git_dir/tg-create/topmsg"
 		printf '%s\n' "$nocommit" >"$git_dir/tg-create/nocommit"
 		printf '%s\n' "$noedit" >"$git_dir/tg-create/noedit"
+		printf '%s\n' "$warntop" >"$git_dir/tg-create/warntop"
 		exit 2
 	fi
 done
@@ -296,6 +372,7 @@ printf '%s\n' "$topmsg" >"$root_dir/.topmsg"
 git add -f "$root_dir/.topmsg"
 printf '%s\n' "$msg" >"$git_dir/MERGE_MSG"
 
+[ -z "$warntop" ] || warn ".topmsg content was reformatted into patch header"
 if [ -n "$nocommit" ]; then
 	info "Topic branch $name set up."
 	if [ -n "$noedit" ]; then
@@ -309,10 +386,8 @@ if [ -n "$nocommit" ]; then
 fi
 
 git commit -m "$msg"
-subj="$(grep -i '^Subject:' <"$root_dir/.topmsg" | sed -n 1p || :)"
-subj="${subj#????????}"
-subj="${subj#*]}"
-subj="$(printf '%s\n' "$subj" | sed -e 's/^  *//; s/  *$//')"
+subj="$(get_subject <"$root_dir/.topmsg" |
+	sed "s/^[^]]*]//; s/^[ $tab][ $tab]*//; s/[ $tab][ $tab]*\$//")"
 if [ -n "$subj" ]; then
 	printf '%s\n' "$subj" ""
 	sed -e '1,/^$/d' <"$root_dir/.topmsg"
