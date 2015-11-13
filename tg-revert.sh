@@ -322,7 +322,7 @@ EOT
 	done <"$insn"
 fi
 msg="tgrevert: $reftype $tagname ($(( $(wc -l <"$insn") )) command(s))"
-[ -n "$dryrun" -o -n "$nostash" ] || $tg tag -q -m "$msg" --stash
+[ -n "$dryrun" -o -n "$nostash" ] || $tg tag -q --none-ok -m "$msg" --stash
 refwidth="$(git config --get --int core.abbrev 2>/dev/null || :)"
 [ -n "$refwidth" ] || refwidth=7
 [ $refwidth -ge 4 -a $refwidth -le 40 ] || refwidth=7

@@ -38,6 +38,7 @@ reflogmsg=
 notype=
 setreflogmsg=
 quiet=
+noneok=
 
 is_numeric()
 {
@@ -59,6 +60,9 @@ while [ $# -gt 0 ]; do case "$1" in
 		;;
 	-q|--quiet)
 		quiet=1
+		;;
+	--none-ok)
+		noneok=1
 		;;
 	-g|--reflog)
 		reflog=1
@@ -304,7 +308,13 @@ if [ $# -eq 1 ] && [ "$1" = "--all" ]; then
 	set -- $(git for-each-ref --format="%(refname)" refs/top-bases |
 		sed -e 's,^refs/top-bases/,,')
 	outofdateok=1
-	[ $# -ge 1 ] || die "no TopGit branches found"
+	if [ $# -eq 0 ]; then
+		if [ -n "$quiet" -a -n "$noneok" ]; then
+			exit 0
+		else
+			die "no TopGit branches found"
+		fi
+	fi
 fi
 branches=
 for b; do
