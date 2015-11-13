@@ -430,9 +430,13 @@ case "$branches" in
 		parents="$(git merge-base --independent \
 			$(printf 'refs/heads/%s^0 ' $branches))" || \
 			die "failed: git merge-base --independent"
-		mttree="$(git hash-object -t tree -w --stdin </dev/null)"
-		tagtarget="$(printf '%s\n' "tg tag branch consolidation" "" $branches | \
-			git commit-tree $mttree $(printf -- '-p %s ' $parents))"
+		if [ $(printf '%s\n' "$parents" | wc -l) -eq 1 ]; then
+			tagtarget="$parents"
+		else
+			mttree="$(git hash-object -t tree -w --stdin </dev/null)"
+			tagtarget="$(printf '%s\n' "tg tag branch consolidation" "" $branches | \
+				git commit-tree $mttree $(printf -- '-p %s ' $parents))"
+		fi
 		;;
 	*)
 		tagtarget="refs/heads/$branches^0"
