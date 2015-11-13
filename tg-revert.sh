@@ -124,10 +124,26 @@ case "$refname" in refs/tags/*) tagname="${refname#refs/tags/}";; *) reftype=ref
 git rev-parse --verify --quiet "$refname^{tag}" -- >/dev/null || die "not annotated/signed tag: $refname"
 tgf="$(get_temp tag)"
 trf="$(get_temp refs)"
-git cat-file tag "$refname" >"$tgf" || die "cannot read tag: $refname"
-sed -ne '/^-----BEGIN TOPGIT REFS-----$/,/^-----END TOPGIT REFS-----$/p' <"$tgf" | \
-sed -ne "/^\\($octet20\\) \\(refs\/[^ $tab][^ $tab]*\\)\$/{s//\\2 \\1/;p;}" | \
-LC_ALL=C sort -u -b -k1,1 >"$trf"
+tagdataref="$refname^{tag}"
+while
+	git cat-file tag "$tagdataref" >"$tgf" || die "cannot read tag: $refname"
+	sed -ne '/^-----BEGIN TOPGIT REFS-----$/,/^-----END TOPGIT REFS-----$/p' <"$tgf" | \
+	sed -ne "/^\\($octet20\\) \\(refs\/[^ $tab][^ $tab]*\\)\$/{s//\\2 \\1/;p;}" | \
+	LC_ALL=C sort -u -b -k1,1 >"$trf"
+	! [ -s "$trf" ]
+do
+	# If it's a tag of a tag, dereference it and try again
+	read -r field tagtype <<-EOT || break
+		$(sed -n '1,/^$/p' <"$tgf" | grep '^type [^ ][^ ]*$' || :)
+	EOT
+	[ "$tagtype" = "tag" ] || break
+	read -r field tagdataref <<-EOT || break
+		$(sed -n '1,/^$/p' <"$tgf" | grep '^object [^ ][^ ]*$' || :)
+	EOT
+	[ -n "$tagdataref" ] || break
+	tagdataref="$tagdataref^{tag}"
+	git rev-parse --verify --quiet "$tagdataref" -- >/dev/null || break
+done
 [ -s "$trf" ] || die "$reftype $tagname does not contain a TOPGIT REFS section"
 rcnt=$(( $(wc -l <"$trf") ))
 vcnt=$(( $(cut -d ' ' -f 2 <"$trf" | git cat-file --batch-check='%(objectname)' | grep -v ' missing$' | wc -l) ))

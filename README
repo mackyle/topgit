@@ -884,6 +884,9 @@ tg tag
 	The ``--stash`` tag name may also be used with the ``-g``/``--reflog``
 	option.
 
+	The mostly undocumented option ``--allow-outdated`` will bypass the
+	out-of-date check and is implied when ``--stash`` or ``--all`` is used.
+
 	A TopGit annotated/signed tag is simply a Git annotated/signed tag with
 	a "TOPGIT REFS" section appended to the end of the tag message (and
 	preceding the signature for signed tags).  PEM-style begin and end
@@ -1014,6 +1017,18 @@ tg revert
 
 	The special tag name ``--stash`` (as well as with ``@{n}`` suffixes)
 	can be used to refer to ``refs/tgstash``.
+
+	The ``tg revert`` command supports tags of tags that contains TopGit
+	refs.  So, for example, if you do this::
+
+		tg tag newtag --all
+		git tag -f -a -m "tag the tag" newtag newtag
+
+	Then ``newtag`` will be a tag of a tag containing a ``TOPGIT REFS``
+	section.  ``tg revert`` knows how to dereference the outermost
+	tag to get to the next (and the next etc.) tag to find the
+	``TOPGIT REFS`` section so after the above sequence, the tag ``newtag``
+	can still be used successfully with ``tg revert``.
 
 	NOTE:  If HEAD points to a ref that is updated by a revert operation
 	then NO WARNING whatsoever will be issued, but the index and working
