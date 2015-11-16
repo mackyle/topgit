@@ -64,7 +64,7 @@ while [ $# -gt 0 ]; do case "$1" in
 	--none-ok)
 		noneok=1
 		;;
-	-g|--reflog)
+	-g|--reflog|--walk-reflogs)
 		reflog=1
 		;;
 	--reflog-message)
