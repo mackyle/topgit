@@ -931,6 +931,13 @@ tg tag
 	is omitted then ``--stash`` is assumed and ``--reflog-message`` will
 	be implied (use ``--no-reflog-message`` to change that).
 
+	Note that when combined with ``tg revert``, a tag created by ``tg tag``
+	can be used to transfer TpoGit branches.  Simply create the tag, push
+	it somewhere and then have the recipient run ``tg revert`` to recreate
+	the TopGit branches.  This may be helpful in situations where it's not
+	feasible to push all the refs corresponding to the TopGit-controlled
+	branches and their top-bases.
+
 tg rebase
 ~~~~~~~~~
 	Provides a ``git rebase`` rerere auto continue function.  It may be
