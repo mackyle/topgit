@@ -76,14 +76,14 @@ process_commit()
 	info "---- Importing $commit to $branch_name"
 	lastsymref="$(git symbolic-ref --quiet HEAD || :)"
 	lasthead="$(git rev-parse --verify --quiet HEAD -- 2>/dev/null || :)"
-	$tg create --no-edit "$branch_name" $basedep
+	$tg create --quiet --no-edit "$branch_name" $basedep || die "tg create failed"
 	basedep=
 	get_commit_msg "$commit" > .topmsg
-	git add -f .topmsg .topdeps
+	git add -f .topmsg .topdeps || die "git add failed"
 	if [ -n "$tgnosequester" ]; then
 		info "topgit.sequester is set to false, unadvisedly skipping sequester commit"
 	else
-		git commit -m "tg import create $branch_name"
+		git commit -m "tg import create $branch_name" || die "git commit failed"
 	fi
 	if ! git cherry-pick --no-commit "$commit"; then
 		info "The commit will also finish the import of this patch."

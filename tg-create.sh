@@ -407,7 +407,7 @@ if [ -n "$nocommit" ]; then
 	exit 0
 fi
 
-git commit -m "$msg"
+git commit -m "$msg" || die "git commit failed"
 subj="$(get_subject <"$root_dir/.topmsg" |
 	sed "s/^[^]]*]//; s/^[ $tab][ $tab]*//; s/[ $tab][ $tab]*\$//")"
 if [ -n "$subj" ]; then
