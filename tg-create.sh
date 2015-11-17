@@ -232,10 +232,29 @@ if [ -n "$nodeps" ]; then
 	git rev-parse --quiet --verify "$deps^0" -- >/dev/null ||
 		die "unknown committish \"$deps\""
 else
-	for d in $deps; do
-		ref_exists "refs/heads/$d"  ||
-			die "unknown branch dependency '$d'"
+	olddeps="$deps"
+	deps=
+	for d in $olddeps; do
+		if [ "$d" = "HEAD" ]; then
+			sr="$(git symbolic-ref --quiet HEAD || :)"
+			[ -n "$sr" ] || die "cannot depend on a detached HEAD"
+			case "$sr" in refs/heads/*) :;; *)
+				die "HEAD is a symref to other than refs/heads/..."
+			esac
+			d="${sr#refs/heads/}"
+		else
+			ref_exists "refs/heads/$d" || die "unknown branch dependency '$d'"
+		fi
+		case " $deps " in
+			*" $d "*)
+				warn "ignoring duplicate depedency $d"
+				;;
+			*)
+				deps="${deps:+$deps }$d"
+				;;
+		esac
 	done
+	unset olddeps
 fi
 ! ref_exists "refs/heads/$name"  ||
 	die "branch '$name' already exists"
