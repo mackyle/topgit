@@ -199,10 +199,14 @@ if [ -z "$deps" ]; then
 	else
 		# The common case
 		[ -z "$name" ] && die "no branch name given"
-		head="$(git symbolic-ref --quiet HEAD || :)"
-		deps="${head#refs/heads/}"
-		[ "$deps" != "$head" ] || die "refusing to auto-depend on non-branch ref (${head:-detached HEAD})"
-		info "Automatically marking dependency on $deps"
+		if [ -n "$nodeps" ]; then
+			deps="HEAD"
+		else
+			head="$(git symbolic-ref --quiet HEAD || :)"
+			deps="${head#refs/heads/}"
+			[ "$deps" != "$head" ] || die "refusing to auto-depend on non-branch ref (${head:-detached HEAD})"
+			info "Automatically marking dependency on $deps"
+		fi
 	fi
 fi
 
@@ -211,10 +215,16 @@ fi
 
 [ -n "$merge" -o -n "$restarted" ] || merge="$deps "
 
-for d in $deps; do
-	ref_exists "refs/heads/$d"  ||
-		die "unknown branch dependency '$d'"
-done
+if [ -n "$nodeps" ]; then
+	# there can be only one and it need only be a committish
+	git rev-parse --quiet --verify "$deps^0" -- >/dev/null ||
+		die "unknown committish \"$deps\""
+else
+	for d in $deps; do
+		ref_exists "refs/heads/$d"  ||
+			die "unknown branch dependency '$d'"
+	done
+fi
 ! ref_exists "refs/heads/$name"  ||
 	die "branch '$name' already exists"
 ! ref_exists "refs/top-bases/$name" ||
@@ -322,7 +332,7 @@ if [ -n "$merge" -a -z "$restarted" ]; then
 	merge="${merge#* }"
 	info "Creating $name base from $branch..."
 	# We create a detached head so that we can abort this operation
-	git checkout -q "$(git rev-parse --verify "$branch" --)"
+	git checkout -q "$(git rev-parse --verify "$branch^0" --)"
 fi
 
 

@@ -321,7 +321,8 @@ tg create
 	detect that you are on a topic branch base ref and resume the topic
 	branch creation operation.
 
-	With the ``--no-deps`` option at most one dependency may be listed and
+	With the ``--no-deps`` option at most one dependency may be listed
+	which may be any valid committish (instead of just refs/heads/...) and
 	the newly created TopGit-controlled branch will have an empty
 	``.topdeps`` file.  This may be desirable in order to create a TopGit-
 	controlled branch that has no changes of its own and serves merely to
