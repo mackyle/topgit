@@ -354,6 +354,9 @@ tg create
 	the editor will never be run for this use case.  Note that no other
 	options may be combined with ``-r``.
 
+	The ``--quiet`` (or ``-q``) option suppresses most informational
+	messages.
+
 tg delete
 ~~~~~~~~~
 	Remove a TopGit-controlled topic branch of the given name

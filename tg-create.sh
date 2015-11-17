@@ -21,8 +21,9 @@ nodeps=
 continue=
 topmsg=
 warntop=
+quiet=
 
-USAGE="Usage: ${tgname:-tg} [... -r remote] create [-m <msg> | -F <file>] [--topmsg <msg> | --topmsg-file <file>] [-n] [--no-commit] [--no-deps] [<name> [<dep>...|-r [<rname>]] ]"
+USAGE="Usage: ${tgname:-tg} [... -r remote] create [-q] [-m <msg> | -F <file>] [--topmsg <msg> | --topmsg-file <file>] [-n] [--no-commit] [--no-deps] [<name> [<dep>...|-r [<rname>]] ]"
 
 usage()
 {
@@ -45,7 +46,13 @@ is_active()
 	[ -f "$git_dir/tg-create/nocommit" ] || return 1
 	[ -f "$git_dir/tg-create/noedit" ] || return 1
 	[ -f "$git_dir/tg-create/warntop" ] || return 1
+	[ -f "$git_dir/tg-create/quiet" ] || return 1
 	return 0
+}
+
+quiet_info()
+{
+	[ -n "$quiet" ] || info "$@"
 }
 
 ## Parse options
@@ -53,6 +60,9 @@ is_active()
 while [ $# -gt 0 ]; do case "$1" in
 	-h|--help)
 		usage
+		;;
+	--quiet|-q)
+		quiet=1
 		;;
 	--no-commit)
 		nocommit=1
@@ -176,7 +186,7 @@ if [ -n "$rname" ]; then
 	msg="tgcreate: $name -r $rname"
 	git update-ref -m "$msg" "refs/top-bases/$name" "refs/remotes/$base_remote/top-bases/$rname" ""
 	git update-ref -m "$msg" "refs/heads/$name" "refs/remotes/$base_remote/$rname" ""
-	info "Topic branch $name based on $base_remote : $rname set up."
+	quiet_info "Topic branch $name based on $base_remote : $rname set up."
 	exit 0
 fi
 
@@ -194,8 +204,9 @@ if [ -z "$deps" ]; then
 		nocommit="$(cat "$git_dir/tg-create/nocommit")"
 		noedit="$(cat "$git_dir/tg-create/noedit")"
 		warntop="$(cat "$git_dir/tg-create/warntop")"
+		quiet="$(cat "$git_dir/tg-create/quiet")"
 		restarted=1
-		info "Resuming $name setup..."
+		quiet_info "Resuming $name setup..."
 	else
 		# The common case
 		[ -z "$name" ] && die "no branch name given"
@@ -205,7 +216,7 @@ if [ -z "$deps" ]; then
 			head="$(git symbolic-ref --quiet HEAD || :)"
 			deps="${head#refs/heads/}"
 			[ "$deps" != "$head" ] || die "refusing to auto-depend on non-branch ref (${head:-detached HEAD})"
-			info "Automatically marking dependency on $deps"
+			quiet_info "Automatically marking dependency on $deps"
 		fi
 	fi
 fi
@@ -330,7 +341,7 @@ if [ -n "$merge" -a -z "$restarted" ]; then
 	# Unshift the first item from the to-merge list
 	branch="${merge%% *}"
 	merge="${merge#* }"
-	info "Creating $name base from $branch..."
+	quiet_info "Creating $name base from $branch..."
 	# We create a detached head so that we can abort this operation
 	git checkout -q "$(git rev-parse --verify "$branch^0" --)"
 fi
@@ -342,7 +353,7 @@ while [ -n "$merge" ]; do
 	# Unshift the first item from the to-merge list
 	branch="${merge%% *}"
 	merge="${merge#* }"
-	info "Merging $name base with $branch..."
+	quiet_info "Merging $name base with $branch..."
 
 	if ! git merge -m "tgcreate: merge $branch into top-bases/$name" "$branch^0"; then
 		info "Please commit merge resolution and call: $tgdisplay create"
@@ -358,6 +369,7 @@ while [ -n "$merge" ]; do
 		printf '%s\n' "$nocommit" >"$git_dir/tg-create/nocommit"
 		printf '%s\n' "$noedit" >"$git_dir/tg-create/noedit"
 		printf '%s\n' "$warntop" >"$git_dir/tg-create/warntop"
+		printf '%s\n' "$quiet" >"$git_dir/tg-create/quiet"
 		exit 2
 	fi
 done
@@ -384,14 +396,14 @@ printf '%s\n' "$msg" >"$git_dir/MERGE_MSG"
 
 [ -z "$warntop" ] || warn ".topmsg content was reformatted into patch header"
 if [ -n "$nocommit" ]; then
-	info "Topic branch $name set up."
+	quiet_info "Topic branch $name set up."
 	if [ -n "$noedit" ]; then
-		info "Please fill in .topmsg now and make the initial commit."
+		quiet_info "Please fill in .topmsg now and make the initial commit."
 	else
-		info "Please make the initial commit."
+		quiet_info "Please make the initial commit."
 	fi
-	info "To abort:"
-	info "  git$gitcdopt rm -f .top* && git$gitcdopt checkout ${deps%% *} && $tgdisplay delete $name"
+	quiet_info "To abort:"
+	quiet_info "  git$gitcdopt rm -f .top* && git$gitcdopt checkout ${deps%% *} && $tgdisplay delete $name"
 	exit 0
 fi
 
@@ -404,7 +416,7 @@ if [ -n "$subj" ]; then
 else
 	cat "$root_dir/.topmsg"
 fi >"$git_dir/MERGE_MSG"
-info "Topic branch $name created."
+quiet_info "Topic branch $name created."
 exit 0
 
 # vim:noet
