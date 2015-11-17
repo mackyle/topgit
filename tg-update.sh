@@ -1,6 +1,7 @@
 #!/bin/sh
 # TopGit - A different patch queue manager
 # Copyright (C) Petr Baudis <pasky@suse.cz>  2008
+# Copyright (C) Kyle J. McKay <mackyle@gmail.com>  2015
 # All rights reserved.
 # GPLv2
 
@@ -9,6 +10,12 @@ all= # Update all branches
 pattern= # Branch selection filter for -a
 current= # Branch we are currently on
 skip= # skip missing dependencies
+stash= # tgstash refs before changes
+
+if [ "$(git config --get --bool topgit.autostash 2>/dev/null || :)" = "true" ]; then
+	# topgit.autostash is true
+	stash=1
+fi
 
 ## Parse options
 
@@ -19,19 +26,24 @@ while [ -n "$1" ]; do
 		all=1;;
 	--skip)
 		skip=1;;
+	--stash)
+		stash=1;;
+	--no-stash)
+		stash=;;
 	-*)
-		echo "Usage: ${tgname:-tg} [...] update [--skip] ([<name>] | -a [<pattern>...])" >&2
+		echo "Usage: ${tgname:-tg} [...] update [--[no-]stash] [--skip] ([<name>] | -a [<pattern>...])" >&2
 		exit 1;;
 	*)
 		if [ -z "$all" ]; then
 			[ -z "$name" ] || die "name already specified ($name)"
 			name="$arg"
 		else
-			pattern="$pattern refs/top-bases/${arg#refs/top-bases/}"
+			pattern="${pattern:+$pattern }refs/top-bases/${arg#refs/top-bases/}"
 		fi
 		;;
 	esac
 done
+origpattern="$pattern"
 [ -z "$pattern" ] && pattern=refs/top-bases
 
 current="$(strip_ref "$(git symbolic-ref -q HEAD || :)")"
@@ -42,6 +54,18 @@ else
 fi
 
 ensure_clean_tree
+
+stash_now_if_requested() {
+	[ -n "$stash" ] || return 0
+	msg="tgupdate: autostash before update"
+	if [ -n "$all" ]; then
+		msg="$msg --all${origpattern:+ $origpattern}"
+	else
+		msg="$msg $name"
+	fi
+	$tg tag --quiet -m "$msg" --stash ${all:-$name} || die "requested --stash failed"
+	stash=
+}
 
 recursive_update() {
 	$tg update ${skip:+--skip}
@@ -72,6 +96,7 @@ update_branch() {
 		fi
 	fi
 	if [ -s "$_depcheck" ]; then
+		stash_now_if_requested
 		# We need to switch to the base branch
 		# ...but only if we aren't there yet (from failed previous merge)
 		_HEAD="$(git symbolic-ref -q HEAD || :)"
@@ -173,6 +198,7 @@ update_branch() {
 		if branch_contains "refs/heads/$_update_name" "$_rname"; then
 			info "The $_update_name head is up-to-date wrt. its remote branch."
 		else
+			stash_now_if_requested
 			info "Reconciling remote branch updates with $_update_name base..."
 			become_non_cacheable
 			# *DETACH* our HEAD now!
@@ -198,6 +224,7 @@ update_branch() {
 		info "The $_update_name head is up-to-date wrt. the base."
 		return 0
 	fi
+	stash_now_if_requested
 	info "Updating $_update_name against new base..."
 	become_non_cacheable
 	if ! git merge -m "tgupdate: merge ${plusextra}top-bases/$_update_name into $_update_name" "$merge_with^0"; then
@@ -219,11 +246,12 @@ create_ref_cache
 
 [ -z "$all" ] && { update_branch $name; exit; }
 
-non_annihilated_branches $pattern |
-	while read name; do
-		info "Proccessing $name..."
-		update_branch "$name" || exit
-	done
+while read name && [ -n "$name" ]; do
+	info "Proccessing $name..."
+	update_branch "$name" || exit
+done <<-EOT
+	$(non_annihilated_branches $pattern)
+EOT
 
 info "Returning to $current..."
 git checkout -q "$current"

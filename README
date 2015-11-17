@@ -816,6 +816,12 @@ tg update
 	branches with missing dependencies by skipping only the dependencies
 	that are missing.  Caveat utilitor.
 
+	When ``--stash`` is specified (or the ``topgit.autostash`` config
+	value is set to ``true``), a ref stash will be automatically created
+	just before beginning updates if any are needed.  The ``--no-stash``
+	option may be used to disable a ``topgit.autostash=true`` setting.
+	See the ``tg tag`` ``--stash`` option for details.
+
 	After the update, if a single topic branch was specified, it is
 	left as the current one; if ``-a`` was specified, it returns to
 	the branch which was current at the beginning.
