@@ -49,11 +49,24 @@ if [ -z "$branches" ]; then
 	else
 		branches="$(verify_topgit_branch HEAD)"
 	fi
+else
+	oldbranches="$branches"
+	branches=
+	for name in $oldbranches; do
+		if [ "$name" = "HEAD" ]; then
+			sr="$(git symbolic-ref --quiet HEAD || :)"
+			[ -n "$sr" ] || die "cannot push a detached HEAD"
+			case "$sr" in refs/heads/*) :;; *)
+				die "HEAD is a symref to other than refs/heads/..."
+			esac
+			branches="${branches:+$branches }${sr#refs/heads/}"
+		else
+			ref_exists "refs/heads/$name" || die "no such ref: refs/heads/$name"
+			branches="${branches:+$branches }$name"
+		fi
+	done
+	unset oldbranches
 fi
-
-for name in $branches; do
-	ref_exists "refs/heads/$name" || die "detached HEAD? Can't push $name"
-done
 
 _listfile="$(get_temp tg-push-listfile)"
 
