@@ -367,6 +367,10 @@ tg delete
 	certain TopGit commands complain, because the base of branch B
 	is still there.
 
+	Normally ``tg delete`` will refuse to delete the current branch.
+	However, giving ``-f`` twice (or more) will force it to do so but it
+	will first detach your HEAD.
+
 	IMPORTANT: Currently, this command will *NOT* remove the branch
 	from the dependency list in other branches. You need to take
 	care of this *manually*.  This is even more complicated in

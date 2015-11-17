@@ -13,7 +13,7 @@ while [ -n "$1" ]; do
 	arg="$1"; shift
 	case "$arg" in
 	-f|--force)
-		force=1;;
+		force=$(( $force +1 ));;
 	-*)
 		echo "Usage: ${tgname:-tg} [...] delete [-f] <name>" >&2
 		exit 1;;
@@ -35,8 +35,11 @@ branchrev="$(git rev-parse --verify "$name" -- 2>/dev/null)" ||
 	fi
 baserev="$(git rev-parse --verify "refs/top-bases/$name" -- 2>/dev/null)" ||
 	die "not a TopGit topic branch: $name"
-! headsym="$(git symbolic-ref -q HEAD)" || [ "$headsym" != "refs/heads/$name" ] ||
-	die "cannot delete your current branch"
+! headsym="$(git symbolic-ref -q HEAD)" || [ "$headsym" != "refs/heads/$name" ] || {
+	[ -n "$force" ] && [ "$force" -ge 2 ] || die "cannot delete your current branch"
+	warn "detaching HEAD to delete current branch"
+	git checkout --quiet --detach || :
+}
 
 [ -z "$force" ] && { branch_empty "$name" || die "branch is non-empty: $name"; }
 
