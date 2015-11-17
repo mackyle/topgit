@@ -221,8 +221,9 @@ if [ -z "$deps" ]; then
 	fi
 fi
 
-# Non-remote branch set up requires a clean tree
-[ -n "$restarted" ] || ensure_clean_tree
+# Non-remote branch set up requires a clean tree unless the single dep is HEAD
+[ -n "$restarted" ] || [ "$deps" = "HEAD" ] || [ $# -eq 1 -a "$deps" = "$(verify_topgit_branch HEAD -f || :)" ] ||
+	ensure_clean_tree
 
 [ -n "$merge" -o -n "$restarted" ] || merge="$deps "
 
@@ -407,7 +408,7 @@ if [ -n "$nocommit" ]; then
 	exit 0
 fi
 
-git commit -m "$msg" || die "git commit failed"
+git commit -m "$msg" "$root_dir/.topdeps" "$root_dir/.topmsg" || die "git commit failed"
 subj="$(get_subject <"$root_dir/.topmsg" |
 	sed "s/^[^]]*]//; s/^[ $tab][ $tab]*//; s/[ $tab][ $tab]*\$//")"
 if [ -n "$subj" ]; then
