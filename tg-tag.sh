@@ -7,7 +7,7 @@
 lf="$(printf '\n.')" && lf="${lf%?}"
 tab="$(printf '\t.')" && tab="${tab%?}"
 USAGE="Usage: ${tgname:-tg} [...] tag [-s | -u <key-id>] [-f] [-q] [--no-edit] [-m <msg> | -F <file>] (<tagname> | --refs) [<branch>...]"
-USAGE="$USAGE$lf   Or: ${tgname:-tg} [...] tag (-g | --reflog) [--reflog-message] [--no-type] [-n <number> | -number] [<tagname>]"
+USAGE="$USAGE$lf   Or: ${tgname:-tg} [...] tag (-g | --reflog) [--reflog-message | --commit-message] [--no-type] [-n <number> | -number] [<tagname>]"
 
 usage()
 {
@@ -71,7 +71,7 @@ while [ $# -gt 0 ]; do case "$1" in
 		reflogmsg=1
 		setreflogmsg=1
 		;;
-	--no-reflog-message)
+	--no-reflog-message|--commit-message)
 		reflogmsg=
 		setreflogmsg=1
 		;;

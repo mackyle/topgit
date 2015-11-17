@@ -943,7 +943,8 @@ tg tag
 	annotated/signed tags as well provided they have a reflog.  The number
 	of entries shown may be limited with the ``-n`` option.  If the tagname
 	is omitted then ``--stash`` is assumed and ``--reflog-message`` will
-	be implied (use ``--no-reflog-message`` to change that).
+	be implied (use ``--no-reflog-message`` or ``--commit-message`` to
+	change that).
 
 	Note that when combined with ``tg revert``, a tag created by ``tg tag``
 	can be used to transfer TpoGit branches.  Simply create the tag, push
