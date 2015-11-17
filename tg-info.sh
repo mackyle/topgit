@@ -1,24 +1,60 @@
 #!/bin/sh
 # TopGit - A different patch queue manager
-# (c) Petr Baudis <pasky@suse.cz>  2008
+# Copyright (C) Petr Baudis <pasky@suse.cz>  2008
+# Copyright (C) Kyle J. McKay <mackyle@gmail.com>  2015
 # GPLv2
 
-name=
+USAGE="Usage: ${tgname:-tg} [...] info [--heads] [<name>]"
 
+usage()
+{
+	if [ "${1:-0}" != 0 ]; then
+		printf '%s\n' "$USAGE" >&2
+	else
+		printf '%s\n' "$USAGE"
+	fi
+	exit ${1:-0}
+}
 
 ## Parse options
 
-while [ -n "$1" ]; do
-	arg="$1"; shift
-	case "$arg" in
-	-*)
-		echo "Usage: ${tgname:-tg} [...] info [<name>]" >&2
-		exit 1;;
+heads=
+
+while [ $# -gt 0 ]; do case "$1" in
+	-h|--help)
+		usage
+		;;
+	--heads)
+		heads=1
+		;;
+	-?*)
+		echo "Unknown option: $1" >&2
+		usage 1
+		;;
 	*)
-		[ -z "$name" ] || die "name already specified ($name)"
-		name="$arg";;
-	esac
-done
+		break
+		;;
+esac; shift; done
+[ $# -gt 0 ] || set -- HEAD
+[ $# -eq 1 ] || die "name already specified ($1)"
+name="$1"
+
+# true if $1 is an ancestor of (or the same as) $2 
+is_ancestor()
+{
+	[ -z "$(git rev-list --max-count=1 "$1" --not "$2" --)" ]
+}
+
+if [ -n "$heads" ]; then
+	hash="$(git rev-parse --verify --quiet "$name" --)" || die "no such ref: $name"
+	$tg summary --tgish-only --heads |
+	while read -r head; do
+		if is_ancestor "$hash" "refs/heads/$head"; then
+			printf '%s\n' "$head"
+		fi
+	done
+	exit 0
+fi
 
 name="$(verify_topgit_branch "${name:-HEAD}")"
 base_rev="$(git rev-parse --short --verify "refs/top-bases/$name" -- 2>/dev/null)" ||

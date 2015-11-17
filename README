@@ -431,6 +431,11 @@ tg info
 	indicate how many commits on the branch (11) and how many of those
 	are non-merge commits (3).
 
+	Alternatively, if ``--heads`` is used then which of the independent
+	TopGit branch heads (as output by ``tg summary --tgish-only --heads)``
+	contains the specified commit (which may be any committish -- defaults
+	to ``HEAD`` if not given).  Zero or more results will be output.
+
 tg patch
 ~~~~~~~~
 	Generate a patch from the current or specified topic branch.
