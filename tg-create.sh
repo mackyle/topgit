@@ -22,6 +22,8 @@ continue=
 topmsg=
 warntop=
 quiet=
+branchtype=PATCH
+branchdesc=patch
 
 USAGE="Usage: ${tgname:-tg} [... -r remote] create [-q] [-m <msg> | -F <file>] [--topmsg <msg> | --topmsg-file <file>] [-n] [--no-commit] [--no-deps] [<name> [<dep>...|-r [<rname>]] ]"
 
@@ -73,6 +75,8 @@ while [ $# -gt 0 ]; do case "$1" in
 		;;
 	--no-deps)
 		nodeps=1
+		branchtype=BASE
+		branchdesc=base
 		;;
 	--continue)
 		continue=1
@@ -314,9 +318,9 @@ if [ -z "$restarted" ]; then
 			! header="$(git config topgit.cc)" || echo "Cc: $header"
 			! header="$(git config topgit.bcc)" || echo "Bcc: $header"
 			! subject_prefix="$(git config topgit.subjectprefix)" || subject_prefix="$subject_prefix "
-			echo "Subject: [${subject_prefix}PATCH] $name"
+			echo "Subject: [${subject_prefix}$branchtype] $name"
 			echo
-			echo '<patch description>'
+			echo "<$branchdesc description>"
 			echo
 			echo "Signed-off-by: $author_addr"
 			[ "$(git config --bool format.signoff)" = true ] && echo "Signed-off-by: $author_addr"
@@ -333,7 +337,7 @@ if [ -z "$restarted" ]; then
 # Lines starting with '#' will be ignored, and an empty patch
 # message aborts the \`tg create\` operation entirely.
 #
-# tg create $name $deps
+# tg create ${nodeps:+--no-deps }$name $deps
 EOT
 		run_editor "$git_dir/TG_EDITMSG" || \
 		die "there was a problem with the editor '$tg_editor'"
@@ -344,7 +348,7 @@ EOT
 	subj="$(get_subject <"$git_dir/TG_EDITMSG")"
 	if [ -z "$subj" ]; then
 		subj="$(sed -n "s/^[ $tab][ $tab]*//; 1p" <"$git_dir/TG_EDITMSG")";
-		case "$subj" in "["*) :;; *) subj="[PATCH] $subj"; esac
+		case "$subj" in "["*) :;; *) subj="[$branchtype] $subj"; esac
 		printf '%s\n' "Subject: $subj" "" >"$git_dir/TG_EDITMSG"+
 		sed -n '2,$p' <"$git_dir/TG_EDITMSG" | git stripspace >>"$git_dir/TG_EDITMSG"+
 		mv -f "$git_dir/TG_EDITMSG"+ "$git_dir/TG_EDITMSG"
