@@ -222,6 +222,57 @@ SYNOPSIS
 	$ tg -r foo update
 
 
+CONVENTIONS
+-----------
+
+When using TopGit there are several common conventions used when working with
+TopGit branches.  None of them are enforced, they are only suggestions.
+
+There are three typical uses for a TopGit branch:
+
+    1. Normal TopGit branches that represent a single patch.  These are known
+       as "patch" TopGit branches.
+    2. Empty TopGit branches with no dependencies (an empty ``.topdeps`` file)
+       that represent a base upon which other "normal" TopGit branches depend.
+       These are known as "base" TopGit branches (not to be confused with
+       the refs/top-bases/... refs).
+    3. Empty TopGit branches that serve as a staging area to bring together
+       several other TopGit branches into one place so they can be used/tested
+       all together.  These are known as "stage" TopGit branches.
+
+An "empty" TopGit branch is one that does not have any changes of its own --
+it may still have dependencies though ("stage" branches do, "base" branches do
+not).  The ``tg summary`` output shows empty branches with a ``0`` in the
+listing.  Normal "patch" branches that have not been annihilated, "base" and
+"stage" branches fall into this category.  (Annihilated branches are normally
+omitted from the ``tg summary`` output but can be shown if given explicitly as
+an argument to the ``tg summary`` command.  However, the message line will be
+incorrect since an annihilated branch has no ``.topmsg`` file of its own.)
+
+A "patch" branch name typically starts with ``t/`` whereas "base" and "stage"
+branch names often do not.
+
+A "base" branch is created by using the ``--no-deps`` option of ``tg create``
+which will automatically suggest a "[BASE]" message prefix rather than
+"[PATCH]".  A "stage" branch is created like a normal patch branch except that
+the only changes that will ever be made to it are typically to add/remove
+dependencies.  Its subject prefix must be manually changed to "[STAGE]" to
+reflect its purpose.
+
+Since both "base" and "stage" branches typically only have a use for the
+"Subject:" ilne from their ``.topmsg`` file, they are quite easily created
+using the ``--topmsg`` option of ``tg create``.
+
+Use of "stage" and "base" branches is completely optional.  However, without
+use of a "stage" branch it will be difficult to test multiple independent
+patches together all at once.  A "base" branch is merely a convenience that
+provides more explicit control over when common base for a set of patches gets
+updated as well as providing a branch that shows in ``tg summary`` output and
+participates in ``tg remote --populate`` setup.
+
+One last thing, you have enabled ``git rerere`` haven't you?
+
+
 NO UNDO
 -------
 
