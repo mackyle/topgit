@@ -446,7 +446,7 @@ has_remote()
 # Return the verified TopGit branch name or die with an error.
 # As a convenience, if HEAD is given and HEAD is a symbolic ref to
 # refs/heads/... then ... will be verified instead.
-# if "$2" = "-f" then return an error rather than dying.
+# if "$2" = "-f" (for fail) then return an error rather than dying.
 verify_topgit_branch()
 {
 	case "$1" in
@@ -458,7 +458,7 @@ verify_topgit_branch()
 			;;
 		HEAD)
 			_verifyname="$(git symbolic-ref HEAD 2>/dev/null || :)"
-			[ -n "$_verifyname" ] || die "HEAD is not a symbolic ref"
+			[ -n "$_verifyname" -o "$2" = "-f" ] || die "HEAD is not a symbolic ref"
 			case "$_verifyname" in refs/heads/*) :;; *)
 				[ "$2" != "-f" ] || return 1
 				die "HEAD is not a symbolic ref to the refs/heads namespace"
