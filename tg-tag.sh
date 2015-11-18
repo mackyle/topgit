@@ -32,6 +32,7 @@ refsonly=
 maxcount=
 reflog=
 outofdateok=
+anyrefok=
 defbranch=HEAD
 stash=
 reflogmsg=
@@ -105,6 +106,9 @@ while [ $# -gt 0 ]; do case "$1" in
 		;;
 	--allow-outdated)
 		outofdateok=1
+		;;
+	--allow-any)
+		anyrefok=1
 		;;
 	--refs|--refs-only)
 		refsonly=1
@@ -305,8 +309,7 @@ fi
 [ -z "$signed" -o "$reftype" = "tag" ] || die "signed tags must be under refs/tags"
 [ $# -gt 0 ] || set -- $defbranch
 if [ $# -eq 1 ] && [ "$1" = "--all" ]; then
-	set -- $(git for-each-ref --format="%(refname)" refs/top-bases |
-		sed -e 's,^refs/top-bases/,,')
+	set -- $(git for-each-ref --format="%(refname)" refs/top-bases)
 	outofdateok=1
 	if [ $# -eq 0 ]; then
 		if [ -n "$quiet" -a -n "$noneok" ]; then
@@ -317,19 +320,142 @@ if [ $# -eq 1 ] && [ "$1" = "--all" ]; then
 	fi
 fi
 branches=
+allrefs=
+tgbranches=
+tgcount=0
+othercount=0
 for b; do
-	bname="$(verify_topgit_branch "$b")"
-	case " ${branches:-..} " in *" $bname "*) :;; *)
-		branches="${branches:+$branches }$bname"
+	sfn="$(git rev-parse --revs-only --symbolic-full-name "$b" -- 2>/dev/null || :)"
+	[ -n "$sfn" ] || die "no such ref: $b"
+	git rev-parse --quiet --verify "$sfn^0" -- >/dev/null || {
+		[ -n "$anyrefok" ] || die "ref is not a committish: $b"
+		warn "ignoring non-committish ref: $b"
+		continue
+	}
+	case "$sfn" in
+		refs/heads/*)
+			added=
+			tgish=1
+			ref_exists "refs/top-bases/${sfn#refs/heads/}" || tgish=
+			[ -n "$anyrefok" ] || [ -n "$tgish" ] ||
+				die "not a TopGit branch: ${sfn#refs/heads/} (use --allow-any option)"
+			case " $allrefs " in *" $b "*) :;; *)
+				allrefs="${allrefs:+$allrefs }$sfn"
+			esac
+			case " $branches " in *" ${sfn#refs/heads/} "*) :;; *)
+				branches="${branches:+$branches }${sfn#refs/heads/}"
+				added=1
+			esac
+			if [ -n "$tgish" ]; then
+				case " $allrefs " in *" refs/top-bases/${sfn#refs/heads/} "*) :;; *)
+					allrefs="${allrefs:+$allrefs }refs/top-bases/${sfn#refs/heads/}"
+				esac
+				case " $tgbranches " in *" ${sfn#refs/heads/} "*) :;; *)
+					tgbranches="${tgbranches:+$tgbranches }${sfn#refs/heads/}"
+					added=1
+				esac
+				[ -z "$added" ] || tgcount=$(( $tgcount + 1 ))
+			else
+				[ -z "$added" ] || othercount=$(( $othercount + 1 ))
+			fi
+			;;
+		refs/top-bases/*)
+			added=
+			tgish=1
+			ref_exists "refs/heads/${sfn#refs/top-bases/}" || tgish=
+			[ -n "$anyrefok" ] || [ -n "$tgish" ] ||
+				warn "including TopGit base that's missing its head: $sfn"
+			case " $allrefs " in *" $sfn "*) :;; *)
+				allrefs="${allrefs:+$allrefs }$sfn"
+			esac
+			case " $branches " in *" ${sfn#refs/top-bases/} "*) :;; *)
+				branches="${branches:+$branches }${sfn#refs/top-bases/}"
+				added=1
+			esac
+			if [ -n "$tgish" ]; then
+				case " $allrefs " in *" refs/heads/${sfn#refs/top-bases/} "*) :;; *)
+					allrefs="${allrefs:+$allrefs }refs/heads/${sfn#refs/top-bases/}"
+				esac
+				case " $tgbranches " in *" ${sfn#refs/top-bases/} "*) :;; *)
+					tgbranches="${tgbranches:+$tgbranches }${sfn#refs/top-bases/}"
+					added=1
+				esac
+				[ -z "$added" ] || tgcount=$(( $tgcount + 1 ))
+			else
+				[ -z "$added" ] || othercount=$(( $othercount + 1 ))
+			fi
+			;;
+		*)
+			[ -n "$anyrefok" ] || die "refusing to include without --allow-any: $sfn"
+			case "$sfn" in refs/tags/*)
+				if [ "$(git cat-file -t "$sfn")" = "tag" ]; then
+					warn "ignoring 'tag' object and storing as lightweight tag: $sfn"
+				fi
+			esac
+			case " $allrefs " in *" $sfn "*) :;; *)
+				allrefs="${allrefs:+$allrefs }$sfn"
+			esac
+			case " $branches " in *" ${sfn#refs/} "*) :;; *)
+				branches="${branches:+$branches }${sfn#refs/}"
+				othercount=$(( $othercount + 1 ))
+			esac
+			;;
 	esac
 done
 [ -n "$force" ] || \
 ! git rev-parse --verify --quiet "$refname" -- >/dev/null ||
 die "$reftype '$tagname' already exists"
 
+desc="tg branch"
+descpl="tg branches"
+if [ $othercount -gt 0 ]; then
+	if [ $tgcount -eq 0 ]; then
+		desc="ref"
+		descpl="refs"
+	else
+		descpl="$descpl and refs"
+	fi
+fi
+
+get_dep() {
+	case " $seen_deps " in *" $_dep "*) return 0; esac
+	seen_deps="${seen_deps:+$seen_deps }$_dep"
+	printf 'refs/heads/%s\n' "$_dep"
+	[ -z "$_dep_is_tgish" ] || printf 'refs/top-bases/%s\n' "$_dep"
+}
+
+get_deps_internal()
+{
+	no_remotes=1
+	recurse_deps_exclude=
+	for _b; do
+		case " $recurse_deps_exclude " in *" $_b "*) continue; esac
+		seen_deps=
+		_dep="$_b"; _dep_is_tgish=1; get_dep
+		recurse_deps get_dep "$_b"
+		recurse_deps_exclude="$recurse_deps_exclude $seen_deps"
+	done
+}
+
+get_deps()
+{
+	get_deps_internal "$@" | LC_ALL=C sort -u
+}
+
 out_of_date=
-if [ -z "$outofdateok" ]; then
-	for b in $branches; do
+if [ -n "$outofdateok" ]; then
+	if [ -n "$tgbranches" ]; then
+		while read -r dep && [ -n "$dep" ]; do
+			case " $allrefs " in *" $dep "*) :;; *)
+				! ref_exists "$dep" ||
+				allrefs="${allrefs:+$allrefs }$dep"
+			esac
+		done <<-EOT
+			$(get_deps $tgbranches)
+		EOT
+	fi
+else
+	for b in $tgbranches; do
 		if ! needs_update "$b" >/dev/null; then
 			out_of_date=1
 			echo "branch not up-to-date: $b"
@@ -338,32 +464,15 @@ if [ -z "$outofdateok" ]; then
 fi
 [ -z "$out_of_date" ] || die "all branches to be tagged must be up-to-date"
 
-show_dep()
-{
-	case " $seen_deps " in *" $_dep "*) return 0; esac
-	seen_deps="${seen_deps:+$seen_deps }$_dep"
-	printf 'refs/heads/%s refs/heads/%s\n' "$_dep" "$_dep"
-	[ -z "$_dep_is_tgish" ] || \
-	printf 'refs/top-bases/%s refs/top-bases/%s\n' "$_dep" "$_dep"
-}
-
-show_deps()
-{
-	no_remotes=1
-	recurse_deps_exclude=
-	for _b; do
-		seen_deps=
-		_dep="$_b"; _dep_is_tgish=1; show_dep
-		recurse_deps show_dep "$_b"
-		recurse_deps_exclude="$recurse_deps_exclude $seen_deps"
-	done
-}
-
 get_refs()
 {
 	printf '%s\n' '-----BEGIN TOPGIT REFS-----'
-	show_deps $branches | LC_ALL=C sort -u | \
-	git cat-file --batch-check='%(objectname) %(rest)' | grep -v ' missing$'
+	{
+	    printf '%s\n' $allrefs
+	    [ -n "$outofdateok" ] || get_deps $tgbranches
+	} | LC_ALL=C sort -u | sed 's/^\(.*\)$/\1^0 \1/' |
+	git cat-file --batch-check='%(objectname) %(rest)' 2>/dev/null |
+	grep -v ' missing$'
 	printf '%s\n' '-----END TOPGIT REFS-----'
 }
 
@@ -385,17 +494,17 @@ else
 	case "$branches" in
 	*" "*)
 		if [ ${#branches} -le 60 ]; then
-			printf '%s\n' "tag tg branches $branches"
+			printf '%s\n' "tag $descpl $branches"
 			printf '%s\n' "$updmsg"
 		else
-			printf '%s\n' "tag $(( $(printf '%s' "$branches" | wc -w) )) tg branches" ""
+			printf '%s\n' "tag $(( $(printf '%s' "$branches" | wc -w) )) $descpl" ""
 			for b in $branches; do
 				printf '%s\n' "$b"
 			done
 		fi
 		;;
 	*)
-		printf '%s\n' "tag tg branch $branches"
+		printf '%s\n' "tag $desc $branches"
 		;;
 	esac | git stripspace >"$git_dir/TAG_EDITMSG"
 	if [ -z "$noedit" ]; then
@@ -406,7 +515,7 @@ else
 #   $tagname
 # Lines starting with '#' will be ignored.
 #
-# tg branches to be tagged:
+# $descpl to be tagged:
 #
 EOT
 			for b in $branches; do
@@ -425,10 +534,10 @@ echo "" >>"$git_dir/TGTAG_FINALMSG"
 get_refs >>"$git_dir/TGTAG_FINALMSG"
 
 tagtarget=
-case "$branches" in
+case "$allrefs" in
 	*" "*)
 		parents="$(git merge-base --independent \
-			$(printf 'refs/heads/%s^0 ' $branches))" || \
+			$(printf '%s^0 ' $allrefs))" || \
 			die "failed: git merge-base --independent"
 		if [ $(printf '%s\n' "$parents" | wc -l) -eq 1 ]; then
 			tagtarget="$parents"
@@ -439,7 +548,7 @@ case "$branches" in
 		fi
 		;;
 	*)
-		tagtarget="refs/heads/$branches^0"
+		tagtarget="$allrefs^0"
 		;;
 esac
 
@@ -470,7 +579,7 @@ else
 		if [ ${#branches} -le 100 ]; then
 			updmsg="$(printf '%s\n' "tgtag: $branches")"
 		else
-			updmsg="$(printf '%s\n' "tgtag: $(( $(printf '%s' "$branches" | wc -w) )) branches")"
+			updmsg="$(printf '%s\n' "tgtag: $(( $(printf '%s' "$branches" | wc -w) )) ${descpl#tg }")"
 		fi
 		;;
 	*)
