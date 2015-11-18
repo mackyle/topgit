@@ -253,6 +253,56 @@ place, then set the ``topgit.sequester`` config variable explicitly to the
 value ``false``.  But this is not recommended.
 
 
+AMENDING AND REBASING AND UPDATE-REF'ING
+----------------------------------------
+
+In a word, "don't".
+
+It is okay to manually update a top-bases/... ref when a) it has no depedencies
+(i.e. it was created with the ``tg create`` ``--no-deps`` option) and b) the
+old top-bases/... ref value can be fast-forwarded to the new top-bases/...
+value OR the new value contains ALL of the changes in the old value through
+some other mechanism (perhaps they were cherry-picked or otherwise applied to
+the new top-bases/... ref).  The same rules apply to non-TopGit-controlled
+dependencies.
+
+Ignoring this rule and proceeding anyway with a non-fast-forward update to a
+top-bases/... ref will result in changes present in the new value being merged
+into the branch (at ``tg update`` time) as expected (possibly with conflicts),
+but any changes that were contained in the old version of the top-bases/... ref
+which have been dropped (i.e. are NOT contained in the new version of the
+top-bases/... ref) will continue to be present in the branch!  To get rid of
+the dropped commits, one or more "revert" commits will have to be manually
+applied to the tip of the new top-bases/... value (which will then be merged
+into the branch at next ``tg update`` time).
+
+The only time it's safe to amend, rebase, filter or otherwise rewrite commits
+contained in a TopGit controlled branch or non-TopGit branch is when those
+commits are NOT reachable via any other ref!
+
+Furthermore, while it is safe to rewrite merge commits (provided they meet the
+same conditions) the merge commits themselves and the branches they are merging
+in must be preserved during the rewrite and that can be rather tricky to get
+right so it's not recommended.
+
+For example, if, while working on a TopGit-controlled branch ``foo``, a bad
+typo is noticed, it's okay to ammend/rebase to fix that provided neither
+``tg update`` nor ``tg create`` has already been used to cause some other ref
+to be able to reach the commit with the typo.
+
+If an amend or rerwite is done anyway even though the commit with the typo is
+reachable from some other ref, the typo won't really be removed.  What will
+happen instead is that the new version without the typo will ultimately be
+merged into the other ref(s) (at ``tg update`` time) likely causing a conflict
+that will have to be manually resolved and the commit with the typo will
+continue to be reachable from those other refs!
+
+Instead just make a new commit to fix the typo.  The end result will end up
+being the same but without the merge conflicts.
+
+See also the discussion in the "NO UNDO" section.
+
+
 USAGE
 -----
 ``tg [-C <dir>] [-r <remote> | -u] [-c <name>=<val>] <subcommand> [<subcommand option/argument>...]``
