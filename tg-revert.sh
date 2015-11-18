@@ -347,10 +347,12 @@ notewidth=$(( $refwidth + 4 + $refwidth ))
 cut -d ' ' -f 3 <"$insn" | LC_ALL=C sort -u -b -k1,1 | join - "$trf" | \
 while read -r name rev; do
 	orig="$(git rev-parse --verify --quiet "$name" -- || :)"
-	if [ -n "$logrefupdates" ]; then case "$name" in refs/heads/*|refs/top-bases/*)
-		mkdir -p "$git_dir/logs/$(dirname "$name")" 2>/dev/null || :
-		{ >>"$git_dir/logs/$name" || :; } 2>/dev/null
-	esac; fi
+	if [ -n "$logrefupdates" -o "$name" = "refs/tgstash" ]; then
+		case "$name" in refs/heads/*|refs/top-bases/*|refs/tgstash)
+			mkdir -p "$git_dir/logs/$(dirname "$name")" 2>/dev/null || :
+			{ >>"$git_dir/logs/$name" || :; } 2>/dev/null
+		esac
+	fi
 	if [ "$rev" != "$orig" ]; then
 		[ -z "$dryrun" -a -n "$quiet" ] || \
 		origsh="$(git rev-parse --verify --short --quiet "$name" -- || :)"
