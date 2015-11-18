@@ -222,6 +222,47 @@ SYNOPSIS
 	$ tg -r foo update
 
 
+NO UNDO
+-------
+
+Beware, there is no "undo" after running a ``tg update``!
+
+Well, that's not entirely correct.  Since ``tg update`` never discards commits
+an "undo" operation is technically feasible provided the old values of all the
+refs that were affected by the ``tg update`` operation can be determined and
+then they are simply changed back to their previous values.
+
+In practice though, it can be extremely tedious and error prone looking through
+log information to try and determine what the correct previous values were.
+Although, since TopGit tries to make sure reflogs are enabled for top-bases
+refs, using Git's ``@{date}`` notation on all the refs dumped out by a
+``tg tag --refs foo``, where "foo" is the branch that was updated whose update
+needs to be undone, may work.
+
+Alternatively, ``tg tag --stash`` can be used prior to the update and then
+``tg revert`` used after the update to restore the previous state.  This
+assumes, of course, that you remember to run ``tg tag --stash`` first.
+
+The ``tg update`` command understands a ``--stash`` option that tells it to
+automatically run ``tg tag --stash`` before it starts making changes (if
+everything is up-to-date it won't run the stash command at all).  Again, you
+must remember to add the ``--stash`` option though.
+
+However, there is a preference.  Setting the config value ``topgit.autostash``
+to ``true`` will implicitly add the ``--stash`` option to any ``tg update``
+command unless an explicit ``--no-stash`` option is given.
+
+If you are likely to ever want to undo a ``tg update``, setting
+``topgit.autostash`` to ``true`` is highly recommended!
+
+Note that the tags saved by ``tg tag --stash`` are stored in the
+``refs/tgstash`` ref and its reflog.  Unfortunately, while Git is happy to
+maintain the reflog (once it's been enabled which ``tg tag`` guarantees for
+``refs/tgstash``), Git is unable to view an annotated/signed tag's reflog!
+Instead Git dereferences the tag and shows the wrong thing.  Use the
+``tg tag -g`` command to view the ``refs/tgstash`` reflog instead.
+
+
 SEQUESTRATION
 -------------
 
