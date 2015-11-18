@@ -443,7 +443,7 @@ case "$branches" in
 		;;
 esac
 
-if [ -n "$logrefupdates" ]; then
+if [ -n "$logrefupdates" -o "$refname" = "refs/tgstash" ]; then
 	mkdir -p "$git_dir/logs/$(dirname "$refname")" 2>/dev/null || :
 	{ >>"$git_dir/logs/$refname" || :; } 2>/dev/null
 fi
