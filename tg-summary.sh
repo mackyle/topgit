@@ -17,12 +17,13 @@ head=
 heads=
 exclude=
 tgish=
+withdeps=
 
 ## Parse options
 
 usage()
 {
-	echo "Usage: ${tgname:-tg} [...] summary [-t | --list | --heads | --sort | --deps | --deps-only | --rdeps | --graphviz] [-i | -w] [--tgish-only] [--exclude branch]... [--all | branch...]" >&2
+	echo "Usage: ${tgname:-tg} [...] summary [-t | --list | --heads | --sort | --deps | --deps-only | --rdeps | --graphviz] [-i | -w] [--tgish-only] [--with-deps] [--exclude branch]... [--all | branch...]" >&2
 	exit 1
 }
 
@@ -36,6 +37,9 @@ while [ -n "$1" ]; do
 		terse=1;;
 	--heads)
 		heads=1;;
+	--with-deps)
+		head=HEAD
+		withdeps=1;;
 	--graphviz)
 		graphviz=1;;
 	--sort)
@@ -68,9 +72,10 @@ while [ -n "$1" ]; do
 done
 [ -z "$exclude" ] || exclude="$exclude "
 if [ "$1" = "--all" ]; then
-      [ $# -eq 1 ] || usage
-      shift
-      head=
+	[ -z "$withdeps" ] || die "mutually exclusive options given"
+	[ $# -eq 1 ] || usage
+	shift
+	head=
 fi
 [ "$heads$rdeps" != "11" ] || head=
 [ $# -ne 0 -o -z "$head" ] || set -- "$head"
@@ -78,6 +83,8 @@ fi
 [ "$terse$heads$graphviz$sort$deps$depsonly" = "" ] ||
 	[ "$terse$heads$graphviz$sort$deps$depsonly$rdeps" = "1" ] ||
 		[ "$terse$heads$graphviz$sort$deps$depsonly$rdeps" = "11" -a "$heads$rdeps" = "11" ] ||
+	die "mutually exclusive options given"
+[ -z "$withdeps" -o -z "$rdeps$depsonly$heads" ] ||
 	die "mutually exclusive options given"
 
 for b; do
@@ -168,6 +175,13 @@ if [ -n "$rdeps" ]; then
 		} | sed -e 's/[^ ][^ ]*[ ]/  /g'
 	done
 	exit 0
+fi
+
+if [ -n "$withdeps" ]; then
+	savetgish="$tgish"
+	tgish=1
+	branches="$(show_deps | LC_ALL=C sort -u -b -k1,1)"
+	tgish="$savetgish"
 fi
 
 curname="$(strip_ref "$(git symbolic-ref -q HEAD || :)")"

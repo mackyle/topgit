@@ -596,6 +596,13 @@ tg summary
 	seeing all the TopGit-controlled branches in the repository and	their
 	relationships to one another.
 
+	Adding ``--with-deps`` replaces the given list of branches (which will
+	default to ``HEAD`` if none are given) with the result of running
+	``tg summary --deps-only --tgish`` on the list of branches.  This can
+	be helpful in limiting ``tg summary`` output to only the list of given
+	branches and their dependencies when many TopGit-controlled branches
+	are present in the repository.
+
 	With ``--exclude branch``, branch can be excluded from the output
 	meaning	it will be skipped and its name will be omitted from any
 	dependency output.  The ``--exclude`` option may be repeated to omit
