@@ -592,6 +592,9 @@ tg summary
 	relationships to one another.  When ``--rdeps`` is given the default is
 	to just display information for ``HEAD``, but that can be changed by
 	using ``--all`` as the branch name or by adding the ``--heads`` option.
+	Note that ``tg summary --rdeps --heads`` can be particularly helpful in
+	seeing all the TopGit-controlled branches in the repository and	their
+	relationships to one another.
 
 	With ``--exclude branch``, branch can be excluded from the output
 	meaning	it will be skipped and its name will be omitted from any
