@@ -222,6 +222,37 @@ SYNOPSIS
 	$ tg -r foo update
 
 
+SEQUESTRATION
+-------------
+
+No, this is not a section about budget nonsense.  ;)
+
+TopGit keeps its metadata in ``.topdeps`` and ``.topmsg`` files.  In an effort
+to facilitate cherry-picking and other Git activities on the patch changes
+themselves while ignoring the TopGit metadata, TopGit attempts to keep all
+changes to ``.topdeps`` and ``.topmsg`` files limited to commits that do NOT
+contain changes to any other files.
+
+This is a departure from previous TopGit versions that made no such effort.
+
+Primarily this affects ``tg create`` and ``tg import`` (which makes use of
+``tg create``) as ``tg create`` will commit the initial versions of
+``.topdeps`` and ``.topmsg`` for a new TopGit-controlled branch in their own
+commit instead of mixing them in with changes to other files.
+
+The ``pre-commit`` hook will also attempt to separate out any ``.topdeps`` and
+``.topmsg`` changes from commits that include changes to other files.
+
+It is possible to defeat these checks without much effort (``pre-commit`` hooks
+can easily be bypassed, ``tg create`` has a ``--no-commit`` option, many Git
+commands simply do not run the ``pre-commit`` hook, etc.).
+
+If you really, really, really, really want to change the default back to the
+old behavior of previous TopGit versions where no such sequestration took
+place, then set the ``topgit.sequester`` config variable explicitly to the
+value ``false``.  But this is not recommended.
+
+
 USAGE
 -----
 ``tg [-C <dir>] [-r <remote> | -u] [-c <name>=<val>] <subcommand> [<subcommand option/argument>...]``
