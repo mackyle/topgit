@@ -270,6 +270,10 @@ provides more explicit control over when common base for a set of patches gets
 updated as well as providing a branch that shows in ``tg summary`` output and
 participates in ``tg remote --populate`` setup.
 
+When using the ``tg tag`` command to create tags that record the current state
+of one or more TopGit branches, the tags are often created with a name that
+starts with ``t/``.
+
 One last thing, you have enabled ``git rerere`` haven't you?
 
 
@@ -518,6 +522,14 @@ tg create
 	has no depedencies since it was created with the ``--no-deps`` option
 	and b) the old ``top-bases/release`` value can be fast-forwarded to the
 	new ``top-bases/release`` value.
+
+	Using ``--no-deps`` it's also possible to use ``tg create`` on an
+	unborn branch (omit the dependency name or specify ``HEAD``).  The
+	unborn branch itself can be made into the new TopGit branch (rather
+	than being born empty and then having the new TopGit branch based off
+	that) by specifying ``HEAD`` as the new branch's name (which is
+	probably what you normally want to do in this case anyway so you can
+	just run ``tg create --no-deps HEAD`` to accomplish that).
 
 	In an alternative use case, if ``-r <branch>`` is given instead of a
 	dependency list, the topic branch is created based on the given
