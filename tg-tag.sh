@@ -8,6 +8,8 @@ lf="$(printf '\n.')" && lf="${lf%?}"
 tab="$(printf '\t.')" && tab="${tab%?}"
 USAGE="Usage: ${tgname:-tg} [...] tag [-s | -u <key-id>] [-f] [-q] [--no-edit] [-m <msg> | -F <file>] (<tagname> | --refs) [<branch>...]"
 USAGE="$USAGE$lf   Or: ${tgname:-tg} [...] tag (-g | --reflog) [--reflog-message | --commit-message] [--no-type] [-n <number> | -number] [<tagname>]"
+USAGE="$USAGE$lf   Or: ${tgname:-tg} [...] tag (--clear | --delete) <tagname>"
+USAGE="$USAGE$lf   Or: ${tgname:-tg} [...] tag --drop <tagname>@{n}"
 
 usage()
 {
@@ -40,6 +42,9 @@ notype=
 setreflogmsg=
 quiet=
 noneok=
+clear=
+delete=
+drop=
 
 is_numeric()
 {
@@ -64,6 +69,15 @@ while [ $# -gt 0 ]; do case "$1" in
 		;;
 	--none-ok)
 		noneok=1
+		;;
+	--clear)
+		clear=1
+		;;
+	--delete)
+		delete=1
+		;;
+	--drop)
+		drop=1
 		;;
 	-g|--reflog|--walk-reflogs)
 		reflog=1
@@ -164,7 +178,7 @@ while [ $# -gt 0 ]; do case "$1" in
 	--all)
 		break
 		;;
-	--stash)
+	--stash|--stash"@{"*"}")
 		if [ -n "$reflog" ]; then
 			case "$2" in -[1-9]*)
 				x1="$1"
@@ -201,8 +215,10 @@ esac; shift; done
 [ -z "$stash" -o -n "$reflog" ] || { outofdateok=1; force=1; defnoedit=1; }
 [ -n "$noedit" ] || noedit="$defnoedit"
 [ "$noedit" != "0" ] || noedit=
-[ -z "$reflog" -o -z "$signed$keyid$force$msg$msgfile$noedit$refsonly$outofdateok" ] || usage 1
+[ -z "$reflog" -o -z "$drop$clear$delete$signed$keyid$force$msg$msgfile$noedit$refsonly$outofdateok" ] || usage 1
 [ -n "$reflog" -o -z "$setreflogmsg$notype$maxcount" ] || usage 1
+[ -z "$drop$clear$delete" -o -z "$setreflogmsg$notype$maxcount$signed$keyid$force$msg$msgfile$noedit$refsonly$outofdateok" ] || usage 1
+[ -z "$reflog$drop$clear$delete" -o "$reflog$drop$clear$delete" = "1" ] || usage 1
 [ -z "$maxcount" ] || is_numeric "$maxcount" || die "invalid count: $maxcount"
 [ -z "$maxcount" ] || [ $maxcount -gt 0 ] || die "invalid count: $maxcount"
 [ -z "$msg" -o -z "$msgfile" ] || die "only one -F or -m option is allowed."
@@ -212,11 +228,22 @@ esac; shift; done
 tagname="$1"
 shift
 [ "$tagname" != "--stash" ] || tagname=refs/tgstash
+case "$tagname" in --stash"@{"*"}")
+	strip="${tagname#--stash??}"
+	strip="${strip%?}"
+	tagname="refs/tgstash@{$strip}"
+esac
 refname="$tagname"
+sfx=
+case "$refname" in [!@]*"@{"*"}")
+	sfx="$refname"
+	refname="${refname%@*}"
+	sfx="${sfx#$refname}"
+esac
 case "$refname" in HEAD|refs/*) :;; *)
 	if reftest="$(git rev-parse --revs-only --symbolic-full-name "$refname" -- 2>/dev/null)" && \
 	   [ -n "$reftest" ]; then
-		if [ -n "$reflog" ]; then
+		if [ -n "$reflog$drop$clear$delete" ]; then
 			refname="$reftest"
 		else
 			case "$reftest" in
@@ -231,9 +258,36 @@ case "$refname" in HEAD|refs/*) :;; *)
 		refname="refs/tags/$refname"
 	fi
 esac
+refname="$refname$sfx"
 reftype=tag
 case "$refname" in refs/tags/*) tagname="${refname#refs/tags/}";; *) reftype=ref; tagname="$refname"; esac
-[ -z "$reflog" -o $# -eq 0 ] || usage 1
+[ -z "$reflog$drop$clear$delete" -o $# -eq 0 ] || usage 1
+if [ -n "$drop$clear$delete" ]; then
+	if [ -n "$sfx" ]; then
+		[ -z "$clear$delete" ] || die "invalid ref name ($sfx suffix not allowed): $refname"
+	else
+		[ -z "$drop" ] || die "invalid reflog name (@{n} suffix required): $refname"
+	fi
+	old="$(git rev-parse --verify --quiet --short "${refname%$sfx}" --)" || die "no such ref: ${refname%$sfx}"
+	if [ -n "$delete" ]; then
+		git update-ref -d "$refname" || die "git update-ref -d failed"
+		printf "Deleted $reftype '%s' (was %s)\n" "$tagname" "$old"
+		exit 0
+	elif [ -n "$clear" ]; then
+		[ -f "$git_dir/logs/$refname" ] || die "no reflog found for: $refname"
+		[ -s "$git_dir/logs/$refname" ] || die "empty reflog found for: $refname"
+		cp -p "$git_dir/logs/$refname" "$git_dir/logs/$refname^-+" || die "cp failed"
+		sed -n '$p' <"$git_dir/logs/$refname^-+" >"$git_dir/logs/$refname" || die "reflog clear failed"
+		rm -f "$git_dir/logs/$refname^-+"
+		printf "Cleared $reftype '%s' reflog to single @{0} entry\n" "$tagname"
+		exit 0
+	else
+		old="$(git rev-parse --verify --short "$refname" --)" || exit 1
+		git reflog delete --rewrite --updateref "$refname" || die "reflog drop failed"
+		printf "Dropped $reftype '%s' reflog entry (was %s)\n" "$tagname" "$old"
+		exit 0
+	fi
+fi
 if [ -n "$reflog" ]; then
 	[ "$tagname" != "refs/tgstash" -o -n "$setreflogmsg" ] || reflogmsg=1
 	git rev-parse --verify --quiet "$refname" -- >/dev/null || \

@@ -1129,6 +1129,19 @@ tg tag
 	be implied (use ``--no-reflog-message`` or ``--commit-message`` to
 	change that).
 
+	The ``--delete`` option is a convenience option that runs the
+	``git update-ref -d`` command on the specified tag removing it and its
+	reflog (if it has one).
+
+	The ``--clear`` option clears all but the most recent (the ``@{0}``)
+	reflog entries from the reflog for the specified tag.  It's equivalent
+	to dropping all the higher numbered reflog entries.
+
+	The ``--drop`` option drops the specified reflog entry and requires the
+	given tagname to have an ``@{n}`` suffix where ``n`` is the reflog
+	entry number to be dropped.   This is really just a convenience option
+	that runs the appropriate ``git reflog delete`` command.
+
 	Note that when combined with ``tg revert``, a tag created by ``tg tag``
 	can be used to transfer TpoGit branches.  Simply create the tag, push
 	it somewhere and then have the recipient run ``tg revert`` to recreate
