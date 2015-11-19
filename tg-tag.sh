@@ -308,9 +308,11 @@ if [ -n "$reflog" ]; then
 fi
 [ -z "$signed" -o "$reftype" = "tag" ] || die "signed tags must be under refs/tags"
 [ $# -gt 0 ] || set -- $defbranch
+all=
 if [ $# -eq 1 ] && [ "$1" = "--all" ]; then
 	set -- $(git for-each-ref --format="%(refname)" refs/top-bases)
 	outofdateok=1
+	all=1
 	if [ $# -eq 0 ]; then
 		if [ -n "$quiet" -a -n "$noneok" ]; then
 			exit 0
@@ -324,14 +326,38 @@ allrefs=
 tgbranches=
 tgcount=0
 othercount=0
-for b; do
-	sfn="$(git rev-parse --revs-only --symbolic-full-name "$b" -- 2>/dev/null || :)"
-	[ -n "$sfn" ] || die "no such ref: $b"
-	git rev-parse --quiet --verify "$sfn^0" -- >/dev/null || {
-		[ -n "$anyrefok" ] || die "ref is not a committish: $b"
-		warn "ignoring non-committish ref: $b"
+ignore=
+newlist=
+while read -r obj typ ref && [ -n "$obj" -a -n "$typ" ]; do
+	[ -n "$ref" -o "$typ" != "missing" ] || die "no such ref: ${obj%???}"
+	case " $ignore " in *" $ref "*) continue; esac
+	if [ "$typ" != "commit" -a "$typ" != "tag" ]; then
+		[ -n "$anyrefok" ] || die "not a committish (is a '$typ') ref: $ref"
+		warn "ignoring non-committish (is a '$typ') ref: $ref"
+		ignore="${ignore:+$ignore }$ref"
 		continue
-	}
+	fi
+	case " $newlist " in *" $ref "*) :;; *)
+		newlist="${newlist:+$newlist }$ref"
+	esac
+	if [ "$typ" = "tag" ]; then
+		warn "storing as lightweight tag instead of 'tag' object: $ref"
+		ignore="${ignore:+$ignore }$ref"
+	fi
+done <<-EOT
+	$({
+		printf '%s\n' "$@" | sed 's/^\(.*\)$/\1^{} \1/'
+		printf '%s\n' "$@" | sed 's/^\(.*\)$/\1 \1/'
+	} |
+	git cat-file --batch-check='%(objectname) %(objecttype) %(rest)' 2>/dev/null ||
+	:)
+EOT
+set -- $newlist
+for b; do
+	sfn="$b"
+	[ -n "$all" ] ||
+	sfn="$(git rev-parse --revs-only --symbolic-full-name "$b" -- 2>/dev/null || :)"
+	[ -n "$sfn" ] || die "no such symbolic ref name: $b"
 	case "$sfn" in
 		refs/heads/*)
 			added=
@@ -387,11 +413,6 @@ for b; do
 			;;
 		*)
 			[ -n "$anyrefok" ] || die "refusing to include without --allow-any: $sfn"
-			case "$sfn" in refs/tags/*)
-				if [ "$(git cat-file -t "$sfn")" = "tag" ]; then
-					warn "ignoring 'tag' object and storing as lightweight tag: $sfn"
-				fi
-			esac
 			case " $allrefs " in *" $sfn "*) :;; *)
 				allrefs="${allrefs:+$allrefs }$sfn"
 			esac
@@ -402,6 +423,7 @@ for b; do
 			;;
 	esac
 done
+
 [ -n "$force" ] || \
 ! git rev-parse --verify --quiet "$refname" -- >/dev/null ||
 die "$reftype '$tagname' already exists"
@@ -468,11 +490,11 @@ get_refs()
 {
 	printf '%s\n' '-----BEGIN TOPGIT REFS-----'
 	{
-	    printf '%s\n' $allrefs
-	    [ -n "$outofdateok" ] || get_deps $tgbranches
+		printf '%s\n' $allrefs
+		[ -n "$outofdateok" ] || get_deps $tgbranches
 	} | LC_ALL=C sort -u | sed 's/^\(.*\)$/\1^0 \1/' |
 	git cat-file --batch-check='%(objectname) %(rest)' 2>/dev/null |
-	grep -v ' missing$'
+	grep -v ' missing$' || :
 	printf '%s\n' '-----END TOPGIT REFS-----'
 }
 
