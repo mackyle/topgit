@@ -1509,6 +1509,8 @@ command might not list all interesting commits.</p>
 <div class="line-block">
 <div class="line"><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">[...]</span> <span class="pre">tag</span> <span class="pre">[-s</span> <span class="pre">|</span> <span class="pre">-u</span> <span class="pre">&lt;key-id&gt;]</span> <span class="pre">[-f]</span> <span class="pre">[-q]</span> <span class="pre">[--no-edit]</span> <span class="pre">[-m</span> <span class="pre">&lt;msg&gt;</span> <span class="pre">|</span> <span class="pre">-F</span> <span class="pre">&lt;file&gt;]</span> <span class="pre">(&lt;tagname&gt;</span> <span class="pre">|</span> <span class="pre">--refs)</span> <span class="pre">[&lt;branch&gt;...]</span></tt></div>
 <div class="line"><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">[...]</span> <span class="pre">tag</span> <span class="pre">(-g</span> <span class="pre">|</span> <span class="pre">--reflog)</span> <span class="pre">[--reflog-message</span> <span class="pre">|</span> <span class="pre">--commit-message]</span> <span class="pre">[--no-type]</span> <span class="pre">[-n</span> <span class="pre">&lt;number&gt;</span> <span class="pre">|</span> <span class="pre">-number]</span> <span class="pre">[&lt;tagname&gt;]</span></tt></div>
+<div class="line"><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">[...]</span> <span class="pre">tag</span> <span class="pre">(--clear</span> <span class="pre">|</span> <span class="pre">--delete)</span> <span class="pre">&lt;tagname&gt;</span></tt></div>
+<div class="line"><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">[...]</span> <span class="pre">tag</span> <span class="pre">--drop</span> <span class="pre">&lt;tagname&gt;&#64;{n}</span></tt></div>
 </div>
 <p>Creates a TopGit annotated/signed tag or lists the reflog of one.</p>
 <p>A TopGit annotated tag records the current state of one or more TopGit
@@ -1565,6 +1567,16 @@ of entries shown may be limited with the <tt class="docutils literal"><span clas
 is omitted then <tt class="docutils literal"><span class="pre">--stash</span></tt> is assumed and <tt class="docutils literal"><span class="pre">--reflog-message</span></tt> will
 be implied (use <tt class="docutils literal"><span class="pre">--no-reflog-message</span></tt> or <tt class="docutils literal"><span class="pre">--commit-message</span></tt> to
 change that).</p>
+<p>The <tt class="docutils literal"><span class="pre">--delete</span></tt> option is a convenience option that runs the
+<tt class="docutils literal"><span class="pre">git</span> <span class="pre">update-ref</span> <span class="pre">-d</span></tt> command on the specified tag removing it and its
+reflog (if it has one).</p>
+<p>The <tt class="docutils literal"><span class="pre">--clear</span></tt> option clears all but the most recent (the <tt class="docutils literal"><span class="pre">&#64;{0}</span></tt>)
+reflog entries from the reflog for the specified tag.  It's equivalent
+to dropping all the higher numbered reflog entries.</p>
+<p>The <tt class="docutils literal"><span class="pre">--drop</span></tt> option drops the specified reflog entry and requires the
+given tagname to have an <tt class="docutils literal"><span class="pre">&#64;{n}</span></tt> suffix where <tt class="docutils literal"><span class="pre">n</span></tt> is the reflog
+entry number to be dropped.   This is really just a convenience option
+that runs the appropriate <tt class="docutils literal"><span class="pre">git</span> <span class="pre">reflog</span> <span class="pre">delete</span></tt> command.</p>
 <p>Note that when combined with <tt class="docutils literal"><span class="pre">tg</span> <span class="pre">revert</span></tt>, a tag created by <tt class="docutils literal"><span class="pre">tg</span> <span class="pre">tag</span></tt>
 can be used to transfer TpoGit branches.  Simply create the tag, push
 it somewhere and then have the recipient run <tt class="docutils literal"><span class="pre">tg</span> <span class="pre">revert</span></tt> to recreate
