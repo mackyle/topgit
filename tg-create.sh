@@ -222,10 +222,26 @@ if [ -z "$deps" ]; then
 			deps="HEAD"
 		else
 			head="$(git symbolic-ref --quiet HEAD || :)"
+			[ -z "$head" ] || git rev-parse --verify --quiet "$head" -- ||
+				die "refusing to auto-depend on unborn branch (use --no-deps)"
 			deps="${head#refs/heads/}"
 			[ "$deps" != "$head" ] || die "refusing to auto-depend on non-branch ref (${head:-detached HEAD})"
-			quiet_info "Automatically marking dependency on $deps"
+			quiet_info "automatically marking dependency on $deps"
 		fi
+	fi
+fi
+
+unborn=
+if [ -n "$nodeps" ]; then
+	# there can be only one dep and it need only be a committish
+	# however, if it's HEAD and HEAD is an unborn branch that's okay too
+	if [ "$deps" = "HEAD" ] && unborn="$(git symbolic-ref --quiet HEAD --)" && ! git rev-parse --verify --quiet HEAD -- >/dev/null; then
+		branchtype=ROOT
+		branchdesc=root
+	else
+		unborn=
+		git rev-parse --quiet --verify "$deps^0" -- >/dev/null ||
+			die "unknown committish \"$deps\""
 	fi
 fi
 
@@ -242,16 +258,14 @@ fi
 
 [ -n "$merge" -o -n "$restarted" ] || merge="$deps "
 
-if [ -n "$nodeps" ]; then
-	# there can be only one and it need only be a committish
-	git rev-parse --quiet --verify "$deps^0" -- >/dev/null ||
-		die "unknown committish \"$deps\""
-else
+if [ -z "$nodeps" ]; then
 	olddeps="$deps"
 	deps=
 	for d in $olddeps; do
 		if [ "$d" = "HEAD" ]; then
 			sr="$(git symbolic-ref --quiet HEAD || :)"
+			[ -z "$sr" ] || git rev-parse --verify --quiet "$sr" -- ||
+				die "refusing to depend on unborn branch (use --no-deps)"
 			[ -n "$sr" ] || die "cannot depend on a detached HEAD"
 			case "$sr" in refs/heads/*) :;; *)
 				die "HEAD is a symref to other than refs/heads/..."
@@ -271,6 +285,14 @@ else
 	done
 	unset olddeps
 fi
+if test="$(git symbolic-ref --quiet "$name" --)"; then case "$test" in
+	refs/heads/*)
+		name="${test#refs/heads/}"
+		break;;
+	refs/top-bases/*)
+		name="${test#refs/top-bases/}"
+		break;;
+esac; fi
 ! ref_exists "refs/heads/$name"  ||
 	die "branch '$name' already exists"
 ! ref_exists "refs/top-bases/$name" ||
@@ -378,11 +400,15 @@ if [ -n "$merge" -a -z "$restarted" ]; then
 	# Unshift the first item from the to-merge list
 	branch="${merge%% *}"
 	merge="${merge#* }"
-	quiet_info "Creating $name base from $branch..."
 	# We create a detached head so that we can abort this operation
 	prefix=refs/heads/
 	[ -z "$nodeps" ] || prefix=
-	git checkout -q "$(git rev-parse --verify "$prefix$branch^0" --)"
+	if [ -n "$unborn" ]; then
+		quiet_info "creating $name base with empty tree..."
+	else
+		quiet_info "creating $name base from $branch..."
+		git checkout -q "$(git rev-parse --verify "$prefix$branch^0" --)"
+	fi
 fi
 
 
@@ -420,8 +446,20 @@ if [ -n "$logrefupdates" ]; then
 	mkdir -p "$git_dir/logs/refs/top-bases/$(dirname "$name")" 2>/dev/null || :
 	{ >>"$git_dir/logs/refs/top-bases/$name" || :; } 2>/dev/null
 fi
-git update-ref "refs/top-bases/$name" "HEAD" ""
-git checkout -b "$name"
+
+if [ -n "$unborn" ]; then
+	mttree="$(git mktree </dev/null)"
+	emsg="tg create empty top-bases/$name"
+	[ "refs/heads/$name" = "$unborn" ] || emsg="Initial empty commit"
+	mtcommit="$(git commit-tree  -m "$emsg" "$mttree")" || die "git commit-tree failed"
+	git update-ref -m "tgcreate: create ${unborn#refs/heads/}" "HEAD" "$mtcommit" ""
+	[ "refs/heads/$name" = "$unborn" ] || warn "branch ${unborn#refs/heads/} created with empty commit"
+	git update-ref -m "tgcreate: set top-bases/$name" "refs/top-bases/$name" "HEAD" ""
+	[ "refs/heads/$name" = "$unborn" ] || git checkout -b "$name"
+else
+	git update-ref -m "tgcreate: set top-bases/$name" "refs/top-bases/$name" "HEAD" ""
+	git checkout -b "$name"
+fi
 
 if [ -n "$nodeps" ]; then
 	>"$root_dir/.topdeps"
