@@ -229,9 +229,16 @@ if [ -z "$deps" ]; then
 	fi
 fi
 
-# Non-remote branch set up requires a clean tree unless the single dep is HEAD
-[ -n "$restarted" ] || [ "$deps" = "HEAD" ] || [ $# -eq 1 -a "$deps" = "$(verify_topgit_branch HEAD -f || :)" ] ||
-	ensure_clean_tree
+# Non-remote branch set up requires a clean tree unless the single dep is the same tree as HEAD
+[ -n "$restarted" ] || [ "$deps" = "HEAD" ] || {
+	prefix=refs/heads/
+	[ -z "$nodeps" ] || prefix=
+	[ $# -eq 1 -a "$(git rev-parse --verify "$prefix$deps^{tree}" --)" = "$(git rev-parse --verify HEAD^{tree} --)" ] ||
+		(ensure_clean_tree) || {
+			[ $# -ne 1 ] || info "use \`git checkout $deps\` first and then try again"
+			exit 1
+		}
+}
 
 [ -n "$merge" -o -n "$restarted" ] || merge="$deps "
 
