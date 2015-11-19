@@ -27,7 +27,7 @@ done
 ## Sanity checks
 
 [ -n "$name" ] || die "no branch name specified"
-branchrev="$(git rev-parse --verify "$name" -- 2>/dev/null)" ||
+branchrev="$(git rev-parse --verify "refs/heads/$name" -- 2>/dev/null)" ||
 	if [ -n "$force" ]; then
 		info "invalid branch name: $name; assuming it has been deleted already"
 	else

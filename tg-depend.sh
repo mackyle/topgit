@@ -39,7 +39,7 @@ done
 ## Sanity checks
 
 [ -n "$name" ] || die "no branch name specified"
-branchrev="$(git rev-parse --verify "$name" -- 2>/dev/null)" ||
+branchrev="$(git rev-parse --verify "refs/heads/$name" -- 2>/dev/null)" ||
 	die "invalid branch name: $name"
 
 # Check that we are on a TopGit branch.

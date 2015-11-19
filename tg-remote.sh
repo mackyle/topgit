@@ -67,7 +67,7 @@ git for-each-ref --format='%(objectname) %(refname)' "refs/remotes/$name/top-bas
 			info "Skipping remote $name/top-bases/$branch that's missing its branch"
 			continue
 		fi
-		if git rev-parse --verify "$branch" -- >/dev/null 2>&1; then
+		if git rev-parse --verify "refs/heads/$branch" -- >/dev/null 2>&1; then
 			git rev-parse --verify "refs/top-bases/$branch" -- >/dev/null 2>&1 || {
 				if [ -n "$logrefupdates" ]; then
 					mkdir -p "$git_dir/logs/refs/top-bases/$(dirname "$branch")" 2>/dev/null || :

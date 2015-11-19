@@ -182,7 +182,7 @@ collapse()
 
 	elif [ -z "$_dep_is_tgish" ]; then
 		# This dep is not for rewrite
-		commit="$(git rev-parse --verify "$_dep" --)"
+		commit="$(git rev-parse --verify "refs/heads/$_dep" --)"
 
 	else
 		# First time hitting this dep; the common case
@@ -390,7 +390,7 @@ elif [ "$driver" = "linearize" ]; then
 	echo $name
 	if test $(git rev-parse --verify "$(pretty_tree $name)^{tree}" --) != $(git rev-parse --verify "HEAD^{tree}" --); then
 		echo "Warning: Exported result doesn't match"
-		echo "tg-head=$(git rev-parse --verify "$name" --), exported=$(git rev-parse --verify "HEAD" --)"
+		echo "tg-head=$(git rev-parse --verify "refs/heads/$name" --), exported=$(git rev-parse --verify "HEAD" --)"
 		#git diff $head HEAD
 	fi
 

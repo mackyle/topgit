@@ -46,7 +46,9 @@ is_ancestor()
 }
 
 if [ -n "$heads" ]; then
-	hash="$(git rev-parse --verify --quiet "$name" --)" || die "no such ref: $name"
+	verify="$name"
+	! test="$(verify_topgit_branch "${name:-HEAD}" -f)" || verify="refs/heads/$test"
+	hash="$(git rev-parse --verify --quiet "$verify" --)" || die "no such ref: $name"
 	$tg summary --tgish-only --heads |
 	while read -r head; do
 		if is_ancestor "$hash" "refs/heads/$head"; then
@@ -63,7 +65,7 @@ base_rev="$(git rev-parse --short --verify "refs/top-bases/$name" -- 2>/dev/null
 measure="$(measure_branch "$name" "$base_rev")"
 
 echo "Topic Branch: $name ($measure)"
-if [ "$(git rev-parse --verify --short "$name" --)" = "$base_rev" ]; then
+if [ "$(git rev-parse --verify --short "refs/heads/$name" --)" = "$base_rev" ]; then
 	echo "* No commits."
 	exit 0
 fi

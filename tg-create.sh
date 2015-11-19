@@ -373,7 +373,9 @@ if [ -n "$merge" -a -z "$restarted" ]; then
 	merge="${merge#* }"
 	quiet_info "Creating $name base from $branch..."
 	# We create a detached head so that we can abort this operation
-	git checkout -q "$(git rev-parse --verify "$branch^0" --)"
+	prefix=refs/heads/
+	[ -z "$nodeps" ] || prefix=
+	git checkout -q "$(git rev-parse --verify "$prefix$branch^0" --)"
 fi
 
 
