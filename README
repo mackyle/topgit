@@ -399,6 +399,40 @@ being the same but without the merge conflicts.
 See also the discussion in the "NO UNDO" section.
 
 
+SPEED AND CACHING
+-----------------
+
+TopGit needs to check many thing to determine whether a TopGit branch is
+up-to-date or not.  This can involve a LOT of git commands for a complex
+dependency tree.  In order to speed things up, TopGit keeps a cache of results
+in a ``tg-cache`` subdirectory in the ``.git`` directory.
+
+Results are tagged with the original hash values used to get that result so
+that items which have not been changed return their results quickly and items
+which have been changed compute their new result and cache it for future use.
+
+The ``.git/tg-cache`` directory may be removed at any time and the cache will
+simply be recreated in an on-demand fashion as needed, at some speed penalty,
+until it's fully rebuilt.
+
+To force the cache to be fully pre-loaded, run the ``tg summary`` command
+without any arguments.  Otherwise, normal day-to-day TopGit operations should
+keep it more-or-less up-to-date.
+
+While each TopGit command is running, it uses a temporary subdirectory also
+located in the ``.git`` directory.  These directories are named
+``tg-tmp.XXXXXX`` where the ``XXXXXX`` part will be random letters and digits.
+
+These temporary directories should always be removed automatically after each
+TopGit command finishes running.  As long as you are not in a subshell as a
+result of a TopGit command stopping and waiting for a manual merge resolution,
+it's safe to remove any of these directories that may have somehow accidentally
+been left behind as a result of some failure that occurred while running a
+TopGit command (provided, of course, it's not actually being used by a TopGit
+command currently running in another terminal window or by another user on the
+same repository).
+
+
 USAGE
 -----
 ``tg [-C <dir>] [-r <remote> | -u] [-c <name>=<val>] <subcommand> [<subcommand option/argument>...]``
