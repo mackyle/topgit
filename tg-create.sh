@@ -11,6 +11,7 @@ merge= # List of branches to be merged; subset of $deps
 name=
 rname= # Remote branch to base this one on
 remote=
+force=
 msg=
 msgfile=
 topmsg=
@@ -65,6 +66,9 @@ while [ $# -gt 0 ]; do case "$1" in
 		;;
 	--quiet|-q)
 		quiet=1
+		;;
+	--force|-f)
+		force=1
 		;;
 	--no-commit)
 		nocommit=1
@@ -264,6 +268,8 @@ fi
 	die "branch '$name' already exists"
 ! ref_exists "refs/top-bases/$name" ||
 	die "'top-bases/$name' already exists"
+[ -n "$force" ] || ! ref_exists "refs/tags/$name" ||
+	die "refusing to create branch with same name as existing tag '$name' without --force"
 
 # Clean up any stale stuff
 rm -rf "$git_dir/tg-create"
