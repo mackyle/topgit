@@ -411,7 +411,15 @@ for b; do
 	sfn="$b"
 	[ -n "$all" ] ||
 	sfn="$(git rev-parse --revs-only --symbolic-full-name "$b" -- 2>/dev/null || :)"
-	[ -n "$sfn" ] || die "no such symbolic ref name: $b"
+	[ -n "$sfn" ] || {
+		[ -n "$anyrefok" ] || die "no such symbolic ref name: $b"
+		fullhash="$(git rev-parse --verify --quiet "$b" --)" || die "no such ref: $b"
+		case " $allrefs " in *" $b "*) :;; *)
+			warn "including non-symbolic ref only in parents calculation: $b"
+			allrefs="${allrefs:+$allrefs }$fullhash"
+		esac
+		continue
+	}
 	case "$sfn" in
 		refs/heads/*)
 			added=
