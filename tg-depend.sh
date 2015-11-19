@@ -60,7 +60,12 @@ depend_add()
 
 	echo "$name" >>"$root_dir/.topdeps"
 	git add -f "$root_dir/.topdeps"
-	git commit -m ".topdeps: add new dependency $name"
+	git commit -m ".topdeps: add new dependency $name" "$root_dir/.topdeps"
+	(ensure_clean_tree) || {
+		warn "skipping needed \`tg update\` since worktree is dirty"
+		warn "be sure to run \`tg update\` when worktree is clean"
+		exit 1
+	}
 	$tg update
 }
 
