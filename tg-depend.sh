@@ -1,13 +1,17 @@
 #!/bin/sh
 # TopGit - A different patch queue manager
-# (c) Petr Baudis <pasky@suse.cz>  2008
+# Copyright (C) Petr Baudis <pasky@suse.cz>  2008
+# Copyright (C) Kyle J. McKay <mackyle@gmail.com>  2015
+# All rights reserved.
 # GPLv2
+
+USAGE="Usage: ${tgname:-tg} [...] depend add [--no-update | --no-commit] <name>"
 
 name=
 
 usage()
 {
-	echo "Usage: ${tgname:-tg} [...] depend add <name>" >&2
+	printf '%s\n' "$USAGE" >&2
 	exit 1
 }
 
@@ -15,7 +19,7 @@ usage()
 
 subcmd="$1"
 case "$subcmd" in
-	-h|"")
+	-h|--help|"")
 		usage;;
 	add)
 		;;
@@ -24,9 +28,15 @@ case "$subcmd" in
 esac
 shift
 
+noupdate=
+nocommit=
 while [ -n "$1" ]; do
 	arg="$1"; shift
 	case "$arg" in
+	--no-update)
+		noupdate=1;;
+	--no-commit)
+		nocommit=1;;
 	-*)
 		usage;;
 	*)
@@ -60,7 +70,18 @@ depend_add()
 
 	echo "$name" >>"$root_dir/.topdeps"
 	git add -f "$root_dir/.topdeps"
-	git commit -m ".topdeps: add new dependency $name" "$root_dir/.topdeps"
+	msg=".topdeps: add new dependency $name"
+	[ -z "$nocommit" ] || {
+		[ -s "$git_dir/MERGE_MSG" ] || printf '%s\n' "$msg" >"$git_dir/MERGE_MSG"
+		info "added new dependency $name to .topdeps and staged it"
+		info "run \`git commit\` then \`tg update\` to complete addition"
+		exit 0
+	}
+	git commit -m "$msg" "$root_dir/.topdeps"
+	[ -z "$noupdate" ] || {
+		info "be sure to run \`tg update\` at some point"
+		exit 0
+	}
 	(ensure_clean_tree) || {
 		warn "skipping needed \`tg update\` since worktree is dirty"
 		warn "be sure to run \`tg update\` when worktree is clean"
