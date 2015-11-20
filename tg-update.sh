@@ -60,10 +60,12 @@ stash_now_if_requested() {
 	msg="tgupdate: autostash before update"
 	if [ -n "$all" ]; then
 		msg="$msg --all${origpattern:+ $origpattern}"
+		stashb="--all"
 	else
 		msg="$msg $name"
+		stashb="$name"
 	fi
-	$tg tag --quiet -m "$msg" --stash ${all:-$name} || die "requested --stash failed"
+	$tg tag --quiet -m "$msg" --stash "$stashb" || die "requested --stash failed"
 	stash=
 }
 
