@@ -620,6 +620,9 @@ patches together all at once.  A &quot;base&quot; branch is merely a convenience
 provides more explicit control over when common base for a set of patches gets
 updated as well as providing a branch that shows in <tt class="docutils literal"><span class="pre">tg</span> <span class="pre">summary</span></tt> output and
 participates in <tt class="docutils literal"><span class="pre">tg</span> <span class="pre">remote</span> <span class="pre">--populate</span></tt> setup.</p>
+<p>When using the <tt class="docutils literal"><span class="pre">tg</span> <span class="pre">tag</span></tt> command to create tags that record the current state
+of one or more TopGit branches, the tags are often created with a name that
+starts with <tt class="docutils literal"><span class="pre">t/</span></tt>.</p>
 <p>One last thing, you have enabled <tt class="docutils literal"><span class="pre">git</span> <span class="pre">rerere</span></tt> haven't you?</p>
 </div>
 <div class="section" id="no-undo">
@@ -716,6 +719,33 @@ continue to be reachable from those other refs!</p>
 <p>Instead just make a new commit to fix the typo.  The end result will end up
 being the same but without the merge conflicts.</p>
 <p>See also the discussion in the &quot;NO UNDO&quot; section.</p>
+</div>
+<div class="section" id="speed-and-caching">
+<h1>SPEED AND CACHING</h1>
+<p>TopGit needs to check many thing to determine whether a TopGit branch is
+up-to-date or not.  This can involve a LOT of git commands for a complex
+dependency tree.  In order to speed things up, TopGit keeps a cache of results
+in a <tt class="docutils literal"><span class="pre">tg-cache</span></tt> subdirectory in the <tt class="docutils literal"><span class="pre">.git</span></tt> directory.</p>
+<p>Results are tagged with the original hash values used to get that result so
+that items which have not been changed return their results quickly and items
+which have been changed compute their new result and cache it for future use.</p>
+<p>The <tt class="docutils literal"><span class="pre">.git/tg-cache</span></tt> directory may be removed at any time and the cache will
+simply be recreated in an on-demand fashion as needed, at some speed penalty,
+until it's fully rebuilt.</p>
+<p>To force the cache to be fully pre-loaded, run the <tt class="docutils literal"><span class="pre">tg</span> <span class="pre">summary</span></tt> command
+without any arguments.  Otherwise, normal day-to-day TopGit operations should
+keep it more-or-less up-to-date.</p>
+<p>While each TopGit command is running, it uses a temporary subdirectory also
+located in the <tt class="docutils literal"><span class="pre">.git</span></tt> directory.  These directories are named
+<tt class="docutils literal"><span class="pre">tg-tmp.XXXXXX</span></tt> where the <tt class="docutils literal"><span class="pre">XXXXXX</span></tt> part will be random letters and digits.</p>
+<p>These temporary directories should always be removed automatically after each
+TopGit command finishes running.  As long as you are not in a subshell as a
+result of a TopGit command stopping and waiting for a manual merge resolution,
+it's safe to remove any of these directories that may have somehow accidentally
+been left behind as a result of some failure that occurred while running a
+TopGit command (provided, of course, it's not actually being used by a TopGit
+command currently running in another terminal window or by another user on the
+same repository).</p>
 </div>
 <div class="section" id="usage">
 <h1>USAGE</h1>
@@ -884,6 +914,13 @@ to update <tt class="docutils literal"><span class="pre">top-bases/release</span
 has no depedencies since it was created with the <tt class="docutils literal"><span class="pre">--no-deps</span></tt> option
 and b) the old <tt class="docutils literal"><span class="pre">top-bases/release</span></tt> value can be fast-forwarded to the
 new <tt class="docutils literal"><span class="pre">top-bases/release</span></tt> value.</p>
+<p>Using <tt class="docutils literal"><span class="pre">--no-deps</span></tt> it's also possible to use <tt class="docutils literal"><span class="pre">tg</span> <span class="pre">create</span></tt> on an
+unborn branch (omit the dependency name or specify <tt class="docutils literal"><span class="pre">HEAD</span></tt>).  The
+unborn branch itself can be made into the new TopGit branch (rather
+than being born empty and then having the new TopGit branch based off
+that) by specifying <tt class="docutils literal"><span class="pre">HEAD</span></tt> as the new branch's name (which is
+probably what you normally want to do in this case anyway so you can
+just run <tt class="docutils literal"><span class="pre">tg</span> <span class="pre">create</span> <span class="pre">--no-deps</span> <span class="pre">HEAD</span></tt> to accomplish that).</p>
 <p>In an alternative use case, if <tt class="docutils literal"><span class="pre">-r</span> <span class="pre">&lt;branch&gt;</span></tt> is given instead of a
 dependency list, the topic branch is created based on the given
 remote branch.  With just <tt class="docutils literal"><span class="pre">-r</span></tt> the remote branch name is assumed
@@ -952,7 +989,7 @@ skip over the annihilated branch.</p>
 <h2>tg depend</h2>
 <blockquote>
 <div class="line-block">
-<div class="line"><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">[...]</span> <span class="pre">depend</span> <span class="pre">add</span> <span class="pre">&lt;name&gt;</span></tt></div>
+<div class="line"><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">[...]</span> <span class="pre">depend</span> <span class="pre">add</span> <span class="pre">[--no-update</span> <span class="pre">|</span> <span class="pre">--no-commit]</span> <span class="pre">&lt;name&gt;</span></tt></div>
 </div>
 <p>Change the dependencies of a TopGit-controlled topic branch.
 This should have several subcommands, but only <tt class="docutils literal"><span class="pre">add</span></tt> is
@@ -961,8 +998,12 @@ supported right now.</p>
 be added, adds it to <tt class="docutils literal"><span class="pre">.topdeps</span></tt>, performs a commit and then
 updates your topic branch accordingly.  If you want to do other
 things related to the dependency addition, like adjusting
-<tt class="docutils literal"><span class="pre">.topmsg</span></tt>, prepare them in the index before calling <tt class="docutils literal"><span class="pre">tg</span> <span class="pre">depend</span>
-<span class="pre">add</span></tt>.</p>
+<tt class="docutils literal"><span class="pre">.topmsg</span></tt>, use the option <tt class="docutils literal"><span class="pre">--no-commit</span></tt>.  Adding the
+<tt class="docutils literal"><span class="pre">--no-update</span></tt> (or <tt class="docutils literal"><span class="pre">--no-commit</span></tt>) option will suppress the
+<tt class="docutils literal"><span class="pre">tg</span> <span class="pre">update</span></tt> normally performed after committing the change.</p>
+<p>It is safe to run <tt class="docutils literal"><span class="pre">tg</span> <span class="pre">depend</span> <span class="pre">add</span></tt> in a dirty worktree, but the
+normally performed <tt class="docutils literal"><span class="pre">tg</span> <span class="pre">update</span></tt> will be suppressed in that case
+(even if neither <tt class="docutils literal"><span class="pre">--no-update</span></tt> nor <tt class="docutils literal"><span class="pre">--no-commit</span></tt> is given).</p>
 <p>You have enabled <tt class="docutils literal"><span class="pre">git</span> <span class="pre">rerere</span></tt> haven't you?</p>
 <div class="line-block">
 <div class="line">TODO: Subcommand for removing dependencies, obviously</div>
