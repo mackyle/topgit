@@ -56,7 +56,7 @@ fi
 ensure_clean_tree
 
 stash_now_if_requested() {
-	[ -n "$stash" ] || return 0
+	[ -n "$stash" -a -z "$TG_RECURSIVE" ] || return 0
 	msg="tgupdate: autostash before update"
 	if [ -n "$all" ]; then
 		msg="$msg --all${origpattern:+ $origpattern}"
