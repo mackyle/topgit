@@ -273,7 +273,7 @@ setup_ours()
 measure_branch()
 {
 	_bname="$1"; _base="$2"
-	[ -n "$_base" ] || _base="refs/top-bases/$_bname"
+	[ -n "$_base" ] || _base="refs/top-bases/$(strip_ref "$_bname")"
 	# The caller should've verified $name is valid
 	_commits="$(git rev-list --count "$_bname" ^"$_base" --)"
 	_nmcommits="$(git rev-list --count --no-merges "$_bname" ^"$_base" --)"
