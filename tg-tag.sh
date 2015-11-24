@@ -377,6 +377,7 @@ if [ $# -eq 1 ] && [ "$1" = "--all" ]; then
 fi
 branches=
 allrefs=
+extrarefs=
 tgbranches=
 tgcount=0
 othercount=0
@@ -414,9 +415,9 @@ for b; do
 	[ -n "$sfn" ] || {
 		[ -n "$anyrefok" ] || die "no such symbolic ref name: $b"
 		fullhash="$(git rev-parse --verify --quiet "$b" --)" || die "no such ref: $b"
-		case " $allrefs " in *" $b "*) :;; *)
+		case " $extrarefs " in *" $b "*) :;; *)
 			warn "including non-symbolic ref only in parents calculation: $b"
-			allrefs="${allrefs:+$allrefs }$fullhash"
+			extrarefs="${extrarefs:+$extrarefs }$fullhash"
 		esac
 		continue
 	}
@@ -618,10 +619,10 @@ echo "" >>"$git_dir/TGTAG_FINALMSG"
 get_refs >>"$git_dir/TGTAG_FINALMSG"
 
 tagtarget=
-case "$allrefs" in
+case "$allrefs${extrarefs:+ $extrarefs}" in
 	*" "*)
 		parents="$(git merge-base --independent \
-			$(printf '%s^0 ' $allrefs))" || \
+			$(printf '%s^0 ' $allrefs $extrarefs))" || \
 			die "failed: git merge-base --independent"
 		if [ $(printf '%s\n' "$parents" | wc -l) -eq 1 ]; then
 			tagtarget="$parents"
