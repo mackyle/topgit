@@ -680,23 +680,26 @@ branch_needs_update()
 		return 0
 	fi
 
-	_dep_base_update=
 	if [ -n "$_dep_is_tgish" ]; then
 		branch_annihilated "$_dep" && return 0
 
 		if has_remote "$_dep"; then
-			branch_contains "refs/heads/$_dep" "refs/remotes/$base_remote/$_dep" || _dep_base_update=%
+			branch_contains "refs/heads/$_dep" "refs/remotes/$base_remote/$_dep" ||
+				echo "refs/remotes/$base_remote/$_dep $_dep $_depchain"
 		fi
-		# This can possibly override the remote check result;
-		# we want to sync with our base first
-		branch_contains "refs/heads/$_dep" "refs/top-bases/$_dep" || _dep_base_update=:
+		# We want to sync with our base first and should output this before
+		# the remote branch, but the order does not actually matter to tg-update
+		# as it just recurses regardless, but it does matter for tg-info (which
+		# treats out-of-date bases as though they were already merged in) so
+		# we output the remote before the base.
+		branch_contains "refs/heads/$_dep" "refs/top-bases/$_dep" || {
+			echo ": $_dep $_depchain"
+			_ret=1
+			return
+		}
 	fi
 
-	if [ -n "$_dep_base_update" ]; then
-		# _dep needs to be synced with its base/remote
-		echo "$_dep_base_update $_dep $_depchain"
-		_ret=1
-	elif [ -n "$_name" ]; then
+	if [ -n "$_name" ]; then
 		case "$_dep" in refs/*) _fulldep="$_dep";; *) _fulldep="refs/heads/$_dep";; esac
 		if ! branch_contains "refs/top-bases/$_name" "$_fulldep"; then
 			# Some new commits in _dep
@@ -709,10 +712,13 @@ branch_needs_update()
 # needs_update NAME
 # This function is recursive; it outputs reverse path from NAME
 # to the branch (e.g. B_DIRTY B1 B2 NAME), one path per line,
-# inner paths first. Innermost name can be ':' if the head is
-# not in sync with the base, '%' if the head is not in sync
-# with the remote (in this order of priority) or '!' if depednecy
-# is missing.
+# inner paths first. Innermost name can be refs/remotes/<remote>/<name>
+# if the head is not in sync with the <remote> branch <name>, ':' if
+# the head is not in sync with the base (in this order of priority)
+# or '!' if dependency is missing.  Note that the remote branch, base
+# order is reversed from the order they will actually be updated in
+# order to accomodate tg info which treats out-of-date items that are
+# only in the base as already being in the head for status purposes.
 # It will also return non-zero status if NAME needs update.
 # If needs_update() hits missing dependencies, it will append
 # them to space-separated $missing_deps list and skip them.

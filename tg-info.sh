@@ -100,8 +100,8 @@ sed '/^!/d' <"$depcheck" >"$depcheck2"
 if [ -s "$depcheck2" ]; then
 	echo "Needs update from:"
 	# 's/ [^ ]* *$//' -- last is $name
-	# 's/^[:%] //'    -- don't distinguish base/remote updates
-	<"$depcheck2" sed -e 's/ [^ ]* *$//' -e 's/^[:%] //' |
+	# 's/^[:] //'     -- don't distinguish base updates
+	<"$depcheck2" sed -e 's/ [^ ]* *$//' -e 's/^[:] //' |
 		while read dep chain; do
 			printf '%s' "$dep "
 			[ -n "$chain" ] && printf '%s' "(<= $(echo "$chain" | sed 's/ / <= /')) "
