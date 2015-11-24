@@ -166,7 +166,8 @@ update_branch() {
 				# only on the _dependencies_, not our branch itself!)
 
 				info "Updating base with $dep changes..."
-				if ! git merge -m "tgupdate: merge ${dep#refs/} into top-bases/$_update_name" "$dep^0"; then
+				case "$dep" in refs/*) fulldep="$dep";; *) fulldep="refs/heads/$dep"; esac
+				if ! git merge -m "tgupdate: merge ${dep#refs/} into top-bases/$_update_name" "$fulldep^0"; then
 					if [ -z "$TG_RECURSIVE" ]; then
 						resume="\`$tgdisplay update${skip:+ --skip} $_update_name\` again"
 					else # subshell
