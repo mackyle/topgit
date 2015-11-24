@@ -212,7 +212,7 @@ while [ $# -gt 0 ]; do case "$1" in
 		;;
 esac; shift; done
 
-[ -z "$stash" -o -n "$reflog" ] || { outofdateok=1; force=1; defnoedit=1; }
+[ -z "$stash" -o -n "$reflog$drop$clear$delete" ] || { outofdateok=1; force=1; defnoedit=1; }
 [ -n "$noedit" ] || noedit="$defnoedit"
 [ "$noedit" != "0" ] || noedit=
 [ -z "$reflog" -o -z "$drop$clear$delete$signed$keyid$force$msg$msgfile$noedit$refsonly$outofdateok" ] || usage 1
