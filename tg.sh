@@ -269,14 +269,15 @@ setup_ours()
 	fi
 }
 
-# measure_branch NAME [BASE]
+# measure_branch NAME [BASE] [EXTRAHEAD...]
 measure_branch()
 {
 	_bname="$1"; _base="$2"
+	shift; shift
 	[ -n "$_base" ] || _base="refs/top-bases/$(strip_ref "$_bname")"
 	# The caller should've verified $name is valid
-	_commits="$(git rev-list --count "$_bname" ^"$_base" --)"
-	_nmcommits="$(git rev-list --count --no-merges "$_bname" ^"$_base" --)"
+	_commits="$(git rev-list --count "$_bname" "$@" ^"$_base" --)"
+	_nmcommits="$(git rev-list --count --no-merges "$_bname" "$@" ^"$_base" --)"
 	if [ $_commits -ne 1 ]; then
 		_suffix="commits"
 	else
