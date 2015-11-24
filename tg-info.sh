@@ -62,7 +62,7 @@ name="$(verify_topgit_branch "${name:-HEAD}")"
 base_rev="$(git rev-parse --short --verify "refs/top-bases/$name" -- 2>/dev/null)" ||
 	die "not a TopGit-controlled branch"
 
-measure="$(measure_branch "$name" "$base_rev")"
+measure="$(measure_branch "refs/heads/$name" "$base_rev")"
 
 echo "Topic Branch: $name ($measure)"
 if [ "$(git rev-parse --verify --short "refs/heads/$name" --)" = "$base_rev" ]; then
@@ -99,22 +99,14 @@ depcheck2="$(get_temp tg-depcheck2)"
 sed '/^!/d' <"$depcheck" >"$depcheck2"
 if [ -s "$depcheck2" ]; then
 	echo "Needs update from:"
-	cat "$depcheck2" |
-		sed 's/ [^ ]* *$//' | # last is $name
-		sed 's/^[:] //' | # don't distinguish base updates
-		sed 's/^% /~/' | # but we may need special remote handling
+	# 's/ [^ ]* *$//' -- last is $name
+	# 's/^[:%] //'    -- don't distinguish base/remote updates
+	<"$depcheck2" sed -e 's/ [^ ]* *$//' -e 's/^[:%] //' |
 		while read dep chain; do
-			rmt=
-			dep2=
-			case "$dep" in "~"?*)
-				rmt=1
-				dep="${dep#?}"
-				#dep2="refs/remotes/$base_remote/$dep"
-			esac
 			printf '%s' "$dep "
 			[ -n "$chain" ] && printf '%s' "(<= $(echo "$chain" | sed 's/ / <= /')) "
-			dep_parent="${chain%% *}"
-			printf '%s' "($(measure_branch "$dep" "${dep2:-$name}"))"
+			case "$dep" in refs/*) fulldep="$dep";; *) fulldep="refs/heads/$dep"; esac
+			printf '%s' "($(measure_branch "$fulldep" "refs/heads/$name"))"
 			echo
 		done | sed 's/^/	/'
 else
