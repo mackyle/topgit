@@ -100,13 +100,28 @@ sed '/^!/d' <"$depcheck" >"$depcheck2"
 if [ -s "$depcheck2" ]; then
 	echo "Needs update from:"
 	# 's/ [^ ]* *$//' -- last is $name
-	# 's/^[:] //'     -- don't distinguish base updates
-	<"$depcheck2" sed -e 's/ [^ ]* *$//' -e 's/^[:] //' |
+	# 's/^[:] /:/'    -- don't distinguish base updates
+	<"$depcheck2" sed -e 's/ [^ ]* *$//' -e 's/^[:] /:/' |
 		while read dep chain; do
+			case "$dep" in
+				:*)
+					dep="${dep#:}"
+					fulldep="refs/heads/$dep"
+					extradep="refs/top-bases/$dep"
+					;;
+				*)
+					extradep=
+					case "$dep" in
+						refs/*)
+							fulldep="$dep";;
+						*)
+							fulldep="refs/heads/$dep";;
+					esac
+					;;
+			esac
 			printf '%s' "$dep "
 			[ -n "$chain" ] && printf '%s' "(<= $(echo "$chain" | sed 's/ / <= /')) "
-			case "$dep" in refs/*) fulldep="$dep";; *) fulldep="refs/heads/$dep"; esac
-			printf '%s' "($(measure_branch "$fulldep" "refs/heads/$name"))"
+			printf '%s' "($(measure_branch "$fulldep" "refs/heads/$name" $extradep))"
 			echo
 		done | sed 's/^/	/'
 else
