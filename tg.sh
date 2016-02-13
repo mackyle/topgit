@@ -572,6 +572,11 @@ recurse_deps_internal()
 		#TODO: handle nonexisting .topdeps?
 		cat_deps "$1" |
 		while read _dname; do
+			# Avoid depedency loops
+			case " $* " in *" $_dname "*)
+				warn "dependency loop detected in branch $_dname"
+				continue
+			esac
 			# Shoo shoo, leave our environment alone!
 			(recurse_deps_internal "$_dname" "$@")
 		done
