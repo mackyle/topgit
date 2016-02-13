@@ -1075,8 +1075,8 @@ initial_setup()
 # a symbolic link.  The directory part must exist, but the basename need not.
 get_abs_path()
 {
-	[ -n "$1" -a -d "$(dirname -- "$1")" ] || return 1
-	printf '%s' "$(cd -- "$(dirname -- "$1")" && pwd -P)/$(basename -- "$1")"
+	[ -n "$1" -a -d "$(dirname "$1")" ] || return 1
+	printf '%s' "$(cd -- "$(dirname "$1")" && pwd -P)/$(basename "$1")"
 }
 
 ## Startup
@@ -1099,14 +1099,14 @@ else
 	set -e
 
 	tg="$0"
-	tgdir="$(dirname -- "$tg")/"
-	tgname="$(basename -- "$tg")"
+	tgdir="$(dirname "$tg")/"
+	tgname="$(basename "$tg")"
 	[ "$0" != "$tgname" ] || tgdir=""
 
 	# If tg contains a '/' but does not start with one then replace it with an absolute path
 
 	case "$0" in /*) :;; */*)
-		tgdir="$(cd "$(dirname -- "$0")" && pwd -P)/"
+		tgdir="$(cd "$(dirname "$0")" && pwd -P)/"
 		tg="$tgdir$tgname"
 	esac
 
