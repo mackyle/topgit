@@ -794,7 +794,7 @@ same repository).</p>
 </tr>
 <tr class="field"><th class="field-name"><a class="reference internal" href="#tg-help">tg help</a>:</th><td class="field-body">Show TopGit help optionally using a browser</td>
 </tr>
-<tr class="field"><th class="field-name"><a class="reference internal" href="#tg-import">tg import</a>:</th><td class="field-body">Import patch file(s) to separate TopGit branches</td>
+<tr class="field"><th class="field-name"><a class="reference internal" href="#tg-import">tg import</a>:</th><td class="field-body">Import commit(s) to separate TopGit branches</td>
 </tr>
 <tr class="field"><th class="field-name"><a class="reference internal" href="#tg-info">tg info</a>:</th><td class="field-body">Show status information about a TopGit branch</td>
 </tr>
@@ -814,7 +814,7 @@ same repository).</p>
 </tr>
 <tr class="field"><th class="field-name"><a class="reference internal" href="#tg-remote">tg remote</a>:</th><td class="field-body">Set up remote for fetching/pushing TopGit branches</td>
 </tr>
-<tr class="field"><th class="field-name"><a class="reference internal" href="#tg-revert">tg revert</a>:</th><td class="field-body">Revert ref(s) to a state stored in a <cite>tg tag</cite></td>
+<tr class="field"><th class="field-name"><a class="reference internal" href="#tg-revert">tg revert</a>:</th><td class="field-body">Revert ref(s) to a state stored in a <tt class="docutils literal"><span class="pre">tg</span> <span class="pre">tag</span></tt></td>
 </tr>
 <tr class="field"><th class="field-name"><a class="reference internal" href="#tg-summary">tg summary</a>:</th><td class="field-body">Show various information about TopGit branches</td>
 </tr>
@@ -1218,13 +1218,13 @@ useful, but that has not yet been implemented.</p>
 branches in a machine-readable format.  Feed this to <tt class="docutils literal"><span class="pre">tsort</span></tt> to
 get the output from --sort.</p>
 <p>The <tt class="docutils literal"><span class="pre">--deps-only</span></tt> option outputs a sorted list of the unique branch
-names given on the command line plus all of their recursive dependents
-(subject to <tt class="docutils literal"><span class="pre">--exclude</span></tt> of course).  When <tt class="docutils literal"><span class="pre">--deps-only</span></tt> is given
-the default is to just display information for <tt class="docutils literal"><span class="pre">HEAD</span></tt>, but that can
-be changed by using <tt class="docutils literal"><span class="pre">--all</span></tt> as the branch name.  Each branch name
-will appear only once in the output no matter how many times it's
-visited while tracing the dependency graph or how many branch names are
-given on the command line to process.</p>
+names given on the command line plus all of their recursive
+dependencies (subject to <tt class="docutils literal"><span class="pre">--exclude</span></tt> of course).  When
+<tt class="docutils literal"><span class="pre">--deps-only</span></tt> is given the default is to just display information for
+<tt class="docutils literal"><span class="pre">HEAD</span></tt>, but that can be changed by using <tt class="docutils literal"><span class="pre">--all</span></tt> as the branch
+name.  Each branch name will appear only once in the output no matter
+how many times it's visited while tracing the dependency graph or how
+many branch names are given on the command line to process.</p>
 <p>The <tt class="docutils literal"><span class="pre">--rdeps</span></tt> option outputs dependency information in an indented
 text format that clearly shows all the dependencies and their
 relationships to one another.  When <tt class="docutils literal"><span class="pre">--rdeps</span></tt> is given the default is
@@ -1561,7 +1561,7 @@ state at any point in the future.</p>
 combined with the <tt class="docutils literal"><span class="pre">--force</span></tt> option a single tag name may be used as a
 sort of TopGit branch state stash.  The special branch name <tt class="docutils literal"><span class="pre">--all</span></tt>
 may be used to tag the state of all current TopGit branches to
-facilitate this function and has the side-effect of surpressing the
+facilitate this function and has the side-effect of suppressing the
 out-of-date check allowing out-of-date branches to be included.</p>
 <p>As a special feature, <tt class="docutils literal"><span class="pre">--stash</span></tt> may be used as the tag name in which
 case <tt class="docutils literal"><span class="pre">--all</span></tt> is implied if no branch name is listed (instead of the
@@ -1619,7 +1619,7 @@ given tagname to have an <tt class="docutils literal"><span class="pre">&#64;{n}
 entry number to be dropped.   This is really just a convenience option
 that runs the appropriate <tt class="docutils literal"><span class="pre">git</span> <span class="pre">reflog</span> <span class="pre">delete</span></tt> command.</p>
 <p>Note that when combined with <tt class="docutils literal"><span class="pre">tg</span> <span class="pre">revert</span></tt>, a tag created by <tt class="docutils literal"><span class="pre">tg</span> <span class="pre">tag</span></tt>
-can be used to transfer TpoGit branches.  Simply create the tag, push
+can be used to transfer TopGit branches.  Simply create the tag, push
 it somewhere and then have the recipient run <tt class="docutils literal"><span class="pre">tg</span> <span class="pre">revert</span></tt> to recreate
 the TopGit branches.  This may be helpful in situations where it's not
 feasible to push all the refs corresponding to the TopGit-controlled
@@ -1667,17 +1667,19 @@ information, then <tt class="docutils literal"><span class="pre">git</span> <spa
 <div class="line"><tt class="docutils literal"><span class="pre">tg</span> <span class="pre">[...]</span> <span class="pre">revert</span> <span class="pre">[-l]</span> <span class="pre">[--tgish-only]</span> <span class="pre">[(--deps</span> <span class="pre">|</span> <span class="pre">--rdeps)]</span> <span class="pre">[--exclude</span> <span class="pre">&lt;ref&gt;...]</span> <span class="pre">(&lt;tagname&gt;</span> <span class="pre">|</span> <span class="pre">--stash)</span> <span class="pre">[(--heads</span> <span class="pre">|</span> <span class="pre">&lt;ref&gt;...)]</span></tt></div>
 </div>
 <p>Provides the ability to revert one or more TopGit branches and their
-dependents to a previous state contained within a tag created using the
-<tt class="docutils literal"><span class="pre">tg</span> <span class="pre">tag</span></tt> command.  In addition to the actual revert mode operation a
-list mode operation is also provided to examine a tag's ref contents.</p>
+dependencies to a previous state contained within a tag created using
+the <tt class="docutils literal"><span class="pre">tg</span> <span class="pre">tag</span></tt> command.  In addition to the actual revert mode
+operation a list mode operation is also provided to examine a tag's ref
+contents.</p>
 <p>The default mode (<tt class="docutils literal"><span class="pre">-l</span></tt> or <tt class="docutils literal"><span class="pre">--list</span></tt>) shows the state of one or more
 of the refs/branches stored in the tag data.  When no refs are given on
 the command line, all refs in the tag data are shown.  With the special
 ref name <tt class="docutils literal"><span class="pre">--heads</span></tt> then the indepedent heads contained in the tag
 data are shown.  The <tt class="docutils literal"><span class="pre">--deps</span></tt> option shows the specified refs and all
-of their dependents in single list with no duplicates.  The <tt class="docutils literal"><span class="pre">--rdeps</span></tt>
-option shows a display similar to <tt class="docutils literal"><span class="pre">tg</span> <span class="pre">summary</span> <span class="pre">--rdeps</span></tt> for each ref
-or all independent heads if no ref is given on the command line.</p>
+of their dependencies in a single list with no duplicates.  The
+<tt class="docutils literal"><span class="pre">--rdeps</span></tt> option shows a display similar to <tt class="docutils literal"><span class="pre">tg</span> <span class="pre">summary</span> <span class="pre">--rdeps</span></tt>
+for each ref or all independent heads if no ref is given on the command
+line.</p>
 <p>The revert mode has three submodes, dry-run mode (<tt class="docutils literal"><span class="pre">-n</span></tt> or
 <tt class="docutils literal"><span class="pre">--dry-run</span></tt>), force mode (<tt class="docutils literal"><span class="pre">-f</span></tt> or <tt class="docutils literal"><span class="pre">--force</span></tt>) and interactive mode
 (<tt class="docutils literal"><span class="pre">-i</span></tt> or <tt class="docutils literal"><span class="pre">--interactive</span></tt>).  If <tt class="docutils literal"><span class="pre">--dry-run</span></tt> (or <tt class="docutils literal"><span class="pre">-n</span></tt>) is given
@@ -1688,7 +1690,7 @@ selection of the refs to be updated before proceeding.  Since revert is
 potentially a destructive operation, at least one of the submodes must
 be specified explicitly.  If no refs are listed on the command line
 then all refs in the tag data are reverted.  Otherwise the listed refs
-and all of their dependents (unless <tt class="docutils literal"><span class="pre">--no-deps</span></tt> is given) are
+and all of their dependencies (unless <tt class="docutils literal"><span class="pre">--no-deps</span></tt> is given) are
 reverted.  Unless <tt class="docutils literal"><span class="pre">--no-stash</span></tt> is given a new stash will be created
 using <tt class="docutils literal"><span class="pre">tg</span> <span class="pre">tag</span> <span class="pre">--stash</span></tt> (except, of course, in dry-run mode) just
 before actually performing the updates to facilitate recovery from
@@ -1818,13 +1820,13 @@ headers can be prefilled from various optional
 <tt class="docutils literal"><span class="pre">topgit.*</span></tt> git config options.</dd>
 <dt><tt class="docutils literal"><span class="pre">.topdeps</span></tt>:</dt>
 <dd>Contains the one-per-line list of branches this branch
-depends on, pre-seeded by <cite>tg create</cite>. A (continuously
+depends on, pre-seeded by <tt class="docutils literal"><span class="pre">tg</span> <span class="pre">create</span></tt>. A (continuously
 updated) merge of these branches will be the <em>base</em> of
 your topic branch.</dd>
 </dl>
 </blockquote>
 <p>IMPORTANT: DO NOT EDIT <tt class="docutils literal"><span class="pre">.topdeps</span></tt> MANUALLY!!! If you do so, you need to
-know exactly what are you doing, since this file must stay in sync with
+know exactly what you are doing, since this file must stay in sync with
 the Git history information, otherwise very bad things will happen.</p>
 <p>TopGit also automagically installs a bunch of custom commit-related
 hooks that will verify whether you are committing the <tt class="docutils literal"><span class="pre">.top*</span></tt> files in a
