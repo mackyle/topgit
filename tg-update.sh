@@ -1,7 +1,7 @@
 #!/bin/sh
 # TopGit - A different patch queue manager
 # Copyright (C) Petr Baudis <pasky@suse.cz>  2008
-# Copyright (C) Kyle J. McKay <mackyle@gmail.com>  2015
+# Copyright (C) Kyle J. McKay <mackyle@gmail.com>  2015,2016
 # All rights reserved.
 # GPLv2
 
@@ -73,6 +73,18 @@ recursive_update() {
 	$tg update ${skip:+--skip}
 	_ret=$?
 	[ $_ret -eq 3 ] && exit 3
+	return $_ret
+}
+
+# run git merge with the passed in arguments AND --no-stat
+# return the exit status of git merge
+# if the returned exit status is no error show a shortstat before
+# returning assuming the merge was done into the previous HEAD
+git_merge() {
+	_oldhead="$(git rev-parse --verify HEAD^0)"
+	_ret=0
+	git merge --no-stat "$@" || _ret=$?
+	[ "$_ret" != "0" ] || git --no-pager diff --shortstat "$_oldhead" HEAD^0 --
 	return $_ret
 }
 
@@ -167,7 +179,7 @@ update_branch() {
 
 				info "Updating $_update_name base with $dep changes..."
 				case "$dep" in refs/*) fulldep="$dep";; *) fulldep="refs/heads/$dep"; esac
-				if ! git merge -m "tgupdate: merge ${dep#refs/} into top-bases/$_update_name" "$fulldep^0"; then
+				if ! git_merge -m "tgupdate: merge ${dep#refs/} into top-bases/$_update_name" "$fulldep^0"; then
 					if [ -z "$TG_RECURSIVE" ]; then
 						resume="\`$tgdisplay update${skip:+ --skip} $_update_name\` again"
 					else # subshell
@@ -206,7 +218,7 @@ update_branch() {
 			become_non_cacheable
 			# *DETACH* our HEAD now!
 			git checkout -q --detach "refs/top-bases/$_update_name"
-			if ! git merge -m "tgupdate: merge ${_rname#refs/} onto top-bases/$_update_name" "$_rname^0"; then
+			if ! git_merge -m "tgupdate: merge ${_rname#refs/} onto top-bases/$_update_name" "$_rname^0"; then
 				info "Oops, you will need to help me out here a bit."
 				info "Please commit merge resolution and call:"
 				info "git$gitcdopt checkout $_update_name && git$gitcdopt merge <commitid>"
@@ -230,7 +242,7 @@ update_branch() {
 	stash_now_if_requested
 	info "Updating $_update_name against new base..."
 	become_non_cacheable
-	if ! git merge -m "tgupdate: merge ${plusextra}top-bases/$_update_name into $_update_name" "$merge_with^0"; then
+	if ! git_merge -m "tgupdate: merge ${plusextra}top-bases/$_update_name into $_update_name" "$merge_with^0"; then
 		if [ -z "$TG_RECURSIVE" ]; then
 			info "Please commit merge resolution. No need to do anything else"
 			info "You can abort this operation using \`git$gitcdopt reset --hard\` now"
