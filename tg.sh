@@ -5,7 +5,7 @@
 # All rights reserved.
 # GPLv2
 
-TG_VERSION=0.19.2
+TG_VERSION=0.19.3
 
 # Update if you add any code that requires a newer version of git
 GIT_MINIMUM_VERSION=1.7.7.2
