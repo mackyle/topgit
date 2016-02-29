@@ -165,7 +165,7 @@ update_branch() {
 				# or a remote base.  (branch_needs_update() is called
 				# only on the _dependencies_, not our branch itself!)
 
-				info "Updating base with $dep changes..."
+				info "Updating $_update_name base with $dep changes..."
 				case "$dep" in refs/*) fulldep="$dep";; *) fulldep="refs/heads/$dep"; esac
 				if ! git merge -m "tgupdate: merge ${dep#refs/} into top-bases/$_update_name" "$fulldep^0"; then
 					if [ -z "$TG_RECURSIVE" ]; then
@@ -202,7 +202,7 @@ update_branch() {
 			info "The $_update_name head is up-to-date wrt. its remote branch."
 		else
 			stash_now_if_requested
-			info "Reconciling remote branch updates with $_update_name base..."
+			info "Reconciling $_update_name base with remote branch updates..."
 			become_non_cacheable
 			# *DETACH* our HEAD now!
 			git checkout -q --detach "refs/top-bases/$_update_name"
