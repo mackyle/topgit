@@ -453,7 +453,7 @@ The ``tg`` tool has several subcommands:
 	:`tg export`_:	    Export TopGit branch patches to files or a branch
 	:`tg files`_:	    Show files changed by a TopGit branch
 	:`tg help`_:	    Show TopGit help optionally using a browser
-	:`tg import`_:	    Import patch file(s) to separate TopGit branches
+	:`tg import`_:	    Import commit(s) to separate TopGit branches
 	:`tg info`_:	    Show status information about a TopGit branch
 	:`tg log`_:	    Run git log limiting revisions to a TopGit branch
 	:`tg mail`_:	    Shortcut for git send-email with ``tg patch`` output
@@ -463,7 +463,7 @@ The ``tg`` tool has several subcommands:
 	:`tg push`_:	    Run git push on TopGit branch(es) and depedencies
 	:`tg rebase`_:	    Auto continue git rebase if rerere resolves conflicts
 	:`tg remote`_:	    Set up remote for fetching/pushing TopGit branches
-	:`tg revert`_:	    Revert ref(s) to a state stored in a `tg tag`
+	:`tg revert`_:	    Revert ref(s) to a state stored in a ``tg tag``
 	:`tg summary`_:	    Show various information about TopGit branches
 	:`tg tag`_:	    Create tag that records current TopGit branch state
 	:`tg update`_:	    Update TopGit branch(es) with respect to dependencies
@@ -803,13 +803,13 @@ tg summary
 	get the output from --sort.
 
 	The ``--deps-only`` option outputs a sorted list of the unique branch
-	names given on the command line plus all of their recursive dependents
-	(subject to ``--exclude`` of course).  When ``--deps-only`` is given
-	the default is to just display information for ``HEAD``, but that can
-	be changed by using ``--all`` as the branch name.  Each branch name
-	will appear only once in the output no matter how many times it's
-	visited while tracing the dependency graph or how many branch names are
-	given on the command line to process.
+	names given on the command line plus all of their recursive
+	dependencies (subject to ``--exclude`` of course).  When
+	``--deps-only`` is given the default is to just display information for
+	``HEAD``, but that can be changed by using ``--all`` as the branch
+	name.  Each branch name will appear only once in the output no matter
+	how many times it's visited while tracing the dependency graph or how
+	many branch names are given on the command line to process.
 
 	The ``--rdeps`` option outputs dependency information in an indented
 	text format that clearly shows all the dependencies and their
@@ -1126,7 +1126,7 @@ tg tag
 	combined with the ``--force`` option a single tag name may be used as a
 	sort of TopGit branch state stash.  The special branch name ``--all``
 	may be used to tag the state of all current TopGit branches to
-	facilitate this function and has the side-effect of surpressing the
+	facilitate this function and has the side-effect of suppressing the
 	out-of-date check allowing out-of-date branches to be included.
 
 	As a special feature, ``--stash`` may be used as the tag name in which
@@ -1194,7 +1194,7 @@ tg tag
 	that runs the appropriate ``git reflog delete`` command.
 
 	Note that when combined with ``tg revert``, a tag created by ``tg tag``
-	can be used to transfer TpoGit branches.  Simply create the tag, push
+	can be used to transfer TopGit branches.  Simply create the tag, push
 	it somewhere and then have the recipient run ``tg revert`` to recreate
 	the TopGit branches.  This may be helpful in situations where it's not
 	feasible to push all the refs corresponding to the TopGit-controlled
@@ -1238,18 +1238,20 @@ tg rebase
 tg revert
 ~~~~~~~~~
 	Provides the ability to revert one or more TopGit branches and their
-	dependents to a previous state contained within a tag created using the
-	``tg tag`` command.  In addition to the actual revert mode operation a
-	list mode operation is also provided to examine a tag's ref contents.
+	dependencies to a previous state contained within a tag created using
+	the ``tg tag`` command.  In addition to the actual revert mode
+	operation a list mode operation is also provided to examine a tag's ref
+	contents.
 
 	The default mode (``-l`` or ``--list``) shows the state of one or more
 	of the refs/branches stored in the tag data.  When no refs are given on
 	the command line, all refs in the tag data are shown.  With the special
 	ref name ``--heads`` then the indepedent heads contained in the tag
 	data are shown.  The ``--deps`` option shows the specified refs and all
-	of their dependents in single list with no duplicates.  The ``--rdeps``
-	option shows a display similar to ``tg summary --rdeps`` for each ref
-	or all independent heads if no ref is given on the command line.
+	of their dependencies in a single list with no duplicates.  The
+	``--rdeps`` option shows a display similar to ``tg summary --rdeps``
+	for each ref or all independent heads if no ref is given on the command
+	line.
 
 	The revert mode has three submodes, dry-run mode (``-n`` or
 	``--dry-run``), force mode (``-f`` or ``--force``) and interactive mode
@@ -1261,7 +1263,7 @@ tg revert
 	potentially a destructive operation, at least one of the submodes must
 	be specified explicitly.  If no refs are listed on the command line
 	then all refs in the tag data are reverted.  Otherwise the listed refs
-	and all of their dependents (unless ``--no-deps`` is given) are
+	and all of their dependencies (unless ``--no-deps`` is given) are
 	reverted.  Unless ``--no-stash`` is given a new stash will be created
 	using ``tg tag --stash`` (except, of course, in dry-run mode) just
 	before actually performing the updates to facilitate recovery from
@@ -1364,12 +1366,12 @@ themselves.  Currently, two files are defined:
 
 	``.topdeps``:
 	    Contains the one-per-line list of branches this branch
-	    depends on, pre-seeded by `tg create`. A (continuously
+	    depends on, pre-seeded by ``tg create``. A (continuously
 	    updated) merge of these branches will be the *base* of
 	    your topic branch.
 
 IMPORTANT: DO NOT EDIT ``.topdeps`` MANUALLY!!! If you do so, you need to
-know exactly what are you doing, since this file must stay in sync with
+know exactly what you are doing, since this file must stay in sync with
 the Git history information, otherwise very bad things will happen.
 
 TopGit also automagically installs a bunch of custom commit-related
