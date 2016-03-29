@@ -85,7 +85,7 @@ while read -r status fn; do case "$fn" in
 		changemsg=1
 		;;
 esac; done <<-EOT
-	$(git diff-index --cached --name-status "$headtree" | grep -e "^$prefix\\.topdeps\$" -e "^$prefix\\.topmsg\$")
+	$(git diff-index --cached --name-status "$headtree" | LC_ALL=C grep -e "^$prefix\\.topdeps\$" -e "^$prefix\\.topmsg\$")
 EOT
 [ -n "$changedeps" -o -n "$changemsg" ] || exit 0
 
@@ -154,7 +154,7 @@ prefix="100[0-9][0-9][0-9] $octet20 0$tab"
 {
 	printf '%s\n' "0 $nullsha$tab.topdeps"
 	printf '%s\n' "0 $nullsha$tab.topmsg"
-	git ls-files --cached -s --full-name | grep -e "^$prefix\\.topdeps\$" -e "^$prefix\\.topmsg\$"
+	git ls-files --cached -s --full-name | LC_ALL=C grep -e "^$prefix\\.topdeps\$" -e "^$prefix\\.topmsg\$"
 } | GIT_INDEX_FILE="$tg_index" git update-index --index-info
 newtree="$(GIT_INDEX_FILE="$tg_index" git write-tree)"
 rm -f "$tg_index"
