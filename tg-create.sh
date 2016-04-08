@@ -149,7 +149,7 @@ while [ $# -gt 0 ]; do case "$1" in
 		;;
 	-r)
 		remote=1
-		rname="$1"; [ $# -eq 0 ] || shift
+		rname="$2"; [ $# -eq 0 ] || shift
 		;;
 	--)
 		shift
@@ -166,7 +166,16 @@ esac; shift; done
 [ $# -gt 0 -o -z "$rname" ] || set -- "$rname"
 [ $# -gt 0 -o -n "$remote$msg$msgfile$topmsg$topmsgfile$nocommit$nodeps" ] || continue=1
 [ -z "$continue" -o "$#$remote$msg$msgfile$topmsg$topmsgfile$nocommit$nodeps" = "0" ] || usage 1
-[ -n "$continue" -o $# -eq 0 ] || { name="$1"; shift; }
+if [ -z "$continue" -a $# -gt 0 ]; then
+	name="$1"
+	shift
+	if [ -z "$remote" -a "$1" = "-r" ]; then
+		remote=1
+		shift;
+		rname="$1"
+		[ $# -eq 0 ] || shift
+	fi
+fi
 [ -n "$continue" -o -n "$name" ] || { err "no branch name given"; usage 1; }
 [ -z "$remote" -o -n "$rname" ] || rname="$name"
 [ -z "$remote" -o -z "$msg$msgfile$topmsg$topmsgfile$nocommit$nodeps" ] || { err "-r may not be combined with other options"; usage 1; }
