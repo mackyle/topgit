@@ -46,20 +46,47 @@ wc_l()
 	echo $(wc -l)
 }
 
-compare_versions()
+vcmp()
 {
-	separator="$1"
-	echo "$3" | tr "${separator}" '\n' | (for l in $(echo "$2"|tr "${separator}" ' '); do
-		read r || return 0
-		[ $l -ge $r ] || return 1
-		[ $l -gt $r ] && return 0
-	done)
+	# Compare $1 to $2 each of which must match \d+(\.\d+)*
+	# An empty string ('') for $1 or $2 is treated like 0
+	# Outputs:
+	#  -1 if $1 < $2
+	#   0 if $1 = $2
+	#   1 if $1 > $2
+	# Note that `vcmp 1.8 1.8.0.0.0.0` correctly outputs 0.
+	while
+		_a="${1%%.*}"
+		_b="${2%%.*}"
+		[ -n "$_a" -o -n "$_b" ]
+	do
+		if [ "${_a:-0}" -lt "${_b:-0}" ]; then
+			echo -1
+			return
+		elif [ "${_a:-0}" -gt "${_b:-0}" ]; then
+			echo 1
+			return
+		fi
+		_a2="${1#$_a}"
+		_b2="${2#$_b}"
+		set -- "${_a2#.}" "${_b2#.}"
+	done
+	echo 0
 }
 
 precheck() {
-	git_ver="$(git version | sed -e 's/^[^0-9][^0-9]*//')"
-	compare_versions . "${git_ver%%[!0-9.]*}" "${GIT_MINIMUM_VERSION}" \
-		|| die "git version >= ${GIT_MINIMUM_VERSION} required"
+	if ! git_version="$(git version)"; then
+		die "'git version' failed"
+	fi
+	case "$git_version" in
+		[Gg]"it version "*) :;;
+		*)
+			die "'git version' output does not start with 'git version '"
+	esac
+	git_vernum="$(echo "$git_version" | sed -ne 's/^[^0-9]*\([0-9][0-9]*\(\.[0-9][0-9]*\)*\).*$/\1/p')"
+
+	[ "$(vcmp "$git_vernum" $GIT_MINIMUM_VERSION)" -ge 0 ] \
+		|| die "git version >= $GIT_MINIMUM_VERSION required but found git version $git_vernum instead"
 }
 
 case "$1" in version|--version|-V)
