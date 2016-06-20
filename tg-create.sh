@@ -258,7 +258,7 @@ fi
 [ -n "$restarted" ] || [ "$deps" = "HEAD" ] || {
 	prefix=refs/heads/
 	[ -z "$nodeps" ] || prefix=
-	[ $# -eq 1 -a "$(git rev-parse --verify "$prefix$deps^{tree}" --)" = "$(git rev-parse --verify HEAD^{tree} --)" ] ||
+	[ $# -eq 1 -a "$(git rev-parse --quiet --verify "$prefix$deps^{tree}" --)" = "$(git rev-parse --quiet --verify HEAD^{tree} --)" ] ||
 		(ensure_clean_tree) || {
 			[ $# -ne 1 ] || info "use \`git checkout $deps\` first and then try again"
 			exit 1
