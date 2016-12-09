@@ -44,12 +44,17 @@ if [ -z "$optcontinue" ]; then
 fi
 
 continuemsg='"git rebase --continue"'
+lasthead=
+newhead="$(git rev-parse --verify --quiet HEAD -- || :)"
 
 while
+	lasthead="$newhead"
 	hascontinuemsg=
 	err=0
 	msg="$(git -c rerere.autoupdate=true rebase "$@"  3>&2 2>&1 1>&3 3>&-)" || err=$?
 	case "$msg" in *"$continuemsg"*) hascontinuemsg=1; esac
+	newhead="$(git rev-parse --verify --quiet HEAD -- || :)"
+	[ "$newhead" != "$lasthead" ] || hascontinuemsg=
 	msg="$(printf '%s\n' "$msg" | sed -e 's~git rebase ~'"$tgdisplay"' rebase ~g')"
 	[ $err -ne 0 ]
 do
