@@ -50,7 +50,7 @@ while
 	err=0
 	msg="$(git -c rerere.autoupdate=true rebase "$@"  3>&2 2>&1 1>&3 3>&-)" || err=$?
 	case "$msg" in *"$continuemsg"*) hascontinuemsg=1; esac
-	msg="$(printf '%s\n' "$msg" | sed -e 's~"git rebase ~"'"$tgdisplay"' rebase ~g')"
+	msg="$(printf '%s\n' "$msg" | sed -e 's~git rebase ~'"$tgdisplay"' rebase ~g')"
 	[ $err -ne 0 ]
 do
 	if [ -n "$hascontinuemsg" ] && [ $(git ls-files --unmerged | wc -l) -eq 0 ]; then
