@@ -134,6 +134,7 @@ check_topdeps()
 			mkdir -p "$depdir/$dep" ||
 				die "cannot check for multiple occurrences of dependents"
 		done
+	test $? -eq 0
 }
 
 # Only check .topdeps if it's been changed otherwise the assumption is it's been checked

@@ -170,6 +170,7 @@ update_branch() {
 						fi
 					done
 					)
+					check_exit_code
 					switch_to_base "$_update_name"
 				fi
 
@@ -193,6 +194,7 @@ update_branch() {
 					exit 2
 				fi
 			done
+		check_exit_code
 	else
 		info "The base is up-to-date."
 	fi

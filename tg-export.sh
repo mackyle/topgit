@@ -360,14 +360,17 @@ if "$allbranches" ; then
 		while read _dep; do
 			driver
 		done
+	test $? -eq 0
 elif [ -z "$branches" ]; then
 	recurse_deps driver "$name"
 	(_ret=0; _dep="$name"; _name=; _dep_is_tgish=1; _dep_missing=; driver)
+	test $? -eq 0
 else
 	echo "$branches" | tr ',' '\n' | while read _dep; do
 		_dep_is_tgish=1
 		$driver
 	done
+	test $? -eq 0
 	name="$(echo "$branches" | sed 's/.*,//')"
 fi
 

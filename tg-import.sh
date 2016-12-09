@@ -177,6 +177,7 @@ for revpair in $ranges; do
 			handle_one_commit
 		fi
 	}
+	test $? -eq 0
 done
 
 # vim:noet

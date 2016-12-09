@@ -20,6 +20,13 @@ nullsha="0000000000000000000000000000000000000000"
 
 ## Auxiliary functions
 
+# Preserves current $? value while triggering a non-zero set -e exit if active
+# This works even for shells that sometimes fail to correctly trigger a -e exit
+check_exit_code()
+{
+	return $?
+}
+
 info()
 {
 	echo "${TG_RECURSIVE}${tgname:-tg}: $*"
