@@ -663,6 +663,18 @@ become_non_cacheable()
 	rm -rf "$tg_tmp_dir/cached" "$tg_tmp_dir/tg~ref-dirs-created"
 }
 
+# call this to make sure Git will not complain about a missing user/email
+# result is cached in TG_IDENT_CHECKED and a non-empty value suppresses the check
+ensure_ident_available()
+{
+	[ -z "$TG_IDENT_CHECKED" ] || return 0
+	git var GIT_AUTHOR_IDENT >/dev/null &&
+	git var GIT_COMMITTER_IDENT >/dev/null || exit
+	TG_IDENT_CHECKED=1
+	export TG_IDENT_CHECKED
+	return 0
+}
+
 # recurse_deps CMD NAME [BRANCHPATH...]
 # Recursively eval CMD on all dependencies of NAME.
 # Dependencies are visited in topological order.

@@ -28,6 +28,7 @@ name="$(verify_topgit_branch HEAD)"
 [ -z "$force" ] && { branch_empty "$name" || die "branch is non-empty: $name"; }
 
 ## Annihilate
+ensure_ident_available
 mb="$(git merge-base "refs/top-bases/$name" "refs/heads/$name")"
 git read-tree "$mb^{tree}"
 # Need to pass --no-verify in order to inhibit TopGit's pre-commit hook to run,

@@ -326,6 +326,7 @@ if [ "$driver" = "collapse" ] || [ "$driver" = "linearize" ]; then
 	else
 		checkout_opt=-B
 	fi
+	ensure_ident_available
 
 elif [ "$driver" = "quilt" ]; then
 	[ -n "$output" ] ||

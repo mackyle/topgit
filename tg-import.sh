@@ -35,6 +35,7 @@ done
 
 
 ensure_clean_tree
+ensure_ident_available
 
 ## Perform import
 

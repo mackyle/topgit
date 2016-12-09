@@ -43,6 +43,7 @@ if [ -z "$optcontinue" ]; then
 	warn "rerere.enabled is false, automatic --continue not possible"
 fi
 
+[ "$*" = "--abort" ] || ensure_ident_available
 continuemsg='"git rebase --continue"'
 lasthead=
 newhead="$(git rev-parse --verify --quiet HEAD -- || :)"

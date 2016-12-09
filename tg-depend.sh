@@ -68,6 +68,7 @@ depend_add()
 	grep -F -x -e "$name" "$root_dir/.topdeps" >/dev/null &&
 		die "$tgname: $current_name already depends on $name"
 
+	[ -n "$nocommit" ] || ensure_ident_available
 	echo "$name" >>"$root_dir/.topdeps"
 	git add -f "$root_dir/.topdeps"
 	msg=".topdeps: add new dependency $name"

@@ -312,6 +312,8 @@ esac; fi
 # Clean up any stale stuff
 rm -rf "$git_dir/tg-create"
 
+# Barf now rather than later if missing ident
+ensure_ident_available
 
 # Get messages
 
