@@ -37,14 +37,25 @@ git commit --no-verify -m"TopGit branch $name annihilated."
 
 # Propagate the dependencies through to dependents (if any), if they don't already have them
 dependencies="$(tg prev -w)"
-$tg next | while read dependent; do
+updatelist=
+while read dependent && [ -n "$dependent" ]; do
 	git checkout -f $dependent
 	needupdate=
 	for dependency in $dependencies; do
 		! $tg depend add --no-update "$dependency" >/dev/null 2>&1 || needupdate=1
 	done
-	[ -z "$needupdate" ] || $tg update $dependent || :
-done
+	[ -z "$needupdate" ] || updatelist="${updatelist:+$updatelist }$dependent"
+done <<EOT
+$($tg next)
+EOT
+
+info "branch successfully annihilated: $name"
+if [ -n "$updatelist" ]; then
+	info "now updating affected branches: $updatelist"
+	for dependent in $updatelist; do
+		$tg update $dependent
+	done
+fi
 
 info "If you have shared your work, you might want to run ${tgname:-tg} push $name now."
 git status
