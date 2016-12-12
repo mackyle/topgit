@@ -85,7 +85,7 @@ recursive_update() {
 git_merge() {
 	_oldhead="$(git rev-parse --verify HEAD^0)"
 	_ret=0
-	git merge --no-stat "$@" || _ret=$?
+	git merge $auhopt --no-stat "$@" || _ret=$?
 	[ "$_ret" != "0" ] || git --no-pager diff --shortstat "$_oldhead" HEAD^0 --
 	return $_ret
 }

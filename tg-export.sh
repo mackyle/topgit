@@ -279,7 +279,7 @@ linearize()
 		else
 			retmerge=0
 
-			git merge -m "tgexport: merge $_dep into base" -s recursive "$_dep^0" || retmerge="$?"
+			git merge $auhopt -m "tgexport: merge $_dep into base" -s recursive "$_dep^0" || retmerge="$?"
 			if test "x$retmerge" != "x0"; then
 				echo "fix up the merge, commit and then exit."
 				#todo error handling

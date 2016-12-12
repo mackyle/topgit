@@ -1097,6 +1097,9 @@ initial_setup()
 
 	GIT_MERGE_AUTOEDIT=no
 	export GIT_MERGE_AUTOEDIT
+
+	auhopt=
+	[ "$(vcmp "$git_vernum" 2.9)" -lt 0 ] || auhopt="--allow-unrelated-histories"
 	git_dir="$(git rev-parse --git-dir)"
 	root_dir="$(git rev-parse --show-cdup)"; root_dir="${root_dir:-.}"
 	logrefupdates="$(git config --bool core.logallrefupdates 2>/dev/null || :)"
