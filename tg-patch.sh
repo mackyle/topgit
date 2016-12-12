@@ -116,7 +116,8 @@ else
 fi
 
 echo '-- '
-echo "$tgname: ($base_rev..) $name (depends on: $(cat_file "refs/heads/$name:.topdeps" $head_from 2>/dev/null | paste -s -d ' ' -))"
+depon="$(cat_file "refs/heads/$name:.topdeps" $head_from 2>/dev/null | paste -s -d ' ' -)"
+echo "$tgname: ($base_rev..) $name${depon:+ (depends on: $depon)}"
 branch_contains "refs/heads/$name" "refs/top-bases/$name" ||
 	echo "$tgname: The patch is out-of-date wrt. the base! Run \`$tgdisplay update\`."
 
