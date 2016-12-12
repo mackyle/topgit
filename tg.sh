@@ -254,6 +254,39 @@ pretty_tree()
 		git mktree
 }
 
+# return an empty-tree root commit -- date is either passed in or current
+# If passed in "$*" must be epochsecs followed by optional hhmm offset (+0000 default)
+# An invalid secs causes the current date to be used, an invalid zone offset
+# causes +0000 to be used
+make_empty_commit()
+(
+	# the empty tree is guaranteed to always be there even in a repo with
+	# zero objects, but for completeness we force it to exist as a real object
+	SECS=
+	read -r SECS ZONE JUNK <<-EOT || :
+		$*
+		EOT
+	case "$SECS" in *[!0-9]*) SECS=; esac
+	if [ -z "$SECS" ]; then
+		MTDATE="$(date '+%s %z')"
+	else
+		case "$ZONE" in
+			-[01][0-9][0-5][0-9]|+[01][0-9][0-5][0-9])
+				:;;
+			[01][0-9][0-5][0-9])
+				ZONE="+$ZONE"
+				;;
+			*)
+				ZONE="+0000"
+		esac
+		MTDATE="$SECS $ZONE"
+	fi
+	EMPTYID="- <-> $MTDATE"
+	EMPTYTREE="$(git hash-object -t tree -w --stdin < /dev/null)"
+	printf '%s\n' "tree $EMPTYTREE" "author $EMPTYID" "committer $EMPTYID" '' |
+	git hash-object -t commit -w --stdin
+)
+
 # setup_hook NAME
 setup_hook()
 {
