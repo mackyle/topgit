@@ -82,7 +82,7 @@ push_branch()
 	# the patches that depend on the sha1 have it already in their ancestry.
 	is_sha1 "$_dep" && return 0
 
-	echo "$_dep" >> "$_listfile"
+	echol "$_dep" >> "$_listfile"
 	[ -z "$_dep_is_tgish" ] ||
 		echo "top-bases/$_dep" >> "$_listfile"
 }

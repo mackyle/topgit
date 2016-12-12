@@ -69,7 +69,7 @@ depend_add()
 		die "$tgname: $current_name already depends on $name"
 
 	[ -n "$nocommit" ] || ensure_ident_available
-	echo "$name" >>"$root_dir/.topdeps"
+	echol "$name" >>"$root_dir/.topdeps"
 	git add -f "$root_dir/.topdeps"
 	msg=".topdeps: add new dependency $name"
 	[ -z "$nocommit" ] || {

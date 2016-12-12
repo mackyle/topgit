@@ -120,7 +120,7 @@ if [ -s "$depcheck2" ]; then
 					;;
 			esac
 			printf '%s' "$dep "
-			[ -n "$chain" ] && printf '%s' "(<= $(echo "$chain" | sed 's/ / <= /')) "
+			[ -n "$chain" ] && printf '%s' "(<= $(echol "$chain" | sed 's/ / <= /')) "
 			printf '%s' "($(measure_branch "$fulldep" "refs/heads/$name" $extradep))"
 			echo
 		done | sed 's/^/	/'

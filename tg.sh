@@ -27,9 +27,16 @@ check_exit_code()
 	return $?
 }
 
+# Output arguments without any possible interpretation
+# (Avoid misinterpretation of '\' characters or leading "-n", "-E" or "-e")
+echol()
+{
+	printf '%s\n' "$*"
+}
+
 info()
 {
-	echo "${TG_RECURSIVE}${tgname:-tg}: $*"
+	echol "${TG_RECURSIVE}${tgname:-tg}: $*"
 }
 
 warn()
@@ -225,13 +232,13 @@ strip_ref()
 {
 	case "$1" in
 		refs/heads/*)
-			echo "${1#refs/heads/}"
+			echol "${1#refs/heads/}"
 			;;
 		refs/top-bases/*)
-			echo "${1#refs/top-bases/}"
+			echol "${1#refs/top-bases/}"
 			;;
 		*)
-			echo "$1"
+			echol "$1"
 	esac
 }
 
@@ -275,10 +282,10 @@ setup_hook()
 	hook_call="if which \"$tgname\" > /dev/null; then $hook_call; fi"
 	# Insert call into the hook
 	{
-		echo "#!@SHELL_PATH@"
-		echo "$hook_call"
+		echol "#!@SHELL_PATH@"
+		echol "$hook_call"
 		if [ -n "$hook_chain" ]; then
-			echo "exec \"\$0-chain$chain_num\" \"\$@\""
+			echol "exec \"\$0-chain$chain_num\" \"\$@\""
 		else
 			[ ! -s "$git_dir/hooks/$1" ] || cat "$git_dir/hooks/$1"
 		fi
@@ -550,7 +557,7 @@ non_annihilated_branches()
 			if branch_annihilated "$name" "" "$rev"; then
 				continue
 			fi
-			echo "$name"
+			echol "$name"
 		done
 }
 
@@ -942,7 +949,7 @@ get_pager()
 		return 0
 	fi
 	if _x="$(git config "pager.$1" 2>/dev/null)"; then
-		echo "$_x"
+		echol "$_x"
 		return 0
 	fi
 	return 1
@@ -1273,7 +1280,7 @@ else
 
 		hooks-path)
 			# Internal command
-			echo "@hooksdir@";;
+			echol "@hooksdir@";;
 
 		*)
 			[ -r "@cmddir@"/tg-$cmd ] || {

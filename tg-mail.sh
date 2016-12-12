@@ -46,9 +46,8 @@ $tg patch "$name" $head_from >"$patchfile"
 header="$(sed -e '/^$/,$d' -e "s,','\\\\'',g" "$patchfile")"
 
 
-
-from="$(echo "$header" | grep '^From:' | sed 's/From:\s*//')"
-to="$(echo "$header" | grep '^To:' | sed 's/To:\s*//')"
+from="$(echol "$header" | grep '^From:' | sed 's/From:\s*//')"
+to="$(echol "$header" | grep '^To:' | sed 's/To:\s*//')"
 
 
 people=

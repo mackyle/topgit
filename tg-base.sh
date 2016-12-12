@@ -20,10 +20,10 @@ fi
 
 rv=0
 for rev in "$@"; do
-	name="$(strip_ref "$(git symbolic-ref -q "$rev" 2>/dev/null || echo "$rev")")"
+	name="$(strip_ref "$(git symbolic-ref -q "$rev" 2>/dev/null || echol "$rev")")"
 	git rev-parse --short --verify "refs/top-bases/$name" -- 2>/dev/null || {
 		rv=1
-		echo $rev is not a TopGit branch >&2
+		echo "$rev is not a TopGit branch" >&2
 	}
 done
 exit $rv

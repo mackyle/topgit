@@ -121,7 +121,10 @@ printf '%s' "Input the number: "
 read n
 
 # Check the input
-sane=`echo $n|sed 's/[^0-9]//g'`
+sane="$(sed 's/[^0-9]//g' <<-EOT
+	$n
+	EOT
+)"
 if [ -z "$n" ] || [ "$sane" != "$n" ]; then
 	die "Bad input"
 fi

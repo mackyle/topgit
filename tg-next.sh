@@ -39,5 +39,5 @@ non_annihilated_branches |
 		cat_file "refs/heads/$parent:.topdeps" $from 2>/dev/null | fgrep -qx "$name" ||
 			continue
 
-		echo "$parent"
+		echol "$parent"
 	done

@@ -40,7 +40,7 @@ while [ -n "$1" ]; do
 		if [ "$val" = "--strip" ]; then
 			strip=true
 			stripval=9999
-		elif [ -n "$val" -a "x$(echo $val | sed -e 's/[0-9]//g')" = "x" ]; then
+		elif [ -n "$val" -a "x$(echol "$val" | sed -e 's/[0-9]//g')" = "x" ]; then
 			strip=true
 			stripval=$val
 		else
@@ -149,7 +149,7 @@ collapsed_commit()
 	# Determine parent
 	[ -s "$playground/$name^parents" ] || git rev-parse --verify "refs/top-bases/$name" -- >> "$playground/$name^parents"
 	parent="$(cut -f 1 "$playground/$name^parents" 2> /dev/null | \
-		while read p; do [ "$(git cat-file -t $p 2> /dev/null)" = tag ] && git cat-file tag $p | head -1 | cut -d' ' -f2 || echo $p; done)"
+		while read p; do [ "$(git cat-file -t "$p" 2> /dev/null)" = tag ] && git cat-file tag "$p" | head -1 | cut -d' ' -f2 || echol "$p"; done)"
 	if [ "$(cat "$playground/$name^parents" 2> /dev/null | wc_l)" -gt 1 ]; then
 		# Produce a merge commit first
 		parent="$({
@@ -159,16 +159,16 @@ collapsed_commit()
 		} | GIT_AUTHOR_DATE="$nowsecs $nowtzoff" \
 			GIT_COMMITTER_DATE="$nowsecs $nowtzoff" \
 			git commit-tree "$(pretty_tree "$name" -b)" \
-			$(for p in $parent; do echo -p $p; done))"
+			$(for p in $parent; do echo "-p $p"; done))"
 	fi
 
 	if branch_empty "$name"; then
-		echo "$parent"
+		echol "$parent"
 	else
 		create_tg_commit "$name" "$(pretty_tree $name)" "$parent"
 	fi
 
-	echo "$name" >>"$playground/^ticker"
+	echol "$name" >>"$playground/^ticker"
 }
 
 # collapse
@@ -190,7 +190,7 @@ collapse()
 		commit="$(collapsed_commit "$_dep")"
 		bump_timestamp
 		mkdir -p "$playground/$(dirname "$_dep")"
-		echo "$commit" >"$playground/$_dep"
+		echol "$commit" >"$playground/$_dep"
 	fi
 
 	# Propagate our work through the dependency chain
@@ -250,7 +250,7 @@ quilt()
 		echo "Exporting $_dep"
 		mkdir -p "$output/$dn"
 		$tg patch ${binary:+--binary} "$_dep" >"$output/$dn$bn"
-		echo "$dn$bn -p1" >>"$output/series"
+		echol "$dn$bn -p1" >>"$output/series"
 	fi
 }
 
@@ -262,7 +262,7 @@ linearize()
 		else
 			head="$(git rev-parse --verify "refs/heads/$_dep" --)"
 		fi
-		echo "$head" > "$playground/^BASE"
+		echol "$head" > "$playground/^BASE"
 		git checkout -q "$head"
 		[ -n "$_dep_is_tgish" ] || return 0
 	fi
@@ -367,12 +367,12 @@ elif [ -z "$branches" ]; then
 	(_ret=0; _dep="$name"; _name=; _dep_is_tgish=1; _dep_missing=; driver)
 	test $? -eq 0
 else
-	echo "$branches" | tr ',' '\n' | while read _dep; do
+	echol "$branches" | tr ',' '\n' | while read _dep; do
 		_dep_is_tgish=1
 		$driver
 	done
 	test $? -eq 0
-	name="$(echo "$branches" | sed 's/.*,//')"
+	name="$(echol "$branches" | sed 's/.*,//')"
 fi
 
 
@@ -391,7 +391,7 @@ elif [ "$driver" = "quilt" ]; then
 elif [ "$driver" = "linearize" ]; then
 	git checkout -q $checkout_opt $output
 
-	echo $name
+	echol "$name"
 	if test $(git rev-parse --verify "$(pretty_tree $name)^{tree}" --) != $(git rev-parse --verify "HEAD^{tree}" --); then
 		echo "Warning: Exported result doesn't match"
 		echo "tg-head=$(git rev-parse --verify "refs/heads/$name" --), exported=$(git rev-parse --verify "HEAD" --)"

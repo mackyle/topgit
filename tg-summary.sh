@@ -169,7 +169,7 @@ if [ -n "$rdeps" ]; then
 		showbreak=1 
 		ref_exists "refs/heads/$b" || continue
 		{
-			echo "$b"
+			echol "$b"
 			recurse_preorder=1
 			recurse_deps show_rdeps "$b"
 		} | sed -e 's/[^ ][^ ]*[ ]/  /g'
@@ -281,7 +281,7 @@ get_branch_list |
 	while read name; do
 		case "$exclude" in *" $name "*) continue; esac
 		if [ -n "$terse" ]; then
-			echo "$name"
+			echol "$name"
 		elif [ -n "$graphviz$sort" ]; then
 			from=$head_from
 			[ "$name" = "$curname" ] ||
