@@ -344,6 +344,8 @@ refwidth="$(git config --get --int core.abbrev 2>/dev/null || :)"
 [ $refwidth -ge 4 -a $refwidth -le 40 ] || refwidth=7
 nullref="$(printf '%.*s' $refwidth "$nullsha")"
 notewidth=$(( $refwidth + 4 + $refwidth ))
+srh=
+[ -n "$dryrun" ] || srh="$(git symbolic-ref --quiet HEAD || :)"
 cut -d ' ' -f 3 <"$insn" | LC_ALL=C sort -u -b -k1,1 | join - "$trf" | \
 while read -r name rev; do
 	orig="$(git rev-parse --verify --quiet "$name" -- || :)"
@@ -356,7 +358,16 @@ while read -r name rev; do
 	if [ "$rev" != "$orig" ]; then
 		[ -z "$dryrun" -a -n "$quiet" ] || \
 		origsh="$(git rev-parse --verify --short --quiet "$name" -- || :)"
-		[ -n "$dryrun" ] || git update-ref -m "$msg" "$name" "$rev"
+		if [ -z "$dryrun" ]; then
+			if [ -n "$srh" ] && [ "$srh" = "$name" ]; then
+				[ -n "$quiet" ] || echo "Detaching HEAD to revert $name"
+				detachat="$orig"
+				[ -n "$detachat" ] || detachat="$(make_empty_commit)"
+				git update-ref -m "tgrevert: detach HEAD to revert $name" --no-deref HEAD "$detachat"
+				[ -n "$quiet" ] || git log -n 1 --format=format:'HEAD is now at %h... %s' HEAD
+			fi
+			git update-ref -m "$msg" "$name" "$rev"
+		fi
 		if [ -n "$dryrun" -o -z "$quiet" ]; then
 			revsh="$(git rev-parse --verify --short --quiet "$rev" -- || :)"
 			if [ -n "$origsh" ]; then
