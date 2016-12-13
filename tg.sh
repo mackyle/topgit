@@ -584,7 +584,8 @@ branch_annihilated()
 
 non_annihilated_branches()
 {
-	git for-each-ref --format='%(objectname) %(refname)' refs/top-bases |
+	[ $# -gt 0 ] || set -- refs/top-bases
+	git for-each-ref --format='%(objectname) %(refname)' "$@" |
 		while read rev ref; do
 			name="${ref#refs/top-bases/}"
 			if branch_annihilated "$name" "" "$rev"; then
