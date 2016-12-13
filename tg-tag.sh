@@ -364,7 +364,7 @@ fi
 [ $# -gt 0 ] || set -- $defbranch
 all=
 if [ $# -eq 1 ] && [ "$1" = "--all" ]; then
-	set -- $(git for-each-ref --format="%(refname)" refs/top-bases)
+	eval set -- $(git for-each-ref --shell --format="%(refname)" refs/top-bases)
 	outofdateok=1
 	all=1
 	if [ $# -eq 0 ]; then
