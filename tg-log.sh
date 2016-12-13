@@ -41,7 +41,7 @@ quotearg() {
 }
 
 name="$(verify_topgit_branch "${name:-HEAD}")"
-base_rev="$(git rev-parse --short --verify "refs/top-bases/$name" -- 2>/dev/null)" ||
+base_rev="$(git rev-parse --short --verify "refs/$topbases/$name" -- 2>/dev/null)" ||
 	die "not a TopGit-controlled branch"
 
 hasdd=
@@ -49,14 +49,14 @@ for a; do
 	[ "$a" != "--" ] || { hasdd=1; break; }
 done
 if [ -z "$hasdd" ]; then
-	git log --first-parent --no-merges "$@" "refs/top-bases/$name".."$name"
+	git log --first-parent --no-merges "$@" "refs/$topbases/$name".."$name"
 else
 	cmd='git log --first-parent --no-merges'
 	while [ $# -gt 0 -a "$1" != "--" ]; do
 		cmd="$cmd '$(quotearg "$1")'"
 		shift
 	done
-	cmd="$cmd '$(quotearg "refs/top-bases/$name".."$name")'"
+	cmd="$cmd '$(quotearg "refs/$topbases/$name".."$name")'"
 	while [ $# -gt 0 ]; do
 		cmd="$cmd '$(quotearg "$1")'"
 		shift

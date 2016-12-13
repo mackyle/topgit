@@ -33,7 +33,7 @@ branchrev="$(git rev-parse --verify "refs/heads/$name" -- 2>/dev/null)" ||
 	else
 		die "invalid branch name: $name"
 	fi
-baserev="$(git rev-parse --verify "refs/top-bases/$name" -- 2>/dev/null)" ||
+baserev="$(git rev-parse --verify "refs/$topbases/$name" -- 2>/dev/null)" ||
 	die "not a TopGit topic branch: $name"
 ! headsym="$(git symbolic-ref -q HEAD)" || [ "$headsym" != "refs/heads/$name" ] || {
 	[ -n "$force" ] && [ "$force" -ge 2 ] || die "cannot delete your current branch"
@@ -48,7 +48,7 @@ baserev="$(git rev-parse --verify "refs/top-bases/$name" -- 2>/dev/null)" ||
 
 ## Wipe out
 
-git update-ref -d "refs/top-bases/$name" "$baserev"
+git update-ref -d "refs/$topbases/$name" "$baserev"
 [ -z "$branchrev" ] || git update-ref -d "refs/heads/$name" "$branchrev"
 
 # vim:noet

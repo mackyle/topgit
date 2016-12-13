@@ -364,7 +364,7 @@ fi
 [ $# -gt 0 ] || set -- $defbranch
 all=
 if [ $# -eq 1 ] && [ "$1" = "--all" ]; then
-	eval set -- $(git for-each-ref --shell --format="%(refname)" refs/top-bases)
+	eval set -- $(git for-each-ref --shell --format="%(refname)" "refs/$topbases")
 	outofdateok=1
 	all=1
 	if [ $# -eq 0 ]; then
@@ -426,7 +426,7 @@ for b; do
 		refs/heads/*)
 			added=
 			tgish=1
-			ref_exists "refs/top-bases/${sfn#refs/heads/}" || tgish=
+			ref_exists "refs/$topbases/${sfn#refs/heads/}" || tgish=
 			[ -n "$anyrefok" ] || [ -n "$tgish" ] ||
 				die "not a TopGit branch: ${sfn#refs/heads/} (use --allow-any option)"
 			case " $allrefs " in *" $b "*) :;; *)
@@ -437,8 +437,8 @@ for b; do
 				added=1
 			esac
 			if [ -n "$tgish" ]; then
-				case " $allrefs " in *" refs/top-bases/${sfn#refs/heads/} "*) :;; *)
-					allrefs="${allrefs:+$allrefs }refs/top-bases/${sfn#refs/heads/}"
+				case " $allrefs " in *" refs/$topbases/${sfn#refs/heads/} "*) :;; *)
+					allrefs="${allrefs:+$allrefs }refs/$topbases/${sfn#refs/heads/}"
 				esac
 				case " $tgbranches " in *" ${sfn#refs/heads/} "*) :;; *)
 					tgbranches="${tgbranches:+$tgbranches }${sfn#refs/heads/}"
@@ -449,25 +449,25 @@ for b; do
 				[ -z "$added" ] || othercount=$(( $othercount + 1 ))
 			fi
 			;;
-		refs/top-bases/*)
+		refs/"$topbases"/*)
 			added=
 			tgish=1
-			ref_exists "refs/heads/${sfn#refs/top-bases/}" || tgish=
+			ref_exists "refs/heads/${sfn#refs/$topbases/}" || tgish=
 			[ -n "$anyrefok" ] || [ -n "$tgish" ] ||
 				warn "including TopGit base that's missing its head: $sfn"
 			case " $allrefs " in *" $sfn "*) :;; *)
 				allrefs="${allrefs:+$allrefs }$sfn"
 			esac
-			case " $branches " in *" ${sfn#refs/top-bases/} "*) :;; *)
-				branches="${branches:+$branches }${sfn#refs/top-bases/}"
+			case " $branches " in *" ${sfn#refs/$topbases/} "*) :;; *)
+				branches="${branches:+$branches }${sfn#refs/$topbases/}"
 				added=1
 			esac
 			if [ -n "$tgish" ]; then
-				case " $allrefs " in *" refs/heads/${sfn#refs/top-bases/} "*) :;; *)
-					allrefs="${allrefs:+$allrefs }refs/heads/${sfn#refs/top-bases/}"
+				case " $allrefs " in *" refs/heads/${sfn#refs/$topbases/} "*) :;; *)
+					allrefs="${allrefs:+$allrefs }refs/heads/${sfn#refs/$topbases/}"
 				esac
-				case " $tgbranches " in *" ${sfn#refs/top-bases/} "*) :;; *)
-					tgbranches="${tgbranches:+$tgbranches }${sfn#refs/top-bases/}"
+				case " $tgbranches " in *" ${sfn#refs/$topbases/} "*) :;; *)
+					tgbranches="${tgbranches:+$tgbranches }${sfn#refs/$topbases/}"
 					added=1
 				esac
 				[ -z "$added" ] || tgcount=$(( $tgcount + 1 ))
@@ -507,7 +507,7 @@ get_dep() {
 	case " $seen_deps " in *" $_dep "*) return 0; esac
 	seen_deps="${seen_deps:+$seen_deps }$_dep"
 	printf 'refs/heads/%s\n' "$_dep"
-	[ -z "$_dep_is_tgish" ] || printf 'refs/top-bases/%s\n' "$_dep"
+	[ -z "$_dep_is_tgish" ] || printf 'refs/%s/%s\n' "$topbases" "$_dep"
 }
 
 get_deps_internal()

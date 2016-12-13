@@ -229,8 +229,8 @@ process_branch()
 	[ -z "$base_remote" ] || remote='l'
 	! has_remote "$name" || remote='r'
 	rem_update=' '
-	[ "$remote" != 'r' ] || ! ref_exists "refs/remotes/$base_remote/top-bases/$name" || {
-		branch_contains "refs/top-bases/$name" "refs/remotes/$base_remote/top-bases/$name" &&
+	[ "$remote" != 'r' ] || ! ref_exists "refs/remotes/$base_remote/$topbases/$name" || {
+		branch_contains "refs/$topbases/$name" "refs/remotes/$base_remote/$topbases/$name" &&
 		branch_contains "refs/heads/$name" "refs/remotes/$base_remote/$name"
 	} || rem_update='R'
 	[ "$remote" != 'r' -o "$rem_update" = 'R' ] || {
@@ -241,9 +241,9 @@ process_branch()
 	deps_missing=' '
 	[ -z "$missing_deps" ] || deps_missing='!'
 	base_update=' '
-	branch_contains "refs/heads/$name" "refs/top-bases/$name" || base_update='B'
+	branch_contains "refs/heads/$name" "refs/$topbases/$name" || base_update='B'
 
-	if [ "$(ref_exists_rev "refs/heads/$name")" != "$(ref_exists_rev "refs/top-bases/$name")" ]; then
+	if [ "$(ref_exists_rev "refs/heads/$name")" != "$(ref_exists_rev "refs/$topbases/$name")" ]; then
 		subject="$(cat_file "refs/heads/$name:.topmsg" $from | sed -n 's/^Subject: //p')"
 	else
 		# No commits yet
@@ -262,7 +262,7 @@ if [ -n "$deps" ]; then
 				list_deps $head_from $b |
 					while read name dep; do
 						case "$exclude" in *" $dep "*) continue; esac
-						[ -z "$tgish" ] || ref_exists "refs/top-bases/$dep" || continue
+						[ -z "$tgish" ] || ref_exists "refs/$topbases/$dep" || continue
 						echo "$name $dep"
 					done
 			done
@@ -270,7 +270,7 @@ if [ -n "$deps" ]; then
 		list_deps $head_from |
 			while read name dep; do
 				case "$exclude" in *" $dep "*) continue; esac
-				[ -z "$tgish" ] || ref_exists "refs/top-bases/$dep" || continue
+				[ -z "$tgish" ] || ref_exists "refs/$topbases/$dep" || continue
 				echo "$name $dep"
 			done
 	fi
@@ -288,7 +288,7 @@ get_branch_list |
 				from=
 			cat_file "refs/heads/$name:.topdeps" $from | while read dep; do
 				dep_is_tgish=true
-				ref_exists "refs/top-bases/$dep" ||
+				ref_exists "refs/$topbases/$dep" ||
 					dep_is_tgish=false
 				[ -z "$tgish" ] || [ "$dep_is_tgish" = "true" ] || continue
 				if ! "$dep_is_tgish" || ! branch_annihilated $dep; then

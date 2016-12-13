@@ -52,7 +52,7 @@ head="${head#refs/heads/}"
 [ -n "$name" ] ||
 	name="${head:-HEAD}"
 name="$(verify_topgit_branch "$name")"
-base_rev="$(git rev-parse --short --verify "refs/top-bases/$name" -- 2>/dev/null)" ||
+base_rev="$(git rev-parse --short --verify "refs/$topbases/$name" -- 2>/dev/null)" ||
 	die "not a TopGit-controlled branch"
 
 if [ -n "$head_from" ] && [ "$name" != "$head" ]; then
@@ -118,7 +118,7 @@ fi
 echo '-- '
 depon="$(cat_file "refs/heads/$name:.topdeps" $head_from 2>/dev/null | paste -s -d ' ' -)"
 echo "$tgname: ($base_rev..) $name${depon:+ (depends on: $depon)}"
-branch_contains "refs/heads/$name" "refs/top-bases/$name" ||
+branch_contains "refs/heads/$name" "refs/$topbases/$name" ||
 	echo "$tgname: The patch is out-of-date wrt. the base! Run \`$tgdisplay update\`."
 
 }

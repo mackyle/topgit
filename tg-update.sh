@@ -38,13 +38,13 @@ while [ -n "$1" ]; do
 			[ -z "$name" ] || die "name already specified ($name)"
 			name="$arg"
 		else
-			pattern="${pattern:+$pattern }refs/top-bases/${arg#refs/top-bases/}"
+			pattern="${pattern:+$pattern }refs/$topbases/$(strip_ref "$arg")"
 		fi
 		;;
 	esac
 done
 origpattern="$pattern"
-[ -z "$pattern" ] && pattern=refs/top-bases
+[ -z "$pattern" ] && pattern="refs/$topbases"
 
 current="$(strip_ref "$(git symbolic-ref -q HEAD || :)")"
 if [ -z "$all" ]; then
@@ -116,7 +116,7 @@ update_branch() {
 		# We need to switch to the base branch
 		# ...but only if we aren't there yet (from failed previous merge)
 		_HEAD="$(git symbolic-ref -q HEAD || :)"
-		if [ "$_HEAD" = "${_HEAD#refs/top-bases/}" ]; then
+		if [ "$_HEAD" = "${_HEAD#refs/$topbases/}" ]; then
 			switch_to_base "$_update_name"
 		fi
 
@@ -182,7 +182,7 @@ update_branch() {
 
 				info "Updating $_update_name base with $dep changes..."
 				case "$dep" in refs/*) fulldep="$dep";; *) fulldep="refs/heads/$dep"; esac
-				if ! git_merge -m "tgupdate: merge ${dep#refs/} into top-bases/$_update_name" "$fulldep^0"; then
+				if ! git_merge -m "tgupdate: merge ${dep#refs/} into $topbases/$_update_name" "$fulldep^0"; then
 					if [ -z "$TG_RECURSIVE" ]; then
 						resume="\`$tgdisplay update${skip:+ --skip} $_update_name\` again"
 					else # subshell
@@ -206,7 +206,7 @@ update_branch() {
 	# previous merge.)
 	git checkout -q "$_update_name"
 
-	merge_with="refs/top-bases/$_update_name"
+	merge_with="refs/$topbases/$_update_name"
 
 
 	## Second, update our head with the remote branch
@@ -221,8 +221,8 @@ update_branch() {
 			info "Reconciling $_update_name base with remote branch updates..."
 			become_non_cacheable
 			# *DETACH* our HEAD now!
-			git checkout -q --detach "refs/top-bases/$_update_name"
-			if ! git_merge -m "tgupdate: merge ${_rname#refs/} onto top-bases/$_update_name" "$_rname^0"; then
+			git checkout -q --detach "refs/$topbases/$_update_name"
+			if ! git_merge -m "tgupdate: merge ${_rname#refs/} onto $topbases/$_update_name" "$_rname^0"; then
 				info "Oops, you will need to help me out here a bit."
 				info "Please commit merge resolution and call:"
 				info "git$gitcdopt checkout $_update_name && git$gitcdopt merge <commitid>"
@@ -246,7 +246,7 @@ update_branch() {
 	stash_now_if_requested
 	info "Updating $_update_name against new base..."
 	become_non_cacheable
-	if ! git_merge -m "tgupdate: merge ${plusextra}top-bases/$_update_name into $_update_name" "$merge_with^0"; then
+	if ! git_merge -m "tgupdate: merge ${plusextra}$topbases/$_update_name into $_update_name" "$merge_with^0"; then
 		if [ -z "$TG_RECURSIVE" ]; then
 			info "Please commit merge resolution. No need to do anything else"
 			info "You can abort this operation using \`git$gitcdopt reset --hard\` now"
@@ -265,11 +265,31 @@ create_ref_cache
 
 [ -z "$all" ] && { update_branch $name; exit; }
 
+do_non_annihilated_branches_patterns() {
+	while read -r _pat && [ -n "$_pat" ]; do
+		set -- "$@" "$_pat"
+	done
+	non_annihilated_branches "$@"
+}
+
+do_non_annihilated_branches() {
+	if [ -z "$pattern" ]; then
+		non_annihilated_branches
+	else
+		do_non_annihilated_branches_patterns <<-EOT
+		$(sed 'y/ /\n/' <<-LIST
+		$pattern
+		LIST
+		)
+		EOT
+	fi
+}
+
 while read name && [ -n "$name" ]; do
 	info "Proccessing $name..."
 	update_branch "$name" || exit
 done <<-EOT
-	$(non_annihilated_branches $pattern)
+	$(do_non_annihilated_branches)
 EOT
 
 info "Returning to $current..."

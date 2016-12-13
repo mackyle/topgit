@@ -29,7 +29,7 @@ head="$(git rev-parse --revs-only --abbrev-ref=loose HEAD --)"
 [ -n "$name" ] ||
 	name="${head:-HEAD}"
 name="$(verify_topgit_branch "$name")"
-base_rev="$(git rev-parse --short --verify "refs/top-bases/$name" -- 2>/dev/null)" ||
+base_rev="$(git rev-parse --short --verify "refs/$topbases/$name" -- 2>/dev/null)" ||
 	die "not a TopGit-controlled branch"
 
 # select .topdeps source for HEAD branch
@@ -37,6 +37,6 @@ base_rev="$(git rev-parse --short --verify "refs/top-bases/$name" -- 2>/dev/null
 	head_from=
 
 cat_file "refs/heads/$name:.topdeps" $head_from | while read dep; do
-	ref_exists "refs/top-bases/$dep" && branch_annihilated "$dep" && continue
+	ref_exists "refs/$topbases/$dep" && branch_annihilated "$dep" && continue
 	echol "$dep"
 done

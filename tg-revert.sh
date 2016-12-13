@@ -69,12 +69,12 @@ while [ $# -gt 0 ]; do case "$1" in
 		;;
 	--exclude=*)
 		[ -n "${1#--exclude=}" ] || die "--exclude= requires a ref name"
-		case "${1#--exclude=}" in refs/*) rn="${1#--exclude=}";; *) rn="refs/heads/${1#--exclude=} refs/top-bases/${1#--exclude=}"; esac
+		case "${1#--exclude=}" in refs/*) rn="${1#--exclude=}";; *) rn="refs/heads/${1#--exclude=} refs/$topbases/${1#--exclude=}"; esac
 		exclude="$exclude $rn";;
 	--exclude)
 		shift
 		[ -n "$1" ] || die "--exclude requires a ref name"
-		case "$1" in refs/*) rn="$1";; *) rn="refs/heads/$1 refs/top-bases/$1"; esac
+		case "$1" in refs/*) rn="$1";; *) rn="refs/heads/$1 refs/$topbases/$1"; esac
 		exclude="$exclude $rn";;
 	--)
 		shift
@@ -168,10 +168,10 @@ fi
 is_tgish() {
 	case "$1" in
 		refs/heads/*)
-			ref_exists "refs/top-bases/${1#refs/heads/}"
+			ref_exists "refs/$topbases/${1#refs/heads/}"
 			;;
-		refs/top-bases/*)
-			ref_exists "refs/heads/${1#refs/top-bases/}"
+		refs/"$topbases"/*)
+			ref_exists "refs/heads/${1#refs/$topbases/}"
 			;;
 		*)
 			! :
@@ -189,10 +189,10 @@ for b; do
 		if [ -z "$list" ] && [ -z "$nodeps" -o -z "$exp" ] && is_tgish "$rn"; then
 			case "$rn" in
 			refs/heads/*)
-				refs="$refs refs/top-bases/${rn#refs/heads/}"
+				refs="$refs refs/$topbases/${rn#refs/heads/}"
 				;;
-			refs/top-bases/*)
-				refs="$refs refs/heads/${rn#refs/top-bases/}"
+			refs/"$topbases"/*)
+				refs="$refs refs/heads/${rn#refs/$topbases/}"
 				;;
 			esac
 		fi
@@ -206,21 +206,21 @@ show_dep() {
 	[ -z "$tgish" -o -n "$_dep_is_tgish" ] || return 0
 	printf 'refs/heads/%s\n' "$_dep"
 	[ -z "$_dep_is_tgish" ] || \
-	printf 'refs/top-bases/%s\n' "$_dep"
+	printf 'refs/%s/%s\n' "$topbases" "$_dep"
 }
 
 show_deps()
 {
 	no_remotes=1
 	recurse_deps_exclude=
-	for _b; do
+	while read _b && [ -n "$_b" ]; do
 		case "$exclude" in *" $_b "*) continue; esac
 		if ! is_tgish "$_b"; then
 			[ -z "$tgish" ] || continue
 			printf '%s\n' "$_b"
 			continue
 		fi
-		case "$_b" in refs/top-bases/*) _b="refs/heads/${_b#refs/top-bases/}"; esac
+		case "$_b" in refs/"$topbases"/*) _b="refs/heads/${_b#refs/$topbases/}"; esac
 		_b="${_b#refs/heads/}"
 		case " $recurse_deps_exclude " in *" $_b "*) continue; esac
 		seen_deps=
@@ -242,7 +242,7 @@ show_rdeps()
 	no_remotes=1
 	show_break=
 	seen_deps=
-	for _b; do
+	while read _b && [ -n "$_b" ]; do
 		case "$exclude" in *" $_b "*) continue; esac
 		if ! is_tgish "$_b"; then
 			[ -z "$tgish" ] || continue
@@ -251,7 +251,7 @@ show_rdeps()
 			printf '%s\n' "$_b"
 			continue
 		fi
-		case "$_b" in refs/top-bases/*) _b="refs/heads/${_b#refs/top-bases/}"; esac
+		case "$_b" in refs/"$topbases"/*) _b="refs/heads/${_b#refs/$topbases/}"; esac
 		_b="${_b#refs/heads/}"
 		case " $seen_deps " in *" $_b "*) continue; esac
 		seen_deps="$seen_deps $_b"
@@ -265,6 +265,12 @@ show_rdeps()
 	done
 }
 
+refslist() {
+	[ -z "$refs" ] || sed 'y/ /\n/' <<-EOT
+	$refs
+	EOT
+}
+
 if [ -n "$list" ]; then
 	if [ -z "$deps$rdeps" ]; then
 		while read -r name rev; do
@@ -276,14 +282,14 @@ if [ -n "$list" ]; then
 		exit 0
 	fi
 	if [ -n "$deps" ]; then
-		show_deps $refs | LC_ALL=C sort -u -b -k1,1 | \
+		refslist | show_deps | LC_ALL=C sort -u -b -k1,1 | \
 		join - "$trf" | \
 		while read -r name rev; do
 			printf '%s %s\n' "$(git rev-parse --verify --quiet --short "$rev" --)" "$name"
 		done
 		exit 0
 	fi
-	show_rdeps $refs
+	refslist | show_rdeps
 	exit 0
 fi
 insn="$(get_temp isns)"
@@ -301,7 +307,7 @@ if [ -n "$nodeps" -o -z "$refs" ]; then
 		printf 'revert %s %s\n' "$(get_short "$rev")" "$name"
 	done <"$trf" | LC_ALL=C sort -u -b -k3,3 >"$insn"
 else
-	show_deps $refs | LC_ALL=C sort -u -b -k1,1 | \
+	refslist | show_deps | LC_ALL=C sort -u -b -k1,1 | \
 	join - "$trf" | \
 	while read -r name rev; do
 		printf 'revert %s %s\n' "$(get_short "$rev")" "$name"
@@ -350,7 +356,7 @@ cut -d ' ' -f 3 <"$insn" | LC_ALL=C sort -u -b -k1,1 | join - "$trf" | \
 while read -r name rev; do
 	orig="$(git rev-parse --verify --quiet "$name" -- || :)"
 	if [ -n "$logrefupdates" -o "$name" = "refs/tgstash" ]; then
-		case "$name" in refs/heads/*|refs/top-bases/*|refs/tgstash)
+		case "$name" in refs/heads/*|refs/"$topbases"/*|refs/tgstash)
 			mkdir -p "$git_dir/logs/$(dirname "$name")" 2>/dev/null || :
 			{ >>"$git_dir/logs/$name" || :; } 2>/dev/null
 		esac

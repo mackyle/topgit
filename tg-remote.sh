@@ -30,12 +30,12 @@ git config "remote.$name.url" >/dev/null || die "unknown remote '$name'"
 
 ## Configure the remote
 
-git config --replace-all "remote.$name.fetch" "+refs/top-bases/*:refs/remotes/$name/top-bases/*" "\\+refs/top-bases/\\*:refs/remotes/$name/top-bases/\\*"
+git config --replace-all "remote.$name.fetch" "+refs/$topbases/*:refs/remotes/$name/$topbases/*" "\\+refs/$topbases/\\*:refs/remotes/$name/$topbases/\\*"
 
-if git config --get-all "remote.$name.push" "\\+refs/top-bases/\\*:refs/top-bases/\\*" >/dev/null && test "xtrue" != "x$(git config --bool --get topgit.dontwarnonoldpushspecs)"; then
+if git config --get-all "remote.$name.push" "\\+refs/$topbases/\\*:refs/$topbases/\\*" >/dev/null && test "xtrue" != "x$(git config --bool --get topgit.dontwarnonoldpushspecs)"; then
 	info "Probably you want to remove the push specs introduced by an old version of topgit:"
-	info '       git config --unset-all "remote.'$name'.push" "\\+refs/top-bases/\\*:refs/top-bases/\\*"'
-	info '       git config --unset-all "remote.'$name'.push" "\\+refs/heads/\\*:refs/heads/\\*"'
+	info '       git config --unset-all "remote.'"$name"'.push" "\\+refs/'"$topbases"'/\\*:refs/'"$topbases"'/\\*"'
+	info '       git config --unset-all "remote.'"$name"'.push" "\\+refs/heads/\\*:refs/heads/\\*"'
 	info '(or use git config --bool --add topgit.dontwarnonoldpushspecs true to get rid of this warning)'
 fi
 
@@ -51,39 +51,39 @@ fi
 info "Populating local topic branches from remote '$name'..."
 
 ## The order of refspecs is very important, because both heads and
-## top-bases are mapped under the same namespace refs/remotes/$name.
+## $topbases are mapped under the same namespace refs/remotes/$name.
 ## If we put the 2nd refspec before the 1st one, stale refs reverse
-## lookup would fail and "refs/remotes/$name/top-bases/XX" reverse
-## lookup as a non-exist "refs/heads/top-bases/XX", and would be
+## lookup would fail and "refs/remotes/$name/$topbases/XX" reverse
+## lookup as a non-exist "refs/heads/$topbases/XX", and would be
 ## deleted by accident.
 git fetch --prune "$name" \
-	"+refs/top-bases/*:refs/remotes/$name/top-bases/*" \
+	"+refs/$topbases/*:refs/remotes/$name/$topbases/*" \
 	"+refs/heads/*:refs/remotes/$name/*"
 
-git for-each-ref --format='%(objectname) %(refname)' "refs/remotes/$name/top-bases" |
+git for-each-ref --format='%(objectname) %(refname)' "refs/remotes/$name/$topbases" |
 	while read rev ref; do
-		branch="${ref#refs/remotes/$name/top-bases/}"
+		branch="${ref#refs/remotes/$name/$topbases/}"
 		if ! git rev-parse --verify "refs/remotes/$name/$branch" -- >/dev/null 2>&1; then
-			info "Skipping remote $name/top-bases/$branch that's missing its branch"
+			info "Skipping remote $name/$topbases/$branch that's missing its branch"
 			continue
 		fi
 		if git rev-parse --verify "refs/heads/$branch" -- >/dev/null 2>&1; then
-			git rev-parse --verify "refs/top-bases/$branch" -- >/dev/null 2>&1 || {
+			git rev-parse --verify "refs/$topbases/$branch" -- >/dev/null 2>&1 || {
 				if [ -n "$logrefupdates" ]; then
-					mkdir -p "$git_dir/logs/refs/top-bases/$(dirname "$branch")" 2>/dev/null || :
-					{ >>"$git_dir/logs/refs/top-bases/$branch" || :; } 2>/dev/null
+					mkdir -p "$git_dir/logs/refs/$topbases/$(dirname "$branch")" 2>/dev/null || :
+					{ >>"$git_dir/logs/refs/$topbases/$branch" || :; } 2>/dev/null
 				fi
-				git update-ref "refs/top-bases/$branch" "$rev"
+				git update-ref "refs/$topbases/$branch" "$rev"
 			}
 			info "Skipping branch $branch: Already exists"
 			continue
 		fi
 		info "Adding branch $branch..."
 		if [ -n "$logrefupdates" ]; then
-			mkdir -p "$git_dir/logs/refs/top-bases/$(dirname "$branch")" 2>/dev/null || :
-			{ >>"$git_dir/logs/refs/top-bases/$branch" || :; } 2>/dev/null
+			mkdir -p "$git_dir/logs/refs/$topbases/$(dirname "$branch")" 2>/dev/null || :
+			{ >>"$git_dir/logs/refs/$topbases/$branch" || :; } 2>/dev/null
 		fi
-		git update-ref "refs/top-bases/$branch" "$rev"
+		git update-ref "refs/$topbases/$branch" "$rev"
 		git update-ref "refs/heads/$branch" "$(git rev-parse --verify "$name/$branch" --)"
 	done
 

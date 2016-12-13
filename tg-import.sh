@@ -120,7 +120,7 @@ handle_pick_failure()
 			[ -z "$isfirst" ] || basedep="$(origbasedep)"
 			[ -z "$lasthead" ] || git update-ref --no-deref HEAD "$lasthead"
 			[ -z "$lastsymref" ] || git symbolic-ref HEAD "$lastsymref"
-			git update-ref -d "refs/top-bases/$branch_name" || :
+			git update-ref -d "refs/$topbases/$branch_name" || :
 			git update-ref -d "refs/heads/$branch_name" || :
 			git reset --hard HEAD
 			return 0

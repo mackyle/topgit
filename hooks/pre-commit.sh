@@ -22,7 +22,7 @@ if head_=$(git symbolic-ref -q HEAD); then
 	case "$head_" in
 		refs/heads/*)
 			head_="${head_#refs/heads/}"
-			git rev-parse -q --verify "refs/top-bases/$head_" -- >/dev/null || exit 0;;
+			git rev-parse -q --verify "refs/$topbases/$head_" -- >/dev/null || exit 0;;
 		*)
 			exit 0;;
 	esac
@@ -115,7 +115,7 @@ check_topdeps()
 				die "cannot have myself as dependent"
 
 			# deps can be non-tgish but we can't run recurse_deps() on them
-			ref_exists "refs/top-bases/$newly_added" ||
+			ref_exists "refs/$topbases/$newly_added" ||
 				continue
 
 			# recurse_deps uses dfs but takes the .topdeps from the tree,

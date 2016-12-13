@@ -197,7 +197,7 @@ get_tree_()
 # get tree for the base
 get_tree_b()
 {
-	echo "refs/top-bases/$1"
+	echo "refs/$topbases/$1"
 }
 
 # get tree for the index
@@ -227,15 +227,15 @@ get_tree_w()
 }
 
 # strip_ref "$(git symbolic-ref HEAD)"
-# Output will have a leading refs/heads/ or refs/top-bases/ stripped if present
+# Output will have a leading refs/heads/ or refs/$topbases/ stripped if present
 strip_ref()
 {
 	case "$1" in
 		refs/heads/*)
 			echol "${1#refs/heads/}"
 			;;
-		refs/top-bases/*)
-			echol "${1#refs/top-bases/}"
+		refs/"$topbases"/*)
+			echol "${1#refs/$topbases/}"
 			;;
 		*)
 			echol "$1"
@@ -348,7 +348,7 @@ measure_branch()
 {
 	_bname="$1"; _base="$2"
 	shift; shift
-	[ -n "$_base" ] || _base="refs/top-bases/$(strip_ref "$_bname")"
+	[ -n "$_base" ] || _base="refs/$topbases/$(strip_ref "$_bname")"
 	# The caller should've verified $name is valid
 	_commits="$(git rev-list --count "$_bname" "$@" ^"$_base" --)"
 	_nmcommits="$(git rev-list --count --no-merges "$_bname" "$@" ^"$_base" --)"
@@ -396,7 +396,7 @@ create_ref_cache()
 	[ -z "$base_remote" ] || _remotespec="refs/remotes/$base_remote"
 	[ -z "$1" ] || printf '1'
 	git for-each-ref --format='%(refname) %(objectname)' \
-		refs/heads refs/top-bases $_remotespec >"$tg_ref_cache"
+		refs/heads "refs/$topbases" $_remotespec >"$tg_ref_cache"
 	create_ref_dirs
 }
 
@@ -419,7 +419,7 @@ rev_parse()
 
 # ref_exists_rev REF
 # Whether REF is a valid ref name
-# REF must be fully qualified and start with refs/heads/, refs/top-bases/
+# REF must be fully qualified and start with refs/heads/, refs/$topbases/
 # or, if $base_remote is set, refs/remotes/$base_remote/
 # Caches result if $tg_read_only and outputs HASH on success
 ref_exists_rev()
@@ -478,7 +478,7 @@ ref_exists_rev_short()
 
 # ref_exists REF
 # Whether REF is a valid ref name
-# REF must be fully qualified and start with refs/heads/, refs/top-bases/
+# REF must be fully qualified and start with refs/heads/, refs/$topbases/
 # or, if $base_remote is set, refs/remotes/$base_remote/
 # Caches result
 ref_exists()
@@ -512,7 +512,7 @@ rev_parse_tree()
 }
 
 # has_remote BRANCH
-# Whether BRANCH has a remote equivalent (accepts top-bases/ too)
+# Whether BRANCH has a remote equivalent (accepts $topbases/ too)
 has_remote()
 {
 	[ -n "$base_remote" ] && ref_exists "refs/remotes/$base_remote/$1"
@@ -528,8 +528,8 @@ verify_topgit_branch()
 		refs/heads/*)
 			_verifyname="${1#refs/heads/}"
 			;;
-		refs/top-bases/*)
-			_verifyname="${1#refs/top-bases/}"
+		refs/"$topbases"/*)
+			_verifyname="${1#refs/$topbases/}"
 			;;
 		HEAD)
 			_verifyname="$(git symbolic-ref HEAD 2>/dev/null || :)"
@@ -548,7 +548,7 @@ verify_topgit_branch()
 		[ "$2" != "-f" ] || return 1
 		die "no such branch: $_verifyname"
 	fi
-	if ! ref_exists "refs/top-bases/$_verifyname"; then
+	if ! ref_exists "refs/$topbases/$_verifyname"; then
 		[ "$2" != "-f" ] || return 1
 		die "not a TopGit-controlled branch: $_verifyname"
 	fi
@@ -558,12 +558,12 @@ verify_topgit_branch()
 # Caches result
 # $1 = branch name (i.e. "t/foo/bar")
 # $2 = optional result of rev-parse "refs/heads/$1"
-# $3 = optional result of rev-parse "refs/top-bases/$1"
+# $3 = optional result of rev-parse "refs/$topbases/$1"
 branch_annihilated()
 {
 	_branch_name="$1"
 	_rev="${2:-$(ref_exists_rev "refs/heads/$_branch_name")}"
-	_rev_base="${3:-$(ref_exists_rev "refs/top-bases/$_branch_name")}"
+	_rev_base="${3:-$(ref_exists_rev "refs/$topbases/$_branch_name")}"
 
 	_result=
 	_result_rev=
@@ -584,10 +584,10 @@ branch_annihilated()
 
 non_annihilated_branches()
 {
-	[ $# -gt 0 ] || set -- refs/top-bases
+	[ $# -gt 0 ] || set -- "refs/$topbases"
 	git for-each-ref --format='%(objectname) %(refname)' "$@" |
 		while read rev ref; do
-			name="${ref#refs/top-bases/}"
+			name="${ref#refs/$topbases/}"
 			if branch_annihilated "$name" "" "$rev"; then
 				continue
 			fi
@@ -633,13 +633,13 @@ recurse_deps_internal()
 
 	_is_tgish=0
 	_ref_hash_base=
-	! _ref_hash_base="$(ref_exists_rev "refs/top-bases/$1")" || _is_tgish=1
+	! _ref_hash_base="$(ref_exists_rev "refs/$topbases/$1")" || _is_tgish=1
 	[ -z "$recurse_preorder" -o -z "$2" ] || echo "0 $_is_tgish $*"
 
 	# If no_remotes is unset also check our base against remote base.
 	# Checking our head against remote head has to be done in the helper.
-	if [ -n "$_is_tgish" -a -z "$no_remotes" ] && has_remote "top-bases/$1"; then
-		echo "0 0 refs/remotes/$base_remote/top-bases/$1 $*"
+	if [ -n "$_is_tgish" -a -z "$no_remotes" ] && has_remote "$topbases/$1"; then
+		echo "0 0 refs/remotes/$base_remote/$topbases/$1 $*"
 	fi
 
 	# if the branch was annihilated, it is considered to have no dependencies
@@ -785,7 +785,7 @@ branch_needs_update()
 		# as it just recurses regardless, but it does matter for tg-info (which
 		# treats out-of-date bases as though they were already merged in) so
 		# we output the remote before the base.
-		branch_contains "refs/heads/$_dep" "refs/top-bases/$_dep" || {
+		branch_contains "refs/heads/$_dep" "refs/$topbases/$_dep" || {
 			echo ": $_dep $_depchain"
 			_ret=1
 			return
@@ -794,7 +794,7 @@ branch_needs_update()
 
 	if [ -n "$_name" ]; then
 		case "$_dep" in refs/*) _fulldep="$_dep";; *) _fulldep="refs/heads/$_dep";; esac
-		if ! branch_contains "refs/top-bases/$_name" "$_fulldep"; then
+		if ! branch_contains "refs/$topbases/$_name" "$_fulldep"; then
 			# Some new commits in _dep
 			echo "$_dep $_depchain"
 			_ret=1
@@ -848,9 +848,9 @@ list_deps()
 	head="$(git symbolic-ref -q HEAD)" ||
 		head="..detached.."
 
-	git for-each-ref --format='%(objectname) %(refname)' refs/top-bases"${1:+/$1}" |
+	git for-each-ref --format='%(objectname) %(refname)' "refs/$topbases${1:+/$1}" |
 		while read rev ref; do
-			name="${ref#refs/top-bases/}"
+			name="${ref#refs/$topbases/}"
 			if branch_annihilated "$name" "" "$rev"; then
 				continue
 			fi
@@ -860,7 +860,7 @@ list_deps()
 				from=
 			cat_file "refs/heads/$name:.topdeps" $from | while read dep; do
 				dep_is_tgish=true
-				ref_exists "refs/top-bases/$dep" ||
+				ref_exists "refs/$topbases/$dep" ||
 					dep_is_tgish=false
 				if ! "$dep_is_tgish" || ! branch_annihilated $dep; then
 					echo "$name $dep"
@@ -872,7 +872,7 @@ list_deps()
 # switch_to_base NAME [SEED]
 switch_to_base()
 {
-	_base="refs/top-bases/$1"; _seed="$2"
+	_base="refs/$topbases/$1"; _seed="$2"
 	# We have to do all the hard work ourselves :/
 	# This is like git checkout -b "$_base" "$_seed"
 	# (or just git checkout "$_base"),
@@ -1164,6 +1164,10 @@ initial_setup()
 	trap 'exit 143' TERM
 	tg_tmp_dir="$(mktemp -d "$git_dir/tg-tmp.XXXXXX")"
 	tg_ref_cache="$tg_tmp_dir/tg~ref-cache"
+
+	# refer to "top-bases" in a refname with $topbases
+
+	topbases="top-bases"
 }
 
 # return the "realpath" for the item except the leaf is not resolved if it's

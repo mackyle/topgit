@@ -190,18 +190,18 @@ fi
 if [ -n "$rname" ]; then
 	[ -n "$name" ] || die "no branch name given"
 	! ref_exists "refs/heads/$name" || die "branch '$name' already exists"
-	! ref_exists "refs/top-bases/$name" || die "'top-bases/$name' already exists"
+	! ref_exists "refs/$topbases/$name" || die "'$topbases/$name' already exists"
 	if [ -z "$base_remote" ]; then
 		die "no remote location given. Either use -r remote argument or set topgit.remote"
 	fi
 	has_remote "$rname" || die "no branch $rname in remote $base_remote"
 
 	if [ -n "$logrefupdates" ]; then
-		mkdir -p "$git_dir/logs/refs/top-bases/$(dirname "$name")" 2>/dev/null || :
-		{ >>"$git_dir/logs/refs/top-bases/$name" || :; } 2>/dev/null
+		mkdir -p "$git_dir/logs/refs/$topbases/$(dirname "$name")" 2>/dev/null || :
+		{ >>"$git_dir/logs/refs/$topbases/$name" || :; } 2>/dev/null
 	fi
 	msg="tgcreate: $name -r $rname"
-	git update-ref -m "$msg" "refs/top-bases/$name" "refs/remotes/$base_remote/top-bases/$rname" ""
+	git update-ref -m "$msg" "refs/$topbases/$name" "refs/remotes/$base_remote/$topbases/$rname" ""
 	git update-ref -m "$msg" "refs/heads/$name" "refs/remotes/$base_remote/$rname" ""
 	quiet_info "Topic branch $name based on $base_remote : $rname set up."
 	exit 0
@@ -270,7 +270,7 @@ fi
 if [ -z "$nodeps" ]; then
 	olddeps="$deps"
 	deps=
-	for d in $olddeps; do
+	while read d && [ -n "$d" ]; do
 		if [ "$d" = "HEAD" ]; then
 			sr="$(git symbolic-ref --quiet HEAD || :)"
 			[ -z "$sr" ] || git rev-parse --verify --quiet "$sr" -- ||
@@ -291,21 +291,26 @@ if [ -z "$nodeps" ]; then
 				deps="${deps:+$deps }$d"
 				;;
 		esac
-	done
+	done <<-EOT
+	$(sed 'y/ /\n/' <<-LIST
+	$olddeps
+	LIST
+	)
+	EOT
 	unset olddeps
 fi
 if test="$(git symbolic-ref --quiet "$name" --)"; then case "$test" in
 	refs/heads/*)
 		name="${test#refs/heads/}"
 		break;;
-	refs/top-bases/*)
-		name="${test#refs/top-bases/}"
+	refs/"$topbases"/*)
+		name="${test#refs/$topbases/}"
 		break;;
 esac; fi
 ! ref_exists "refs/heads/$name"  ||
 	die "branch '$name' already exists"
-! ref_exists "refs/top-bases/$name" ||
-	die "'top-bases/$name' already exists"
+! ref_exists "refs/$topbases/$name" ||
+	die "'$topbases/$name' already exists"
 [ -n "$force" ] || ! ref_exists "refs/tags/$name" ||
 	die "refusing to create branch with same name as existing tag '$name' without --force"
 
@@ -431,7 +436,7 @@ while [ -n "$merge" ]; do
 	merge="${merge#* }"
 	quiet_info "Merging $name base with $branch..."
 
-	if ! git merge $auhopt -m "tgcreate: merge $branch into top-bases/$name" "$branch^0"; then
+	if ! git merge $auhopt -m "tgcreate: merge $branch into $topbases/$name" "$branch^0"; then
 		info "Please commit merge resolution and call: $tgdisplay create"
 		info "It is also safe to abort this operation using:"
 		info "git$gitcdopt reset --hard some_branch"
@@ -454,28 +459,30 @@ done
 ## Set up the topic branch
 
 if [ -n "$logrefupdates" ]; then
-	mkdir -p "$git_dir/logs/refs/top-bases/$(dirname "$name")" 2>/dev/null || :
-	{ >>"$git_dir/logs/refs/top-bases/$name" || :; } 2>/dev/null
+	mkdir -p "$git_dir/logs/refs/$topbases/$(dirname "$name")" 2>/dev/null || :
+	{ >>"$git_dir/logs/refs/$topbases/$name" || :; } 2>/dev/null
 fi
 
 if [ -n "$unborn" ]; then
 	mttree="$(git mktree </dev/null)"
-	emsg="tg create empty top-bases/$name"
+	emsg="tg create empty $topbases/$name"
 	[ "refs/heads/$name" = "$unborn" ] || emsg="Initial empty commit"
 	mtcommit="$(git commit-tree  -m "$emsg" "$mttree")" || die "git commit-tree failed"
 	git update-ref -m "tgcreate: create ${unborn#refs/heads/}" "HEAD" "$mtcommit" ""
 	[ "refs/heads/$name" = "$unborn" ] || warn "branch ${unborn#refs/heads/} created with empty commit"
-	git update-ref -m "tgcreate: set top-bases/$name" "refs/top-bases/$name" "HEAD" ""
+	git update-ref -m "tgcreate: set $topbases/$name" "refs/$topbases/$name" "HEAD" ""
 	[ "refs/heads/$name" = "$unborn" ] || git checkout -b "$name"
 else
-	git update-ref -m "tgcreate: set top-bases/$name" "refs/top-bases/$name" "HEAD" ""
+	git update-ref -m "tgcreate: set $topbases/$name" "refs/$topbases/$name" "HEAD" ""
 	git checkout -b "$name"
 fi
 
-if [ -n "$nodeps" ]; then
+if [ -n "$nodeps" ] || [ -z "$deps" ]; then
 	>"$root_dir/.topdeps"
 else
-	printf '%s\n' $deps >"$root_dir/.topdeps"
+	sed 'y/ /\n/' <<-EOT >"$root_dir/.topdeps"
+	$deps
+	EOT
 fi
 git add -f "$root_dir/.topdeps"
 printf '%s\n' "$topmsg" >"$root_dir/.topmsg"

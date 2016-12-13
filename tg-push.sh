@@ -9,6 +9,7 @@ tgish_deps_only=false
 dry_run=
 force=
 push_all=false
+branches=
 
 while [ -n "$1" ]; do
 	arg="$1"; shift
@@ -31,7 +32,7 @@ while [ -n "$1" ]; do
 		shift
 		;;
 	*)
-		branches="$branches $arg";;
+		branches="${branches:+$branches }$(strip_ref "$arg")";;
 	esac
 done
 
@@ -45,14 +46,14 @@ fi
 
 if [ -z "$branches" ]; then
 	if $push_all; then
-		branches="$(non_annihilated_branches)"
+		branches="$(non_annihilated_branches | paste -s -d " ")"
 	else
 		branches="$(verify_topgit_branch HEAD)"
 	fi
 else
 	oldbranches="$branches"
 	branches=
-	for name in $oldbranches; do
+	while read name && [ -n "$name" ]; do
 		if [ "$name" = "HEAD" ]; then
 			sr="$(git symbolic-ref --quiet HEAD || :)"
 			[ -n "$sr" ] || die "cannot push a detached HEAD"
@@ -64,7 +65,12 @@ else
 			ref_exists "refs/heads/$name" || die "no such ref: refs/heads/$name"
 			branches="${branches:+$branches }$name"
 		fi
-	done
+	done <<-EOT
+	$(sed 'y/ /\n/' <<-LIST
+	$oldbranches
+	LIST
+	)
+	EOT
 	unset oldbranches
 fi
 
@@ -84,24 +90,29 @@ push_branch()
 
 	echol "$_dep" >> "$_listfile"
 	[ -z "$_dep_is_tgish" ] ||
-		echo "top-bases/$_dep" >> "$_listfile"
+		echo "$topbases/$_dep" >> "$_listfile"
 }
 
 no_remotes=1
-for name in $branches; do
+while read name && [ -n "$name" ]; do
 	# current branch
 	# re-use push_branch, which expects some pre-defined variables
 	_dep="$name"
 	_dep_is_tgish=1
 	_dep_missing=
-	ref_exists "refs/top-bases/$_dep" ||
+	ref_exists "refs/$topbases/$_dep" ||
 		_dep_is_tgish=
 	push_branch "$name"
 
 	# deps but only if branch is tgish
 	$recurse_deps && [ -n "$_dep_is_tgish" ] &&
 		recurse_deps push_branch "$name"
-done
+done <<EOT
+$(sed 'y/ /\n/' <<LIST
+$branches
+LIST
+)
+EOT
 
 # remove multiple occurrences of the same branch
 sort -u "$_listfile" | xargs git push $dry_run $force "$remote"

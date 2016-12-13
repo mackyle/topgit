@@ -22,7 +22,7 @@ pattern=
 
 checkout() {
 	_head="$(git rev-parse --revs-only --abbrev-ref=loose HEAD --)"
-	ref_exists "refs/top-bases/$_head" && branch_annihilated "$_head" && _checkout_opts="-f"
+	ref_exists "refs/$topbases/$_head" && branch_annihilated "$_head" && _checkout_opts="-f"
 	git checkout ${_checkout_opts} "$1"
 }
 
@@ -76,7 +76,7 @@ _depfile="$(mktemp "$tg_tmp_dir/tg-co-deps.XXXXXX")"
 _altfile="$(mktemp "$tg_tmp_dir/tg-co-alt.XXXXXX")"
 
 if [ -n "$goto" ]; then
-	$tg summary -t | grep -e "$pattern" >$_altfile || :
+	$tg summary -t | grep -e "$pattern" >"$_altfile" || :
 	no_branch_found="No topic branch matches grep pattern '$pattern'"
 else
 	branch=`git symbolic-ref -q HEAD` || die "Working on a detached head"
@@ -90,9 +90,9 @@ else
 
 	if [ -z "$all" ]; then
 		if [ -n "$pop" ]; then
-			$tg prev -w >$_altfile
+			$tg prev -w >"$_altfile"
 		else
-			$tg next >$_altfile
+			$tg next >"$_altfile"
 		fi
 	else
 		$tg summary --deps >$_depfile || die "${tgname:-tg} summary failed"
@@ -103,22 +103,26 @@ else
 			dir=push
 		fi
 		script=@sharedir@/leaves.awk
-		awk -f @sharedir@/leaves.awk dir=$dir start=$branch <$_depfile | sort >$_altfile
+		awk -f @sharedir@/leaves.awk dir=$dir start=$branch <$_depfile | sort >"$_altfile"
 	fi
 fi
 
-_alts=`wc_l < $_altfile`
+_alts=$(wc_l <"$_altfile")
 if [ $_alts = 0 ]; then
 	die "$no_branch_found"
 elif [ $_alts = 1 ]; then
-	checkout `cat $_altfile`
+	checkout "$(cat "$_altfile")"
 	exit $?
 fi
 
+catn() {
+	sed = | paste -d ":" - - | sed 's/^/     /;s/^ *\(......\):/\1  /'
+}
+
 echo Please select one of the following topic branches:
-cat -n $_altfile
+catn <"$_altfile"
 printf '%s' "Input the number: "
-read n
+read -r n
 
 # Check the input
 sane="$(sed 's/[^0-9]//g' <<-EOT
@@ -132,7 +136,7 @@ if [ $n -lt 1 ] || [ $n -gt $_alts ]; then
 	die "Input out of range"
 fi
 
-new_branch=`sed -n ${n}p $_altfile`
+new_branch="$(sed -n ${n}p "$_altfile")"
 [ -n "$new_branch" ] || die "Bad input"
 
-checkout $new_branch
+checkout "$new_branch"

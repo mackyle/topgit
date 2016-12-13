@@ -29,7 +29,7 @@ name="$(verify_topgit_branch HEAD)"
 
 ## Annihilate
 ensure_ident_available
-mb="$(git merge-base "refs/top-bases/$name" "refs/heads/$name")"
+mb="$(git merge-base "refs/$topbases/$name" "refs/heads/$name")"
 git read-tree "$mb^{tree}"
 # Need to pass --no-verify in order to inhibit TopGit's pre-commit hook to run,
 # which would bark upon missing .top* files.
@@ -39,11 +39,13 @@ git commit --no-verify -m"TopGit branch $name annihilated."
 dependencies="$(tg prev -w)"
 updatelist=
 while read dependent && [ -n "$dependent" ]; do
-	git checkout -f $dependent
+	git checkout -f "refs/heads/$dependent"
 	needupdate=
-	for dependency in $dependencies; do
+	while read dependency && [ -n "$dependency" ]; do
 		! $tg depend add --no-update "$dependency" >/dev/null 2>&1 || needupdate=1
-	done
+	done <<-EOT
+	$dependencies
+	EOT
 	[ -z "$needupdate" ] || updatelist="${updatelist:+$updatelist }$dependent"
 done <<EOT
 $($tg next)
@@ -52,9 +54,14 @@ EOT
 info "branch successfully annihilated: $name"
 if [ -n "$updatelist" ]; then
 	info "now updating affected branches: $updatelist"
-	for dependent in $updatelist; do
-		$tg update $dependent
-	done
+	while read dependent && [ -n "$dependent" ]; do
+		$tg update "$dependent"
+	done <<-EOT
+	$(sed 'y/ /\n/' <<-LIST
+	$updatelist
+	LIST
+	)
+	EOT
 fi
 
 info "If you have shared your work, you might want to run ${tgname:-tg} push $name now."

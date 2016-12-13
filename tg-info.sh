@@ -59,7 +59,7 @@ if [ -n "$heads" ]; then
 fi
 
 name="$(verify_topgit_branch "${name:-HEAD}")"
-base_rev="$(git rev-parse --short --verify "refs/top-bases/$name" -- 2>/dev/null)" ||
+base_rev="$(git rev-parse --short --verify "refs/$topbases/$name" -- 2>/dev/null)" ||
 	die "not a TopGit-controlled branch"
 
 measure="$(measure_branch "refs/heads/$name" "$base_rev")"
@@ -73,12 +73,12 @@ fi
 git cat-file blob "$name:.topmsg" | grep ^Subject: || :
 
 echo "Base: $base_rev"
-branch_contains "refs/heads/$name" "refs/top-bases/$name" ||
+branch_contains "refs/heads/$name" "refs/$topbases/$name" ||
 	echo "* Base is newer than head! Please run \`$tgdisplay update\`."
 
 if has_remote "$name"; then
 	echo "Remote Mate: $base_remote/$name"
-	branch_contains "refs/top-bases/$name" "refs/remotes/$base_remote/top-bases/$name" ||
+	branch_contains "refs/$topbases/$name" "refs/remotes/$base_remote/$topbases/$name" ||
 		echo "* Local base is out of date wrt. the remote base."
 	branch_contains "refs/heads/$name" "refs/remotes/$base_remote/$name" ||
 		echo "* Local head is out of date wrt. the remote head."
@@ -107,7 +107,7 @@ if [ -s "$depcheck2" ]; then
 				:*)
 					dep="${dep#:}"
 					fulldep="refs/heads/$dep"
-					extradep="refs/top-bases/$dep"
+					extradep="refs/$topbases/$dep"
 					;;
 				*)
 					extradep=
@@ -121,7 +121,7 @@ if [ -s "$depcheck2" ]; then
 			esac
 			printf '%s' "$dep "
 			[ -n "$chain" ] && printf '%s' "(<= $(echol "$chain" | sed 's/ / <= /')) "
-			printf '%s' "($(measure_branch "$fulldep" "refs/heads/$name" $extradep))"
+			printf '%s' "($(eval measure_branch '"$fulldep"' '"refs/heads/$name"' ${extradep:+\"\$extradep\"}))"
 			echo
 		done | sed 's/^/	/'
 else
