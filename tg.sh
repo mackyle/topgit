@@ -55,11 +55,6 @@ die()
 	exit 1
 }
 
-wc_l()
-{
-	echo $(wc -l)
-}
-
 vcmp()
 {
 	# Compare $1 to $2 each of which must match \d+(\.\d+)*
