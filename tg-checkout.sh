@@ -79,8 +79,8 @@ if [ -n "$goto" ]; then
 	$tg summary -t | grep -e "$pattern" >"$_altfile" || :
 	no_branch_found="No topic branch matches grep pattern '$pattern'"
 else
-	branch=`git symbolic-ref -q HEAD` || die "Working on a detached head"
-	branch=`git rev-parse --revs-only --abbrev-ref $branch --`
+	branch="$(git symbolic-ref -q HEAD)" || die "Working on a detached head"
+	branch="$(git rev-parse --revs-only --abbrev-ref "$branch" --)"
 
 	if [ -n "$pop" ]; then
 		no_branch_found="$branch does not depend on any topic"

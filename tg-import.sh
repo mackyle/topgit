@@ -155,8 +155,8 @@ for revpair in $ranges; do
 	rangeidx=$(( $rangeidx + 1 ))
 	case "$revpair" in
 	?*..?*)
-		rev1=`expr "z$revpair" : 'z\(.*\)\.\.'`
-		rev2=`expr "z$revpair" : 'z.*\.\.\(.*\)'`
+		rev1="$(expr "z$revpair" : 'z\(.*\)\.\.')"
+		rev2="$(expr "z$revpair" : 'z.*\.\.\(.*\)')"
 		;;
 	*)
 		die "Unknown range spec $revpair"

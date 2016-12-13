@@ -68,7 +68,7 @@ vcmp()
 	#  -1 if $1 < $2
 	#   0 if $1 = $2
 	#   1 if $1 > $2
-	# Note that `vcmp 1.8 1.8.0.0.0.0` correctly outputs 0.
+	# Note that $(vcmp 1.8 1.8.0.0.0.0) correctly outputs 0.
 	while
 		_a="${1%%.*}"
 		_b="${2%%.*}"
@@ -928,18 +928,18 @@ do_help()
 		if [ -n "$_www" ]; then
 			nohtml=
 			if ! [ -r "@sharedir@/topgit.html" ]; then
-				echo "`basename $0`: missing html help file:" \
+				echo "$(basename "$0"): missing html help file:" \
 					"@sharedir@/topgit.html" 1>&2
 				nohtml=1
 			fi
 			if ! [ -r "@sharedir@/tg-$1.html" ]; then
-				echo "`basename $0`: missing html help file:" \
+				echo "$(basename "$0"): missing html help file:" \
 					"@sharedir@/tg-$1.html" 1>&2
 				nohtml=1
 			fi
 			if [ -n "$nohtml" ]; then
-				echo "`basename $0`: use" \
-					"\"`basename $0` help $1\" instead" 1>&2
+				echo "$(basename "$0"): use" \
+					"\"$(basename "$0") help $1\" instead" 1>&2
 				exit 1
 			fi
 			git web--browse -c help.browser "@sharedir@/tg-$1.html"
@@ -957,7 +957,7 @@ do_help()
 		}
 		page output "$1"
 	else
-		echo "`basename $0`: no help for $1" 1>&2
+		echo "$(basename "$0"): no help for $1" 1>&2
 		do_help
 		exit 1
 	fi
@@ -1042,7 +1042,7 @@ setup_pager()
 		export LV
 	fi
 
-	# this is needed so e.g. `git diff` will still colorize it's output if
+	# this is needed so e.g. $(git diff) will still colorize it's output if
 	# requested in ~/.gitconfig with color.diff=auto
 	GIT_PAGER_IN_USE=1
 	export GIT_PAGER_IN_USE
