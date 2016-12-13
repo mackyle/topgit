@@ -39,7 +39,7 @@ fi
 
 if [ -z "$optcontinue" ]; then
 	rerereon="$(git config --get --bool rerere.enabled 2>/dev/null || :)"
-	[ "$rerereon" = "true" ] || \
+	[ "$rerereon" = "true" ] ||
 	warn "rerere.enabled is false, automatic --continue not possible"
 fi
 

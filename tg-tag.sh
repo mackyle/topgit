@@ -241,7 +241,7 @@ case "$refname" in [!@]*"@{"*"}")
 	sfx="${sfx#$refname}"
 esac
 case "$refname" in HEAD|refs/*) :;; *)
-	if reftest="$(git rev-parse --revs-only --symbolic-full-name "$refname" -- 2>/dev/null)" && \
+	if reftest="$(git rev-parse --revs-only --symbolic-full-name "$refname" -- 2>/dev/null)" &&
 	   [ -n "$reftest" ]; then
 		if [ -n "$reflog$drop$clear$delete" ]; then
 			refname="$reftest"
@@ -290,9 +290,9 @@ if [ -n "$drop$clear$delete" ]; then
 fi
 if [ -n "$reflog" ]; then
 	[ "$tagname" != "refs/tgstash" -o -n "$setreflogmsg" ] || reflogmsg=1
-	git rev-parse --verify --quiet "$refname" -- >/dev/null || \
+	git rev-parse --verify --quiet "$refname" -- >/dev/null ||
 	die "no such ref: $refname"
-	[ -s "$git_dir/logs/$refname" ] || \
+	[ -s "$git_dir/logs/$refname" ] ||
 	die "no reflog present for $reftype: $tagname"
 	showref="$(git rev-parse --revs-only --abbrev-ref=strict "$refname" --)"
 	hashcolor=
@@ -309,9 +309,9 @@ if [ -n "$reflog" ]; then
 	setup_strftime
 	output()
 	{
-		sed 's/[^ ][^ ]* //' <"$git_dir/logs/$refname" | \
-		awk '{a[i++]=$0} END {for (j=i-1; j>=0;) print a[j--]}' | \
-		git cat-file --batch-check='%(objectname) %(objecttype) %(rest)' | \
+		sed 's/[^ ][^ ]* //' <"$git_dir/logs/$refname" |
+		awk '{a[i++]=$0} END {for (j=i-1; j>=0;) print a[j--]}' |
+		git cat-file --batch-check='%(objectname) %(objecttype) %(rest)' |
 		{
 			stashnum=-1
 			lastdate=
@@ -328,12 +328,12 @@ if [ -n "$reflog" ]; then
 				es="${es# }"
 				obj="$(git rev-parse --verify --quiet --short "$newrev" --)"
 				extra=
-				[ "$type" = "tag" -o -n "$notype" ] || \
+				[ "$type" = "tag" -o -n "$notype" ] ||
 				extra="$hashcolor($metacolor$type$resetcolor$hashcolor)$resetcolor "
 				if [ -z "$reflogmsg" -o -z "$msg" ]; then
 					objmsg=
 					if [ "$type" = "tag" ]; then
-						objmsg="$(git cat-file tag "$obj" | \
+						objmsg="$(git cat-file tag "$obj" |
 							sed '1,/^$/d' | sed '/^$/,$d')"
 					elif [ "$type" = "commit" ]; then
 						objmsg="$(git log -n 1 --format='format:%s' "$obj" --)"
@@ -488,7 +488,7 @@ for b; do
 	esac
 done
 
-[ -n "$force" ] || \
+[ -n "$force" ] ||
 ! git rev-parse --verify --quiet "$refname" -- >/dev/null ||
 die "$reftype '$tagname' already exists"
 
@@ -609,7 +609,7 @@ EOT
 			done
 		} >>"$git_dir/TAG_EDITMSG"
 		stripcomments=1
-		run_editor "$git_dir/TAG_EDITMSG" || \
+		run_editor "$git_dir/TAG_EDITMSG" ||
 		die "there was a problem with the editor '$tg_editor'"
 	fi
 fi
@@ -623,13 +623,13 @@ tagtarget=
 case "$allrefs${extrarefs:+ $extrarefs}" in
 	*" "*)
 		parents="$(git merge-base --independent \
-			$(printf '%s^0 ' $allrefs $extrarefs))" || \
+			$(printf '%s^0 ' $allrefs $extrarefs))" ||
 			die "failed: git merge-base --independent"
 		if [ $(printf '%s\n' "$parents" | wc -l) -eq 1 ]; then
 			tagtarget="$parents"
 		else
 			mttree="$(git hash-object -t tree -w --stdin </dev/null)"
-			tagtarget="$(printf '%s\n' "tg tag branch consolidation" "" $branches | \
+			tagtarget="$(printf '%s\n' "tg tag branch consolidation" "" $branches |
 				git commit-tree $mttree $(printf -- '-p %s ' $parents))"
 		fi
 		;;
@@ -647,11 +647,11 @@ if [ "$reftype" = "tag" -a -n "$signed" ]; then
 	git tag -F "$git_dir/TGTAG_FINALMSG" ${signed:+-s} ${force:+-f} \
 		${keyid:+-u} ${keyid} "$tagname" "$tagtarget"
 else
-	obj="$(git rev-parse --verify --quiet "$tagtarget" --)" || \
+	obj="$(git rev-parse --verify --quiet "$tagtarget" --)" ||
 		die "invalid object name: $tagtarget"
-	typ="$(git cat-file -t "$tagtarget" 2>/dev/null)" || \
+	typ="$(git cat-file -t "$tagtarget" 2>/dev/null)" ||
 		die "invalid object name: $tagtarget"
-	id="$(git var GIT_COMMITTER_IDENT 2>/dev/null)" || \
+	id="$(git var GIT_COMMITTER_IDENT 2>/dev/null)" ||
 		die "could not get GIT_COMMITTER_IDENT"
 	newtag="$({
 			printf '%s\n' "object $obj" "type $typ" "tag $tagname" \

@@ -112,7 +112,7 @@ case "$refname" in HEAD|refs/*) :;; *)
 	suffix="${refname%@*}"
 	suffix="${refname#$suffix}"
 	refname="${refname%$suffix}"
-	if reftest="$(git rev-parse --revs-only --symbolic-full-name "$refname" -- 2>/dev/null)" && \
+	if reftest="$(git rev-parse --revs-only --symbolic-full-name "$refname" -- 2>/dev/null)" &&
 	   [ -n "$reftest" ]; then
 		refname="$reftest$suffix"
 	else
@@ -127,8 +127,8 @@ trf="$(get_temp refs)"
 tagdataref="$refname^{tag}"
 while
 	git cat-file tag "$tagdataref" >"$tgf" || die "cannot read tag: $refname"
-	sed -ne '/^-----BEGIN TOPGIT REFS-----$/,/^-----END TOPGIT REFS-----$/p' <"$tgf" | \
-	sed -ne "/^\\($octet20\\) \\(refs\/[^ $tab][^ $tab]*\\)\$/{s//\\2 \\1/;p;}" | \
+	sed -ne '/^-----BEGIN TOPGIT REFS-----$/,/^-----END TOPGIT REFS-----$/p' <"$tgf" |
+	sed -ne "/^\\($octet20\\) \\(refs\/[^ $tab][^ $tab]*\\)\$/{s//\\2 \\1/;p;}" |
 	LC_ALL=C sort -u -b -k1,1 >"$trf"
 	! [ -s "$trf" ]
 do
@@ -159,9 +159,9 @@ if [ $# -eq 1 -a "$1" = "--heads" ]; then
 	srt="$(get_temp sort)"
 	LC_ALL=C sort -b -k2,2 <"$trf" >"$srt"
 	set -- $(
-	git merge-base --independent $(cut -d ' ' -f 2 <"$srt") | \
-	LC_ALL=C sort -b -k1,1 | \
-	join -2 2 -o 2.1 - "$srt" | \
+	git merge-base --independent $(cut -d ' ' -f 2 <"$srt") |
+	LC_ALL=C sort -b -k1,1 |
+	join -2 2 -o 2.1 - "$srt" |
 	LC_ALL=C sort)
 fi
 
@@ -205,7 +205,7 @@ show_dep() {
 	seen_deps="${seen_deps:+$seen_deps }$_dep"
 	[ -z "$tgish" -o -n "$_dep_is_tgish" ] || return 0
 	printf 'refs/heads/%s\n' "$_dep"
-	[ -z "$_dep_is_tgish" ] || \
+	[ -z "$_dep_is_tgish" ] ||
 	printf 'refs/%s/%s\n' "$topbases" "$_dep"
 }
 
@@ -282,8 +282,8 @@ if [ -n "$list" ]; then
 		exit 0
 	fi
 	if [ -n "$deps" ]; then
-		refslist | show_deps | LC_ALL=C sort -u -b -k1,1 | \
-		join - "$trf" | \
+		refslist | show_deps | LC_ALL=C sort -u -b -k1,1 |
+		join - "$trf" |
 		while read -r name rev; do
 			printf '%s %s\n' "$(git rev-parse --verify --quiet --short "$rev" --)" "$name"
 		done
@@ -307,8 +307,8 @@ if [ -n "$nodeps" -o -z "$refs" ]; then
 		printf 'revert %s %s\n' "$(get_short "$rev")" "$name"
 	done <"$trf" | LC_ALL=C sort -u -b -k3,3 >"$insn"
 else
-	refslist | show_deps | LC_ALL=C sort -u -b -k1,1 | \
-	join - "$trf" | \
+	refslist | show_deps | LC_ALL=C sort -u -b -k1,1 |
+	join - "$trf" |
 	while read -r name rev; do
 		printf 'revert %s %s\n' "$(get_short "$rev")" "$name"
 	done >"$insn"
@@ -328,18 +328,18 @@ if [ -n "$interact" ]; then
 #
 # However, if you remove everything, the revert will be aborted.
 EOT
-	run_editor "$insn" || \
+	run_editor "$insn" ||
 	die "there was a problem with the editor '$tg_editor'"
 	git stripspace -s <"$insn" >"$insn"+
 	mv -f "$insn"+ "$insn"
 	[ -s "$insn" ] || die "nothing to do"
 	while read -r op hash ref; do
-		[ "$op" = "r" -o "$op" = "revert" ] || \
+		[ "$op" = "r" -o "$op" = "revert" ] ||
 		die "invalid op in instruction: $op $hash $ref"
 		case "$ref" in refs/?*) :;; *)
 			die "invalid ref in instruction: $op $hash $ref"
 		esac
-		ref_exists "$ref" || \
+		ref_exists "$ref" ||
 		die "unknown ref in instruction: $op $hash $ref"
 	done <"$insn"
 fi
@@ -352,7 +352,7 @@ nullref="$(printf '%.*s' $refwidth "$nullsha")"
 notewidth=$(( $refwidth + 4 + $refwidth ))
 srh=
 [ -n "$dryrun" ] || srh="$(git symbolic-ref --quiet HEAD || :)"
-cut -d ' ' -f 3 <"$insn" | LC_ALL=C sort -u -b -k1,1 | join - "$trf" | \
+cut -d ' ' -f 3 <"$insn" | LC_ALL=C sort -u -b -k1,1 | join - "$trf" |
 while read -r name rev; do
 	orig="$(git rev-parse --verify --quiet "$name" -- || :)"
 	if [ -n "$logrefupdates" -o "$name" = "refs/tgstash" ]; then
@@ -362,7 +362,7 @@ while read -r name rev; do
 		esac
 	fi
 	if [ "$rev" != "$orig" ]; then
-		[ -z "$dryrun" -a -n "$quiet" ] || \
+		[ -z "$dryrun" -a -n "$quiet" ] ||
 		origsh="$(git rev-parse --verify --short --quiet "$name" -- || :)"
 		if [ -z "$dryrun" ]; then
 			if [ -n "$srh" ] && [ "$srh" = "$name" ]; then

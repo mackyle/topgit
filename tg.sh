@@ -99,8 +99,8 @@ precheck() {
 	esac
 	git_vernum="$(echo "$git_version" | sed -ne 's/^[^0-9]*\([0-9][0-9]*\(\.[0-9][0-9]*\)*\).*$/\1/p')"
 
-	[ "$(vcmp "$git_vernum" $GIT_MINIMUM_VERSION)" -ge 0 ] \
-		|| die "git version >= $GIT_MINIMUM_VERSION required but found git version $git_vernum instead"
+	[ "$(vcmp "$git_vernum" $GIT_MINIMUM_VERSION)" -ge 0 ] ||
+		die "git version >= $GIT_MINIMUM_VERSION required but found git version $git_vernum instead"
 }
 
 case "$1" in version|--version|-V)
@@ -367,7 +367,7 @@ branch_contains()
 	_revb1="$(ref_exists_rev "$1")" || return 0
 	_revb2="$(ref_exists_rev "$2")" || return 0
 	if [ -s "$tg_cache_dir/$1/.bc/$2/.d" ]; then
-		if read _result _rev_matchb1 _rev_matchb2 && \
+		if read _result _rev_matchb1 _rev_matchb2 &&
 			[ "$_revb1" = "$_rev_matchb1" -a "$_revb2" = "$_rev_matchb2" ]; then
 			return $_result
 		fi <"$tg_cache_dir/$1/.bc/$2/.d"
@@ -441,7 +441,7 @@ ref_exists_rev()
 	_result_rev="$(rev_parse "$1")"
 	_result=$?
 	[ -d "$tg_tmp_dir/cached/$1" ] || mkdir -p "$tg_tmp_dir/cached/$1" 2>/dev/null
-	[ ! -d "$tg_tmp_dir/cached/$1" ] || \
+	[ ! -d "$tg_tmp_dir/cached/$1" ] ||
 	echo $_result $_result_rev >"$tg_tmp_dir/cached/$1/.ref" 2>/dev/null || :
 	printf '%s' "$_result_rev"
 	return $_result
@@ -470,7 +470,7 @@ ref_exists_rev_short()
 		_result=$?
 	fi
 	[ -d "$tg_tmp_dir/cached/$1" ] || mkdir -p "$tg_tmp_dir/cached/$1" 2>/dev/null
-	[ ! -d "$tg_tmp_dir/cached/$1" ] || \
+	[ ! -d "$tg_tmp_dir/cached/$1" ] ||
 	echo $_result $_result_rev >"$tg_tmp_dir/cached/$1/.rfs" 2>/dev/null || :
 	printf '%s' "$_result_rev"
 	return $_result
@@ -577,7 +577,7 @@ branch_annihilated()
 	test -z "$mb" || test "$(rev_parse_tree "$mb")" = "$(rev_parse_tree "$_rev")"
 	_result=$?
 	[ -d "$tg_cache_dir/$_branch_name" ] || mkdir -p "$tg_cache_dir/$_branch_name" 2>/dev/null
-	[ ! -d "$tg_cache_dir/$_branch_name" ] || \
+	[ ! -d "$tg_cache_dir/$_branch_name" ] ||
 	echo $_result $_rev $_rev_base >"$tg_cache_dir/$_branch_name/.ann" 2>/dev/null || :
 	return $_result
 }

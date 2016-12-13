@@ -390,7 +390,7 @@ if [ -z "$restarted" ]; then
 #
 # tg create ${nodeps:+--no-deps }$name $deps
 EOT
-		run_editor "$git_dir/TG_EDITMSG" || \
+		run_editor "$git_dir/TG_EDITMSG" ||
 		die "there was a problem with the editor '$tg_editor'"
 		git stripspace -s <"$git_dir/TG_EDITMSG" >"$git_dir/TG_EDITMSG"+
 		mv -f "$git_dir/TG_EDITMSG"+ "$git_dir/TG_EDITMSG"
