@@ -12,7 +12,7 @@ current= # Branch we are currently on
 skip= # skip missing dependencies
 stash= # tgstash refs before changes
 
-if [ "$(git config --get --bool topgit.autostash 2>/dev/null || :)" = "true" ]; then
+if [ "$(git config --get --bool topgit.autostash 2>/dev/null || :)" != "false" ]; then
 	# topgit.autostash is true
 	stash=1
 fi

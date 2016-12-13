@@ -300,15 +300,16 @@ assumes, of course, that you remember to run ``tg tag --stash`` first.
 
 The ``tg update`` command understands a ``--stash`` option that tells it to
 automatically run ``tg tag --stash`` before it starts making changes (if
-everything is up-to-date it won't run the stash command at all).  Again, you
-must remember to add the ``--stash`` option though.
+everything is up-to-date it won't run the stash command at all).  The
+``--stash`` option is the default, add the ``--no-stash`` option to turn it
+off.
 
-However, there is a preference.  Setting the config value ``topgit.autostash``
-to ``true`` will implicitly add the ``--stash`` option to any ``tg update``
-command unless an explicit ``--no-stash`` option is given.
+There is a preference for this.  Setting the config value ``topgit.autostash``
+to ``false`` will implicitly add the ``--no-stash`` option to any ``tg update``
+command unless an explicit ``--stash`` option is given.
 
 If you are likely to ever want to undo a ``tg update``, setting
-``topgit.autostash`` to ``true`` is highly recommended!
+``topgit.autostash`` to ``false`` is highly discouraged!
 
 Note that the tags saved by ``tg tag --stash`` are stored in the
 ``refs/tgstash`` ref and its reflog.  Unfortunately, while Git is happy to
