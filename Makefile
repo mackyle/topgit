@@ -8,6 +8,9 @@ all::
 # This should be fatal in non-GNU make
 export MAKE
 
+# Update if you add any code that requires a newer version of git
+GIT_MINIMUM_VERSION ?= 1.8.5
+
 prefix ?= $(HOME)
 bindir = $(prefix)/bin
 cmddir = $(prefix)/libexec/topgit
@@ -22,9 +25,7 @@ hooks_out = $(patsubst %.sh,%,$(hooks_in))
 help_out = $(patsubst %.sh,%.txt,tg-help.sh $(commands_in))
 html_out = $(patsubst %.sh,%.html,tg-help.sh tg-tg.sh $(commands_in))
 
-ifndef SHELL_PATH
-	SHELL_PATH = /bin/sh
-endif
+SHELL_PATH ?= /bin/sh
 SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
 
 version := $(shell test -d .git && git describe --match "topgit-[0-9]*" --abbrev=4 --dirty 2>/dev/null | sed -e 's/^topgit-//' )
@@ -45,13 +46,14 @@ please_set_SHELL_PATH_to_a_more_modern_shell:
 
 shell_compatibility_test: please_set_SHELL_PATH_to_a_more_modern_shell
 
-tg $(commands_out) $(hooks_out): % : %.sh Makefile TG-PREFIX
+tg $(commands_out) $(hooks_out): % : %.sh Makefile TG-BUILD-SETTINGS
 	@echo "[SED] $@"
 	@sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
 		-e 's#@cmddir@#$(cmddir)#g;' \
 		-e 's#@hooksdir@#$(hooksdir)#g' \
 		-e 's#@bindir@#$(bindir)#g' \
 		-e 's#@sharedir@#$(sharedir)#g' \
+		-e 's#@mingitver@#$(GIT_MINIMUM_VERSION)#g' \
 		-e 's|@SHELL_PATH@|$(SHELL_PATH_SQ)|' \
 		$(version_arg) \
 		$@.sh >$@+ && \
@@ -99,7 +101,7 @@ $(html_out): create-html.sh
 
 precheck:: tg
 ifeq ($(DESTDIR),)
-	./$+ precheck
+	@./$+ precheck
 else
 	@echo skipping precheck because DESTDIR is set
 endif
@@ -127,19 +129,25 @@ install-html:: html
 
 clean::
 	rm -f tg $(commands_out) $(hooks_out) $(help_out) topgit.html $(html_out)
-	rm -f TG-PREFIX
+	rm -f TG-BUILD-SETTINGS
 	rm -rf bin-wrappers
 	+@$(MAKE) -C t clean
 
-define TRACK_PREFIX
-$(bindir):$(cmddir):$(hooksdir):$(sharedir):$(SHELL_PATH):$(version)
+define BUILD_SETTINGS
+TG_INST_BINDIR='$(bindir)'
+TG_INST_CMDDIR='$(cmddir)'
+TG_INST_HOOKSDIR='$(hooksdir)'
+TG_INST_SHAREDIR='$(sharedir)'
+SHELL_PATH='$(SHELL_PATH)'
+TG_VERSION='$(version)'
+TG_GIT_MINIMUM_VERSION='$(GIT_MINIMUM_VERSION)'
 endef
-export TRACK_PREFIX
+export BUILD_SETTINGS
 
-TG-PREFIX: FORCE
-	@if test x"$$TRACK_PREFIX" != x"`cat TG-PREFIX 2>/dev/null`"; then \
-		echo "* new prefix flags"; \
-		echo "$$TRACK_PREFIX" >TG-PREFIX; \
+TG-BUILD-SETTINGS: FORCE
+	@if test x"$$BUILD_SETTINGS" != x"`cat $@ 2>/dev/null`"; then \
+		echo "* new build settings"; \
+		echo "$$BUILD_SETTINGS" >$@; \
 	fi
 
 test:: all

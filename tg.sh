@@ -7,8 +7,8 @@
 
 TG_VERSION=0.19.4
 
-# Update if you add any code that requires a newer version of git
-GIT_MINIMUM_VERSION=1.8.5
+# Update in Makefile if you add any code that requires a newer version of git
+GIT_MINIMUM_VERSION="@mingitver@"
 
 ## SHA-1 pattern
 

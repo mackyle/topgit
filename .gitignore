@@ -14,7 +14,7 @@
 /bin-wrappers/
 
 /README.html
-/TG-PREFIX
+/TG-BUILD-SETTINGS
 /config.mak
 /hooks/pre-commit
 /tg
