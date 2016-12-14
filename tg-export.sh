@@ -15,6 +15,7 @@ strip=false
 stripval=0
 allbranches=false
 binary=
+pl=
 
 
 ## Parse options
@@ -25,7 +26,7 @@ while [ -n "$1" ]; do
 	-a|--all)
 		allbranches=true;;
 	-b)
-		branches="$1"; shift;;
+		branches="${branches:+$branches }$1"; shift;;
 	--force)
 		forcebranch=1;;
 	--flatten)
@@ -87,6 +88,20 @@ done
 if [ -z "$branches" ] && ! "$allbranches"; then
 	# this check is only needed when no branches have been passed
 	name="$(verify_topgit_branch HEAD)"
+fi
+
+if [ -n "$branches" ]; then
+	oldbranches="$branches"
+	branches=
+	while read bname && [ -n "$bname" ]; do
+		branches="${branches:+$branches }$(verify_topgit_branch "$bname")"
+	done <<-EOT
+	$(sed 'y/ /\n/' <<-LIST
+	$oldbranches
+	LIST
+	)
+	EOT
+	unset oldbranches bname
 fi
 
 read -r nowsecs nowtzoff <<EOT
@@ -367,12 +382,17 @@ elif [ -z "$branches" ]; then
 	(_ret=0; _dep="$name"; _name=; _dep_is_tgish=1; _dep_missing=; driver)
 	test $? -eq 0
 else
-	echol "$branches" | tr ',' '\n' | while read _dep; do
+	while read _dep && [ -n "$_dep" ]; do
 		_dep_is_tgish=1
 		$driver
-	done
-	test $? -eq 0
-	name="$(echol "$branches" | sed 's/.*,//')"
+	done <<-EOT
+	$(sed 'y/ /\n/' <<-LIST
+	$branches
+	LIST
+	)
+	EOT
+	name="$branches"
+	case "$branches" in *" "*) pl="es"; esac
 fi
 
 
@@ -386,7 +406,7 @@ if [ "$driver" = "collapse" ]; then
 
 elif [ "$driver" = "quilt" ]; then
 	depcount=$(( $(cat "$output/series" | wc -l) ))
-	echo "Exported topic branch $name (total $depcount topics) to directory $output"
+	echo "Exported topic branch$pl $name (total $depcount topics) to directory $output"
 
 elif [ "$driver" = "linearize" ]; then
 	git checkout -q $checkout_opt $output
