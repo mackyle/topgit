@@ -38,7 +38,7 @@ endif
 
 .PHONY: FORCE
 
-all::	shell_compatibility_test precheck $(commands_out) $(hooks_out) $(help_out) tg-tg.txt
+all::	shell_compatibility_test precheck $(commands_out) $(hooks_out) bin-wrappers/tg $(help_out) tg-tg.txt
 
 please_set_SHELL_PATH_to_a_more_modern_shell:
 	@$$(:)
@@ -57,6 +57,17 @@ tg $(commands_out) $(hooks_out): % : %.sh Makefile TG-PREFIX
 		$@.sh >$@+ && \
 	chmod +x $@+ && \
 	mv $@+ $@
+
+bin-wrappers/tg : $(commands_out) $(hooks_out) tg
+	@echo "[WRAPPER] $@"
+	@[ -d bin-wrappers ] || mkdir bin-wrappers
+	@echo '#!$(SHELL_PATH_SQ)' >"$@"
+	@curdir="$$(pwd -P)"; \
+	 echo "TG_INST_CMDDIR='$$curdir' && export TG_INST_CMDDIR" >>"$@"; \
+	 echo "TG_INST_SHAREDIR='$$curdir' && export TG_INST_SHAREDIR" >>"$@"; \
+	 echo "TG_INST_HOOKSDIR='$$curdir' && export TG_INST_HOOKSDIR" >>"$@"; \
+	 echo "exec '$$curdir/tg' \"\$$@\"" >>"$@"
+	@chmod a+x "$@"
 
 $(help_out): README create-help.sh
 	@CMD=`echo $@ | sed -e 's/tg-//' -e 's/\.txt//'` && \
@@ -117,6 +128,7 @@ install-html:: html
 clean::
 	rm -f tg $(commands_out) $(hooks_out) $(help_out) topgit.html $(html_out)
 	rm -f TG-PREFIX
+	rm -rf bin-wrappers
 
 define TRACK_PREFIX
 $(bindir):$(cmddir):$(hooksdir):$(sharedir):$(SHELL_PATH):$(version)

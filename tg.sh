@@ -906,7 +906,7 @@ do_help()
 
 		cmds=
 		sep=
-		for cmd in "@cmddir@"/tg-*; do
+		for cmd in "$TG_INST_CMDDIR"/tg-*; do
 			! [ -r "$cmd" ] && continue
 			# strip directory part and "tg-" prefix
 			cmd="$(basename "$cmd")"
@@ -919,17 +919,17 @@ do_help()
 		echo "Usage: $tgname [-C <dir>] [-r <remote> | -u] [-c <name>=<val>] ($cmds) ..."
 		echo "   Or: $tgname help [-w] [<command>]"
 		echo "Use \"$tgdisplaydir$tgname help tg\" for overview of TopGit"
-	elif [ -r "@cmddir@"/tg-$1 -o -r "@sharedir@/tg-$1.txt" ] ; then
+	elif [ -r "$TG_INST_CMDDIR"/tg-$1 -o -r "$TG_INST_SHAREDIR/tg-$1.txt" ] ; then
 		if [ -n "$_www" ]; then
 			nohtml=
-			if ! [ -r "@sharedir@/topgit.html" ]; then
+			if ! [ -r "$TG_INST_SHAREDIR/topgit.html" ]; then
 				echo "$(basename "$0"): missing html help file:" \
-					"@sharedir@/topgit.html" 1>&2
+					"$TG_INST_SHAREDIR/topgit.html" 1>&2
 				nohtml=1
 			fi
-			if ! [ -r "@sharedir@/tg-$1.html" ]; then
+			if ! [ -r "$TG_INST_SHAREDIR/tg-$1.html" ]; then
 				echo "$(basename "$0"): missing html help file:" \
-					"@sharedir@/tg-$1.html" 1>&2
+					"$TG_INST_SHAREDIR/tg-$1.html" 1>&2
 				nohtml=1
 			fi
 			if [ -n "$nohtml" ]; then
@@ -937,17 +937,17 @@ do_help()
 					"\"$(basename "$0") help $1\" instead" 1>&2
 				exit 1
 			fi
-			git web--browse -c help.browser "@sharedir@/tg-$1.html"
+			git web--browse -c help.browser "$TG_INST_SHAREDIR/tg-$1.html"
 			exit
 		fi
 		output()
 		{
-			if [ -r "@cmddir@"/tg-$1 ] ; then
-				"@cmddir@"/tg-$1 -h 2>&1 || :
+			if [ -r "$TG_INST_CMDDIR"/tg-$1 ] ; then
+				"$TG_INST_CMDDIR"/tg-$1 -h 2>&1 || :
 				echo
 			fi
-			if [ -r "@sharedir@/tg-$1.txt" ] ; then
-				cat "@sharedir@/tg-$1.txt"
+			if [ -r "$TG_INST_SHAREDIR/tg-$1.txt" ] ; then
+				cat "$TG_INST_SHAREDIR/tg-$1.txt"
 			fi
 		}
 		page output "$1"
@@ -1175,8 +1175,12 @@ get_abs_path()
 
 ## Startup
 
-[ -d "@cmddir@" ] ||
-	die "No command directory: '@cmddir@'"
+: "${TG_INST_CMDDIR:=@cmddir@}"
+: "${TG_INST_SHAREDIR:=@sharedir@}"
+: "${TG_INST_HOOKSDIR:=@hooksdir@}"
+
+[ -d "$TG_INST_CMDDIR" ] ||
+	die "No command directory: '$TG_INST_CMDDIR'"
 
 if [ -n "$tg__include" ]; then
 
@@ -1316,10 +1320,10 @@ else
 
 		hooks-path)
 			# Internal command
-			echol "@hooksdir@";;
+			echol "$TG_INST_HOOKSDIR";;
 
 		*)
-			[ -r "@cmddir@"/tg-$cmd ] || {
+			[ -r "$TG_INST_CMDDIR"/tg-$cmd ] || {
 				echo "Unknown subcommand: $cmd" >&2
 				do_help
 				exit 1
@@ -1352,7 +1356,7 @@ else
 			esac
 			[ -z "$_use_ref_cache" ] || create_ref_cache
 
-			. "@cmddir@"/tg-$cmd;;
+			. "$TG_INST_CMDDIR"/tg-$cmd;;
 	esac
 
 fi

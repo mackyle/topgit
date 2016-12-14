@@ -10,6 +10,9 @@
 # .deb build stamp
 /build-stamp
 
+# wrappers
+/bin-wrappers/
+
 /README.html
 /TG-PREFIX
 /config.mak
