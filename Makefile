@@ -129,6 +129,7 @@ clean::
 	rm -f tg $(commands_out) $(hooks_out) $(help_out) topgit.html $(html_out)
 	rm -f TG-PREFIX
 	rm -rf bin-wrappers
+	+@$(MAKE) -C t clean
 
 define TRACK_PREFIX
 $(bindir):$(cmddir):$(hooksdir):$(sharedir):$(SHELL_PATH):$(version)
@@ -140,3 +141,6 @@ TG-PREFIX: FORCE
 		echo "* new prefix flags"; \
 		echo "$$TRACK_PREFIX" >TG-PREFIX; \
 	fi
+
+test:: all
+	+@$(MAKE) -C t all
