@@ -6,7 +6,7 @@
 #  * Many "GIT_..." variables removed -- some were kept as TESTLIB_..." instead
 #    (Except "GIT_PATH" is new and is the full path to a "git" executable)
 #
-#  * Added cmd_path, fatal, whats_my_dir, test_possibly_broken_ok_ and
+#  * Added cmd_path, fatal, whats_my_dir, vcmp, test_possibly_broken_ok_ and
 #    test_possibly_broken_failure_ functions
 #
 #  * Anything related to valgrind or perf has been stripped out
@@ -54,10 +54,40 @@ whats_my_dir() (
 	printf '%s\n' "$mydir"
 )
 
+vcmp() (
+	# Compare $1 to $2 each of which must match \d+(\.\d+)*
+	# An empty string ('') for $1 or $2 is treated like 0
+	# Outputs:
+	#  -1 if $1 < $2
+	#   0 if $1 = $2
+	#   1 if $1 > $2
+	# Note that $(vcmp 1.8 1.8.0.0.0.0) correctly outputs 0.
+	while
+		_a="${1%%.*}"
+		_b="${2%%.*}"
+		[ -n "$_a" -o -n "$_b" ]
+	do
+		if [ "${_a:-0}" -lt "${_b:-0}" ]; then
+			echo -1
+			return
+		elif [ "${_a:-0}" -gt "${_b:-0}" ]; then
+			echo 1
+			return
+		fi
+		_a2="${1#$_a}"
+		_b2="${2#$_b}"
+		set -- "${_a2#.}" "${_b2#.}"
+	done
+	echo 0
+)
+
+! [ -f ../TG-BUILD-SETTINGS ] || . ../TG-BUILD-SETTINGS
+! [ -f TG-TEST-SETTINGS ] || . ./TG-TEST-SETTINGS
+
 : "${SHELL_PATH:=/bin/sh}"
 : "${DIFF:=diff}"
-GIT_PATH="$(cmd_path git)"
-PERL_PATH="$(cmd_path perl || :)"
+: "${GIT_PATH:=$(cmd_path git)}"
+: "${PERL_PATH:=$(cmd_path perl || :)}"
 TESTLIB_DIRECTORY="$(whats_my_dir)"
 
 # Test the binaries we have just built.  The tests are kept in
@@ -88,8 +118,11 @@ EMPTY_DIRECTORY="$TESTLIB_DIRECTORY/empty"
 
 ################################################################
 # It appears that people try to run tests with missing perl or git...
-"$GIT_PATH" --version >/dev/null 2>&1 ||
+git_version="$("$GIT_PATH" --version 2>&1)" ||
 	fatal 'error: you do not seem to have git available?'
+case "$git_version" in [Gg][Ii][Tt]\ [Vv][Ee][Rr][Ss][Ii][Oo][Nn]\ [0-9]*) :;; *)
+	fatal "error: git --version returned bogus value: $git_version"
+esac
 #"$PERL_PATH" --version >/dev/null 2>&1 ||
 #	fatal 'error: you do not seem to have perl available?'
 
@@ -139,6 +172,7 @@ unset VISUAL EMAIL LANGUAGE COLUMNS $("$PERL_PATH" -e '
 		USE_LOOKUP
 		TEST
 		.*_TEST
+		MINIMUM_VERSION
 		PATH
 		PROVE
 		UNZIP
@@ -757,10 +791,29 @@ test_done() {
 	esac
 }
 
-tg_bin_dir="$(cd "$TESTLIB_DIRECTORY/../bin-wrappers" 2>/dev/null && pwd -P || :)"
-[ -x "$tg_bin_dir/tg" ] ||
-	fatal 'error: no ../bin-wrappers/tg executable found!'
-PATH="$tg_bin_dir:$PATH"
+if [ -n "$TG_TEST_INSTALLED" ]; then
+	[ -n "$(cmd_path tg || :)" ] ||
+		fatal 'error: TG_TEST_INSTALLED set but no tg found in $PATH!'
+else
+	tg_bin_dir="$(cd "$TESTLIB_DIRECTORY/../bin-wrappers" 2>/dev/null && pwd -P || :)"
+	[ -x "$tg_bin_dir/tg" ] ||
+		fatal 'error: no ../bin-wrappers/tg executable found!'
+	PATH="$tg_bin_dir:$PATH"
+fi
+tg_version="$(tg --version)" ||
+	fatal 'error: tg --version failed!'
+case "$tg_version" in [Tt][Oo][Pp][Gg][Ii][Tt]\ [Vv][Ee][Rr][Ss][Ii][Oo][Nn]\ [0-9]*) :;; *)
+	fatal "error: tg --version returned bogus value: $tg_version"
+esac
+
+if [ -n "$GIT_MINIMUM_VERSION" ] && [ -n "$git_version" ]; then
+	git_vernum="$(sed -ne '1s/^[^0-9]*\([0-9][0-9]*\(\.[0-9][0-9]*\)*\).*$/\1/p' <<-EOT
+		$git_version
+		EOT
+		)"
+	[ "$(vcmp "$git_vernum" $GIT_MINIMUM_VERSION)" -ge 0 ] ||
+		fatal "git version >= $GIT_MINIMUM_VERSION required but found git version $git_vernum instead"
+fi
 
 if test -z "$TESTLIB_TEST_CMP"
 then

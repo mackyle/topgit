@@ -21,6 +21,8 @@
 ##
 ## SHELL_PATH -- path to POSIX sh, default is /bin/sh if not otherwise set
 ## PERL_PATH  -- path to Perl, default is $(command -v perl) if not set
+## GIT_PATH   -- path to git to use, default is $(command -v git) if not set
+## DIFF       -- diff to use, defaults to "diff"
 ## PROVE      -- prove executable to run, MAY contain options
 ##
 ## TESTLIB_PROVE_OPTS
@@ -51,6 +53,9 @@
 ## T          -- space-sparated list of tests to run, must be full filename
 ##               WITHOUT any directory part of the test INCLUDING the .sh
 ##               suffix.  The default is all t\d{4}-*.sh files in this dir.
+##
+## TG_TEST_INSTALLED
+##            -- if not empty, test whatever "tg" is found in $PATH
 #
 
 # Default target is all
@@ -62,8 +67,7 @@ all::
 -include ../config.mak
 SHELL_PATH ?= /bin/sh
 SHELL = $(SHELL_PATH)
-PERL_PATH ?= $(shell command -v perl)
-PERL_PATH ?= /usr/bin/perl
+DIFF ?= diff
 PROVE ?= prove
 DEFAULT_TEST_TARGET ?= test
 TEST_LINT ?= test-lint
@@ -77,6 +81,7 @@ endif
 
 SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
 PERL_PATH_SQ = $(subst ','\'',$(PERL_PATH))
+GIT_PATH_SQ = $(subst ','\'',$(GIT_PATH))
 TEST_RESULTS_DIRECTORY_SQ = $(subst ','\'',$(TEST_RESULTS_DIRECTORY))
 
 # Default list of tests is all t????-*.sh files
@@ -96,10 +101,10 @@ LINTSCRIPTS = $(sort $(filter-out $(ALLT),$(wildcard *.sh)))
 
 all:: $(DEFAULT_TEST_TARGET)
 
-test: pre-clean $(TEST_LINT)
+test: pre-clean TG-TEST-SETTINGS $(TEST_LINT)
 	@$(MAKE) aggregate-results-and-cleanup
 
-prove: pre-clean $(TEST_LINT)
+prove: pre-clean TG-TEST-SETTINGS $(TEST_LINT)
 	@echo "*** prove ***"; $(PROVE) --exec '$(SHELL_PATH_SQ)' $(TESTLIB_PROVE_OPTS) $(T) :: $(TESTLIB_TEST_OPTS)
 	@$(MAKE) -s clean-except-prove-cache
 
@@ -133,12 +138,12 @@ test-lint-executable:
 		echo >&2 "non-executable tests:" $$bad; exit 1; }
 
 test-lint-shell-syntax:
-	@'$(PERL_PATH_SQ)' check-non-portable-shell.pl $(LINTTESTS) $(LINTSCRIPTS)
+	@p='$(PERL_PATH_SQ)'; "$${p:-perl}" check-non-portable-shell.pl $(LINTTESTS) $(LINTSCRIPTS)
 
 test-lint-filenames:
 	@# We do *not* pass a glob to ls-files but use grep instead, to catch
 	@# non-ASCII characters (which are quoted within double-quotes)
-	@bad="$$(git -c core.quotepath=true ls-files 2>/dev/null | \
+	@g='$(GIT_PATH_SQ)'; bad="$$("$${g:-git}" -c core.quotepath=true ls-files 2>/dev/null | \
 			grep '['\''""*:<>?\\|]')"; \
 		test -z "$$bad" || { \
 		echo >&2 "non-portable file name(s): $$bad"; exit 1; }
@@ -156,3 +161,23 @@ aggregate-results:
 
 .PHONY: pre-clean $(T) aggregate-results clean valgrind perf
 
+# Provide Makefile-determined settings in a test-available format
+
+define TEST_SETTINGS
+: "$${SHELL_PATH:=$(SHELL_PATH)}"
+: "$${PERL_PATH:=$(PERL_PATH)}" "$${PERL_PATH:=perl}"
+: "$${GIT_PATH:=$(GIT_PATH)}" "$${GIT_PATH:=git}"
+: "$${DIFF:=$(DIFF)}"
+: "$${TESTLIB_NO_TOLERATE=$(TESTLIB_NO_TOLERATE)}"
+: "$${GIT_MINIMUM_VERSION:=$(GIT_MINIMUM_VERSION)}" "$${GIT_MINIMUM_VERSION:=$$TG_GIT_MINIMUM_VERSION}"
+: "$${TG_TEST_INSTALLED=$(TG_TEST_INSTALLED)}"
+endef
+export TEST_SETTINGS
+
+TG-TEST-SETTINGS: FORCE
+	@if test x"$$TEST_SETTINGS" != x"`cat $@ 2>/dev/null`"; then \
+		echo "* new test settings"; \
+		echo "$$TEST_SETTINGS" >$@; \
+	fi
+
+.PHONY: FORCE
