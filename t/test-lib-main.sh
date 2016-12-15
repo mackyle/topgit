@@ -6,6 +6,11 @@
 #  * Many "GIT_..." variables removed -- some were kept as TESTLIB_..." instead
 #    (Except "GIT_PATH" is new and is the full path to a "git" executable)
 #
+#  * IMPORTANT: test-lib-main.sh SHOULD NOT EXECUTE ANY CODE!  A new
+#    function "test_lib_main_init" has been added that will be called
+#    and MUST contain any lines of code to be executed.  This will ALWAYS
+#    be the LAST function defined in this file for easy locatability.
+#
 #  * Added cmd_path, fatal, whats_my_dir, vcmp, test_possibly_broken_ok_ and
 #    test_possibly_broken_failure_ functions
 #
@@ -27,6 +32,12 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see http://www.gnu.org/licenses/ .
+
+#
+## IMPORTANT:  THIS FILE MUST NOT CONTAIN ANYTHING OTHER THAN FUNCTION
+##             DEFINITION!!!  INITIALIZATION GOES IN THE LAST FUNCTION
+##             DEFINED IN THIS FILE "test_lib_main_init" AS REQUIRED!
+#
 
 cmd_path() (
 	{ "unset" -f command unset unalias "$1"; } >/dev/null 2>&1 || :
@@ -81,6 +92,433 @@ vcmp() (
 	echo 0
 )
 
+error() {
+	say_color error "error: $*"
+	TESTLIB_EXIT_OK=t
+	exit 1
+}
+
+say() {
+	say_color info "$*"
+}
+
+die() {
+	code=$?
+	if test -n "$TESTLIB_EXIT_OK"
+	then
+		exit $code
+	else
+		echo >&5 "FATAL: Unexpected exit with code $code"
+		exit 1
+	fi
+}
+
+# You are not expected to call test_ok_ and test_failure_ directly, use
+# the test_expect_* functions instead.
+
+test_ok_() {
+	test_success=$(($test_success + 1))
+	say_color "" "ok $test_count - $@"
+}
+
+test_failure_() {
+	test_failure=$(($test_failure + 1))
+	say_color error "not ok $test_count - $1"
+	shift
+	printf '%s\n' "$*" | sed -e 's/^/#	/'
+	test "$immediate" = "" || { TESTLIB_EXIT_OK=t; exit 1; }
+}
+
+test_known_broken_ok_() {
+	test_fixed=$(($test_fixed + 1))
+	say_color error "ok $test_count - $@ # TODO known breakage vanished"
+}
+
+test_known_broken_failure_() {
+	test_broken=$(($test_broken + 1))
+	say_color warn "not ok $test_count - $@ # TODO known breakage"
+}
+
+test_possibly_broken_ok_() {
+	test_success=$(($test_success + 1))
+	say_color "" "ok $test_count - $@"
+}
+
+test_possibly_broken_failure_() {
+	test_broken=$(($test_broken + 1))
+	say_color warn "not ok $test_count - $@ # TODO tolerated breakage"
+}
+
+test_debug() {
+	test "$debug" = "" || test $# -eq 0 || test -z "$*" || "$@"
+}
+
+match_pattern_list() {
+	arg="$1"
+	shift
+	test -z "$*" && return 1
+	for pattern_
+	do
+		case "$arg" in
+		$pattern_)
+			return 0
+		esac
+	done
+	return 1
+}
+
+match_test_selector_list() {
+	title="$1"
+	shift
+	arg="$1"
+	shift
+	test -z "$1" && return 0
+
+	# Both commas and whitespace are accepted as separators.
+	OLDIFS=$IFS
+	IFS=' 	,'
+	set -- $1
+	IFS=$OLDIFS
+
+	# If the first selector is negative we include by default.
+	include=
+	case "$1" in
+		!*) include=t ;;
+	esac
+
+	for selector
+	do
+		orig_selector=$selector
+
+		positive=t
+		case "$selector" in
+			!*)
+				positive=
+				selector=${selector##?}
+				;;
+		esac
+
+		test -z "$selector" && continue
+
+		case "$selector" in
+			*-*)
+				if expr "z${selector%%-*}" : "z[0-9]*[^0-9]" >/dev/null
+				then
+					echo "error: $title: invalid non-numeric in range" \
+						"start: '$orig_selector'" >&2
+					exit 1
+				fi
+				if expr "z${selector#*-}" : "z[0-9]*[^0-9]" >/dev/null
+				then
+					echo "error: $title: invalid non-numeric in range" \
+						"end: '$orig_selector'" >&2
+					exit 1
+				fi
+				;;
+			*)
+				if expr "z$selector" : "z[0-9]*[^0-9]" >/dev/null
+				then
+					echo "error: $title: invalid non-numeric in test" \
+						"selector: '$orig_selector'" >&2
+					exit 1
+				fi
+		esac
+
+		# Short cut for "obvious" cases
+		test -z "$include" && test -z "$positive" && continue
+		test -n "$include" && test -n "$positive" && continue
+
+		case "$selector" in
+			-*)
+				if test $arg -le ${selector#-}
+				then
+					include=$positive
+				fi
+				;;
+			*-)
+				if test $arg -ge ${selector%-}
+				then
+					include=$positive
+				fi
+				;;
+			*-*)
+				if test ${selector%%-*} -le $arg \
+					&& test $arg -le ${selector#*-}
+				then
+					include=$positive
+				fi
+				;;
+			*)
+				if test $arg -eq $selector
+				then
+					include=$positive
+				fi
+				;;
+		esac
+	done
+
+	test -n "$include"
+}
+
+maybe_teardown_verbose() {
+	test -z "$verbose_only" && return
+	exec 4>/dev/null 3>/dev/null
+	verbose=
+}
+
+maybe_setup_verbose() {
+	test -z "$verbose_only" && return
+	if match_pattern_list $test_count $verbose_only
+	then
+		exec 4>&2 3>&1
+		# Emit a delimiting blank line when going from
+		# non-verbose to verbose.  Within verbose mode the
+		# delimiter is printed by test_expect_*.  The choice
+		# of the initial $last_verbose is such that before
+		# test 1, we do not print it.
+		test -z "$last_verbose" && echo >&3 ""
+		verbose=t
+	else
+		exec 4>/dev/null 3>/dev/null
+		verbose=
+	fi
+	last_verbose=$verbose
+}
+
+want_trace() {
+	test "$trace" = t && test "$verbose" = t
+}
+
+# This is a separate function because some tests use
+# "return" to end a test_expect_success block early
+# (and we want to make sure we run any cleanup like
+# "set +x").
+test_eval_inner_() {
+	# Do not add anything extra (including LF) after '$*'
+	eval "
+		want_trace && set -x
+		$*"
+}
+
+test_eval_() {
+	# We run this block with stderr redirected to avoid extra cruft
+	# during a "-x" trace. Once in "set -x" mode, we cannot prevent
+	# the shell from printing the "set +x" to turn it off (nor the saving
+	# of $? before that). But we can make sure that the output goes to
+	# /dev/null.
+	#
+	# The test itself is run with stderr put back to &4 (so either to
+	# /dev/null, or to the original stderr if --verbose was used).
+	{
+		test_eval_inner_ "$@" </dev/null >&3 2>&4
+		test_eval_ret_=$?
+		if want_trace
+		then
+			set +x
+			if test "$test_eval_ret_" != 0
+			then
+				say_color error >&4 "error: last command exited with \$?=$test_eval_ret_"
+			fi
+		fi
+	} 2>/dev/null
+	return $test_eval_ret_
+}
+
+test_run_() {
+	test_cleanup=:
+	expecting_failure=$2
+
+	if test "${TESTLIB_TEST_CHAIN_LINT:-1}" != 0; then
+		# turn off tracing for this test-eval, as it simply creates
+		# confusing noise in the "-x" output
+		trace_tmp=$trace
+		trace=
+		# 117 is magic because it is unlikely to match the exit
+		# code of other programs
+		test_eval_ "(exit 117) && $1"
+		if test "$?" != 117; then
+			error "bug in the test script: broken &&-chain: $1"
+		fi
+		trace=$trace_tmp
+	fi
+
+	test_eval_ "$1"
+	eval_ret=$?
+
+	if test -z "$immediate" || test $eval_ret = 0 ||
+	   test -n "$expecting_failure" && test "${test_cleanup:-:}" != ":"
+	then
+		test_eval_ "$test_cleanup"
+	fi
+	if test "$verbose" = "t" && test -n "$HARNESS_ACTIVE"
+	then
+		echo ""
+	fi
+	return "$eval_ret"
+}
+
+test_start_() {
+	test_count=$(($test_count+1))
+	maybe_setup_verbose
+}
+
+test_finish_() {
+	echo >&3 ""
+	maybe_teardown_verbose
+}
+
+test_skip() {
+	to_skip=
+	skipped_reason=
+	if match_pattern_list $this_test.$test_count $TESTLIB_SKIP_TESTS
+	then
+		to_skip=t
+		skipped_reason="TESTLIB_SKIP_TESTS"
+	fi
+	if test -z "$to_skip" && test -n "$test_prereq" &&
+	   ! test_have_prereq "$test_prereq"
+	then
+		to_skip=t
+
+		of_prereq=
+		if test "$missing_prereq" != "$test_prereq"
+		then
+			of_prereq=" of $test_prereq"
+		fi
+		skipped_reason="missing $missing_prereq${of_prereq}"
+	fi
+	if test -z "$to_skip" && test -n "$run_list" &&
+		! match_test_selector_list '--run' $test_count "$run_list"
+	then
+		to_skip=t
+		skipped_reason="--run"
+	fi
+
+	case "$to_skip" in
+	t)
+		say_color skip >&3 "skipping test: $@"
+		say_color skip "ok $test_count # skip $1 ($skipped_reason)"
+		: true
+		;;
+	*)
+		false
+		;;
+	esac
+}
+
+# stub; runs at end of each successful test
+test_at_end_hook_() {
+	:
+}
+
+test_done() {
+	TESTLIB_EXIT_OK=t
+
+	if test -z "$HARNESS_ACTIVE"
+	then
+		test_results_dir="$TEST_OUTPUT_DIRECTORY/test-results"
+		mkdir -p "$test_results_dir"
+		base=${0##*/}
+		test_results_path="$test_results_dir/${base%.sh}.counts"
+
+		cat >"$test_results_path" <<-EOF
+		total $test_count
+		success $test_success
+		fixed $test_fixed
+		broken $test_broken
+		failed $test_failure
+
+		EOF
+	fi
+
+	if test "$test_fixed" != 0
+	then
+		say_color error "# $test_fixed known breakage(s) vanished; please update test(s)"
+	fi
+	if test "$test_broken" != 0
+	then
+		say_color warn "# still have $test_broken known breakage(s)"
+	fi
+	if test "$test_broken" != 0 || test "$test_fixed" != 0
+	then
+		test_remaining=$(( $test_count - $test_broken - $test_fixed ))
+		msg="remaining $test_remaining test(s)"
+	else
+		test_remaining=$test_count
+		msg="$test_count test(s)"
+	fi
+	case "$test_failure" in
+	0)
+		# Maybe print SKIP message
+		if test -n "$skip_all" && test $test_count -gt 0
+		then
+			error "Can't use skip_all after running some tests"
+		fi
+		test -z "$skip_all" || skip_all=" # SKIP $skip_all"
+
+		if test $test_external_has_tap -eq 0
+		then
+			if test $test_remaining -gt 0
+			then
+				say_color pass "# passed all $msg"
+			fi
+			say "1..$test_count$skip_all"
+		fi
+
+		test -d "$remove_trash" &&
+		cd "$(dirname "$remove_trash")" &&
+		rm -rf "$(basename "$remove_trash")"
+
+		test_at_end_hook_
+
+		exit 0 ;;
+
+	*)
+		if test $test_external_has_tap -eq 0
+		then
+			say_color error "# failed $test_failure among $msg"
+			say "1..$test_count"
+		fi
+
+		exit 1 ;;
+
+	esac
+}
+
+# Provide an implementation of the 'yes' utility
+yes() {
+	if test $# = 0
+	then
+		y=y
+	else
+		y="$*"
+	fi
+
+	i=0
+	while test $i -lt 99
+	do
+		echo "$y"
+		i=$(($i+1))
+	done
+}
+
+run_with_limited_cmdline() {
+	(ulimit -s 128 && "$@")
+}
+
+#
+# THIS SHOULD ALWAYS BE THE LAST FUNCTION DEFINED IN THIS FILE
+#
+# Any client that sources this file should immediately execute this function
+# afterwards with the command line arguments
+#
+# THERE SHOULD NOT BE ANY DIRECTLY EXECUTED LINES OF CODE IN THIS FILE
+#
+test_lib_main_init() {
+# Note that this code is NOT indented
+# Begin test_lib_main_init code
+
+
 ! [ -f ../TG-BUILD-SETTINGS ] || . ../TG-BUILD-SETTINGS
 ! [ -f TG-TEST-SETTINGS ] || . ./TG-TEST-SETTINGS
 
@@ -114,7 +552,6 @@ fi
 	chmod a-w "$TESTLIB_DIRECTORY/empty"
 }
 EMPTY_DIRECTORY="$TESTLIB_DIRECTORY/empty"
-
 
 ################################################################
 # It appears that people try to run tests with missing perl or git...
@@ -338,16 +775,6 @@ fi
 TERM=dumb
 export TERM
 
-error() {
-	say_color error "error: $*"
-	TESTLIB_EXIT_OK=t
-	exit 1
-}
-
-say() {
-	say_color info "$*"
-}
-
 if test -n "$HARNESS_ACTIVE"
 then
 	if test "$verbose" = t || test -n "$verbose_only"
@@ -400,17 +827,6 @@ test_success=0
 
 test_external_has_tap=0
 
-die() {
-	code=$?
-	if test -n "$TESTLIB_EXIT_OK"
-	then
-		exit $code
-	else
-		echo >&5 "FATAL: Unexpected exit with code $code"
-		exit 1
-	fi
-}
-
 TESTLIB_EXIT_OK=
 trap 'die' EXIT
 trap 'exit $?' HUP INT QUIT ABRT PIPE TERM
@@ -419,378 +835,7 @@ trap 'exit $?' HUP INT QUIT ABRT PIPE TERM
 . "$TEST_DIRECTORY/test-lib-functions.sh"
 test_lib_functions_init
 
-# You are not expected to call test_ok_ and test_failure_ directly, use
-# the test_expect_* functions instead.
-
-test_ok_() {
-	test_success=$(($test_success + 1))
-	say_color "" "ok $test_count - $@"
-}
-
-test_failure_() {
-	test_failure=$(($test_failure + 1))
-	say_color error "not ok $test_count - $1"
-	shift
-	printf '%s\n' "$*" | sed -e 's/^/#	/'
-	test "$immediate" = "" || { TESTLIB_EXIT_OK=t; exit 1; }
-}
-
-test_known_broken_ok_() {
-	test_fixed=$(($test_fixed + 1))
-	say_color error "ok $test_count - $@ # TODO known breakage vanished"
-}
-
-test_known_broken_failure_() {
-	test_broken=$(($test_broken + 1))
-	say_color warn "not ok $test_count - $@ # TODO known breakage"
-}
-
-test_possibly_broken_ok_() {
-	test_success=$(($test_success + 1))
-	say_color "" "ok $test_count - $@"
-}
-
-test_possibly_broken_failure_() {
-	test_broken=$(($test_broken + 1))
-	say_color warn "not ok $test_count - $@ # TODO tolerated breakage"
-}
-
-test_debug() {
-	test "$debug" = "" || test $# -eq 0 || test -z "$*" || "$@"
-}
-
-match_pattern_list() {
-	arg="$1"
-	shift
-	test -z "$*" && return 1
-	for pattern_
-	do
-		case "$arg" in
-		$pattern_)
-			return 0
-		esac
-	done
-	return 1
-}
-
-match_test_selector_list() {
-	title="$1"
-	shift
-	arg="$1"
-	shift
-	test -z "$1" && return 0
-
-	# Both commas and whitespace are accepted as separators.
-	OLDIFS=$IFS
-	IFS=' 	,'
-	set -- $1
-	IFS=$OLDIFS
-
-	# If the first selector is negative we include by default.
-	include=
-	case "$1" in
-		!*) include=t ;;
-	esac
-
-	for selector
-	do
-		orig_selector=$selector
-
-		positive=t
-		case "$selector" in
-			!*)
-				positive=
-				selector=${selector##?}
-				;;
-		esac
-
-		test -z "$selector" && continue
-
-		case "$selector" in
-			*-*)
-				if expr "z${selector%%-*}" : "z[0-9]*[^0-9]" >/dev/null
-				then
-					echo "error: $title: invalid non-numeric in range" \
-						"start: '$orig_selector'" >&2
-					exit 1
-				fi
-				if expr "z${selector#*-}" : "z[0-9]*[^0-9]" >/dev/null
-				then
-					echo "error: $title: invalid non-numeric in range" \
-						"end: '$orig_selector'" >&2
-					exit 1
-				fi
-				;;
-			*)
-				if expr "z$selector" : "z[0-9]*[^0-9]" >/dev/null
-				then
-					echo "error: $title: invalid non-numeric in test" \
-						"selector: '$orig_selector'" >&2
-					exit 1
-				fi
-		esac
-
-		# Short cut for "obvious" cases
-		test -z "$include" && test -z "$positive" && continue
-		test -n "$include" && test -n "$positive" && continue
-
-		case "$selector" in
-			-*)
-				if test $arg -le ${selector#-}
-				then
-					include=$positive
-				fi
-				;;
-			*-)
-				if test $arg -ge ${selector%-}
-				then
-					include=$positive
-				fi
-				;;
-			*-*)
-				if test ${selector%%-*} -le $arg \
-					&& test $arg -le ${selector#*-}
-				then
-					include=$positive
-				fi
-				;;
-			*)
-				if test $arg -eq $selector
-				then
-					include=$positive
-				fi
-				;;
-		esac
-	done
-
-	test -n "$include"
-}
-
-maybe_teardown_verbose() {
-	test -z "$verbose_only" && return
-	exec 4>/dev/null 3>/dev/null
-	verbose=
-}
-
 last_verbose=t
-maybe_setup_verbose() {
-	test -z "$verbose_only" && return
-	if match_pattern_list $test_count $verbose_only
-	then
-		exec 4>&2 3>&1
-		# Emit a delimiting blank line when going from
-		# non-verbose to verbose.  Within verbose mode the
-		# delimiter is printed by test_expect_*.  The choice
-		# of the initial $last_verbose is such that before
-		# test 1, we do not print it.
-		test -z "$last_verbose" && echo >&3 ""
-		verbose=t
-	else
-		exec 4>/dev/null 3>/dev/null
-		verbose=
-	fi
-	last_verbose=$verbose
-}
-
-want_trace() {
-	test "$trace" = t && test "$verbose" = t
-}
-
-# This is a separate function because some tests use
-# "return" to end a test_expect_success block early
-# (and we want to make sure we run any cleanup like
-# "set +x").
-test_eval_inner_() {
-	# Do not add anything extra (including LF) after '$*'
-	eval "
-		want_trace && set -x
-		$*"
-}
-
-test_eval_() {
-	# We run this block with stderr redirected to avoid extra cruft
-	# during a "-x" trace. Once in "set -x" mode, we cannot prevent
-	# the shell from printing the "set +x" to turn it off (nor the saving
-	# of $? before that). But we can make sure that the output goes to
-	# /dev/null.
-	#
-	# The test itself is run with stderr put back to &4 (so either to
-	# /dev/null, or to the original stderr if --verbose was used).
-	{
-		test_eval_inner_ "$@" </dev/null >&3 2>&4
-		test_eval_ret_=$?
-		if want_trace
-		then
-			set +x
-			if test "$test_eval_ret_" != 0
-			then
-				say_color error >&4 "error: last command exited with \$?=$test_eval_ret_"
-			fi
-		fi
-	} 2>/dev/null
-	return $test_eval_ret_
-}
-
-test_run_() {
-	test_cleanup=:
-	expecting_failure=$2
-
-	if test "${TESTLIB_TEST_CHAIN_LINT:-1}" != 0; then
-		# turn off tracing for this test-eval, as it simply creates
-		# confusing noise in the "-x" output
-		trace_tmp=$trace
-		trace=
-		# 117 is magic because it is unlikely to match the exit
-		# code of other programs
-		test_eval_ "(exit 117) && $1"
-		if test "$?" != 117; then
-			error "bug in the test script: broken &&-chain: $1"
-		fi
-		trace=$trace_tmp
-	fi
-
-	test_eval_ "$1"
-	eval_ret=$?
-
-	if test -z "$immediate" || test $eval_ret = 0 ||
-	   test -n "$expecting_failure" && test "${test_cleanup:-:}" != ":"
-	then
-		test_eval_ "$test_cleanup"
-	fi
-	if test "$verbose" = "t" && test -n "$HARNESS_ACTIVE"
-	then
-		echo ""
-	fi
-	return "$eval_ret"
-}
-
-test_start_() {
-	test_count=$(($test_count+1))
-	maybe_setup_verbose
-}
-
-test_finish_() {
-	echo >&3 ""
-	maybe_teardown_verbose
-}
-
-test_skip() {
-	to_skip=
-	skipped_reason=
-	if match_pattern_list $this_test.$test_count $TESTLIB_SKIP_TESTS
-	then
-		to_skip=t
-		skipped_reason="TESTLIB_SKIP_TESTS"
-	fi
-	if test -z "$to_skip" && test -n "$test_prereq" &&
-	   ! test_have_prereq "$test_prereq"
-	then
-		to_skip=t
-
-		of_prereq=
-		if test "$missing_prereq" != "$test_prereq"
-		then
-			of_prereq=" of $test_prereq"
-		fi
-		skipped_reason="missing $missing_prereq${of_prereq}"
-	fi
-	if test -z "$to_skip" && test -n "$run_list" &&
-		! match_test_selector_list '--run' $test_count "$run_list"
-	then
-		to_skip=t
-		skipped_reason="--run"
-	fi
-
-	case "$to_skip" in
-	t)
-		say_color skip >&3 "skipping test: $@"
-		say_color skip "ok $test_count # skip $1 ($skipped_reason)"
-		: true
-		;;
-	*)
-		false
-		;;
-	esac
-}
-
-# stub; runs at end of each successful test
-test_at_end_hook_() {
-	:
-}
-
-test_done() {
-	TESTLIB_EXIT_OK=t
-
-	if test -z "$HARNESS_ACTIVE"
-	then
-		test_results_dir="$TEST_OUTPUT_DIRECTORY/test-results"
-		mkdir -p "$test_results_dir"
-		base=${0##*/}
-		test_results_path="$test_results_dir/${base%.sh}.counts"
-
-		cat >"$test_results_path" <<-EOF
-		total $test_count
-		success $test_success
-		fixed $test_fixed
-		broken $test_broken
-		failed $test_failure
-
-		EOF
-	fi
-
-	if test "$test_fixed" != 0
-	then
-		say_color error "# $test_fixed known breakage(s) vanished; please update test(s)"
-	fi
-	if test "$test_broken" != 0
-	then
-		say_color warn "# still have $test_broken known breakage(s)"
-	fi
-	if test "$test_broken" != 0 || test "$test_fixed" != 0
-	then
-		test_remaining=$(( $test_count - $test_broken - $test_fixed ))
-		msg="remaining $test_remaining test(s)"
-	else
-		test_remaining=$test_count
-		msg="$test_count test(s)"
-	fi
-	case "$test_failure" in
-	0)
-		# Maybe print SKIP message
-		if test -n "$skip_all" && test $test_count -gt 0
-		then
-			error "Can't use skip_all after running some tests"
-		fi
-		test -z "$skip_all" || skip_all=" # SKIP $skip_all"
-
-		if test $test_external_has_tap -eq 0
-		then
-			if test $test_remaining -gt 0
-			then
-				say_color pass "# passed all $msg"
-			fi
-			say "1..$test_count$skip_all"
-		fi
-
-		test -d "$remove_trash" &&
-		cd "$(dirname "$remove_trash")" &&
-		rm -rf "$(basename "$remove_trash")"
-
-		test_at_end_hook_
-
-		exit 0 ;;
-
-	*)
-		if test $test_external_has_tap -eq 0
-		then
-			say_color error "# failed $test_failure among $msg"
-			say "1..$test_count"
-		fi
-
-		exit 1 ;;
-
-	esac
-}
 
 if [ -n "$TG_TEST_INSTALLED" ]; then
 	[ -n "$(cmd_path tg || :)" ] ||
@@ -862,23 +907,6 @@ then
 	skip_all="skip all tests in $this_test"
 	test_done
 fi
-
-# Provide an implementation of the 'yes' utility
-yes() {
-	if test $# = 0
-	then
-		y=y
-	else
-		y="$*"
-	fi
-
-	i=0
-	while test $i -lt 99
-	do
-		echo "$y"
-		i=$(($i+1))
-	done
-}
 
 # Fix some commands on Windows
 case $(uname -s) in
@@ -1012,8 +1040,8 @@ test_lazy_prereq SANITY '
 	return $status
 '
 
-run_with_limited_cmdline() {
-	(ulimit -s 128 && "$@")
-}
-
 test_lazy_prereq CMDLINE_LIMIT 'run_with_limited_cmdline true'
+
+
+# End test_lib_main_init code
+}
