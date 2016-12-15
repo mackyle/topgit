@@ -417,6 +417,7 @@ trap 'exit $?' HUP INT QUIT ABRT PIPE TERM
 
 # The user-facing functions are loaded from a separate file
 . "$TEST_DIRECTORY/test-lib-functions.sh"
+test_lib_functions_init
 
 # You are not expected to call test_ok_ and test_failure_ directly, use
 # the test_expect_* functions instead.

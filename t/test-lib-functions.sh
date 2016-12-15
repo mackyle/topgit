@@ -6,6 +6,11 @@
 #  * Many "GIT_..." variables removed -- some were kept as TESTLIB_..." instead
 #    (Except "GIT_PATH" is new and is the full path to a "git" executable)
 #
+#  * IMPORTANT: test-lib-functions.sh SHOULD NOT EXECUTE ANY CODE!  A new
+#    function "test_lib_functions_init" has been added that will be called
+#    and MUST contain any lines of code to be executed.  This will ALWAYS
+#    be the LAST function defined in this file for easy locatability.
+#
 #  * Added test_tolerate_failure function
 #
 #  * Anything related to valgrind or perf has been stripped out
@@ -29,6 +34,12 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see http://www.gnu.org/licenses/ .
+
+#
+## IMPORTANT:  THIS FILE MUST NOT CONTAIN ANYTHING OTHER THAN FUNCTION
+##             DEFINITION!!!  INITIALIZATION GOES IN THE LAST FUNCTION
+##             DEFINED IN THIS FILE "test_lib_functions_init" IF REQUIRED!
+#
 
 # The semantics of the editor variables are that of invoking
 # sh -c "$EDITOR \"$@\"" files ...
@@ -271,8 +282,6 @@ write_script() {
 test_set_prereq() {
 	satisfied_prereq="$satisfied_prereq$1 "
 }
-satisfied_prereq=" "
-lazily_testable_prereq= lazily_tested_prereq=
 
 # Usage: test_lazy_prereq PREREQ 'script'
 test_lazy_prereq() {
@@ -1022,4 +1031,17 @@ test_copy_bytes() {
 			$len -= $nread;
 		}
 	' - "$1"
+}
+
+#
+# THIS SHOULD ALWAYS BE THE LAST FUNCTION DEFINED IN THIS FILE
+#
+# Any client that sources this file should immediately execute this function
+# afterwards.
+#
+# THERE SHOULD NOT BE ANY DIRECTLY EXECUTED LINES OF CODE IN THIS FILE
+#
+test_lib_functions_init() {
+	satisfied_prereq=" "
+	lazily_testable_prereq= lazily_tested_prereq=
 }
