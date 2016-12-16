@@ -679,7 +679,7 @@ u200c=$(printf '\342\200\214')
 export _x05 _x40 _z40 LF u200c EMPTY_TREE EMPTY_BLOB
 
 test "x$TERM" != "xdumb" && (
-		test -t 1 &&
+		{ test -n "$TESTLIB_FORCETTY" || test -t 1; } &&
 		tput bold >/dev/null 2>&1 &&
 		tput setaf 1 >/dev/null 2>&1 &&
 		tput sgr0 >/dev/null 2>&1

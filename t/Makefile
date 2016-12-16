@@ -35,6 +35,12 @@
 ##            -- set to "test-lint" (the default) to do some lint tests
 ##               may be set to empty to skip these
 ##
+## TESTLIB_NO_CLEAN
+##            -- suppresses removal of test-results directory after testing
+##
+## TESTLIB_NO_CACHE
+##            -- suppresses use of TG-TEST-CACHE for "test" and "prove" targets
+##
 ## TESTLIB_SKIP_TESTS
 ##            -- space-separated "case" patterns to match against the
 ##               t[0-9][0-9][0-9][0-9] portion of the test file name.  To
@@ -101,12 +107,26 @@ LINTSCRIPTS = $(sort $(filter-out $(ALLT),$(wildcard *.sh)))
 
 all:: $(DEFAULT_TEST_TARGET)
 
+ifndef TESTLIB_NO_CACHE
+
+define CACHE_SETUP
+TESTLIB_CACHE="$$($(SHELL_PATH_SQ) ./test-lib.sh --cache $(TESTLIB_TEST_OPTS) 2>/dev/null || :)"
+endef
+
+define CACHE_SETUP_TTY
+! test -t 1 || { TESTLIB_FORCETTY=1 && export TESTLIB_FORCETTY; }; $(CACHE_SETUP)
+endef
+
+endif
+
 test: pre-clean TG-TEST-SETTINGS $(TEST_LINT)
-	@$(MAKE) aggregate-results-and-cleanup
+	@$(CACHE_SETUP_TTY) $(MAKE) aggregate-results-and-cleanup
 
 prove: pre-clean TG-TEST-SETTINGS $(TEST_LINT)
-	@echo "*** prove ***"; $(PROVE) --exec '$(SHELL_PATH_SQ)' $(TESTLIB_PROVE_OPTS) $(T) :: $(TESTLIB_TEST_OPTS)
+	@echo "*** prove ***"; $(CACHE_SETUP) $(PROVE) --exec '$(SHELL_PATH_SQ)' $(TESTLIB_PROVE_OPTS) $(T) :: $(TESTLIB_TEST_OPTS)
+ifndef TESTLIB_NO_CLEAN
 	@$(MAKE) -s clean-except-prove-cache
+endif
 
 $(T):
 	@echo "*** $@ ***"; '$(SHELL_PATH_SQ)' $@ $(TESTLIB_TEST_OPTS)
@@ -118,6 +138,7 @@ pre-clean:
 
 clean-except-prove-cache:
 	rm -r -f empty 'trash directory'.* '$(TEST_RESULTS_DIRECTORY_SQ)'
+	rm -f TG-TEST-CACHE
 
 clean: clean-except-prove-cache
 	rm -f .prove
@@ -152,7 +173,9 @@ test-lint-filenames:
 
 aggregate-results-and-cleanup: $(T)
 	@$(MAKE) aggregate-results
+ifndef TESTLIB_NO_CLEAN
 	@$(MAKE) -s clean
+endif
 
 aggregate-results:
 	@for f in '$(TEST_RESULTS_DIRECTORY_SQ)'/t*-*.counts; do \
