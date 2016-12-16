@@ -506,17 +506,19 @@ run_with_limited_cmdline() {
 	(ulimit -s 128 && "$@")
 }
 
+
 #
-# THIS SHOULD ALWAYS BE THE LAST FUNCTION DEFINED IN THIS FILE
+## Note that the following functions have bodies that are NOT indented
+## to assist with readability
 #
-# Any client that sources this file should immediately execute this function
-# afterwards with the command line arguments
-#
-# THERE SHOULD NOT BE ANY DIRECTLY EXECUTED LINES OF CODE IN THIS FILE
-#
-test_lib_main_init() {
-# Note that this code is NOT indented
-# Begin test_lib_main_init code
+
+
+# This function is called with all the test args and must perform all
+# initialization that involves variables and is not specific to "$0"
+# or "$test_description" in any way.  This function may only be called
+# once per run of the entire test suite.
+test_lib_main_init_generic() {
+# Begin test_lib_main_init_generic
 
 
 ! [ -f ../TG-BUILD-SETTINGS ] || . ../TG-BUILD-SETTINGS
@@ -758,53 +760,10 @@ then
 	say_color_info=$(tput setaf 6) # cyan
 	say_color_reset=$(tput sgr0)
 	say_color_="" # no formatting for normal text
-	say_color() {
-		test -z "$1" && test -n "$quiet" && return
-		eval "say_color_color=\$say_color_$1"
-		shift
-		printf "%s\\n" "$say_color_color$*$say_color_reset"
-	}
-else
-	say_color() {
-		test -z "$1" && test -n "$quiet" && return
-		shift
-		printf "%s\n" "$*"
-	}
 fi
 
 TERM=dumb
 export TERM
-
-if test -n "$HARNESS_ACTIVE"
-then
-	if test "$verbose" = t || test -n "$verbose_only"
-	then
-		printf 'Bail out! %s\n' \
-		 'verbose mode forbidden under TAP harness; try --verbose-log'
-		exit 1
-	fi
-fi
-
-test "${test_description}" != "" ||
-error "Test script did not set test_description."
-
-if test "$help" = "t"
-then
-	printf '%s\n' "$test_description"
-	exit 0
-fi
-
-exec 5>&1
-exec 6<&0
-if test "$verbose_log" = "t"
-then
-	exec 3>>"$TESTLIB_TEST_TEE_OUTPUT_FILE" 4>&3
-elif test "$verbose" = "t"
-then
-	exec 4>&2 3>&1
-else
-	exec 4>/dev/null 3>/dev/null
-fi
 
 # Send any "-x" output directly to stderr to avoid polluting tests
 # which capture stderr. We can do this unconditionally since it
@@ -826,10 +785,6 @@ test_broken=0
 test_success=0
 
 test_external_has_tap=0
-
-TESTLIB_EXIT_OK=
-trap 'die' EXIT
-trap 'exit $?' HUP INT QUIT ABRT PIPE TERM
 
 # The user-facing functions are loaded from a separate file
 . "$TEST_DIRECTORY/test-lib-functions.sh"
@@ -871,60 +826,9 @@ then
 	fi
 fi
 
-# Test repository
-TRASH_DIRECTORY="trash directory.$(basename "$0" .sh)"
-test -n "$root" && TRASH_DIRECTORY="$root/$TRASH_DIRECTORY"
-case "$TRASH_DIRECTORY" in
-/*) ;; # absolute path is good
- *) TRASH_DIRECTORY="$TEST_OUTPUT_DIRECTORY/$TRASH_DIRECTORY" ;;
-esac
-test ! -z "$debug" || remove_trash=$TRASH_DIRECTORY
-rm -fr "$TRASH_DIRECTORY" || {
-	TESTLIB_EXIT_OK=t
-	echo >&5 "FATAL: Cannot prepare test area"
-	exit 1
-}
-
-HOME="$TRASH_DIRECTORY"
-GNUPGHOME="$HOME/gnupg-home-not-used"
-export HOME GNUPGHOME
-
-if test -z "$TEST_NO_CREATE_REPO"
-then
-	test_create_repo "$TRASH_DIRECTORY"
-else
-	mkdir -p "$TRASH_DIRECTORY"
-fi
-# Use -P to resolve symlinks in our working directory so that the cwd
-# in subprocesses like tg equals our $PWD (for pathname comparisons).
-cd -P "$TRASH_DIRECTORY" || exit 1
-
-this_test=${0##*/}
-this_test=${this_test%%-*}
-if match_pattern_list "$this_test" $TESTLIB_SKIP_TESTS
-then
-	say_color info >&3 "skipping test $this_test altogether"
-	skip_all="skip all tests in $this_test"
-	test_done
-fi
-
 # Fix some commands on Windows
 case $(uname -s) in
 *MINGW*)
-	# Windows has its own (incompatible) sort and find
-	sort() {
-		/usr/bin/sort "$@"
-	}
-	find() {
-		/usr/bin/find "$@"
-	}
-	sum() {
-		md5sum "$@"
-	}
-	# git sees Windows-style pwd
-	pwd() {
-		builtin pwd -W
-	}
 	# no POSIX permissions
 	# backslashes in pathspec are converted to '/'
 	# exec does not inherit the PID
@@ -1043,5 +947,146 @@ test_lazy_prereq SANITY '
 test_lazy_prereq CMDLINE_LIMIT 'run_with_limited_cmdline true'
 
 
-# End test_lib_main_init code
+# End test_lib_main_init_generic
+}
+
+
+# This function is guaranteed to always be called for every single test.
+# Only put things in this function that MUST be done per-test, function
+# definitions and sourcing other files generally DO NOT QUALIFY (there can
+# be exceptions).
+test_lib_main_init_specific() {
+# Begin test_lib_main_init_specific
+
+
+# Ignore --quiet under a TAP::Harness. Saying how many tests
+# passed without the ok/not ok details is always an error.
+test -n "$HARNESS_ACTIVE" && unset quiet
+
+if test -n "$color"
+then
+	say_color() {
+		test -z "$1" && test -n "$quiet" && return
+		eval "say_color_color=\$say_color_$1"
+		shift
+		printf "%s\\n" "$say_color_color$*$say_color_reset"
+	}
+else
+	say_color() {
+		test -z "$1" && test -n "$quiet" && return
+		shift
+		printf "%s\n" "$*"
+	}
+fi
+
+if test -n "$HARNESS_ACTIVE"
+then
+	if test "$verbose" = t || test -n "$verbose_only"
+	then
+		printf 'Bail out! %s\n' \
+		 'verbose mode forbidden under TAP harness; try --verbose-log'
+		exit 1
+	fi
+fi
+
+test "${test_description}" != "" ||
+error "Test script did not set test_description."
+
+if test "$help" = "t"
+then
+	printf '%s\n' "$test_description"
+	exit 0
+fi
+
+exec 5>&1
+exec 6<&0
+if test "$verbose_log" = "t"
+then
+	exec 3>>"$TESTLIB_TEST_TEE_OUTPUT_FILE" 4>&3
+elif test "$verbose" = "t"
+then
+	exec 4>&2 3>&1
+else
+	exec 4>/dev/null 3>/dev/null
+fi
+
+TESTLIB_EXIT_OK=
+trap 'die' EXIT
+trap 'exit $?' HUP INT QUIT ABRT PIPE TERM
+
+# Test repository
+TRASH_DIRECTORY="trash directory.$(basename "$0" .sh)"
+test -n "$root" && TRASH_DIRECTORY="$root/$TRASH_DIRECTORY"
+case "$TRASH_DIRECTORY" in
+/*) ;; # absolute path is good
+ *) TRASH_DIRECTORY="$TEST_OUTPUT_DIRECTORY/$TRASH_DIRECTORY" ;;
+esac
+test ! -z "$debug" || remove_trash=$TRASH_DIRECTORY
+rm -fr "$TRASH_DIRECTORY" || {
+	TESTLIB_EXIT_OK=t
+	echo >&5 "FATAL: Cannot prepare test area"
+	exit 1
+}
+
+HOME="$TRASH_DIRECTORY"
+GNUPGHOME="$HOME/gnupg-home-not-used"
+export HOME GNUPGHOME
+
+if test -z "$TEST_NO_CREATE_REPO"
+then
+	test_create_repo "$TRASH_DIRECTORY"
+else
+	mkdir -p "$TRASH_DIRECTORY"
+fi
+# Use -P to resolve symlinks in our working directory so that the cwd
+# in subprocesses like tg equals our $PWD (for pathname comparisons).
+cd -P "$TRASH_DIRECTORY" || exit 1
+
+this_test=${0##*/}
+this_test=${this_test%%-*}
+if match_pattern_list "$this_test" $TESTLIB_SKIP_TESTS
+then
+	say_color info >&3 "skipping test $this_test altogether"
+	skip_all="skip all tests in $this_test"
+	test_done
+fi
+
+# Fix some commands on Windows
+case $(uname -s) in
+*MINGW*)
+	# Windows has its own (incompatible) sort and find
+	sort() {
+		/usr/bin/sort "$@"
+	}
+	find() {
+		/usr/bin/find "$@"
+	}
+	sum() {
+		md5sum "$@"
+	}
+	# git sees Windows-style pwd
+	pwd() {
+		builtin pwd -W
+	}
+	;;
+esac
+
+
+# End test_lib_main_init_specific
+}
+
+
+#
+# THIS SHOULD ALWAYS BE THE LAST FUNCTION DEFINED IN THIS FILE
+#
+# Any client that sources this file should immediately execute this function
+# afterwards with the command line arguments
+#
+# THERE SHOULD NOT BE ANY DIRECTLY EXECUTED LINES OF CODE IN THIS FILE
+#
+test_lib_main_init() {
+
+	test_lib_main_init_generic "$@"
+	test_lib_main_init_specific "$@"
+
 }
