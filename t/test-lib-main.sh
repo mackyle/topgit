@@ -827,7 +827,8 @@ then
 fi
 
 # Fix some commands on Windows
-case $(uname -s) in
+uname_s="$(uname -s)"
+case $uname_s in
 *MINGW*)
 	# no POSIX permissions
 	# backslashes in pathspec are converted to '/'
@@ -856,7 +857,7 @@ esac
 
 test_lazy_prereq PIPE '
 	# test whether the filesystem supports FIFOs
-	case $(uname -s) in
+	case "$uname_s" in
 	CYGWIN*|MINGW*)
 		false
 		;;
@@ -1022,7 +1023,7 @@ case "$TRASH_DIRECTORY" in
  *) TRASH_DIRECTORY="$TEST_OUTPUT_DIRECTORY/$TRASH_DIRECTORY" ;;
 esac
 test ! -z "$debug" || remove_trash=$TRASH_DIRECTORY
-rm -fr "$TRASH_DIRECTORY" || {
+! [ -e "$TRASH_DIRECTORY" ] || rm -fr "$TRASH_DIRECTORY" || {
 	TESTLIB_EXIT_OK=t
 	echo >&5 "FATAL: Cannot prepare test area"
 	exit 1
@@ -1052,7 +1053,7 @@ then
 fi
 
 # Fix some commands on Windows
-case $(uname -s) in
+case "$uname_s" in
 *MINGW*)
 	# Windows has its own (incompatible) sort and find
 	sort() {
