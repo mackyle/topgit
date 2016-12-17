@@ -27,6 +27,14 @@ check_exit_code()
 	return $?
 }
 
+# This is the POSIX equivalent of which
+cmd_path()
+(
+	{ "unset" -f command unset unalias "$1"; } >/dev/null 2>&1 || :
+	{ "unalias" -a; } >/dev/null 2>&1 || :
+	command -v "$1"
+)
+
 # Output arguments without any possible interpretation
 # (Avoid misinterpretation of '\' characters or leading "-n", "-E" or "-e")
 echol()
@@ -307,7 +315,7 @@ setup_hook()
 		hook_call="exec $hook_call"
 	fi
 	# Don't call hook if tg is not installed
-	hook_call="if which \"$tgname\" > /dev/null; then $hook_call; fi"
+	hook_call="if command -v \"$tgname\" >/dev/null 2>&1; then $hook_call; fi"
 	# Insert call into the hook
 	{
 		echol "#!@SHELL_PATH@"
@@ -1213,7 +1221,7 @@ else
 
 	tgdisplaydir="$tgdir"
 	tgdisplay="$tg"
-	if [ "$(get_abs_path "$tg")" = "$(get_abs_path "$(which "$tgname" || :)" || :)" ]; then
+	if [ "$(get_abs_path "$tg")" = "$(get_abs_path "$(cmd_path "$tgname" || :)" || :)" ]; then
 		tgdisplaydir=""
 		tgdisplay="$tgname"
 	fi
