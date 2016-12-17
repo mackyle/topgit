@@ -171,8 +171,11 @@ test-lint-filenames:
 
 # Run the tests without using prove
 
-aggregate-results-and-cleanup: $(T)
-	@$(MAKE) aggregate-results
+run-individual-tests: $(T)
+
+aggregate-results-and-cleanup:
+	@ec=0; $(MAKE) -k run-individual-tests || ec=$$?; \
+	$(MAKE) aggregate-results || exit && exit $$ec
 ifndef TESTLIB_NO_CLEAN
 	@$(MAKE) -s clean
 endif
@@ -182,7 +185,7 @@ aggregate-results:
 		echo "$$f"; \
 	done | '$(SHELL_PATH_SQ)' ./aggregate-results.sh
 
-.PHONY: pre-clean $(T) aggregate-results clean valgrind perf
+.PHONY: pre-clean $(T) run-individual-tests aggregate-results clean valgrind perf
 
 # Provide Makefile-determined settings in a test-available format
 
