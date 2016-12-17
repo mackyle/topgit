@@ -386,7 +386,7 @@ test_declared_prereq() {
 
 test_verify_prereq() {
 	test -z "$test_prereq" ||
-	expr >/dev/null "$test_prereq" : '[A-Z0-9_,!]*$' ||
+	test "x$test_prereq" = "x${test_prereq#*[!A-Z0-9_,!]}" ||
 	error "bug in the test script: '$test_prereq' does not look like a prereq"
 }
 

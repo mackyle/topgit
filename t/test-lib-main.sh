@@ -202,21 +202,22 @@ match_test_selector_list() {
 
 		case "$selector" in
 			*-*)
-				if expr "z${selector%%-*}" : "z[0-9]*[^0-9]" >/dev/null
+				if x_="${selector%%-*}" && test "z$x_" != "z${x_#*[!0-9]}"
 				then
 					echo "error: $title: invalid non-numeric in range" \
 						"start: '$orig_selector'" >&2
 					exit 1
 				fi
-				if expr "z${selector#*-}" : "z[0-9]*[^0-9]" >/dev/null
+				if x_="${selector#*-}" && test "z$x_" != "z${x_#*[!0-9]}"
 				then
 					echo "error: $title: invalid non-numeric in range" \
 						"end: '$orig_selector'" >&2
 					exit 1
 				fi
+				unset x_
 				;;
 			*)
-				if expr "z$selector" : "z[0-9]*[^0-9]" >/dev/null
+				if test "z$selector" != "z${selector#*[!0-9]}"
 				then
 					echo "error: $title: invalid non-numeric in test" \
 						"selector: '$orig_selector'" >&2
