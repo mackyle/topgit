@@ -174,8 +174,8 @@ test-lint-filenames:
 run-individual-tests: $(T)
 
 aggregate-results-and-cleanup:
-	@ec=0; $(MAKE) -k run-individual-tests || ec=$$?; \
-	$(MAKE) aggregate-results || exit && exit $$ec
+	@ec=0; TESTLIB_TEST_PARENT_INT_ON_ERROR=1 $(MAKE) -k run-individual-tests || ec=$$?; \
+	[ $$ec -eq 130 ] || $(MAKE) aggregate-results || exit && exit $$ec
 ifndef TESTLIB_NO_CLEAN
 	@$(MAKE) -s clean
 endif

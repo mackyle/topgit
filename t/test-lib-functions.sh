@@ -11,7 +11,7 @@
 #    and MUST contain any lines of code to be executed.  This will ALWAYS
 #    be the LAST function defined in this file for easy locatability.
 #
-#  * Added test_tolerate_failure function
+#  * Added test_tolerate_failure and $LINENO support unctions
 #
 #  * Anything related to valgrind or perf has been stripped out
 #
@@ -390,7 +390,9 @@ test_verify_prereq() {
 	error "bug in the test script: '$test_prereq' does not look like a prereq"
 }
 
-test_expect_failure() {
+test_expect_failure_lno() {
+	callerlno="$1"
+	shift
 	test_start_
 	test "$#" = 3 && { test_prereq=$1; shift; } || test_prereq=
 	test "$#" = 2 ||
@@ -408,12 +410,19 @@ test_expect_failure() {
 		fi
 	fi
 	test_finish_
+	unset callerlno
 }
+test_expect_failure() {
+	test_expect_failure_lno "" "$@"
+}
+alias test_expect_failure='test_expect_failure_lno "$LINENO"' >/dev/null 2>&1 || :
 
 if test -n "$TESTLIB_NO_TOLERATE"; then
-test_tolerate_failure() { test_expect_success "$@"; }
+test_tolerate_failure_lno() { test_expect_success_lno "$@"; }
 else
-test_tolerate_failure() {
+test_tolerate_failure_lno() {
+	callerlno="$1"
+	shift
 	test_start_
 	test "$#" = 3 && { test_prereq=$1; shift; } || test_prereq=
 	test "$#" = 2 ||
@@ -431,10 +440,17 @@ test_tolerate_failure() {
 		fi
 	fi
 	test_finish_
+	unset callerlno
 }
 fi
+test_tolerate_failure() {
+	test_tolerate_failure_lno "" "$@"
+}
+alias test_tolerate_failure='test_tolerate_failure_lno "$LINENO"' >/dev/null 2>&1 || :
 
-test_expect_success() {
+test_expect_success_lno() {
+	callerlno="$1"
+	shift
 	test_start_
 	test "$#" = 3 && { test_prereq=$1; shift; } || test_prereq=
 	test "$#" = 2 ||
@@ -448,11 +464,16 @@ test_expect_success() {
 		then
 			test_ok_ "$1"
 		else
-			test_failure_ "$@"
+			test_failure_ "$callerlno" "$@"
 		fi
 	fi
 	test_finish_
+	unset callerlno
 }
+test_expect_success() {
+	test_expect_success_lno "" "$@"
+}
+alias test_expect_success='test_expect_success_lno "$LINENO"' >/dev/null 2>&1 || :
 
 # test_external runs external test scripts that provide continuous
 # test output about their progress, and succeeds/fails on
@@ -462,7 +483,9 @@ test_expect_success() {
 # mind that all scripts run in "trash directory".
 # Usage: test_external description command arguments...
 # Example: test_external 'Perl API' perl ../path/to/test.pl
-test_external() {
+test_external_lno() {
+	callerlno="$1"
+	shift
 	test "$#" = 4 && { test_prereq=$1; shift; } || test_prereq=
 	test "$#" = 3 ||
 	error >&5 "bug in the test script: not 3 or 4 parameters to test_external"
@@ -492,23 +515,30 @@ test_external() {
 			fi
 		else
 			if test $test_external_has_tap -eq 0; then
-				test_failure_ "$descr" "$@"
+				test_failure_ "$callerlno" "$descr" "$@"
 			else
 				say_color error "# test_external test $descr failed: $@"
 				test_failure=$(($test_failure + 1))
 			fi
 		fi
 	fi
+	unset callerlno
 }
+test_external() {
+	test_external_lno "" "$@"
+}
+alias test_external='test_external_lno "$LINENO"' >/dev/null 2>&1 || :
 
 # Like test_external, but in addition tests that the command generated
 # no output on stderr.
-test_external_without_stderr() {
+test_external_without_stderr_lno() {
+	callerlno="$1"
+	shift
 	# The temporary file has no (and must have no) security
 	# implications.
 	tmp=${TMPDIR:-/tmp}
 	stderr="$tmp/git-external-stderr.$$.tmp"
-	test_external "$@" 4> "$stderr"
+	test_external_lno "$callerlno" "$@" 4> "$stderr"
 	test -f "$stderr" || error "Internal error: $stderr disappeared."
 	descr="no stderr: $1"
 	shift
@@ -533,13 +563,18 @@ test_external_without_stderr() {
 		# rm first in case test_failure exits.
 		rm "$stderr"
 		if test $test_external_has_tap -eq 0; then
-			test_failure_ "$descr" "$@" "$output"
+			test_failure_ "$callerlno" "$descr" "$@" "$output"
 		else
 			say_color error "# test_external_without_stderr test $descr failed: $@: $output"
 			test_failure=$(($test_failure + 1))
 		fi
 	fi
+	unset callerlno
 }
+test_external_without_stderr() {
+	test_external_without_stderr_lno "" "$@"
+}
+alias test_external_without_stderr='test_external_without_stderr_lno "$LINENO"' >/dev/null 2>&1 || :
 
 # debugging-friendly alternatives to "test [-f|-d|-e]"
 # The commands test the existence or non-existence of $1. $2 can be

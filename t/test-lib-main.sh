@@ -93,8 +93,10 @@ vcmp() (
 )
 
 error() {
-	say_color error "error: $*"
+	say_color error "${LF}error: $*"
+	printf '%s\n' "Bail out! $(basename "$0"):${callerlno:+$callerlno:} error: $*"
 	TESTLIB_EXIT_OK=t
+	[ -z "$TESTLIB_TEST_PARENT_INT_ON_ERROR" ] || kill -INT $PPID || :
 	exit 1
 }
 
@@ -123,9 +125,31 @@ test_ok_() {
 
 test_failure_() {
 	test_failure=$(($test_failure + 1))
+	tlno="$1"
+	shift
 	say_color error "not ok $test_count - $1"
 	shift
-	printf '%s\n' "$*" | sed -e 's/^/#	/'
+	printf '%s\n' "$(printf '%s\n' "failed: $(basename "$0")${tlno:+:$tlno}$LF$*")" |
+	sed -n -e '
+2 {
+  :loop
+  s/\([^ 	]\)/\1/
+  t first
+  b continue
+  :first
+  i\
+#
+  b rest
+  :continue
+  n
+  b loop
+}
+:rest
+s/^/#      /
+p
+$ i\
+#
+'
 	test "$immediate" = "" || { TESTLIB_EXIT_OK=t; exit 1; }
 }
 
@@ -294,12 +318,12 @@ want_trace() {
 # "return" to end a test_expect_success block early
 # (and we want to make sure we run any cleanup like
 # "set +x").
-test_eval_inner_() {
+test_eval_inner_() (
 	# Do not add anything extra (including LF) after '$*'
 	eval "
 		want_trace && set -x
 		$*"
-}
+)
 
 test_eval_() {
 	# We run this block with stderr redirected to avoid extra cruft
@@ -996,7 +1020,18 @@ error "Test script did not set test_description."
 
 if test "$help" = "t"
 then
-	printf '%s\n' "$test_description"
+	printf '%s\n' "$(printf '%s\n' "$test_description")" |
+	sed -n -e '
+	    1 {
+	      :loop
+	      s/\([^ 	]\)/\1/
+	      t rest
+	      n
+	      b loop
+	    }
+	    :rest
+	    p
+	'
 	exit 0
 fi
 
