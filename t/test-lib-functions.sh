@@ -847,7 +847,7 @@ test_ln_s_add() {
 
 # This function writes out its parameters, one per line
 test_write_lines() {
-	printf "%s\n" "$@"
+	printf '%s\n' "$@"
 }
 
 git() {
