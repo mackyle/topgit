@@ -54,20 +54,37 @@ if [ "$1" = "--cache" ]; then
 	unset TESTLIB_TEST_TEE_STARTED
 
 	if [ -n "$lazily_testable_prereq" ]; then
-		# run all the "lazy" prereq tests now
-		cachetestdir="$TESTLIB_DIRECTORY/cachetest"
-		! [ -e "$cachetestdir" ] || rm -rf "$cachetestdir" ||
-			fatal "cannot remove $cachetestdir"
-		mkdir "$cachetestdir" || fatal "cannot mkdir $cachetestdir"
+		# run all the "lazy" prereq tests now in a new subdir
+		# (set up on the "--root" if selected) using setup code
+		# taken (and modified) from test-lib-main.sh so that the
+		# lazy prereqs get the same answer the would when not cached
+		TRASH_DIRECTORY="cachetest"
+		test -n "$root" && TRASH_DIRECTORY="$root/$TRASH_DIRECTORY"
+		case "$TRASH_DIRECTORY" in
+		/*) ;; # absolute path is good
+		 *) TRASH_DIRECTORY="$TEST_OUTPUT_DIRECTORY/$TRASH_DIRECTORY" ;;
+		esac
+		! [ -e "$TRASH_DIRECTORY" ] || rm -fr "$TRASH_DIRECTORY" ||
+			fatal "FATAL: Cannot prepare cache test area"
+		mkdir -p "$TRASH_DIRECTORY" && [ -d "$TRASH_DIRECTORY" ] ||
+			fatal "cannot mkdir -p $TRASH_DIRECTORY"
 		savepwd="$PWD"
-		cd "$cachetestdir" || fatal "cannot cd to $cachetestdir"
+		savehome="$HOME"
+		cd -P "$TRASH_DIRECTORY" || fatal "cannot cd to $TRASH_DIRECTORY"
+		git init --quiet --template="$EMPTY_DIRECTORY" >/dev/null 2>&1 ||
+			fatal "cannot run git init"
+		HOME="$TRASH_DIRECTORY"
+		GNUPGHOME="$HOME/gnupg-home-not-used"
+		export HOME GNUPGHOME
 		for lp in $lazily_testable_prereq; do
 			! { eval "lpscript=\$test_prereq_lazily_$lp" &&
 			(t() { eval "$lpscript";}; t) >/dev/null 2>&1;} || test_set_prereq $lp
 			lazily_tested_prereq="$lazily_tested_prereq$lp "
 		done
+		HOME="$savehome"
 		cd "$savepwd" || fatal "cannot cd to $savepwd"
-		rm -rf "$cachetestdir"
+		rm -rf "$TRASH_DIRECTORY"
+		unset savepwd savehome TRASH_DIRECTORY GNUPGHOME
 	fi
 
 	# Add most GIT_XXX vars (variation of code from test-lib-main.sh)
