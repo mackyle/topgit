@@ -11,8 +11,8 @@
 #    and MUST contain any lines of code to be executed.  This will ALWAYS
 #    be the LAST function defined in this file for easy locatability.
 #
-#  * Added cmd_path, fatal, whats_my_dir, vcmp, test_possibly_broken_ok_ and
-#    test_possibly_broken_failure_ functions
+#  * Added cmd_path, fatal, whats_my_dir, vcmp, getcmd,
+#    test_possibly_broken_ok_ and test_possibly_broken_failure_ functions
 #
 #  * Anything related to valgrind or perf has been stripped out
 #
@@ -49,6 +49,21 @@ fatal() {
 	printf '%s\n' "$*" >&2
 	TESTLIB_EXIT_OK=1
 	exit 1
+}
+
+# usage: cmdget <varname> <cmd> [<arg>...]
+# return code is that of <cmd> [<arg...]
+# <varname> is set to VERBATIM <cmd> output (except NULs may not be handled)
+getcmd() {
+	[ -n "$1" ] || return 1
+	eval "$1=" >/dev/null 2>&1 || return 1
+	[ -n "$2" ] || return 1
+	_getcmd_vn="$1"
+	shift
+	_getcmd_ec=0
+	_getcmd_result="$(ec=0; ("$@") || ec=$?; echo Z; exit $ec)" || _getcmd_ec=$?
+	eval "$_getcmd_vn=\"\${_getcmd_result%Z}\""
+	return $_getcmd_ec
 }
 
 whats_my_dir() (
@@ -155,7 +170,7 @@ $ i\
 
 test_known_broken_ok_() {
 	test_fixed=$(($test_fixed + 1))
-	say_color error "ok $test_count - $@ # TODO known breakage vanished"
+	say_color warn "ok $test_count - $@ # TODO known breakage vanished"
 }
 
 test_known_broken_failure_() {
@@ -834,17 +849,12 @@ then
 	#   * HOME will be changed to a temporary directory and tput
 	#     might need to read ~/.terminfo from the original HOME
 	#     directory to get the control sequences
-	# Note:  This approach assumes the control sequences don't end
-	# in a newline for any terminal of interest (command
-	# substitutions strip trailing newlines).  Given that most
-	# (all?) terminals in common use are related to ECMA-48, this
-	# shouldn't be a problem.
-	say_color_error=$(tput bold; tput setaf 1) # bold red
-	say_color_skip=$(tput setaf 4) # blue
-	say_color_warn=$(tput setaf 3) # brown/yellow
-	say_color_pass=$(tput setaf 2) # green
-	say_color_info=$(tput setaf 6) # cyan
-	say_color_reset=$(tput sgr0)
+	getcmd say_color_error eval 'tput setaf 1'		# red
+	getcmd say_color_skip  eval 'tput bold; tput setaf 5'	# bold blue
+	getcmd say_color_warn  eval 'tput setaf 3'		# brown/yellow
+	getcmd say_color_pass  eval 'tput setaf 2'		# green
+	getcmd say_color_info  eval 'tput setaf 6'		# cyan
+	getcmd say_color_reset eval 'tput sgr0'
 	say_color_="" # no formatting for normal text
 fi
 
