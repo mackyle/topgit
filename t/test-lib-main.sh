@@ -538,6 +538,91 @@ run_with_limited_cmdline() {
 #
 
 
+test_lib_main_init_tee() {
+# Begin test_lib_main_init_tee
+
+
+# if --tee was passed, write the output not only to the terminal, but
+# additionally to the file test-results/$BASENAME.out, too.
+case "$TESTLIB_TEST_TEE_STARTED, $* " in
+done,*)
+	# do not redirect again
+	;;
+*' --tee '*|*' --verbose-log '*)
+	mkdir -p "$TEST_OUTPUT_DIRECTORY/test-results"
+	BASE="$TEST_OUTPUT_DIRECTORY/test-results/$(basename "$0" .sh)"
+
+	# Make this filename available to the sub-process in case it is using
+	# --verbose-log.
+	TESTLIB_TEST_TEE_OUTPUT_FILE=$BASE.out
+	export TESTLIB_TEST_TEE_OUTPUT_FILE
+
+	# Truncate before calling "tee -a" to get rid of the results
+	# from any previous runs.
+	>"$TESTLIB_TEST_TEE_OUTPUT_FILE"
+
+	(TESTLIB_TEST_TEE_STARTED=done ${SHELL_PATH} "$0" "$@" 2>&1;
+	 echo $? >"$BASE.exit") | tee -a "$TESTLIB_TEST_TEE_OUTPUT_FILE"
+	test "$(cat "$BASE.exit")" = 0
+	exit
+	;;
+esac
+
+
+# End test_lib_main_init_tee
+}
+
+
+test_lib_main_init_funcs() {
+# Begin test_lib_main_init_funcs
+
+
+[ -z "$test_lib_main_init_funcs_done" ] || return 0
+
+if test -n "$color"
+then
+	say_color() {
+		test -z "$1" && test -n "$quiet" && return
+		eval "say_color_color=\$say_color_$1"
+		shift
+		printf "%s\\n" "$say_color_color$*$say_color_reset"
+	}
+else
+	say_color() {
+		test -z "$1" && test -n "$quiet" && return
+		shift
+		printf "%s\n" "$*"
+	}
+fi
+
+# Fix some commands on Windows
+: "${uname_s:=$(uname -s)}"
+case "$uname_s" in
+*MINGW*)
+	# Windows has its own (incompatible) sort and find
+	sort() {
+		/usr/bin/sort "$@"
+	}
+	find() {
+		/usr/bin/find "$@"
+	}
+	sum() {
+		md5sum "$@"
+	}
+	# git sees Windows-style pwd
+	pwd() {
+		builtin pwd -W
+	}
+	;;
+esac
+
+test_lib_main_init_funcs_done=1
+
+
+# End test_lib_main_init_funcs
+}
+
+
 # This function is called with all the test args and must perform all
 # initialization that involves variables and is not specific to "$0"
 # or "$test_description" in any way.  This function may only be called
@@ -590,31 +675,7 @@ esac
 #"$PERL_PATH" --version >/dev/null 2>&1 ||
 #	fatal 'error: you do not seem to have perl available?'
 
-# if --tee was passed, write the output not only to the terminal, but
-# additionally to the file test-results/$BASENAME.out, too.
-case "$TESTLIB_TEST_TEE_STARTED, $* " in
-done,*)
-	# do not redirect again
-	;;
-*' --tee '*|*' --verbose-log '*)
-	mkdir -p "$TEST_OUTPUT_DIRECTORY/test-results"
-	BASE="$TEST_OUTPUT_DIRECTORY/test-results/$(basename "$0" .sh)"
-
-	# Make this filename available to the sub-process in case it is using
-	# --verbose-log.
-	TESTLIB_TEST_TEE_OUTPUT_FILE=$BASE.out
-	export TESTLIB_TEST_TEE_OUTPUT_FILE
-
-	# Truncate before calling "tee -a" to get rid of the results
-	# from any previous runs.
-	>"$TESTLIB_TEST_TEE_OUTPUT_FILE"
-
-	(TESTLIB_TEST_TEE_STARTED=done ${SHELL_PATH} "$0" "$@" 2>&1;
-	 echo $? >"$BASE.exit") | tee -a "$TESTLIB_TEST_TEE_OUTPUT_FILE"
-	test "$(cat "$BASE.exit")" = 0
-	exit
-	;;
-esac
+test_lib_main_init_tee "$@"
 
 # For repeatability, reset the environment to known value.
 # TERM is sanitized below, after saving color control sequences.
@@ -852,7 +913,7 @@ then
 fi
 
 # Fix some commands on Windows
-uname_s="$(uname -s)"
+: "${uname_s:=$(uname -s)}"
 case $uname_s in
 *MINGW*)
 	# no POSIX permissions
@@ -880,9 +941,11 @@ esac
 
 ( COLUMNS=1 && test $COLUMNS = 1 ) && test_set_prereq COLUMNS_CAN_BE_1
 
+test_lib_main_init_funcs
+
 test_lazy_prereq PIPE '
 	# test whether the filesystem supports FIFOs
-	case "$uname_s" in
+	case "${uname_s:-$(uname -s)}" in
 	CYGWIN*|MINGW*)
 		false
 		;;
@@ -989,21 +1052,7 @@ test_lib_main_init_specific() {
 # passed without the ok/not ok details is always an error.
 test -n "$HARNESS_ACTIVE" && unset quiet
 
-if test -n "$color"
-then
-	say_color() {
-		test -z "$1" && test -n "$quiet" && return
-		eval "say_color_color=\$say_color_$1"
-		shift
-		printf "%s\\n" "$say_color_color$*$say_color_reset"
-	}
-else
-	say_color() {
-		test -z "$1" && test -n "$quiet" && return
-		shift
-		printf "%s\n" "$*"
-	}
-fi
+test_lib_main_init_funcs
 
 if test -n "$HARNESS_ACTIVE"
 then
@@ -1087,26 +1136,6 @@ then
 	skip_all="skip all tests in $this_test"
 	test_done
 fi
-
-# Fix some commands on Windows
-case "$uname_s" in
-*MINGW*)
-	# Windows has its own (incompatible) sort and find
-	sort() {
-		/usr/bin/sort "$@"
-	}
-	find() {
-		/usr/bin/find "$@"
-	}
-	sum() {
-		md5sum "$@"
-	}
-	# git sees Windows-style pwd
-	pwd() {
-		builtin pwd -W
-	}
-	;;
-esac
 
 
 # End test_lib_main_init_specific

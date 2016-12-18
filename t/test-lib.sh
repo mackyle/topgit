@@ -133,31 +133,8 @@ if [ -n "$TESTLIB_CACHE_ACTIVE" ]; then
 	# Remove the leftover variables used to trigger use of the cache
 	unset TESTLIB_CACHE TESTLIB_CACHE_ACTIVE
 
-	# However, we still must parse and handle some options :(
-	# swiped from test-lib-main.sh
-	case "$TESTLIB_TEST_TEE_STARTED, $* " in
-	done,*)
-		# do not redirect again
-		;;
-	*' --tee '*|*' --va'*|*' --verbose-log '*)
-		mkdir -p "$TEST_OUTPUT_DIRECTORY/test-results"
-		BASE="$TEST_OUTPUT_DIRECTORY/test-results/$(basename "$0" .sh)"
-
-		# Make this filename available to the sub-process in case it is using
-		# --verbose-log.
-		TESTLIB_TEST_TEE_OUTPUT_FILE=$BASE.out
-		export TESTLIB_TEST_TEE_OUTPUT_FILE
-
-		# Truncate before calling "tee -a" to get rid of the results
-		# from any previous runs.
-		>"$TESTLIB_TEST_TEE_OUTPUT_FILE"
-
-		(TESTLIB_TEST_TEE_STARTED=done ${SHELL_PATH} "$0" "$@" 2>&1;
-		 echo $? >"$BASE.exit") | tee -a "$TESTLIB_TEST_TEE_OUTPUT_FILE"
-		test "$(cat "$BASE.exit")" = 0
-		exit
-		;;
-	esac
+	# Handle --tee now if needed
+	test_lib_main_init_tee "$@"
 
 	# We must also still perform per-test initialization though
 	test_lib_main_init_specific "$@"
