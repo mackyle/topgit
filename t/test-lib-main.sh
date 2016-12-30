@@ -11,7 +11,7 @@
 #    and MUST contain any lines of code to be executed.  This will ALWAYS
 #    be the LAST function defined in this file for easy locatability.
 #
-#  * Added cmd_path, fatal, whats_my_dir, vcmp, getcmd,
+#  * Added cmd_path, fatal, whats_my_dir, vcmp, getcmd, say_tap, say_color_tap
 #    test_possibly_broken_ok_ and test_possibly_broken_failure_ functions
 #
 #  * Anything related to valgrind or perf has been stripped out
@@ -116,7 +116,11 @@ error() {
 }
 
 say() {
-	say_color info "$*"
+	say_color info "$@"
+}
+
+say_tap() {
+	say_color_tap info "$@"
 }
 
 die() {
@@ -135,14 +139,14 @@ die() {
 
 test_ok_() {
 	test_success=$(($test_success + 1))
-	say_color "" "ok $test_count - $@"
+	say_color_tap "" "ok $test_count - $@"
 }
 
 test_failure_() {
 	test_failure=$(($test_failure + 1))
 	tlno="$1"
 	shift
-	say_color error "not ok $test_count - $1"
+	say_color_tap error "not ok $test_count - $1"
 	shift
 	printf '%s\n' "$(printf '%s\n' "failed: $(basename "$0")${tlno:+:$tlno}$LF$*")" |
 	sed -n -e '
@@ -170,22 +174,22 @@ $ i\
 
 test_known_broken_ok_() {
 	test_fixed=$(($test_fixed + 1))
-	say_color warn "ok $test_count - $@ # TODO known breakage vanished"
+	say_color_tap warn "ok $test_count - $@ # TODO known breakage vanished"
 }
 
 test_known_broken_failure_() {
 	test_broken=$(($test_broken + 1))
-	say_color warn "not ok $test_count - $@ # TODO known breakage"
+	say_color_tap warn "not ok $test_count - $@ # TODO known breakage"
 }
 
 test_possibly_broken_ok_() {
 	test_success=$(($test_success + 1))
-	say_color "" "ok $test_count - $@"
+	say_color_tap "" "ok $test_count - $@"
 }
 
 test_possibly_broken_failure_() {
 	test_broken=$(($test_broken + 1))
-	say_color warn "not ok $test_count - $@ # TODO tolerated breakage"
+	say_color_tap warn "not ok $test_count - $@ # TODO tolerated breakage"
 }
 
 test_debug() {
@@ -437,7 +441,7 @@ test_skip() {
 	case "$to_skip" in
 	t)
 		say_color skip >&3 "skipping test: $@"
-		say_color skip "ok $test_count # skip $1 ($skipped_reason)"
+		say_color_tap skip "ok $test_count # skip $1 ($skipped_reason)"
 		: true
 		;;
 	*)
@@ -502,7 +506,7 @@ test_done() {
 			then
 				say_color pass "# passed all $msg"
 			fi
-			say "1..$test_count$skip_all"
+			say_tap "1..$test_count$skip_all"
 		fi
 
 		test -d "$remove_trash" &&
@@ -517,7 +521,7 @@ test_done() {
 		if test $test_external_has_tap -eq 0
 		then
 			say_color error "# failed $test_failure among $msg"
-			say "1..$test_count"
+			say_tap "1..$test_count"
 		fi
 
 		exit 1 ;;
@@ -600,15 +604,36 @@ then
 		test -z "$1" && test -n "$quiet" && return
 		eval "say_color_color=\$say_color_$1"
 		shift
-		printf "%s\\n" "$say_color_color$*$say_color_reset"
+		_sfc=
+		_sms="$*"
+		if test -n "$HARNESS_ACTIVE"
+		then
+		    case "$_sms" in '#'*)
+			    _sfc='#'
+			    _sms="${_sms#?}"
+		    esac
+		fi
+		printf '%s\n' "$_sfc$say_color_color$_sms$say_color_reset"
 	}
 else
 	say_color() {
 		test -z "$1" && test -n "$quiet" && return
 		shift
-		printf "%s\n" "$*"
+		printf '%s\n' "$*"
 	}
 fi
+
+# Just like say_color except if HARNESS_ACTIVE it's ALWAYS output and WITHOUT color
+say_color_tap() {
+	if test -n "$HARNESS_ACTIVE"
+	then
+		shift
+		printf '%s\n' "$*"
+	else
+		say_color "$@"
+	fi
+}
+
 
 # Fix some commands on Windows
 : "${uname_s:=$(uname -s)}"
@@ -804,9 +829,7 @@ do
 		verbose_only=${1#--*=}
 		shift ;;
 	-q|--q|--qu|--qui|--quie|--quiet)
-		# Ignore --quiet under a TAP::Harness. Saying how many tests
-		# passed without the ok/not ok details is always an error.
-		test -z "$HARNESS_ACTIVE" && quiet=t; shift ;;
+		quiet=t; shift ;;
 	--no-color)
 		color=; shift ;;
 	--tee)
@@ -1058,15 +1081,11 @@ test_lib_main_init_specific() {
 # Begin test_lib_main_init_specific
 
 
-# Ignore --quiet under a TAP::Harness. Saying how many tests
-# passed without the ok/not ok details is always an error.
-test -n "$HARNESS_ACTIVE" && unset quiet
-
 test_lib_main_init_funcs
 
 if test -n "$HARNESS_ACTIVE"
 then
-	if test "$verbose" = t || test -n "$verbose_only"
+	if test "$verbose" = t || test -n "$verbose_only" && test -z "$TESTLIB_OVERRIDE"
 	then
 		printf 'Bail out! %s\n' \
 		 'verbose mode forbidden under TAP harness; try --verbose-log'
