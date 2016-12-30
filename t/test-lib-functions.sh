@@ -397,6 +397,8 @@ test_expect_failure_lno() {
 	test "$#" = 3 && { test_prereq=$1; shift; } || test_prereq=
 	test "$#" = 2 ||
 	error "bug in the test script: not 2 or 3 parameters to test-expect-failure"
+	test_get_ "$2"
+	set -- "$1" "$test_script_"
 	test_verify_prereq
 	export test_prereq
 	if ! test_skip "$@"
@@ -427,6 +429,8 @@ test_tolerate_failure_lno() {
 	test "$#" = 3 && { test_prereq=$1; shift; } || test_prereq=
 	test "$#" = 2 ||
 	error "bug in the test script: not 2 or 3 parameters to test-tolerate-failure"
+	test_get_ "$2"
+	set -- "$1" "$test_script_"
 	test_verify_prereq
 	export test_prereq
 	if ! test_skip "$@"
@@ -455,6 +459,8 @@ test_expect_success_lno() {
 	test "$#" = 3 && { test_prereq=$1; shift; } || test_prereq=
 	test "$#" = 2 ||
 	error "bug in the test script: not 2 or 3 parameters to test-expect-success"
+	test_get_ "$2"
+	set -- "$1" "$test_script_"
 	test_verify_prereq
 	export test_prereq
 	if ! test_skip "$@"

@@ -2,21 +2,23 @@
 
 TEST_NO_CREATE_REPO=1
 
-test_description='Test sanity of test framework.'
+test_description='Test sanity of test framework
+
+1 - it works
+
+    Just a basic test that always succeeds
+
+2 - it works on stdin
+
+    Another basic test but read using the magic -
+'
 
 . ./test-lib.sh
 
-subshell="$(cat <<'TEST'
-
-	exec <>/dev/tty >&0 2>&1 &&
-	echo "Hi!  You're in a subshell now!" &&
-	PS1='(subshell)$ ' && export PS1 &&
-	"${SHELL:-/bin/sh}" -i
-TEST
-)$LF"
-
-#test_expect_success 'a sub shell' "$subshell"
 test_expect_success 'it works' ':'
-#test_tolerate_failure 'it fails' '! :'
+test_expect_success 'it works on stdin' - <<-'EOT'
+	: && # no more quoting issues but 'tis a bit slower!
+	:    # unpaired " are allowed too!
+EOT
 
 test_done

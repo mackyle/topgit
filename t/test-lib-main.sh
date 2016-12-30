@@ -397,6 +397,20 @@ test_eval_() {
 	fi
 }
 
+# If "$1" = "-" read the script from stdin but ONLY if stdin is NOT a tty
+# Store the test script in test_script_
+test_get_() {
+	if test "x$1" = "x-"
+	then
+		! test -t 0 || error "test script is '-' but STDIN is a tty"
+		test_script_="$(cat)"
+		test -n "$test_script_" || error "test script is '-' but STDIN is empty"
+		test_script_="$LF$test_script_$LF"
+	else
+		test_script_="$1"
+	fi
+}
+
 test_run_() {
 	test_cleanup=:
 	expecting_failure=$2
