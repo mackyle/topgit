@@ -11,7 +11,7 @@
 #    and MUST contain any lines of code to be executed.  This will ALWAYS
 #    be the LAST function defined in this file for easy locatability.
 #
-#  * Added cmd_path, fatal, whats_my_dir, vcmp, getcmd, say_tap, say_color_tap
+#  * Added cmd_path, fatal, whats_the_dir, vcmp, getcmd, say_tap, say_color_tap
 #    test_possibly_broken_ok_ and test_possibly_broken_failure_ functions
 #
 #  * Anything related to valgrind or perf has been stripped out
@@ -66,18 +66,22 @@ getcmd() {
 	return $_getcmd_ec
 }
 
-whats_my_dir() (
-	# determine script's location and name
-	myname="$0"
-	while [ -L "$myname" ]; do
-		oldname="$myname"
-		myname="$(readlink "$myname")"
-		case "$myname" in /*) :;; *)
-			myname="$(dirname "$oldname")/$myname"
+whats_the_dir() (
+	# determine "$1"'s directory
+	_name="$1"
+	while [ -L "$_name" ]; do
+		_oldname="$_name"
+		_name="$(readlink "$_name")"
+		case "$_name" in "/"*) :;; *)
+			_name="$(dirname "$_oldname")/$_name"
 		esac
 	done
-	mydir="$(cd "$(dirname "$myname")" && pwd -P)"
-	printf '%s\n' "$mydir"
+	_name="$(dirname "$_name")"
+	if [ -d "$_name" ]; then
+		(cd "$_name" && pwd)
+	else
+		printf '%s\n' "$_name"
+	fi
 )
 
 vcmp() (
@@ -670,15 +674,19 @@ test_lib_main_init_funcs_done=1
 test_lib_main_init_generic() {
 # Begin test_lib_main_init_generic
 
+[ -n "$TESTLIB_DIRECTORY" ] || TESTLIB_DIRECTORY="$(whats_the_dir "${TEST_DIRECTORY:-.}/test-lib.sh")"
+[ -f "$TESTLIB_DIRECTORY/test-lib.sh" ] && [ -f "$TESTLIB_DIRECTORY/test-lib-main.sh" ] &&
+[ -f "$TESTLIB_DIRECTORY/test-lib-functions.sh" ] ||
+fatal "error: invalid TESTLIB_DIRECOTRY: $TESTLIB_DIRECTORY"
+export TESTLIB_DIRECTORY
 
-! [ -f ../TG-BUILD-SETTINGS ] || . ../TG-BUILD-SETTINGS
-! [ -f TG-TEST-SETTINGS ] || . ./TG-TEST-SETTINGS
+! [ -f "$TESTLIB_DIRECTORY/../TG-BUILD-SETTINGS" ] || . "$TESTLIB_DIRECTORY/../TG-BUILD-SETTINGS"
+! [ -f "$TESTLIB_DIRECTORY/TG-TEST-SETTINGS" ] || . "$TESTLIB_DIRECTORY/TG-TEST-SETTINGS"
 
 : "${SHELL_PATH:=/bin/sh}"
 : "${DIFF:=diff}"
 : "${GIT_PATH:=$(cmd_path git)}"
 : "${PERL_PATH:=$(cmd_path perl || :)}"
-TESTLIB_DIRECTORY="$(whats_my_dir)"
 
 # Test the binaries we have just built.  The tests are kept in
 # t/ subdirectory and are run in 'trash directory' subdirectory.
@@ -704,6 +712,7 @@ fi
 	chmod a-w "$TESTLIB_DIRECTORY/empty"
 }
 EMPTY_DIRECTORY="$TESTLIB_DIRECTORY/empty"
+export TEST_DIRECTORY TEST_OUTPUT_DIRECTORY EMPTY_DIRECTORY
 
 ################################################################
 # It appears that people try to run tests with missing perl or git...
@@ -906,7 +915,7 @@ test_success=0
 test_external_has_tap=0
 
 # The user-facing functions are loaded from a separate file
-. "$TEST_DIRECTORY/test-lib-functions.sh"
+. "$TESTLIB_DIRECTORY/test-lib-functions.sh"
 test_lib_functions_init
 
 last_verbose=t

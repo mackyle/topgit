@@ -135,14 +135,32 @@ if [ "$1" = "--cache" ]; then
 		EOT
 		echo export $EXPORT_VARS "&&"
 		echo "cd $PWD_SQ &&"
-		echo ". ./test-lib-functions.sh &&"
-		echo ". ./test-lib-main.sh &&"
+		echo ". \"$TESTLIB_DIRECTORY/test-lib-functions.sh\" &&"
+		echo ". \"$TESTLIB_DIRECTORY/test-lib-main.sh\" &&"
 		echo "TESTLIB_CACHE_ACTIVE=1"
 	} >TG-TEST-CACHE
 	printf ". %s/TG-TEST-CACHE || { echo 'error: missing '\'%s'/TG-TEST-CACHE'\' >&2; exit 1; }\n" "$PWD_SQ" "$PWD_SQ"
 	TESTLIB_EXIT_OK=1
 	exit 0
 fi
+
+whats_the_dir() (
+	# determine "$1"'s directory
+	_name="$1"
+	while [ -L "$_name" ]; do
+		_oldname="$_name"
+		_name="$(readlink "$_name")"
+		case "$_name" in "/"*) :;; *)
+			_name="$(dirname "$_oldname")/$_name"
+		esac
+	done
+	_name="$(dirname "$_name")"
+	if [ -d "$_name" ]; then
+		(cd "$_name" && pwd)
+	else
+		printf '%s\n' "$_name"
+	fi
+)
 
 [ -z "$TESTLIB_CACHE" ] || eval "$TESTLIB_CACHE" || exit $?
 if [ -n "$TESTLIB_CACHE_ACTIVE" ]; then
@@ -157,6 +175,6 @@ if [ -n "$TESTLIB_CACHE_ACTIVE" ]; then
 	test_lib_main_init_specific "$@"
 else
 	# Normal, non-cached case where we run the init function
-	. ./test-lib-main.sh
+	. "$(whats_the_dir "${TEST_DIRECTORY:-.}/test-lib.sh")/test-lib-main.sh"
 	test_lib_main_init "$@"
 fi
