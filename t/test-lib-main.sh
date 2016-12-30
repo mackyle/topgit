@@ -11,8 +11,8 @@
 #    and MUST contain any lines of code to be executed.  This will ALWAYS
 #    be the LAST function defined in this file for easy locatability.
 #
-#  * Added cmd_path, fatal, whats_the_dir, vcmp, getcmd, say_tap, say_color_tap
-#    test_possibly_broken_ok_ and test_possibly_broken_failure_ functions
+#  * Added cmd_path, fatal, whats_the_dir, vcmp, getcmd, say_tap, say_color_tap,
+#    fail_, test_possibly_broken_ok_ and test_possibly_broken_failure_ functions
 #
 #  * Anything related to valgrind or perf has been stripped out
 #
@@ -344,7 +344,8 @@ want_trace() {
 test_eval_inner_() (
 	# Do not add anything extra (including LF) after '$*'
 	eval "
-		want_trace && set -x
+		set -e
+		! want_trace || ! set -x && ! :
 		$*"
 )
 
@@ -352,7 +353,7 @@ test_eval_inner_() (
 test_eval_inner_no_subshell_() {
 	# Do not add anything extra (including LF) after '$*'
 	eval "
-		want_trace && set -x
+		! want_trace || ! set -x && ! :
 		$*"
 }
 
@@ -411,6 +412,10 @@ test_get_() {
 	fi
 }
 
+fail_() {
+	return ${1:-1}
+}
+
 test_run_() {
 	test_cleanup=:
 	expecting_failure=$2
@@ -422,7 +427,7 @@ test_run_() {
 		trace=
 		# 117 is magic because it is unlikely to match the exit
 		# code of other programs
-		test_eval_ss_ "1" "(exit 117) && $1"
+		test_eval_ss_ "1" "fail_ 117 && $1${LF}fail_ \$?"
 		if test "$?" != 117; then
 			error "bug in the test script: broken &&-chain: $1"
 		fi
