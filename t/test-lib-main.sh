@@ -348,7 +348,15 @@ test_eval_inner_() (
 		$*"
 )
 
-test_eval_() {
+# Same thing as test_eval_inner_ but without the subshell
+test_eval_inner_no_subshell_() {
+	# Do not add anything extra (including LF) after '$*'
+	eval "
+		want_trace && set -x
+		$*"
+}
+
+test_eval_ss_() {
 	# We run this block with stderr redirected to avoid extra cruft
 	# during a "-x" trace. Once in "set -x" mode, we cannot prevent
 	# the shell from printing the "set +x" to turn it off (nor the saving
@@ -358,7 +366,14 @@ test_eval_() {
 	# The test itself is run with stderr put back to &4 (so either to
 	# /dev/null, or to the original stderr if --verbose was used).
 	{
-		test_eval_inner_ "$@" </dev/null >&3 2>&4
+		test_eval_ss_="$1"
+		shift
+		if test "${test_eval_ss_:-0}" = "0"
+		then
+			test_eval_inner_no_subshell_ "$@" </dev/null >&3 2>&4
+		else
+			test_eval_inner_ "$@" </dev/null >&3 2>&4
+		fi
 		test_eval_ret_=$?
 		if want_trace
 		then
@@ -372,6 +387,16 @@ test_eval_() {
 	return $test_eval_ret_
 }
 
+# Calls the real test_eval_ss_ with !"$TESTLIB_TEST_NO_SUBSHELL" as first arg
+test_eval_() {
+	if test -n "$TESTLIB_TEST_NO_SUBSHELL"
+	then
+		test_eval_ss_ "0" "$@"
+	else
+		test_eval_ss_ "1" "$@"
+	fi
+}
+
 test_run_() {
 	test_cleanup=:
 	expecting_failure=$2
@@ -383,7 +408,7 @@ test_run_() {
 		trace=
 		# 117 is magic because it is unlikely to match the exit
 		# code of other programs
-		test_eval_ "(exit 117) && $1"
+		test_eval_ss_ "1" "(exit 117) && $1"
 		if test "$?" != 117; then
 			error "bug in the test script: broken &&-chain: $1"
 		fi
