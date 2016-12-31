@@ -112,10 +112,11 @@ vcmp() (
 )
 
 error() {
-	say_color error "${LF}error: $*"
-	printf '%s\n' "Bail out! $(basename "$0"):${callerlno:+$callerlno:} error: $*"
+	say_color error "${LF}error: $*" >&7
+	printf '%s\n' "Bail out! $(basename "$0"):${callerlno:+$callerlno:} error: $*" >&5
 	TESTLIB_EXIT_OK=t
 	[ -z "$TESTLIB_TEST_PARENT_INT_ON_ERROR" ] || kill -INT $PPID || :
+	kill -USR1 $$
 	exit 1
 }
 
@@ -197,7 +198,7 @@ test_possibly_broken_failure_() {
 }
 
 test_debug() {
-	test "$debug" = "" || test $# -eq 0 || test -z "$*" || "$@"
+	test "$debug" = "" || test $# -eq 0 || test -z "$*" || { "$@"; } >&7 2>&1
 }
 
 match_pattern_list() {
@@ -345,6 +346,7 @@ test_eval_inner_() (
 	# Do not add anything extra (including LF) after '$*'
 	eval "
 		set -e
+		test_subshell_active_=t
 		! want_trace || ! set -x && ! :
 		$*"
 )
@@ -418,13 +420,16 @@ fail_() {
 
 test_run_() {
 	test_cleanup=:
+	test_subshell_active_=
 	expecting_failure=$2
+	linting=
 
 	if test "${TESTLIB_TEST_CHAIN_LINT:-1}" != 0; then
 		# turn off tracing for this test-eval, as it simply creates
 		# confusing noise in the "-x" output
 		trace_tmp=$trace
 		trace=
+		linting=t
 		# 117 is magic because it is unlikely to match the exit
 		# code of other programs
 		test_eval_ss_ "1" "fail_ 117 && $1${LF}fail_ \$?"
@@ -432,6 +437,7 @@ test_run_() {
 			error "bug in the test script: broken &&-chain: $1"
 		fi
 		trace=$trace_tmp
+		linting=
 	fi
 
 	test_eval_ "$1"
@@ -1136,6 +1142,9 @@ test_lib_main_init_specific() {
 # Begin test_lib_main_init_specific
 
 
+# original stdin is on 6, stdout on 5 and stderr on 7
+exec 5>&1 6<&0 7>&2
+
 test_lib_main_init_funcs
 
 if test -n "$HARNESS_ACTIVE"
@@ -1168,8 +1177,6 @@ then
 	exit 0
 fi
 
-exec 5>&1
-exec 6<&0
 if test "$verbose_log" = "t"
 then
 	exec 3>>"$TESTLIB_TEST_TEE_OUTPUT_FILE" 4>&3
@@ -1183,6 +1190,7 @@ fi
 TESTLIB_EXIT_OK=
 trap 'die' EXIT
 trap 'exit $?' HUP INT QUIT ABRT PIPE TERM
+trap 'TESTLIB_EXIT_OK=t; exit 1' USR1
 
 # Test repository
 TRASH_DIRECTORY="trash directory.$(basename "$0" .sh)"

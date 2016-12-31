@@ -847,7 +847,8 @@ test_when_finished() {
 	# We cannot detect when we are in a subshell in general, but by
 	# doing so on Bash is better than nothing (the test will
 	# silently pass on other shells).
-	test "${BASH_SUBSHELL-0}" = 0 ||
+	test -z "$linting" || return 0
+	test "${BASH_SUBSHELL-0}" = 0 && test -z "$test_subshell_active_" ||
 	error "bug in test script: test_when_finished does nothing in a subshell"
 	test_cleanup="{ $*
 		} && (exit \"\$eval_ret\"); eval_ret=\$?; $test_cleanup"

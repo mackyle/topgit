@@ -809,12 +809,12 @@ unset TESTLIB_TEST_NO_SUBSHELL
 test_expect_success 'tests clean up even on failures' "
 	test_must_fail run_sub_test_lib_test \
 		failing-cleanup 'Failing tests with cleanup commands' <<-\\EOF &&
+	TESTLIB_TEST_NO_SUBSHELL=1
 	test_expect_success 'tests clean up even after a failure' '
 		touch clean-after-failure &&
 		test_when_finished rm clean-after-failure &&
 		(exit 1)
 	'
-	TESTLIB_TEST_NO_SUBSHELL=1
 	test_expect_success 'failure to clean up causes the test to fail' '
 		test_when_finished \"(exit 2)\"
 	'
