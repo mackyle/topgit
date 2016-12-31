@@ -685,7 +685,8 @@ test_must_fail() {
 		_test_ok=
 		;;
 	esac
-	"$@"
+	exit_code=0
+	"$@" ||
 	exit_code=$?
 	if test $exit_code -eq 0 && ! list_contains "$_test_ok" success
 	then
@@ -891,13 +892,13 @@ test_write_lines() {
 	printf '%s\n' "$@"
 }
 
-git() {
-	"command" "$GIT_PATH" "$@"
-}
+git() (
+	"exec" "$GIT_PATH" "$@"
+)
 
-perl() {
-	"command" "$PERL_PATH" "$@"
-}
+perl() (
+	"exec" "$PERL_PATH" "$@"
+)
 
 # Is the value one of the various ways to spell a boolean true/false?
 test_normalize_bool() {
