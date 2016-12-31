@@ -883,6 +883,8 @@ do
 		shift ;;
 	-q|--q|--qu|--qui|--quie|--quiet)
 		quiet=t; shift ;;
+	--color)
+		color=t; shift ;;
 	--no-color)
 		color=; shift ;;
 	--tee)
