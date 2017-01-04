@@ -57,7 +57,7 @@ else
 		if [ "$name" = "HEAD" ]; then
 			sr="$(git symbolic-ref --quiet HEAD || :)"
 			[ -n "$sr" ] || die "cannot push a detached HEAD"
-			case "$sr" in refs/heads/*) :;; *)
+			case "$sr" in refs/heads/*);;*)
 				die "HEAD is a symref to other than refs/heads/..."
 			esac
 			branches="${branches:+$branches }${sr#refs/heads/}"

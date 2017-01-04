@@ -108,7 +108,7 @@ case "$tagname" in --stash"@{"*"}")
 	tagname="refs/tgstash@{$strip}"
 esac
 refname="$tagname"
-case "$refname" in HEAD|refs/*) :;; *)
+case "$refname" in HEAD|refs/*);;*)
 	suffix="${refname%@*}"
 	suffix="${refname#$suffix}"
 	refname="${refname%$suffix}"
@@ -184,7 +184,7 @@ for b; do
 	exp=
 	case "$b" in refs/*) exp=1; rn="$b";; *) rn="refs/heads/$b"; esac
 	ref_exists "$rn" || die "not present in tag data (try --list): $rn"
-	case " $refs " in *" $rn "*) :;; *)
+	case " $refs " in *" $rn "*);;*)
 		refs="${refs:+$refs }$rn"
 		if [ -z "$list" ] && [ -z "$nodeps" -o -z "$exp" ] && is_tgish "$rn"; then
 			case "$rn" in
@@ -275,7 +275,7 @@ if [ -n "$list" ]; then
 	if [ -z "$deps$rdeps" ]; then
 		while read -r name rev; do
 			case "$exclude" in *" $name "*) continue; esac
-			[ -z "$refs" ] || case " $refs " in *" $name "*) :;; *) continue; esac
+			[ -z "$refs" ] || case " $refs " in *" $name "*);;*) continue; esac
 			[ -z "$tgish" ] || is_tgish "$name" || continue
 			printf '%s %s\n' "$(git rev-parse --verify --quiet --short "$rev" --)" "$name"
 		done <"$trf"
@@ -302,7 +302,7 @@ get_short() {
 if [ -n "$nodeps" -o -z "$refs" ]; then
 	while read -r name rev; do
 		case "$exclude" in *" $name "*) continue; esac
-		[ -z "$refs" ] || case " $refs " in *" $name "*) :;; *) continue; esac
+		[ -z "$refs" ] || case " $refs " in *" $name "*);;*) continue; esac
 		[ -z "$tgish" ] || is_tgish "$name" || continue
 		printf 'revert %s %s\n' "$(get_short "$rev")" "$name"
 	done <"$trf" | LC_ALL=C sort -u -b -k3,3 >"$insn"
@@ -336,7 +336,7 @@ EOT
 	while read -r op hash ref; do
 		[ "$op" = "r" -o "$op" = "revert" ] ||
 		die "invalid op in instruction: $op $hash $ref"
-		case "$ref" in refs/?*) :;; *)
+		case "$ref" in refs/?*);;*)
 			die "invalid ref in instruction: $op $hash $ref"
 		esac
 		ref_exists "$ref" ||

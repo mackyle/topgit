@@ -276,7 +276,7 @@ if [ -z "$nodeps" ]; then
 			[ -z "$sr" ] || git rev-parse --verify --quiet "$sr" -- ||
 				die "refusing to depend on unborn branch (use --no-deps)"
 			[ -n "$sr" ] || die "cannot depend on a detached HEAD"
-			case "$sr" in refs/heads/*) :;; *)
+			case "$sr" in refs/heads/*);;*)
 				die "HEAD is a symref to other than refs/heads/..."
 			esac
 			d="${sr#refs/heads/}"
@@ -399,7 +399,7 @@ EOT
 	subj="$(get_subject <"$git_dir/TG_EDITMSG")"
 	if [ -z "$subj" ]; then
 		subj="$(sed -n "s/^[ $tab][ $tab]*//; 1p" <"$git_dir/TG_EDITMSG")";
-		case "$subj" in "["*) :;; *) subj="[$branchtype] $subj"; esac
+		case "$subj" in "["*);;*) subj="[$branchtype] $subj"; esac
 		printf '%s\n' "Subject: $subj" "" >"$git_dir/TG_EDITMSG"+
 		sed -n '2,$p' <"$git_dir/TG_EDITMSG" | git stripspace >>"$git_dir/TG_EDITMSG"+
 		mv -f "$git_dir/TG_EDITMSG"+ "$git_dir/TG_EDITMSG"

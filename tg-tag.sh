@@ -240,7 +240,7 @@ case "$refname" in [!@]*"@{"*"}")
 	refname="${refname%@*}"
 	sfx="${sfx#$refname}"
 esac
-case "$refname" in HEAD|refs/*) :;; *)
+case "$refname" in HEAD|refs/*);;*)
 	if reftest="$(git rev-parse --revs-only --symbolic-full-name "$refname" -- 2>/dev/null)" &&
 	   [ -n "$reftest" ]; then
 		if [ -n "$reflog$drop$clear$delete" ]; then
@@ -393,7 +393,7 @@ while read -r obj typ ref && [ -n "$obj" -a -n "$typ" ]; do
 		ignore="${ignore:+$ignore }$ref"
 		continue
 	fi
-	case " $newlist " in *" $ref "*) :;; *)
+	case " $newlist " in *" $ref "*);;*)
 		newlist="${newlist:+$newlist }$ref"
 	esac
 	if [ "$typ" = "tag" ]; then
@@ -416,7 +416,7 @@ for b; do
 	[ -n "$sfn" ] || {
 		[ -n "$anyrefok" ] || die "no such symbolic ref name: $b"
 		fullhash="$(git rev-parse --verify --quiet "$b" --)" || die "no such ref: $b"
-		case " $extrarefs " in *" $b "*) :;; *)
+		case " $extrarefs " in *" $b "*);;*)
 			warn "including non-symbolic ref only in parents calculation: $b"
 			extrarefs="${extrarefs:+$extrarefs }$fullhash"
 		esac
@@ -429,18 +429,18 @@ for b; do
 			ref_exists "refs/$topbases/${sfn#refs/heads/}" || tgish=
 			[ -n "$anyrefok" ] || [ -n "$tgish" ] ||
 				die "not a TopGit branch: ${sfn#refs/heads/} (use --allow-any option)"
-			case " $allrefs " in *" $b "*) :;; *)
+			case " $allrefs " in *" $b "*);;*)
 				allrefs="${allrefs:+$allrefs }$sfn"
 			esac
-			case " $branches " in *" ${sfn#refs/heads/} "*) :;; *)
+			case " $branches " in *" ${sfn#refs/heads/} "*);;*)
 				branches="${branches:+$branches }${sfn#refs/heads/}"
 				added=1
 			esac
 			if [ -n "$tgish" ]; then
-				case " $allrefs " in *" refs/$topbases/${sfn#refs/heads/} "*) :;; *)
+				case " $allrefs " in *" refs/$topbases/${sfn#refs/heads/} "*);;*)
 					allrefs="${allrefs:+$allrefs }refs/$topbases/${sfn#refs/heads/}"
 				esac
-				case " $tgbranches " in *" ${sfn#refs/heads/} "*) :;; *)
+				case " $tgbranches " in *" ${sfn#refs/heads/} "*);;*)
 					tgbranches="${tgbranches:+$tgbranches }${sfn#refs/heads/}"
 					added=1
 				esac
@@ -455,18 +455,18 @@ for b; do
 			ref_exists "refs/heads/${sfn#refs/$topbases/}" || tgish=
 			[ -n "$anyrefok" ] || [ -n "$tgish" ] ||
 				warn "including TopGit base that's missing its head: $sfn"
-			case " $allrefs " in *" $sfn "*) :;; *)
+			case " $allrefs " in *" $sfn "*);;*)
 				allrefs="${allrefs:+$allrefs }$sfn"
 			esac
-			case " $branches " in *" ${sfn#refs/$topbases/} "*) :;; *)
+			case " $branches " in *" ${sfn#refs/$topbases/} "*);;*)
 				branches="${branches:+$branches }${sfn#refs/$topbases/}"
 				added=1
 			esac
 			if [ -n "$tgish" ]; then
-				case " $allrefs " in *" refs/heads/${sfn#refs/$topbases/} "*) :;; *)
+				case " $allrefs " in *" refs/heads/${sfn#refs/$topbases/} "*);;*)
 					allrefs="${allrefs:+$allrefs }refs/heads/${sfn#refs/$topbases/}"
 				esac
-				case " $tgbranches " in *" ${sfn#refs/$topbases/} "*) :;; *)
+				case " $tgbranches " in *" ${sfn#refs/$topbases/} "*);;*)
 					tgbranches="${tgbranches:+$tgbranches }${sfn#refs/$topbases/}"
 					added=1
 				esac
@@ -477,10 +477,10 @@ for b; do
 			;;
 		*)
 			[ -n "$anyrefok" ] || die "refusing to include without --allow-any: $sfn"
-			case " $allrefs " in *" $sfn "*) :;; *)
+			case " $allrefs " in *" $sfn "*);;*)
 				allrefs="${allrefs:+$allrefs }$sfn"
 			esac
-			case " $branches " in *" ${sfn#refs/} "*) :;; *)
+			case " $branches " in *" ${sfn#refs/} "*);;*)
 				branches="${branches:+$branches }${sfn#refs/}"
 				othercount=$(( $othercount + 1 ))
 			esac
@@ -532,7 +532,7 @@ out_of_date=
 if [ -n "$outofdateok" ]; then
 	if [ -n "$tgbranches" ]; then
 		while read -r dep && [ -n "$dep" ]; do
-			case " $allrefs " in *" $dep "*) :;; *)
+			case " $allrefs " in *" $dep "*);;*)
 				! ref_exists "$dep" ||
 				allrefs="${allrefs:+$allrefs }$dep"
 			esac

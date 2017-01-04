@@ -95,10 +95,8 @@ precheck() {
 	if ! git_version="$(git version)"; then
 		die "'git version' failed"
 	fi
-	case "$git_version" in
-		[Gg]"it version "*) :;;
-		*)
-			die "'git version' output does not start with 'git version '"
+	case "$git_version" in [Gg]"it version "*);;*)
+		die "'git version' output does not start with 'git version '"
 	esac
 	git_vernum="$(echo "$git_version" | sed -ne 's/^[^0-9]*\([0-9][0-9]*\(\.[0-9][0-9]*\)*\).*$/\1/p')"
 
@@ -275,7 +273,7 @@ make_empty_commit()
 	else
 		case "$ZONE" in
 			-[01][0-9][0-5][0-9]|+[01][0-9][0-5][0-9])
-				:;;
+				;;
 			[01][0-9][0-5][0-9])
 				ZONE="+$ZONE"
 				;;
@@ -429,7 +427,7 @@ ref_exists_rev()
 {
 	case "$1" in
 		refs/*)
-			:;;
+			;;
 		$octet20)
 			printf '%s' "$1"
 			return;;
@@ -455,9 +453,9 @@ ref_exists_rev_short()
 {
 	case "$1" in
 		refs/*)
-			:;;
+			;;
 		$octet20)
-			:;;
+			;;
 		*)
 			die "ref_exists_rev_short requires fully-qualified ref name"
 	esac
@@ -537,7 +535,7 @@ verify_topgit_branch()
 		HEAD)
 			_verifyname="$(git symbolic-ref HEAD 2>/dev/null || :)"
 			[ -n "$_verifyname" -o "$2" = "-f" ] || die "HEAD is not a symbolic ref"
-			case "$_verifyname" in refs/heads/*) :;; *)
+			case "$_verifyname" in refs/heads/*);;*)
 				[ "$2" != "-f" ] || return 1
 				die "HEAD is not a symbolic ref to the refs/heads namespace"
 			esac
@@ -752,7 +750,7 @@ recurse_deps()
 		_dep_missing=
 		if [ "$_ismissing" != "0" ]; then
 			_dep_missing=1
-			case " $missing_deps " in *" $_dep "*) :;; *)
+			case " $missing_deps " in *" $_dep "*);;*)
 				missing_deps="${missing_deps:+$missing_deps }$_dep"
 			esac
 		fi
@@ -1211,7 +1209,7 @@ else
 
 	# If tg contains a '/' but does not start with one then replace it with an absolute path
 
-	case "$0" in /*) :;; */*)
+	case "$0" in /*) ;; */*)
 		tgdir="$(cd "$(dirname "$0")" && pwd -P)/"
 		tg="$tgdir$tgname"
 	esac
