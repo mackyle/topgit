@@ -1,6 +1,6 @@
 # Test framework from Git with modifications.
 #
-# Modifications Copyright (C) 2016 Kyle J. McKay
+# Modifications Copyright (C) 2016,2017 Kyle J. McKay.  All rights reserved.
 # Modifications made:
 #
 #  * Many "GIT_..." variables removed -- some were kept as TESTLIB_..." instead
@@ -66,54 +66,80 @@ getcmd() {
 	return $_getcmd_ec
 }
 
-whats_the_dir() (
-	# determine "$1"'s directory
-	_name="$1"
-	while [ -L "$_name" ]; do
-		_oldname="$_name"
-		_name="$(readlink "$_name")"
-		case "$_name" in "/"*) :;; *)
-			_name="$(dirname "$_oldname")/$_name"
+# usage: whats_the_dir [-P | -L] [--] path-to-something varname
+# determine path-to-something's directory and store it into varname
+# without "-P" or "-L" a relative dirname may be returned
+whats_the_dir() {
+	# determine "$1"'s directory and store it into the var name passed as "$2"
+	if [ "z$1" = "z-P" -o "z$1" = "z-L" ]; then
+		if [ "z$2" = "z--" ]; then
+			set -- "$3" "$4" "$1"
+		else
+			set -- "$2" "$3" "$1"
+		fi
+	elif [ "z$1" = "z--" ]; then
+		shift
+	fi
+	case "$1" in *"/"*);;*) set -- "./$1" "$2" "$3"; esac
+	while [ -L "$1" ]; do
+		set -- "$(readlink "$1")" "$2" "$3" "$1"
+		case "$1" in "/"*);;*)
+			set -- "${4%/*}/$1" "$2" "$3"
 		esac
 	done
-	_name="$(dirname "$_name")"
-	if [ -d "$_name" ]; then
-		(cd "$_name" && pwd)
-	else
-		printf '%s\n' "$_name"
-	fi
-)
-
-vcmp() (
-	# Compare $1 to $2 each of which must match \d+(\.\d+)*
-	# An empty string ('') for $1 or $2 is treated like 0
-	# Outputs:
-	#  -1 if $1 < $2
-	#   0 if $1 = $2
-	#   1 if $1 > $2
-	# Note that $(vcmp 1.8 1.8.0.0.0.0) correctly outputs 0.
-	while
-		_a="${1%%.*}"
-		_b="${2%%.*}"
-		[ -n "$_a" -o -n "$_b" ]
-	do
-		if [ "${_a:-0}" -lt "${_b:-0}" ]; then
-			echo -1
-			return
-		elif [ "${_a:-0}" -gt "${_b:-0}" ]; then
-			echo 1
-			return
+	set -- "${1%/*}" "$2" "$3"
+	if [ "z$3" != "z" ] && [ -d "$1" ] &&
+	   ! case "$1" in [!/]*|*"/./"*|*"/."|*"/../"*|*"/..") ! :; esac; then
+		[ "z$3" = "z-P" ] || set -- "$1" "$2"
+		if [ "z$3" = "z" -a \( "z$1" = "z." -o "z$1" = "z$PWD" \) ]; then
+			set -- "$PWD" "$2"
+		else
+			set -- "$(cd "$1" && pwd $3)" "$2"
 		fi
-		_a2="${1#$_a}"
-		_b2="${2#$_b}"
-		set -- "${_a2#.}" "${_b2#.}"
+	fi
+	eval "$2=\"$1\""
+}
+
+vcmp() {
+	# Compare $1 to $3 each of which must match ^[^0-9]*\d*(\.\d*)*.*$
+	# where only the "\d*" parts in the regex participate in the comparison
+	# Since EVERY string matches that regex this function is easy to use
+	# An empty string ('') for $1 or $3 or any "\d*" part is treated as 0
+	# $2 is a compare op '<', '<=', '=', '==', '!=', '>=', '>'
+	# Return code is 0 for true, 1 for false (or unknown compare op)
+	# There is NO difference in behavior between '=' and '=='
+	# Note that "vcmp 1.8 == 1.8.0.0.0.0" correctly returns 0
+	set -- "$1" "$2" "$3" "${1%%[0-9]*}" "${3%%[0-9]*}"
+	set -- "${1#"$4"}" "$2" "${3#"$5"}"
+	set -- "${1%%[!0-9.]*}" "$2" "${3%%[!0-9.]*}"
+	while
+		vcmp_a_="${1%%.*}"
+		vcmp_b_="${3%%.*}"
+		[ "z$vcmp_a_" != "z" -o "z$vcmp_b_" != "z" ]
+	do
+		if [ "${vcmp_a_:-0}" -lt "${vcmp_b_:-0}" ]; then
+			unset vcmp_a_ vcmp_b_
+			case "$2" in "<"|"<="|"!=") return 0; esac
+			return 1
+		elif [ "${vcmp_a_:-0}" -gt "${vcmp_b_:-0}" ]; then
+			unset vcmp_a_ vcmp_b_
+			case "$2" in ">"|">="|"!=") return 0; esac
+			return 1;
+		fi
+		vcmp_a_="${1#$vcmp_a_}"
+		vcmp_b_="${3#$vcmp_b_}"
+		set -- "${vcmp_a_#.}" "$2" "${vcmp_b_#.}"
 	done
-	echo 0
-)
+	unset vcmp_a_ vcmp_b_
+	case "$2" in "="|"=="|"<="|">=") return 0; esac
+	return 1
+}
+
+vcmp "$@"
 
 error() {
 	say_color error "${LF}error: $*" >&7
-	printf '%s\n' "Bail out! $(basename "$0"):${callerlno:+$callerlno:} error: $*" >&5
+	printf '%s\n' "Bail out! ${0##*/}:${callerlno:+$callerlno:} error: $*" >&5
 	TESTLIB_EXIT_OK=t
 	[ -z "$TESTLIB_TEST_PARENT_INT_ON_ERROR" ] || kill -INT $PPID || :
 	kill -USR1 $$
@@ -153,7 +179,7 @@ test_failure_() {
 	shift
 	say_color_tap error "not ok $test_count - $1"
 	shift
-	printf '%s\n' "$(printf '%s\n' "failed: $(basename "$0")${tlno:+:$tlno}$LF$*")" |
+	printf '%s\n' "$(printf '%s\n' "failed: ${0##*/}${tlno:+:$tlno}$LF$*")" |
 	sed -n -e '
 2 {
   :loop
@@ -564,8 +590,14 @@ test_done() {
 		fi
 
 		test -d "$remove_trash" &&
-		cd "$(dirname "$remove_trash")" &&
-		rm -rf "$(basename "$remove_trash")"
+		cd "${remove_trash%/*}" &&
+		test_done_td_="${remove_trash##*/}" &&
+		test -e "$test_done_td_" &&
+		rm -rf "$test_done_td_" &&
+		! test -e "$test_done_td_" || {
+			chmod -R u+w "$test_done_td_" &&
+			rm -rf "$test_done_td_"
+		}
 
 		test_at_end_hook_
 
@@ -623,7 +655,8 @@ done,*)
 	;;
 *' --tee '*|*' --verbose-log '*)
 	mkdir -p "$TEST_OUTPUT_DIRECTORY/test-results"
-	BASE="$TEST_OUTPUT_DIRECTORY/test-results/$(basename "$0" .sh)"
+	BASE="$TEST_OUTPUT_DIRECTORY/test-results/${0##*/}"
+	BASE="${BASE%.sh}"
 
 	# Make this filename available to the sub-process in case it is using
 	# --verbose-log.
@@ -690,8 +723,7 @@ say_color_tap() {
 
 
 # Fix some commands on Windows
-: "${uname_s:=$(uname -s)}"
-case "$uname_s" in
+case "${UNAME_S:=$(uname -s)}" in
 *MINGW*)
 	# Windows has its own (incompatible) sort and find
 	sort() {
@@ -724,7 +756,7 @@ test_lib_main_init_funcs_done=1
 test_lib_main_init_generic() {
 # Begin test_lib_main_init_generic
 
-[ -n "$TESTLIB_DIRECTORY" ] || TESTLIB_DIRECTORY="$(whats_the_dir "${TEST_DIRECTORY:-.}/test-lib.sh")"
+[ -n "$TESTLIB_DIRECTORY" ] || whats_the_dir -L -- "${TEST_DIRECTORY:-.}/test-lib.sh" TESTLIB_DIRECTORY
 [ -f "$TESTLIB_DIRECTORY/test-lib.sh" ] && [ -f "$TESTLIB_DIRECTORY/test-lib-main.sh" ] &&
 [ -f "$TESTLIB_DIRECTORY/test-lib-functions.sh" ] ||
 fatal "error: invalid TESTLIB_DIRECOTRY: $TESTLIB_DIRECTORY"
@@ -758,8 +790,10 @@ then
 	TEST_OUTPUT_DIRECTORY="$TEST_DIRECTORY"
 fi
 [ -d "$TESTLIB_DIRECTORY"/empty ] || {
-	mkdir "$TESTLIB_DIRECTORY/empty"
-	chmod a-w "$TESTLIB_DIRECTORY/empty"
+	mkdir "$TESTLIB_DIRECTORY/empty" || :
+	chmod a-w "$TESTLIB_DIRECTORY/empty" || :
+	test -d "$TESTLIB_DIRECTORY"/empty ||
+	fatal "error: could not make empty directory: '$TESTLIB_DIRECTORY/empty'"
 }
 EMPTY_DIRECTORY="$TESTLIB_DIRECTORY/empty"
 export TEST_DIRECTORY TEST_OUTPUT_DIRECTORY EMPTY_DIRECTORY
@@ -768,7 +802,7 @@ export TEST_DIRECTORY TEST_OUTPUT_DIRECTORY EMPTY_DIRECTORY
 # It appears that people try to run tests with missing perl or git...
 git_version="$("$GIT_PATH" --version 2>&1)" ||
 	fatal 'error: you do not seem to have git available?'
-case "$git_version" in [Gg][Ii][Tt]\ [Vv][Ee][Rr][Ss][Ii][Oo][Nn]\ [0-9]*) :;; *)
+case "$git_version" in [Gg][Ii][Tt]\ [Vv][Ee][Rr][Ss][Ii][Oo][Nn]\ [0-9]*);;*)
 	fatal "error: git --version returned bogus value: $git_version"
 esac
 #"$PERL_PATH" --version >/dev/null 2>&1 ||
@@ -835,8 +869,7 @@ unset CDPATH
 unset GREP_OPTIONS
 unset UNZIP
 
-case $(echo $GIT_TRACE |tr "[A-Z]" "[a-z]") in
-1|2|true)
+case "$GIT_TRACE" in 1|2|[Tt][Rr][Uu][Ee])
 	GIT_TRACE=4
 	;;
 esac
@@ -859,7 +892,7 @@ LF='
 
 # UTF-8 ZERO WIDTH NON-JOINER, which HFS+ ignores
 # when case-folding filenames
-u200c=$(printf '\342\200\214')
+u200c="$(printf '\342\200\214')"
 
 export _x05 _x40 _z40 LF u200c EMPTY_TREE EMPTY_BLOB
 
@@ -983,18 +1016,12 @@ else
 fi
 tg_version="$(tg --version)" ||
 	fatal 'error: tg --version failed!'
-case "$tg_version" in [Tt][Oo][Pp][Gg][Ii][Tt]\ [Vv][Ee][Rr][Ss][Ii][Oo][Nn]\ [0-9]*) :;; *)
+case "$tg_version" in [Tt][Oo][Pp][Gg][Ii][Tt]\ [Vv][Ee][Rr][Ss][Ii][Oo][Nn]\ [0-9]*);;*)
 	fatal "error: tg --version returned bogus value: $tg_version"
 esac
 
-if [ -n "$GIT_MINIMUM_VERSION" ] && [ -n "$git_version" ]; then
-	git_vernum="$(sed -ne '1s/^[^0-9]*\([0-9][0-9]*\(\.[0-9][0-9]*\)*\).*$/\1/p' <<-EOT
-		$git_version
-		EOT
-		)"
-	[ "$(vcmp "$git_vernum" $GIT_MINIMUM_VERSION)" -ge 0 ] ||
-		fatal "git version >= $GIT_MINIMUM_VERSION required but found git version $git_vernum instead"
-fi
+vcmp "$git_version" '>=' "$GIT_MINIMUM_VERSION" ||
+fatal "git version >= $GIT_MINIMUM_VERSION required but found \"$git_version\" instead"
 
 if test -z "$TESTLIB_TEST_CMP"
 then
@@ -1007,8 +1034,7 @@ then
 fi
 
 # Fix some commands on Windows
-: "${uname_s:=$(uname -s)}"
-case $uname_s in
+case "${UNAME_S:=$(uname -s)}" in
 *MINGW*)
 	# no POSIX permissions
 	# backslashes in pathspec are converted to '/'
@@ -1039,7 +1065,7 @@ test_lib_main_init_funcs
 
 test_lazy_prereq PIPE '
 	# test whether the filesystem supports FIFOs
-	case "${uname_s:-$(uname -s)}" in
+	case "${UNAME_S:=$(uname -s)}" in
 	CYGWIN*|MINGW*)
 		false
 		;;
@@ -1066,8 +1092,8 @@ test_lazy_prereq CASE_INSENSITIVE_FS '
 
 test_lazy_prereq UTF8_NFD_TO_NFC '
 	# check whether FS converts nfd unicode to nfc
-	auml=$(printf "\303\244")
-	aumlcdiar=$(printf "\141\314\210")
+	auml="$(printf "\303\244")"
+	aumlcdiar="$(printf "\141\314\210")"
 	>"$auml" &&
 	case "$(echo *)" in
 	"$aumlcdiar")
@@ -1092,7 +1118,7 @@ test_lazy_prereq USR_BIN_TIME '
 '
 
 test_lazy_prereq NOT_ROOT '
-	uid=$(id -u) &&
+	uid="$(id -u)" &&
 	test "$uid" != 0
 '
 
@@ -1193,14 +1219,22 @@ trap 'exit $?' HUP INT QUIT ABRT PIPE TERM
 trap 'TESTLIB_EXIT_OK=t; exit 1' USR1
 
 # Test repository
-TRASH_DIRECTORY="trash directory.$(basename "$0" .sh)"
+TRASH_DIRECTORY="trash directory.${0##*/}"
+TRASH_DIRECTORY="${TRASH_DIRECTORY%.sh}"
 test -n "$root" && TRASH_DIRECTORY="$root/$TRASH_DIRECTORY"
 case "$TRASH_DIRECTORY" in
 /*) ;; # absolute path is good
  *) TRASH_DIRECTORY="$TEST_OUTPUT_DIRECTORY/$TRASH_DIRECTORY" ;;
 esac
 test ! -z "$debug" || remove_trash=$TRASH_DIRECTORY
-! [ -e "$TRASH_DIRECTORY" ] || rm -fr "$TRASH_DIRECTORY" || {
+! test -e "$TRASH_DIRECTORY" || {
+	rm -rf "$TRASH_DIRECTORY" &&
+	! test -e "$TRASH_DIRECTORY" || {
+		chmod -R u+w "$TRASH_DIRECTORY" &&
+		rm -rf "$TRASH_DIRECTORY" &&
+		! test -e "$TRASH_DIRECTORY"
+	}
+} || {
 	TESTLIB_EXIT_OK=t
 	echo >&5 "FATAL: Cannot prepare test area"
 	exit 1

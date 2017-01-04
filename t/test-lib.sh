@@ -1,5 +1,6 @@
 # Test libe caching support
-# Copyright (C) 2016 Kyle J. McKay.  All rights reserved.
+# Copyright (C) 2016,2017 Kyle J. McKay.
+# All rights reserved.
 # License GPLv2+
 
 if [ "$1" = "--cache" ]; then
@@ -20,12 +21,12 @@ if [ "$1" = "--cache" ]; then
 		TZ _x05 _x40 _z40 EMPTY_TREE EMPTY_BLOB LF u200c color \
 		immediate TESTLIB_TEST_LONG run_list help quiet \
 		say_color_error say_color_skip say_color_warn say_color_pass \
-		say_color_info say_color_reset say_color_ TERM BASH_XTRACEFD \
+		say_color_info say_color_ TERM BASH_XTRACEFD \
 		test_failure test_count test_fixed test_broken test_success \
 		test_external_has_tap last_verbose GIT_MINIMUM_VERSION \
 		TG_TEST_INSTALLED uname_s test_prereq TG_GIT_MINIMUM_VERSION \
 		TG_INST_BINDIR TG_INST_CMDDIR TG_INST_HOOKSDIR TG_VERSION \
-		TG_INST_SHAREDIR git_version git_vernum tg_version \
+		TG_INST_SHAREDIR git_version tg_version UNAME_S \
 		lazily_tested_prereq satisfied_prereq PATH TESTLIB_TEST_CMP \
 		GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_PATH DIFF \
 		GIT_COMMITTER_NAME GIT_COMMITTER_EMAIL GIT_TEMPLATE_DIR \
@@ -37,7 +38,7 @@ if [ "$1" = "--cache" ]; then
 		GIT_ATTR_NOSYSTEM GIT_MERGE_VERBOSITY GIT_MERGE_AUTOEDIT \
 		GIT_AUTHOR_EMAIL GIT_AUTHOR_NAME GIT_COMMITTER_EMAIL TZ \
 		GIT_COMMITTER_NAME EDITOR GIT_TRACE_BARE LANG LC_ALL PAGER \
-		_x05 _x40 _z40 EMPTY_TREE EMPTY_BLOB LF u200c \
+		_x05 _x40 _z40 EMPTY_TREE EMPTY_BLOB LF u200c UNAME_S \
 		TERM SHELL_PATH PERL_PATH GIT_PATH DIFF TG_TEST_INSTALLED \
 		test_prereq TESTLIB_NO_TOLERATE TESTLIB_TEST_LONG"
 
@@ -46,6 +47,9 @@ if [ "$1" = "--cache" ]; then
 
 	# strip off --cache
 	shift
+
+	# set UNAME_S if needed
+	: "${UNAME_S:=$(uname -s)}"
 
 	# run the standard init but avoid doing any --tee processing now
 	. ./test-lib-main.sh
@@ -108,35 +112,37 @@ if [ "$1" = "--cache" ]; then
 			print join(" ", @vars);
 		')"
 
-	# writes the single-quoted value of the variable name passed as
-	# the first argument to stdout (will be '' if unset) followed by the
-	# second followed by a newline; use `quotevar 3 "" "$value"` to quote
-	# a value directly
+	# stores the single-quoted value of the variable name passed as
+	# the first argument into the variable name passed as the second
+	# (use quotevar 3 varname "$value" to quote a value directly)
 	quotevar() {
-		eval "_scratch=\"\${$1}\""
-		case "$_scratch" in *"'"*)
-			_scratch="$(printf '%s\nZ\n' "$_scratch" | sed "s/'/'\\\''/g")"
-			_scratch="${_scratch%??}"
+		eval "set -- \"\${$1}\" \"$2\""
+		case "$1" in *"'"*)
+			set -- "$(printf '%s\nZ\n' "$1" | sed "s/'/'\\\''/g")" "$2"
+			set -- "${1%??}" "$2"
 		esac
-		printf "'%s'%s\n" "$_scratch" "$2"
+		eval "$2=\"'$1'\""
 	}
 	# return true if variable name passed as the first argument is
 	# set even if to an empty value
 	isvarset() {
-		test "$(eval 'echo "${'$1'+set}"')" = "set"
+		eval "test \"z\${$1+set}\" = \"zset\""
 	}
-	PWD_SQ="$(quotevar PWD)"
+	quotevar PWD PWD_SQ
+	quotevar TESTLIB_DIRECTORY TD_SQ
 	{
 		echo unset $UNSET_VARS "&&"
 		while read vname && [ -n "$vname" ]; do
-			! isvarset $vname || { printf "%s=" $vname; quotevar $vname " &&"; }
+			! isvarset $vname || { quotevar "$vname" qv; printf '%s=%s &&\n' "$vname" "$qv"; }
 		done <<-EOT
-		$(echo $CACHE_VARS | sed 'y/ /\n/' | sort -u)
+		$(echo $CACHE_VARS | LC_ALL=C sed 'y/ /\n/' | LC_ALL=C sort -u)
+		say_color_reset
 		EOT
 		echo export $EXPORT_VARS "&&"
-		echo "cd $PWD_SQ &&"
-		echo ". \"$TESTLIB_DIRECTORY/test-lib-functions.sh\" &&"
-		echo ". \"$TESTLIB_DIRECTORY/test-lib-main.sh\" &&"
+		printf '%s\n' \
+			"cd $PWD_SQ &&" \
+			". $TD_SQ/test-lib-functions.sh &&" \
+			". $TD_SQ/test-lib-main.sh &&"
 		echo "TESTLIB_CACHE_ACTIVE=1"
 	} >TG-TEST-CACHE
 	printf ". %s/TG-TEST-CACHE || { echo 'error: missing '\'%s'/TG-TEST-CACHE'\' >&2; exit 1; }\n" "$PWD_SQ" "$PWD_SQ"
@@ -144,23 +150,39 @@ if [ "$1" = "--cache" ]; then
 	exit 0
 fi
 
-whats_the_dir() (
-	# determine "$1"'s directory
-	_name="$1"
-	while [ -L "$_name" ]; do
-		_oldname="$_name"
-		_name="$(readlink "$_name")"
-		case "$_name" in "/"*) :;; *)
-			_name="$(dirname "$_oldname")/$_name"
+# usage: whats_the_dir [-P | -L] [--] path-to-something varname
+# determine path-to-something's directory and store it into varname
+# without "-P" or "-L" a relative dirname may be returned
+whats_the_dir() {
+	# determine "$1"'s directory and store it into the var name passed as "$2"
+	if [ "z$1" = "z-P" -o "z$1" = "z-L" ]; then
+		if [ "z$2" = "z--" ]; then
+			set -- "$3" "$4" "$1"
+		else
+			set -- "$2" "$3" "$1"
+		fi
+	elif [ "z$1" = "z--" ]; then
+		shift
+	fi
+	case "$1" in *"/"*);;*) set -- "./$1" "$2" "$3"; esac
+	while [ -L "$1" ]; do
+		set -- "$(readlink "$1")" "$2" "$3" "$1"
+		case "$1" in "/"*);;*)
+			set -- "${4%/*}/$1" "$2" "$3"
 		esac
 	done
-	_name="$(dirname "$_name")"
-	if [ -d "$_name" ]; then
-		(cd "$_name" && pwd)
-	else
-		printf '%s\n' "$_name"
+	set -- "${1%/*}" "$2" "$3"
+	if [ "z$3" != "z" ] && [ -d "$1" ] &&
+	   ! case "$1" in [!/]*|*"/./"*|*"/."|*"/../"*|*"/..") ! :; esac; then
+		[ "z$3" = "z-P" ] || set -- "$1" "$2"
+		if [ "z$3" = "z" -a \( "z$1" = "z." -o "z$1" = "z$PWD" \) ]; then
+			set -- "$PWD" "$2"
+		else
+			set -- "$(cd "$1" && pwd $3)" "$2"
+		fi
 	fi
-)
+	eval "$2=\"$1\""
+}
 
 [ -z "$TESTLIB_CACHE" ] || eval "$TESTLIB_CACHE" || exit $?
 if [ -n "$TESTLIB_CACHE_ACTIVE" ]; then
@@ -175,6 +197,8 @@ if [ -n "$TESTLIB_CACHE_ACTIVE" ]; then
 	test_lib_main_init_specific "$@"
 else
 	# Normal, non-cached case where we run the init function
-	. "$(whats_the_dir "${TEST_DIRECTORY:-.}/test-lib.sh")/test-lib-main.sh"
+	whats_the_dir -- "${TEST_DIRECTORY:-.}/test-lib.sh" testlib_dir_
+	. "$testlib_dir_/test-lib-main.sh" &&
+	unset _testlib_dir_ &&
 	test_lib_main_init "$@"
 fi

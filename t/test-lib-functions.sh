@@ -1,6 +1,6 @@
 # Test function library from Git with modifications.
 #
-# Modifications Copyright (C) 2016 Kyle J. McKay
+# Modifications Copyright (C) 2016,2017 Kyle J. McKay.  All rights reserved.
 # Modifications made:
 #
 #  * Many "GIT_..." variables removed -- some were kept as TESTLIB_..." instead
@@ -15,7 +15,7 @@
 #
 #  * Anything related to valgrind or perf has been stripped out
 #
-#  * Many other minor changes
+#  * Many other minor changes and efficiencies
 #
 # Library of functions shared by all tests scripts, included by
 # test-lib.sh.
@@ -901,11 +901,6 @@ perl() (
 	"exec" "$PERL_PATH" "$@"
 )
 
-# Is the value one of the various ways to spell a boolean true/false?
-test_normalize_bool() {
-	git -c zzz-magick.variable="$1" config --bool zzz-magick.variable 2>/dev/null
-}
-
 # Given a variable $1, normalize the value of it to one of "true",
 # "false", or "auto" and store the result to it.
 #
@@ -923,18 +918,29 @@ test_normalize_bool() {
 # took any non-empty string as "please test".
 
 test_tristate() {
-	if eval "test x\"\${$1+isset}\" = xisset"
+	if eval "test \"z\${$1+set}\" = \"zset\""
 	then
 		# explicitly set
-		eval "
-			case \"\$$1\" in
-			'')	$1=false ;;
-			auto)	;;
-			*)	$1=\$(test_normalize_bool \$$1 || echo true) ;;
-			esac
-		"
+		eval "set -- \"\$1\" \"\$$1\""
+		case "$2" in [-+]0?*|0?*)
+			set -- "$1" "${2#[-+]}"
+			set -- "$1" "$2" "${2%%[!0]*}"
+			set -- "$1" "${2#"$3"}"
+		esac
+		case "$2" in
+			[Aa][Uu][Tt][Oo])
+				set "$1" "auto";;
+			""|[Ff][Aa][Ll][Ss][Ee]|[Oo][Ff][Ff]|[Nn][Oo]|[-+]0|0)
+				set "$1" "false";;
+			*)
+				# Git is actually more picky than this in that
+				# only true/on/yes/(int)!=0 qualify else an err
+				# but the original code treated those as true
+				set "$1" "true";;
+		esac
+		eval "$1=\"\$2\""
 	else
-		eval "$1=auto"
+		eval "$1=\"auto\""
 	fi
 }
 
