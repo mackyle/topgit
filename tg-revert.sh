@@ -387,7 +387,7 @@ while read -r name rev; do
 			fi
 		fi
 	else
-		[ -z "$dryrun" -a -n "$quiet" ] || printf "* %-*s  %s\n" $notewidth "[no change]" "$name"
+		: #[ -z "$dryrun" -a -n "$quiet" ] || printf "* %-*s  %s\n" $notewidth "[no change]" "$name"
 	fi
 done
 
