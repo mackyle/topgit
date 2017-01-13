@@ -289,7 +289,7 @@ if [ -n "$drop$clear$delete" ]; then
 	fi
 fi
 if [ -n "$reflog" ]; then
-	[ "$tagname" != "refs/tgstash" -o -n "$setreflogmsg" ] || reflogmsg=1
+	[ "$refname" = "refs/tgstash" -o -n "$setreflogmsg" ] || reflogmsg=1
 	git rev-parse --verify --quiet "$refname" -- >/dev/null ||
 	die "no such ref: $refname"
 	[ -s "$git_dir/logs/$refname" ] ||
