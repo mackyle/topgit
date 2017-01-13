@@ -116,7 +116,11 @@ case "$refname" in HEAD|refs/*);;*)
 	   [ -n "$reftest" ]; then
 		refname="$reftest$suffix"
 	else
-		refname="refs/tags/$refname$suffix"
+		if hash="$(git rev-parse --quiet --verify "$refname$suffix")"; then
+			refname="$hash"
+		else
+			refname="refs/tags/$refname$suffix"
+		fi
 	fi
 esac
 reftype=tag
