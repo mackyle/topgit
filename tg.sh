@@ -65,30 +65,38 @@ die()
 
 vcmp()
 {
-	# Compare $1 to $2 each of which must match \d+(\.\d+)*
-	# An empty string ('') for $1 or $2 is treated like 0
-	# Outputs:
-	#  -1 if $1 < $2
-	#   0 if $1 = $2
-	#   1 if $1 > $2
-	# Note that $(vcmp 1.8 1.8.0.0.0.0) correctly outputs 0.
+	# Compare $1 to $3 each of which must match ^[^0-9]*\d*(\.\d*)*.*$
+	# where only the "\d*" parts in the regex participate in the comparison
+	# Since EVERY string matches that regex this function is easy to use
+	# An empty string ('') for $1 or $3 or any "\d*" part is treated as 0
+	# $2 is a compare op '<', '<=', '=', '==', '!=', '>=', '>'
+	# Return code is 0 for true, 1 for false (or unknown compare op)
+	# There is NO difference in behavior between '=' and '=='
+	# Note that "vcmp 1.8 == 1.8.0.0.0.0" correctly returns 0
+	set -- "$1" "$2" "$3" "${1%%[0-9]*}" "${3%%[0-9]*}"
+	set -- "${1#"$4"}" "$2" "${3#"$5"}"
+	set -- "${1%%[!0-9.]*}" "$2" "${3%%[!0-9.]*}"
 	while
-		_a="${1%%.*}"
-		_b="${2%%.*}"
-		[ -n "$_a" -o -n "$_b" ]
+		vcmp_a_="${1%%.*}"
+		vcmp_b_="${3%%.*}"
+		[ "z$vcmp_a_" != "z" -o "z$vcmp_b_" != "z" ]
 	do
-		if [ "${_a:-0}" -lt "${_b:-0}" ]; then
-			echo -1
-			return
-		elif [ "${_a:-0}" -gt "${_b:-0}" ]; then
-			echo 1
-			return
+		if [ "${vcmp_a_:-0}" -lt "${vcmp_b_:-0}" ]; then
+			unset vcmp_a_ vcmp_b_
+			case "$2" in "<"|"<="|"!=") return 0; esac
+			return 1
+		elif [ "${vcmp_a_:-0}" -gt "${vcmp_b_:-0}" ]; then
+			unset vcmp_a_ vcmp_b_
+			case "$2" in ">"|">="|"!=") return 0; esac
+			return 1;
 		fi
-		_a2="${1#$_a}"
-		_b2="${2#$_b}"
-		set -- "${_a2#.}" "${_b2#.}"
+		vcmp_a_="${1#$vcmp_a_}"
+		vcmp_b_="${3#$vcmp_b_}"
+		set -- "${vcmp_a_#.}" "$2" "${vcmp_b_#.}"
 	done
-	echo 0
+	unset vcmp_a_ vcmp_b_
+	case "$2" in "="|"=="|"<="|">=") return 0; esac
+	return 1
 }
 
 precheck() {
@@ -98,10 +106,9 @@ precheck() {
 	case "$git_version" in [Gg]"it version "*);;*)
 		die "'git version' output does not start with 'git version '"
 	esac
-	git_vernum="$(echo "$git_version" | sed -ne 's/^[^0-9]*\([0-9][0-9]*\(\.[0-9][0-9]*\)*\).*$/\1/p')"
 
-	[ "$(vcmp "$git_vernum" $GIT_MINIMUM_VERSION)" -ge 0 ] ||
-		die "git version >= $GIT_MINIMUM_VERSION required but found git version $git_vernum instead"
+	vcmp "$git_version" '>=' "$GIT_MINIMUM_VERSION" ||
+		die "git version >= $GIT_MINIMUM_VERSION required but found $git_version instead"
 }
 
 case "$1" in version|--version|-V)
@@ -1134,7 +1141,7 @@ initial_setup()
 	export GIT_MERGE_AUTOEDIT
 
 	auhopt=
-	[ "$(vcmp "$git_vernum" 2.9)" -lt 0 ] || auhopt="--allow-unrelated-histories"
+	! vcmp "$git_version" '>=' "2.9" || auhopt="--allow-unrelated-histories"
 	git_dir="$(git rev-parse --git-dir)"
 	root_dir="$(git rev-parse --show-cdup)"; root_dir="${root_dir:-.}"
 	logrefupdates="$(git config --bool core.logallrefupdates 2>/dev/null || :)"
