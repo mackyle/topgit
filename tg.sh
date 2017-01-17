@@ -383,7 +383,7 @@ branch_contains()
 	fi
 	[ -d "$tg_cache_dir/$1/.bc/$2" ] || mkdir -p "$tg_cache_dir/$1/.bc/$2" 2>/dev/null || :
 	_result=0
-	[ -z "$(git rev-list --max-count=1 ^"$_revb1" "$_revb2" --)" ] || _result=$?
+	[ "$(git rev-list --count --max-count=1 "$_revb2" --not "$_revb1" --)" = "0" ] || _result=1
 	if [ -d "$tg_cache_dir/$1/.bc/$2" ]; then
 		echo "$_result" "$_revb1" "$_revb2" >"$tg_cache_dir/$1/.bc/$2/.d"
 	fi

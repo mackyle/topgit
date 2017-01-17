@@ -42,7 +42,7 @@ name="$1"
 # true if $1 is an ancestor of (or the same as) $2 
 is_ancestor()
 {
-	[ -z "$(git rev-list --max-count=1 "$1" --not "$2" --)" ]
+	[ "$(git rev-list --count --max-count=1 "$1" --not "$2" --)" = "0" ]
 }
 
 if [ -n "$heads" ]; then
