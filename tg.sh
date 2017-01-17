@@ -318,6 +318,7 @@ setup_hook()
 		fi
 	else
 		hook_call="exec $hook_call"
+		[ -d "$git_dir/hooks" ] || mkdir "$git_dir/hooks" || :
 	fi
 	# Don't call hook if tg is not installed
 	hook_call="if command -v \"$tgname\" >/dev/null 2>&1; then $hook_call; fi"
