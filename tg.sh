@@ -1173,9 +1173,90 @@ initial_setup()
 	tg_tmp_dir="$(mktemp -d "$git_dir/tg-tmp.XXXXXX")"
 	tg_ref_cache="$tg_tmp_dir/tg~ref-cache"
 
+	# catch errors if topbases is used without being set
+	unset tg_topbases_set
+	topbases="programmer*:error"
+}
+
+set_topbases()
+{
 	# refer to "top-bases" in a refname with $topbases
 
-	topbases="top-bases"
+	[ -z "$tg_topbases_set" ] || return 0
+
+	# See if topgit.top-bases is set to heads or refs
+	tgtb="$(git config "topgit.top-bases" 2>/dev/null || :)"
+	if [ -n "$tgtb" ] && [ "$tgtb" != "heads" ] && [ "$tgtb" != "refs" ]; then
+		if [ -n "$1" ]; then
+			# never die on the hook script
+			unset tgtb
+		else
+			die "invalid \"topgit.top-bases\" setting (must be \"heads\" or \"refs\")"
+		fi
+	fi
+	if [ -n "$tgtb" ]; then
+		topbases="heads/{top-bases}"
+		[ "$tgtb" = "heads" ] || topbases="top-bases"
+		# MUST NOT be exported
+		unset tgtb tg_topbases_set
+		tg_topbases_set=1
+		return 0
+	fi
+	unset tgtb
+
+	# check heads and top-bases and see what state the current
+	# repository is in.  remotes are ignored.
+
+	hblist=" "
+	topbases=
+	both=
+	newtb="heads/{top-bases}"
+	while read -r rn && [ -n "$rn" ]; do case "$rn" in
+		"refs/heads/{top-bases}"/*)
+			case "$hblist" in *" ${rn#refs/$newtb/} "*)
+				if [ "$topbases" != "heads/{top-bases}" ] && [ -n "$topbases" ]; then
+					both=1
+					break;
+				else
+					topbases="heads/{top-bases}"
+				fi
+			esac;;
+		"refs/top-bases"/*)
+			case "$hblist" in *" ${rn#refs/top-bases/} "*)
+				if [ "$topbases" != "top-bases" ] && [ -n "$topbases" ]; then
+					both=1
+					break;
+				else
+					topbases="top-bases"
+				fi
+			esac;;
+		"refs/heads"/*)
+			hblist="$hblist${rn#refs/heads/} ";;
+	esac; done <<-EOT
+		$(git for-each-ref --format='%(refname)' "refs/heads" "refs/top-bases")
+	EOT
+	if [ -n "$both" ]; then
+		if [ -n "$1" ]; then
+			# hook script always prefers newer without complaint
+			topbases="heads/{top-bases}"
+		else
+			# Complain and die
+			err "repository contains existing TopGit branches"
+			err "but some use refs/top-bases/... for the base"
+			err "and some use refs/heads/{top-bases}/... for the base"
+			err "with the latter being the new, preferred location"
+			err "set \"topgit.top-bases\" to either \"heads\" to use"
+			err "the new heads/{top-bases} location or \"refs\" to use"
+			err "the old top-bases location."
+			die "schizophrenic repository requires topgit.top-bases setting"
+		fi
+	fi
+
+	[ -n "$topbases" ] || topbases="top-bases" # default is still top-bases
+	# MUST NOT be exported
+	unset hblist both newtb rn tg_topases_set
+	tg_topbases_set=1
+	return 0
 }
 
 # return the "realpath" for the item except the leaf is not resolved if it's
@@ -1204,6 +1285,7 @@ if [ -n "$tg__include" ]; then
 	# ensure setup happens
 
 	initial_setup
+	set_topbases 1
 
 else
 
@@ -1358,6 +1440,9 @@ else
 				setup_ours
 				setup_hook "pre-commit"
 			fi
+
+			# everything but rebase needs topbases set
+			[ "$cmd" = "rebase" ] || set_topbases
 
 			_use_ref_cache=
 			tg_read_only=1
