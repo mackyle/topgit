@@ -397,13 +397,13 @@ create_ref_dirs()
 	echo 1 >"$tg_tmp_dir/tg~ref-dirs-created"
 }
 
-# If the first argument is non-empty, outputs "1" if this call created the cache
-create_ref_cache()
+# If the first argument is non-empty, stores "1" there if this call created the cache
+v_create_ref_cache()
 {
 	[ -n "$tg_ref_cache" -a ! -s "$tg_ref_cache" ] || return 0
 	_remotespec=
 	[ -z "$base_remote" ] || _remotespec="refs/remotes/$base_remote"
-	[ -z "$1" ] || printf '1'
+	[ -z "$1" ] || eval "$1=1"
 	git for-each-ref --format='%(refname) %(objectname)' \
 		refs/heads "refs/$topbases" $_remotespec >"$tg_ref_cache"
 	create_ref_dirs
@@ -685,10 +685,12 @@ become_cacheable()
 {
 	_old_tg_read_only="$tg_read_only"
 	if [ -z "$tg_read_only" ]; then
+		! [ -e "$tg_tmp_dir/cached" ] && ! [ -e "$tg_tmp_dir/tg~ref-dirs-created" ] ||
 		rm -rf "$tg_tmp_dir/cached" "$tg_tmp_dir/tg~ref-dirs-created"
 		tg_read_only=1
 	fi
-	_my_ref_cache="$(create_ref_cache 1)"
+	_my_ref_cache=
+	v_create_ref_cache _my_ref_cache
 	_my_ref_cache="${_my_ref_cache:+1}"
 	tg_read_only="undo${_my_ref_cache:-0}-$_old_tg_read_only"
 }
@@ -710,6 +712,7 @@ become_non_cacheable()
 {
 	remove_ref_cache
 	tg_read_only=
+	! [ -e "$tg_tmp_dir/cached" ] && ! [ -e "$tg_tmp_dir/tg~ref-dirs-created" ] ||
 	rm -rf "$tg_tmp_dir/cached" "$tg_tmp_dir/tg~ref-dirs-created"
 }
 
@@ -1494,7 +1497,7 @@ else
 				annihilate|create|delete|depend|import|update)
 					tg_read_only=;;
 			esac
-			[ -z "$_use_ref_cache" ] || create_ref_cache
+			[ -z "$_use_ref_cache" ] || v_create_ref_cache
 
 			. "$TG_INST_CMDDIR"/tg-$cmd;;
 	esac

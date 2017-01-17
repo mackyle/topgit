@@ -72,8 +72,13 @@ stash_now_if_requested() {
 }
 
 recursive_update() {
-	$tg update ${skip:+--skip}
-	_ret=$?
+	_ret=0
+	(
+		TG_RECURSIVE="[$1] $TG_RECURSIVE"
+		PS1="[$1] $PS1"
+		export PS1
+		update_branch "$1"
+	) || _ret=$?
 	[ $_ret -eq 3 ] && exit 3
 	return $_ret
 }
@@ -120,83 +125,78 @@ update_branch() {
 			switch_to_base "$_update_name"
 		fi
 
-		cat "$_depcheck" |
+		while read -r depline; do
+			dep="${depline#?}"
+			action="${depline%$dep}"
+
+			# We do not distinguish between dependencies out-of-date
+			# and base/remote out-of-date cases for $dep here,
+			# but thanks to needs_update returning : or refs/remotes/<remote>/<name>
+			# for the latter, we do correctly recurse here
+			# in both cases.
+
+			if [ x"$action" = x+ ]; then
+				case " $missing_deps " in *" $dep "*)
+					info "Skipping recursing to missing dependency: $dep"
+					continue
+				esac
+				info "Recursing to $dep..."
+				git checkout -q "$dep"
+				while ! recursive_update "$dep"; do
+					# The merge got stuck! Let the user fix it up.
+					info "You are in a subshell. If you abort the merge,"
+					info "use \`exit 1\` to abort the recursive update altogether."
+					info "Use \`exit 2\` to skip updating this branch and continue."
+					if "${SHELL:-@SHELL_PATH@}" -i </dev/tty; then
+						# assume user fixed it
+						# we could be left on a detached HEAD if we were resolving
+						# a conflict while merging a base in, fix it with a checkout
+						git checkout -q "$(strip_ref "$dep")"
+						continue
+					else
+						ret=$?
+						if [ $ret -eq 2 ]; then
+							info "Ok, I will try to continue without updating this branch."
+							break
+						else
+							info "Ok, you aborted the merge. Now, you just need to"
+							info "switch back to some sane branch using \`git$gitcdopt checkout\`."
+							exit 3
+						fi
+					fi
+				done
+				switch_to_base "$_update_name"
+			fi
+
+			# This will be either a proper topic branch
+			# or a remote base.  (branch_needs_update() is called
+			# only on the _dependencies_, not our branch itself!)
+
+			info "Updating $_update_name base with $dep changes..."
+			become_non_cacheable
+			case "$dep" in refs/*) fulldep="$dep";; *) fulldep="refs/heads/$dep"; esac
+			if ! git_merge -m "tgupdate: merge ${dep#refs/} into $topbases/$_update_name" "$fulldep^0"; then
+				if [ -z "$TG_RECURSIVE" ]; then
+					resume="\`$tgdisplay update${skip:+ --skip} $_update_name\` again"
+				else # subshell
+					resume='exit'
+				fi
+				info "Please commit merge resolution and call $resume."
+				info "It is also safe to abort this operation using \`git$gitcdopt reset --hard\`,"
+				info "but please remember that you are on the base branch now;"
+				info "you will want to switch to some normal branch afterwards."
+				rm "$_depcheck"
+				exit 2
+			fi
+		done <<-EOT
+		$(
+			<"$_depcheck" \
 			sed 's/ [^ ]* *$//' | # last is $_update_name
 			sed 's/.* \([^ ]*\)$/+\1/' | # only immediate dependencies
 			sed 's/^\([^+]\)/-\1/' | # now each line is +branch or -branch (+ == recurse)
-			uniq -s 1 | # fold branch lines; + always comes before - and thus wins within uniq
-			while read depline; do
-				dep="${depline#?}"
-				action="${depline%$dep}"
-				become_non_cacheable
-
-				# We do not distinguish between dependencies out-of-date
-				# and base/remote out-of-date cases for $dep here,
-				# but thanks to needs_update returning : or refs/remotes/<remote>/<name>
-				# for the latter, we do correctly recurse here
-				# in both cases.
-
-				if [ x"$action" = x+ ]; then
-					case " $missing_deps " in *" $dep "*)
-						info "Skipping recursing to missing dependency: $dep"
-						continue
-					esac
-					info "Recursing to $dep..."
-					git checkout -q "$dep"
-					(
-					TG_RECURSIVE="[$dep] $TG_RECURSIVE"
-					PS1="[$dep] $PS1"
-					export TG_RECURSIVE
-					export PS1
-					while ! recursive_update; do
-						# The merge got stuck! Let the user fix it up.
-						info "You are in a subshell. If you abort the merge,"
-						info "use \`exit 1\` to abort the recursive update altogether."
-						info "Use \`exit 2\` to skip updating this branch and continue."
-						if "${SHELL:-@SHELL_PATH@}" -i </dev/tty; then
-							# assume user fixed it
-							# we could be left on a detached HEAD if we were resolving
-							# a conflict while merging a base in, fix it with a checkout
-							git checkout -q "$(strip_ref "$dep")"
-							continue
-						else
-							ret=$?
-							if [ $ret -eq 2 ]; then
-								info "Ok, I will try to continue without updating this branch."
-								break
-							else
-								info "Ok, you aborted the merge. Now, you just need to"
-								info "switch back to some sane branch using \`git$gitcdopt checkout\`."
-								exit 3
-							fi
-						fi
-					done
-					)
-					check_exit_code
-					switch_to_base "$_update_name"
-				fi
-
-				# This will be either a proper topic branch
-				# or a remote base.  (branch_needs_update() is called
-				# only on the _dependencies_, not our branch itself!)
-
-				info "Updating $_update_name base with $dep changes..."
-				case "$dep" in refs/*) fulldep="$dep";; *) fulldep="refs/heads/$dep"; esac
-				if ! git_merge -m "tgupdate: merge ${dep#refs/} into $topbases/$_update_name" "$fulldep^0"; then
-					if [ -z "$TG_RECURSIVE" ]; then
-						resume="\`$tgdisplay update${skip:+ --skip} $_update_name\` again"
-					else # subshell
-						resume='exit'
-					fi
-					info "Please commit merge resolution and call $resume."
-					info "It is also safe to abort this operation using \`git$gitcdopt reset --hard\`,"
-					info "but please remember that you are on the base branch now;"
-					info "you will want to switch to some normal branch afterwards."
-					rm "$_depcheck"
-					exit 2
-				fi
-			done
-		check_exit_code
+			uniq -s 1 # fold branch lines; + always comes before - and thus wins within uniq
+		)
+		EOT
 	else
 		info "The base is up-to-date."
 	fi
@@ -261,7 +261,7 @@ update_branch() {
 
 # We are "read-only" and cacheable until the first change
 tg_read_only=1
-create_ref_cache
+v_create_ref_cache
 
 [ -z "$all" ] && { update_branch $name; exit; }
 
