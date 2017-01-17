@@ -296,11 +296,11 @@ if [ -z "$nodeps" ]; then
 	unset olddeps
 fi
 if test="$(git symbolic-ref --quiet "$name" --)"; then case "$test" in
-	refs/heads/*)
-		name="${test#refs/heads/}"
-		break;;
 	refs/"$topbases"/*)
 		name="${test#refs/$topbases/}"
+		break;;
+	refs/heads/*)
+		name="${test#refs/heads/}"
 		break;;
 esac; fi
 ! ref_exists "refs/heads/$name"  ||

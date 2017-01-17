@@ -423,32 +423,6 @@ for b; do
 		continue
 	}
 	case "$sfn" in
-		refs/heads/*)
-			added=
-			tgish=1
-			ref_exists "refs/$topbases/${sfn#refs/heads/}" || tgish=
-			[ -n "$anyrefok" ] || [ -n "$tgish" ] ||
-				die "not a TopGit branch: ${sfn#refs/heads/} (use --allow-any option)"
-			case " $allrefs " in *" $b "*);;*)
-				allrefs="${allrefs:+$allrefs }$sfn"
-			esac
-			case " $branches " in *" ${sfn#refs/heads/} "*);;*)
-				branches="${branches:+$branches }${sfn#refs/heads/}"
-				added=1
-			esac
-			if [ -n "$tgish" ]; then
-				case " $allrefs " in *" refs/$topbases/${sfn#refs/heads/} "*);;*)
-					allrefs="${allrefs:+$allrefs }refs/$topbases/${sfn#refs/heads/}"
-				esac
-				case " $tgbranches " in *" ${sfn#refs/heads/} "*);;*)
-					tgbranches="${tgbranches:+$tgbranches }${sfn#refs/heads/}"
-					added=1
-				esac
-				[ -z "$added" ] || tgcount=$(( $tgcount + 1 ))
-			else
-				[ -z "$added" ] || othercount=$(( $othercount + 1 ))
-			fi
-			;;
 		refs/"$topbases"/*)
 			added=
 			tgish=1
@@ -468,6 +442,32 @@ for b; do
 				esac
 				case " $tgbranches " in *" ${sfn#refs/$topbases/} "*);;*)
 					tgbranches="${tgbranches:+$tgbranches }${sfn#refs/$topbases/}"
+					added=1
+				esac
+				[ -z "$added" ] || tgcount=$(( $tgcount + 1 ))
+			else
+				[ -z "$added" ] || othercount=$(( $othercount + 1 ))
+			fi
+			;;
+		refs/heads/*)
+			added=
+			tgish=1
+			ref_exists "refs/$topbases/${sfn#refs/heads/}" || tgish=
+			[ -n "$anyrefok" ] || [ -n "$tgish" ] ||
+				die "not a TopGit branch: ${sfn#refs/heads/} (use --allow-any option)"
+			case " $allrefs " in *" $b "*);;*)
+				allrefs="${allrefs:+$allrefs }$sfn"
+			esac
+			case " $branches " in *" ${sfn#refs/heads/} "*);;*)
+				branches="${branches:+$branches }${sfn#refs/heads/}"
+				added=1
+			esac
+			if [ -n "$tgish" ]; then
+				case " $allrefs " in *" refs/$topbases/${sfn#refs/heads/} "*);;*)
+					allrefs="${allrefs:+$allrefs }refs/$topbases/${sfn#refs/heads/}"
+				esac
+				case " $tgbranches " in *" ${sfn#refs/heads/} "*);;*)
+					tgbranches="${tgbranches:+$tgbranches }${sfn#refs/heads/}"
 					added=1
 				esac
 				[ -z "$added" ] || tgcount=$(( $tgcount + 1 ))

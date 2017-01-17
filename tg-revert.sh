@@ -172,11 +172,11 @@ fi
 
 is_tgish() {
 	case "$1" in
-		refs/heads/*)
-			ref_exists "refs/$topbases/${1#refs/heads/}"
-			;;
 		refs/"$topbases"/*)
 			ref_exists "refs/heads/${1#refs/$topbases/}"
+			;;
+		refs/heads/*)
+			ref_exists "refs/$topbases/${1#refs/heads/}"
 			;;
 		*)
 			! :
@@ -193,11 +193,11 @@ for b; do
 		refs="${refs:+$refs }$rn"
 		if [ -z "$list" ] && [ -z "$nodeps" -o -z "$exp" ] && is_tgish "$rn"; then
 			case "$rn" in
-			refs/heads/*)
-				refs="$refs refs/$topbases/${rn#refs/heads/}"
-				;;
 			refs/"$topbases"/*)
 				refs="$refs refs/heads/${rn#refs/$topbases/}"
+				;;
+			refs/heads/*)
+				refs="$refs refs/$topbases/${rn#refs/heads/}"
 				;;
 			esac
 		fi

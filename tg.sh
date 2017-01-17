@@ -239,11 +239,11 @@ get_tree_w()
 strip_ref()
 {
 	case "$1" in
-		refs/heads/*)
-			echol "${1#refs/heads/}"
-			;;
 		refs/"$topbases"/*)
 			echol "${1#refs/$topbases/}"
+			;;
+		refs/heads/*)
+			echol "${1#refs/heads/}"
 			;;
 		*)
 			echol "$1"
@@ -534,11 +534,11 @@ has_remote()
 verify_topgit_branch()
 {
 	case "$1" in
-		refs/heads/*)
-			_verifyname="${1#refs/heads/}"
-			;;
 		refs/"$topbases"/*)
 			_verifyname="${1#refs/$topbases/}"
+			;;
+		refs/heads/*)
+			_verifyname="${1#refs/heads/}"
 			;;
 		HEAD)
 			_verifyname="$(git symbolic-ref HEAD 2>/dev/null)" || :
