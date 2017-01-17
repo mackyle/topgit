@@ -1177,6 +1177,7 @@ initial_setup()
 	# catch errors if topbases is used without being set
 	unset tg_topbases_set
 	topbases="programmer*:error"
+	oldbases="$topbases"
 }
 
 set_topbases()
@@ -1196,8 +1197,14 @@ set_topbases()
 		fi
 	fi
 	if [ -n "$tgtb" ]; then
-		topbases="heads/{top-bases}"
-		[ "$tgtb" = "heads" ] || topbases="top-bases"
+		case "$tgtb" in
+		heads)
+			topbases="heads/{top-bases}"
+			oldbases="top-bases";;
+		refs)
+			topbases="top-bases"
+			oldbases="heads/{top-bases}";;
+		esac
 		# MUST NOT be exported
 		unset tgtb tg_topbases_set
 		tg_topbases_set=1
@@ -1220,6 +1227,7 @@ set_topbases()
 					break;
 				else
 					topbases="heads/{top-bases}"
+					oldbases="top-bases"
 				fi
 			esac;;
 		"refs/top-bases"/*)
@@ -1229,6 +1237,7 @@ set_topbases()
 					break;
 				else
 					topbases="top-bases"
+					oldbases="heads/{top-bases}"
 				fi
 			esac;;
 		"refs/heads"/*)
@@ -1240,6 +1249,7 @@ set_topbases()
 		if [ -n "$1" ]; then
 			# hook script always prefers newer without complaint
 			topbases="heads/{top-bases}"
+			oldbases="top-bases"
 		else
 			# Complain and die
 			err "repository contains existing TopGit branches"
@@ -1253,7 +1263,11 @@ set_topbases()
 		fi
 	fi
 
-	[ -n "$topbases" ] || topbases="top-bases" # default is still top-bases
+	[ -n "$topbases" ] || {
+		# default is still top-bases for now
+		topbases="top-bases"
+		oldbases="heads/{top-bases}"
+	}
 	# MUST NOT be exported
 	unset hblist both newtb rn tg_topases_set
 	tg_topbases_set=1

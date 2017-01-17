@@ -133,7 +133,7 @@ while
 	git cat-file tag "$tagdataref" >"$tgf" || die "cannot read tag: $refname"
 	sed -ne '/^-----BEGIN TOPGIT REFS-----$/,/^-----END TOPGIT REFS-----$/p' <"$tgf" |
 	sed -ne "/^\\($octet20\\) \\(refs\/[^ $tab][^ $tab]*\\)\$/{s//\\2 \\1/;p;}" |
-	sed -e "s,^refs/top-bases/,refs/$topbases/,g" |
+	sed -e "s,^refs/$oldbases/,refs/$topbases/,g" |
 	LC_ALL=C sort -u -b -k1,1 >"$trf"
 	! [ -s "$trf" ]
 do
