@@ -195,11 +195,7 @@ if [ -n "$rname" ]; then
 		die "no remote location given. Either use -r remote argument or set topgit.remote"
 	fi
 	has_remote "$rname" || die "no branch $rname in remote $base_remote"
-
-	if [ -n "$logrefupdates" ]; then
-		mkdir -p "$git_dir/logs/refs/$topbases/$(dirname "$name")" 2>/dev/null || :
-		{ >>"$git_dir/logs/refs/$topbases/$name" || :; } 2>/dev/null
-	fi
+	init_reflog "refs/$topases/$name"
 	msg="tgcreate: $name -r $rname"
 	git update-ref -m "$msg" "refs/$topbases/$name" "refs/remotes/$base_remote/$topbases/$rname" ""
 	git update-ref -m "$msg" "refs/heads/$name" "refs/remotes/$base_remote/$rname" ""
@@ -458,11 +454,7 @@ done
 
 ## Set up the topic branch
 
-if [ -n "$logrefupdates" ]; then
-	mkdir -p "$git_dir/logs/refs/$topbases/$(dirname "$name")" 2>/dev/null || :
-	{ >>"$git_dir/logs/refs/$topbases/$name" || :; } 2>/dev/null
-fi
-
+init_reflog "refs/$topbases/$name"
 if [ -n "$unborn" ]; then
 	mttree="$(git mktree </dev/null)"
 	emsg="tg create empty $topbases/$name"

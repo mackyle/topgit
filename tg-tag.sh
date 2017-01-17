@@ -638,10 +638,7 @@ case "$allrefs${extrarefs:+ $extrarefs}" in
 		;;
 esac
 
-if [ -n "$logrefupdates" -o "$refname" = "refs/tgstash" ]; then
-	mkdir -p "$git_dir/logs/$(dirname "$refname")" 2>/dev/null || :
-	{ >>"$git_dir/logs/$refname" || :; } 2>/dev/null
-fi
+init_reflog "$refname"
 if [ "$reftype" = "tag" -a -n "$signed" ]; then
 	[ -z "$quiet" ] || exec >/dev/null
 	git tag -F "$git_dir/TGTAG_FINALMSG" ${signed:+-s} ${force:+-f} \

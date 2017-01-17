@@ -204,12 +204,16 @@ collapse()
 		echo "Collapsing $_dep"
 		commit="$(collapsed_commit "$_dep")"
 		bump_timestamp
-		mkdir -p "$playground/$(dirname "$_dep")"
+		_depdn="${_dep%/}"
+		case "$_depdn" in */*);;*) _depdn="./$_depdn"; esac
+		mkdir -p "$playground/${_depdn%/*}"
 		echol "$commit" >"$playground/$_dep"
 	fi
 
 	# Propagate our work through the dependency chain
-	mkdir -p "$playground/$(dirname "$_name")"
+	_namedn="${_name%/}"
+	case "$_namedn" in */*);;*) _namedn="./$_namedn"; esac
+	mkdir -p "$playground/${_namedn%/*}"
 	echo "$commit	$_dep" >>"$playground/$_name^parents"
 }
 
@@ -234,8 +238,10 @@ quilt()
 		done
 	fi
 
-	bn="$(basename "$_dep_tmp.diff")"
-	dn="$(dirname "$_dep_tmp.diff")/"
+	dn="${_dep_tmp%/}.diff"
+	case "$dn" in */*);;*) dn="./$dn"; esac
+	bn="${dn##*/}"
+	dn="${dn%/*}/"
 	[ "x$dn" = "x./" ] && dn=""
 
 	if "$flatten" && [ "$dn" ]; then
@@ -250,8 +256,10 @@ quilt()
 		return
 	fi
 
-	mkdir -p "$playground/$(dirname "$_dep")"
-	touch "$playground/$_dep"
+	_depdn="${_dep%/}"
+	case "$_depdn" in */*);;*) _depdn="./$_depdn"; esac
+	mkdir -p "$playground/${_depdn%/*}"
+	>>"$playground/$_dep"
 
 	if branch_empty "$_dep"; then
 		echo "Skip empty patch $_dep"

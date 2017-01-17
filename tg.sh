@@ -298,7 +298,7 @@ make_empty_commit()
 # setup_hook NAME
 setup_hook()
 {
-	tgname="$(basename "$0")"
+	tgname="${0##*/}"
 	hook_call="\"\$(\"$tgname\" --hooks-path)\"/$1 \"\$@\""
 	if [ -f "$git_dir/hooks/$1" ] && fgrep -q "$hook_call" "$git_dir/hooks/$1"; then
 		# Another job well done!
@@ -922,7 +922,7 @@ do_help()
 		for cmd in "$TG_INST_CMDDIR"/tg-*; do
 			! [ -r "$cmd" ] && continue
 			# strip directory part and "tg-" prefix
-			cmd="$(basename "$cmd")"
+			cmd="${cmd##*/}"
 			cmd="${cmd#tg-}"
 			cmds="$cmds$sep$cmd"
 			sep="|"
@@ -936,18 +936,18 @@ do_help()
 		if [ -n "$_www" ]; then
 			nohtml=
 			if ! [ -r "$TG_INST_SHAREDIR/topgit.html" ]; then
-				echo "$(basename "$0"): missing html help file:" \
+				echo "${0##*/}: missing html help file:" \
 					"$TG_INST_SHAREDIR/topgit.html" 1>&2
 				nohtml=1
 			fi
 			if ! [ -r "$TG_INST_SHAREDIR/tg-$1.html" ]; then
-				echo "$(basename "$0"): missing html help file:" \
+				echo "${0##*/}: missing html help file:" \
 					"$TG_INST_SHAREDIR/tg-$1.html" 1>&2
 				nohtml=1
 			fi
 			if [ -n "$nohtml" ]; then
-				echo "$(basename "$0"): use" \
-					"\"$(basename "$0") help $1\" instead" 1>&2
+				echo "${0##*/}: use" \
+					"\"${0##*/} help $1\" instead" 1>&2
 				exit 1
 			fi
 			git web--browse -c help.browser "$TG_INST_SHAREDIR/tg-$1.html"
@@ -965,7 +965,7 @@ do_help()
 		}
 		page output "$1"
 	else
-		echo "$(basename "$0"): no help for $1" 1>&2
+		echo "${0##*/}: no help for $1" 1>&2
 		do_help
 		exit 1
 	fi
@@ -1259,12 +1259,30 @@ set_topbases()
 	return 0
 }
 
+# init_reflog "ref"
+# if "$logrefupdates" is set and ref is not under refs/heads/ then force
+# an empty log file to exist so that ref changes will be logged
+# "$1" must be a fully-qualified refname (i.e. start with "refs/")
+# However, if "$1" is "refs/tgstash" then always make the reflog
+init_reflog()
+{
+	[ -n "$1" ] || return 0
+	[ -n "$logrefupdates" ] || [ "$1" = "refs/tgstash" ] || return 0
+	case "$1" in refs/heads/*) return 0;; refs/*[!/]);; *) return 1; esac
+	mkdir -p "$git_dir/logs/${1%/*}" 2>/dev/null || :
+	{ >>"$git_dir/logs/$1" || :; } 2>/dev/null
+ }
+
 # return the "realpath" for the item except the leaf is not resolved if it's
 # a symbolic link.  The directory part must exist, but the basename need not.
 get_abs_path()
 {
-	[ -n "$1" -a -d "$(dirname "$1")" ] || return 1
-	printf '%s' "$(cd -- "$(dirname "$1")" && pwd -P)/$(basename "$1")"
+	[ -n "$1" ] || return 1
+	set -- "$1" "${1%/}"
+	case "$2" in */*);;*) set -- "$1" "./$2"; esac
+	set -- "$1" "${2%/*}"
+	[ -d "$2" ] || return 1
+	printf '%s' "$(cd "$2" && pwd -P)/${1##*/}"
 }
 
 ## Startup
@@ -1292,14 +1310,16 @@ else
 	set -e
 
 	tg="$0"
-	tgdir="$(dirname "$tg")/"
-	tgname="$(basename "$tg")"
+	tgdir="${tg%/}"
+	case "$tgdir" in */*);;*) tgdir="./$tgdir"; esac
+	tgdir="${tgdir%/*}/"
+	tgname="${tg##*/}"
 	[ "$0" != "$tgname" ] || tgdir=""
 
 	# If tg contains a '/' but does not start with one then replace it with an absolute path
 
 	case "$0" in /*) ;; */*)
-		tgdir="$(cd "$(dirname "$0")" && pwd -P)/"
+		tgdir="$(cd "${0%/*}" && pwd -P)/"
 		tg="$tgdir$tgname"
 	esac
 

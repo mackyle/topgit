@@ -69,20 +69,14 @@ git for-each-ref --format='%(objectname) %(refname)' "refs/remotes/$name/$topbas
 		fi
 		if git rev-parse --verify "refs/heads/$branch" -- >/dev/null 2>&1; then
 			git rev-parse --verify "refs/$topbases/$branch" -- >/dev/null 2>&1 || {
-				if [ -n "$logrefupdates" ]; then
-					mkdir -p "$git_dir/logs/refs/$topbases/$(dirname "$branch")" 2>/dev/null || :
-					{ >>"$git_dir/logs/refs/$topbases/$branch" || :; } 2>/dev/null
-				fi
+				init_reflog "refs/$topbases/$branch"
 				git update-ref "refs/$topbases/$branch" "$rev"
 			}
 			info "Skipping branch $branch: Already exists"
 			continue
 		fi
 		info "Adding branch $branch..."
-		if [ -n "$logrefupdates" ]; then
-			mkdir -p "$git_dir/logs/refs/$topbases/$(dirname "$branch")" 2>/dev/null || :
-			{ >>"$git_dir/logs/refs/$topbases/$branch" || :; } 2>/dev/null
-		fi
+		init_reflog "refs/$topbases/$branch"
 		git update-ref "refs/$topbases/$branch" "$rev"
 		git update-ref "refs/heads/$branch" "$(git rev-parse --verify "$name/$branch" --)"
 	done
