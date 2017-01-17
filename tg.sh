@@ -300,7 +300,7 @@ setup_hook()
 {
 	tgname="${0##*/}"
 	hook_call="\"\$(\"$tgname\" --hooks-path)\"/$1 \"\$@\""
-	if [ -f "$git_dir/hooks/$1" ] && fgrep -q "$hook_call" "$git_dir/hooks/$1"; then
+	if [ -f "$git_dir/hooks/$1" ] && LC_ALL=C grep -Fq "$hook_call" "$git_dir/hooks/$1"; then
 		# Another job well done!
 		return
 	fi
@@ -308,7 +308,7 @@ setup_hook()
 	hook_chain=
 	if [ -s "$git_dir/hooks/$1" -a -x "$git_dir/hooks/$1" ]; then
 		hook_call="$hook_call"' || exit $?'
-		if ! LC_ALL=C sed -n 1p <"$git_dir/hooks/$1" | LC_ALL=C fgrep -qx "#!@SHELL_PATH@"; then
+		if ! LC_ALL=C sed -n 1p <"$git_dir/hooks/$1" | LC_ALL=C grep -Fqx "#!@SHELL_PATH@"; then
 			chain_num=
 			while [ -e "$git_dir/hooks/$1-chain$chain_num" ]; do
 				chain_num=$(( $chain_num + 1 ))

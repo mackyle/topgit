@@ -36,7 +36,7 @@ non_annihilated_branches |
 		[ "x$parent" = "x$head" ] ||
 			from=
 
-		cat_file "refs/heads/$parent:.topdeps" $from 2>/dev/null | fgrep -qx "$name" ||
+		cat_file "refs/heads/$parent:.topdeps" $from 2>/dev/null | LC_ALL=C grep -Fqx "$name" ||
 			continue
 
 		echol "$parent"

@@ -45,7 +45,7 @@ baserev="$(git rev-parse --verify "refs/$topbases/$name" -- 2>/dev/null)" ||
 [ -z "$force" ] && { branch_empty "$name" || die "branch is non-empty: $name"; }
 
 # Quick'n'dirty check whether branch is required
-[ -z "$force" ] && { $tg summary --deps | cut -d' ' -f2- | tr ' ' '\n' | fgrep -xq -- "$name" && die "some branch depends on $name"; }
+[ -z "$force" ] && { $tg summary --deps | cut -d' ' -f2- | tr ' ' '\n' | LC_ALL=C grep -Fxq -- "$name" && die "some branch depends on $name"; }
 
 ## Wipe out
 
