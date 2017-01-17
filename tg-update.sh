@@ -12,7 +12,7 @@ current= # Branch we are currently on
 skip= # skip missing dependencies
 stash= # tgstash refs before changes
 
-if [ "$(git config --get --bool topgit.autostash 2>/dev/null || :)" != "false" ]; then
+if [ "$(git config --get --bool topgit.autostash 2>/dev/null)" != "false" ]; then
 	# topgit.autostash is true
 	stash=1
 fi
@@ -46,7 +46,7 @@ done
 origpattern="$pattern"
 [ -z "$pattern" ] && pattern="refs/$topbases"
 
-current="$(strip_ref "$(git symbolic-ref -q HEAD || :)")"
+current="$(strip_ref "$(git symbolic-ref -q HEAD)")" || :
 if [ -z "$all" ]; then
 	name="$(verify_topgit_branch "${name:-HEAD}")"
 else
@@ -115,7 +115,7 @@ update_branch() {
 		stash_now_if_requested
 		# We need to switch to the base branch
 		# ...but only if we aren't there yet (from failed previous merge)
-		_HEAD="$(git symbolic-ref -q HEAD || :)"
+		_HEAD="$(git symbolic-ref -q HEAD)" || :
 		if [ "$_HEAD" = "${_HEAD#refs/$topbases/}" ]; then
 			switch_to_base "$_update_name"
 		fi

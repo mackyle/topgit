@@ -75,8 +75,8 @@ process_commit()
 	commit="$1"
 	branch_name="$2"
 	info "---- Importing $commit to $branch_name"
-	lastsymref="$(git symbolic-ref --quiet HEAD || :)"
-	lasthead="$(git rev-parse --verify --quiet HEAD -- 2>/dev/null || :)"
+	lastsymref="$(git symbolic-ref --quiet HEAD)" || :
+	lasthead="$(git rev-parse --verify --quiet HEAD -- 2>/dev/null)" || :
 	$tg create --quiet --no-edit "$branch_name" $basedep || die "tg create failed"
 	basedep=
 	get_commit_msg "$commit" > .topmsg

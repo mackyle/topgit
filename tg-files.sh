@@ -25,7 +25,7 @@ while [ -n "$1" ]; do
 done
 
 
-head="$(git symbolic-ref -q HEAD || :)"
+head="$(git symbolic-ref -q HEAD)" || :
 head="${head#refs/heads/}"
 
 [ -n "$name" ] ||

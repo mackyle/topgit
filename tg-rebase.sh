@@ -38,7 +38,7 @@ EOT
 fi
 
 if [ -z "$optcontinue" ]; then
-	rerereon="$(git config --get --bool rerere.enabled 2>/dev/null || :)"
+	rerereon="$(git config --get --bool rerere.enabled 2>/dev/null)" || :
 	[ "$rerereon" = "true" ] ||
 	warn "rerere.enabled is false, automatic --continue not possible"
 fi
@@ -46,7 +46,7 @@ fi
 [ "$*" = "--abort" ] || ensure_ident_available
 continuemsg='"git rebase --continue"'
 lasthead=
-newhead="$(git rev-parse --verify --quiet HEAD -- || :)"
+newhead="$(git rev-parse --verify --quiet HEAD --)" || :
 
 while
 	lasthead="$newhead"
@@ -54,7 +54,7 @@ while
 	err=0
 	msg="$(git -c rerere.autoupdate=true rebase "$@"  3>&2 2>&1 1>&3 3>&-)" || err=$?
 	case "$msg" in *"$continuemsg"*) hascontinuemsg=1; esac
-	newhead="$(git rev-parse --verify --quiet HEAD -- || :)"
+	newhead="$(git rev-parse --verify --quiet HEAD --)" || :
 	[ "$newhead" != "$lasthead" ] || hascontinuemsg=
 	msg="$(printf '%s\n' "$msg" | sed -e 's~git rebase ~'"$tgdisplay"' rebase ~g')"
 	[ $err -ne 0 ]

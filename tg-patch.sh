@@ -46,7 +46,7 @@ quotearg() {
 	printf '%s' "$1" | sed 's/\(['\''!]\)/'\'\\\\\\1\''/g'
 }
 
-head="$(git symbolic-ref -q HEAD || :)"
+head="$(git symbolic-ref -q HEAD)" || :
 head="${head#refs/heads/}"
 
 [ -n "$name" ] ||

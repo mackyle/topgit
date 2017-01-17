@@ -184,7 +184,7 @@ if [ -n "$withdeps" ]; then
 	tgish="$savetgish"
 fi
 
-curname="$(strip_ref "$(git symbolic-ref -q HEAD || :)")"
+curname="$(strip_ref "$(git symbolic-ref -q HEAD)")" || :
 
 if [ -n "$graphviz" ]; then
 	cat <<EOT

@@ -412,7 +412,7 @@ set -- $newlist
 for b; do
 	sfn="$b"
 	[ -n "$all" ] ||
-	sfn="$(git rev-parse --revs-only --symbolic-full-name "$b" -- 2>/dev/null || :)"
+	sfn="$(git rev-parse --revs-only --symbolic-full-name "$b" -- 2>/dev/null)" || :
 	[ -n "$sfn" ] || {
 		[ -n "$anyrefok" ] || die "no such symbolic ref name: $b"
 		fullhash="$(git rev-parse --verify --quiet "$b" --)" || die "no such ref: $b"
@@ -655,7 +655,7 @@ else
 				"tagger $id" ""
 			cat "$git_dir/TGTAG_FINALMSG"
 		} | git mktag)" || die "git mktag failed"
-	old="$(git rev-parse --verify --short --quiet "$refname" -- || :)"
+	old="$(git rev-parse --verify --short --quiet "$refname" --)" || :
 	updmsg=
 	case "$branches" in
 	*" "*)

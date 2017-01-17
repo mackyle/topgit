@@ -226,7 +226,7 @@ if [ -z "$deps" ]; then
 		if [ -n "$nodeps" ]; then
 			deps="HEAD"
 		else
-			head="$(git symbolic-ref --quiet HEAD || :)"
+			head="$(git symbolic-ref --quiet HEAD)" || :
 			[ -z "$head" ] || git rev-parse --verify --quiet "$head" -- ||
 				die "refusing to auto-depend on unborn branch (use --no-deps)"
 			deps="${head#refs/heads/}"
@@ -268,7 +268,7 @@ if [ -z "$nodeps" ]; then
 	deps=
 	while read d && [ -n "$d" ]; do
 		if [ "$d" = "HEAD" ]; then
-			sr="$(git symbolic-ref --quiet HEAD || :)"
+			sr="$(git symbolic-ref --quiet HEAD)" || :
 			[ -z "$sr" ] || git rev-parse --verify --quiet "$sr" -- ||
 				die "refusing to depend on unborn branch (use --no-deps)"
 			[ -n "$sr" ] || die "cannot depend on a detached HEAD"

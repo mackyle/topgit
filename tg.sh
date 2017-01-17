@@ -540,7 +540,7 @@ verify_topgit_branch()
 			_verifyname="${1#refs/$topbases/}"
 			;;
 		HEAD)
-			_verifyname="$(git symbolic-ref HEAD 2>/dev/null || :)"
+			_verifyname="$(git symbolic-ref HEAD 2>/dev/null)" || :
 			[ -n "$_verifyname" -o "$2" = "-f" ] || die "HEAD is not a symbolic ref"
 			case "$_verifyname" in refs/heads/*);;*)
 				[ "$2" != "-f" ] || return 1
@@ -1026,7 +1026,7 @@ setup_pager()
 		elif [ -n "${PAGER+set}" ]; then
 			TG_PAGER="$PAGER"
 		else
-			_gp="$(git var GIT_PAGER 2>/dev/null || :)"
+			_gp="$(git var GIT_PAGER 2>/dev/null)" || :
 			[ "$_gp" != ":" ] || _gp=
 			TG_PAGER="${_gp:-less}"
 		fi
@@ -1144,9 +1144,9 @@ initial_setup()
 	! vcmp "$git_version" '>=' "2.9" || auhopt="--allow-unrelated-histories"
 	git_dir="$(git rev-parse --git-dir)"
 	root_dir="$(git rev-parse --show-cdup)"; root_dir="${root_dir:-.}"
-	logrefupdates="$(git config --bool core.logallrefupdates 2>/dev/null || :)"
+	logrefupdates="$(git config --bool core.logallrefupdates 2>/dev/null)" || :
 	[ "$logrefupdates" = "true" ] || logrefupdates=
-	tgsequester="$(git config --bool topgit.sequester 2>/dev/null || :)"
+	tgsequester="$(git config --bool topgit.sequester 2>/dev/null)" || :
 	tgnosequester=
 	[ "$tgsequester" != "false" ] || tgnosequester=1
 	unset tgsequester
@@ -1185,7 +1185,7 @@ set_topbases()
 	[ -z "$tg_topbases_set" ] || return 0
 
 	# See if topgit.top-bases is set to heads or refs
-	tgtb="$(git config "topgit.top-bases" 2>/dev/null || :)"
+	tgtb="$(git config "topgit.top-bases" 2>/dev/null)" || :
 	if [ -n "$tgtb" ] && [ "$tgtb" != "heads" ] && [ "$tgtb" != "refs" ]; then
 		if [ -n "$1" ]; then
 			# never die on the hook script
@@ -1273,16 +1273,18 @@ init_reflog()
 	{ >>"$git_dir/logs/$1" || :; } 2>/dev/null
  }
 
-# return the "realpath" for the item except the leaf is not resolved if it's
+# store the "realpath" for "$2" in "$1" except the leaf is not resolved if it's
 # a symbolic link.  The directory part must exist, but the basename need not.
-get_abs_path()
+v_get_abs_path()
 {
-	[ -n "$1" ] || return 1
-	set -- "$1" "${1%/}"
-	case "$2" in */*);;*) set -- "$1" "./$2"; esac
-	set -- "$1" "${2%/*}"
-	[ -d "$2" ] || return 1
-	printf '%s' "$(cd "$2" && pwd -P)/${1##*/}"
+	[ -n "$1" ] && [ -n "$2" ] || return 1
+	set -- "$1" "$2" "${2%/}"
+	case "$3" in
+		*/*) set -- "$1" "$2" "${3%/*}";;
+		*  ) set -- "$1" "$2" ".";;
+	esac
+	[ -d "$3" ] || return 1
+	eval "$1="'"$(cd "$3" && pwd -P)/${2##*/}"'
 }
 
 ## Startup
@@ -1328,10 +1330,15 @@ else
 
 	tgdisplaydir="$tgdir"
 	tgdisplay="$tg"
-	if [ "$(get_abs_path "$tg")" = "$(get_abs_path "$(cmd_path "$tgname" || :)" || :)" ]; then
+	if
+	    v_get_abs_path _tgabs "$tg" &&
+	    v_get_abs_path _tgnameabs "$(cmd_path "$tgname")" &&
+	    [ "$_tgabs" = "$_tgnameabs" ]
+	then
 		tgdisplaydir=""
 		tgdisplay="$tgname"
 	fi
+	unset _tgabs _tgnameabs
 
 	explicit_remote=
 	explicit_dir=
