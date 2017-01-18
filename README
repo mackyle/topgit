@@ -11,8 +11,15 @@ branches easier. In fact, it is designed especially for the case where
 you maintain a queue of third-party patches on top of another (perhaps
 Git-controlled) project and want to easily organize, maintain and submit
 them -- TopGit achieves that by keeping a separate topic branch for each
-patch and providing some tools to maintain the branches.  See the USAGE_
-section for command line details.
+patch and providing some tools to maintain the branches.
+
+See also:
+
+	:USAGE_:	    Command Line details
+	:`NO UNDO`_:	    Where's the undo!!!
+	:CONVENTIONS_:	    Suggestions for organizing your TopGit branches
+	:GLOSSARY_:	    All the TopGit vocabulary in one place
+	:TECHNICAL_:	    How it works behind the scenes
 
 
 INSTALLATION
@@ -69,7 +76,7 @@ history itself, only "one level higher").  For now, you have to manually
 specify which patches the current one depends on, but TopGit might help
 you with that in the future in a darcs-like fashion.
 
-A glossary plug: The union (i.e. merge) of patch dependencies is called
+A glossary_ plug: The union (i.e. merge) of patch dependencies is called
 a *base* of the patch (topic branch).
 
 Of course, TopGit is perhaps not the right tool for you:
@@ -230,13 +237,16 @@ TopGit branches.  None of them are enforced, they are only suggestions.
 
 There are three typical uses for a TopGit branch:
 
-    1. Normal TopGit branches that represent a single patch.  These are known
+    1. [PATCH]
+       Normal TopGit branches that represent a single patch.  These are known
        as "patch" TopGit branches.
-    2. Empty TopGit branches with no dependencies (an empty ``.topdeps`` file)
+    2. [BASE]
+       Empty TopGit branches with no dependencies (an empty ``.topdeps`` file)
        that represent a base upon which other "normal" TopGit branches depend.
        These are known as "base" TopGit branches (not to be confused with
        the refs/top-bases/... refs).
-    3. Empty TopGit branches that serve as a staging area to bring together
+    3. [STAGE]
+       Empty TopGit branches that serve as a staging area to bring together
        several other TopGit branches into one place so they can be used/tested
        all together.  These are known as "stage" TopGit branches.
 
@@ -266,9 +276,9 @@ using the ``--topmsg`` option of ``tg create``.
 Use of "stage" and "base" branches is completely optional.  However, without
 use of a "stage" branch it will be difficult to test multiple independent
 patches together all at once.  A "base" branch is merely a convenience that
-provides more explicit control over when common base for a set of patches gets
-updated as well as providing a branch that shows in ``tg summary`` output and
-participates in ``tg remote --populate`` setup.
+provides more explicit control over when a common base for a set of patches
+gets updated as well as providing a branch that shows in ``tg summary`` output
+and participates in ``tg remote --populate`` setup.
 
 When using the ``tg tag`` command to create tags that record the current state
 of one or more TopGit branches, the tags are often created with a name that
@@ -300,9 +310,10 @@ assumes, of course, that you remember to run ``tg tag --stash`` first.
 
 The ``tg update`` command understands a ``--stash`` option that tells it to
 automatically run ``tg tag --stash`` before it starts making changes (if
-everything is up-to-date it won't run the stash command at all).  The
-``--stash`` option is the default, add the ``--no-stash`` option to turn it
-off.
+everything is up-to-date it won't run the stash command at all).
+
+The ``--stash`` option is the default nowadays when running ``tg update``,
+add the ``--no-stash`` option to turn it off.
 
 There is a preference for this.  Setting the config value ``topgit.autostash``
 to ``false`` will implicitly add the ``--no-stash`` option to any ``tg update``
@@ -397,7 +408,7 @@ continue to be reachable from those other refs!
 Instead just make a new commit to fix the typo.  The end result will end up
 being the same but without the merge conflicts.
 
-See also the discussion in the "NO UNDO" section.
+See also the discussion in the `NO UNDO`_ section.
 
 
 SPEED AND CACHING
@@ -1430,12 +1441,171 @@ Then, the base is merged into the remote branch and the result is merged
 to the local branch -- again, to carry over remote conflict resolutions.
 In the future, this order might be adjustable on a per-update basis, in
 case local changes happen to be diverging more than the remote ones.
+(Actually this description seems to be a bit out of date, see the details
+in `The Update Process`_ instead for something a bit more current.)
 
 All commands by default refer to the remote that ``tg remote --populate``
 was called on the last time (stored in the ``topgit.remote`` git
 configuration variable). You can manually run any command with a
 different base remote by passing ``-r REMOTE`` *before* the subcommand
 name.
+
+
+TECHNICAL
+---------
+
+A familiarity with the terms in the GLOSSARY_ is helpful for understanding the
+content of this sections.  See also the IMPLEMENTATION_ section.
+
+The Update Process
+~~~~~~~~~~~~~~~~~~
+
+When a branch is "updated" using the ``tg update`` command the following steps
+are taken:
+
+	1) The branch and all of its dependencies (and theirs recursively)
+	   are checked to see which ones are *out-of-date*.  See glossary_.
+
+	2) Each of the branch's direct dependencies (i.e. they are listed in
+	   the branch's ``.topdeps`` file) which is out of date is updated
+	   before proceeding (yup, this is a recursive process).
+
+	3) Each of the branch's direct dependencies (i.e. they are listed in
+	   the branch's ``.topdes`` file) that was updated in the previous
+	   step is now merged into the branch's corresponding base.
+
+	4) If the branch has a corresponding remote branch and the branch
+	   does not already contain it, it's merged into the branch's base
+	   (which was possibly updated in step (3)) on a detached HEAD.
+	   Yup, this step can be a bit confusing and no, the updated base from
+	   step (3) has not yet been merged into the branch itself yet either.
+	   If there is no remote branch this step does not apply.  Using a
+	   detached HEAD allows the remote branch to be merged into the
+	   contents of the base without actually perturbing the base's ref.
+
+	5) If there is a remote branch present then use the result of step (4)
+	   otherwise use the branch's base and merge that into the branch
+	   itself.
+
+That's it!  Simple, right? ;)
+
+Unless the auto stash option has been disabled (see `no undo`_, `tg update`_
+and `tg tag`_), a copy of all the old refs values will be stashed away
+immediately after step (1) before starting step (2), but only if anything is
+actually found to be out-of-date.
+
+
+GLOSSARY
+--------
+
+	.topmsg
+		Version-controlled file stored at the root level of each
+		TopGit branch that contains the patch header for a TopGit
+		branch.  See also IMPLEMENTATION_;
+
+	.topdeps
+		Version-controlled file stored at the root level of each
+		TopGit branch that lists the branch's dependencies one per
+		line omitting the leading ``refs/heads/`` part.  See also
+		IMPLEMENTATION_;
+
+	branch containment
+		Given two Git commit identifiers (e.g. hashes) C1 and C2,
+		commit C1 "contains" commit C2 if either they are the same
+		commit or C2 can be reached from C1 by following one or more
+		parent links from C1 (perhaps via one or more intermediate
+		commits along the way).  In other words, if C1 contains C2
+		then C2 is an ancestor of C1 or conversely C1 is a descendant
+		of C2.  Since a TopGit branch name is also the name of a Git
+		branch (something located under the ``refs/heads`` Git
+		namespace) and similarly for a TopGit base, they can both be
+		resolved to a Git commit identifier and then participate in
+		a branch containment test.  An easy mnemonic for this is
+		"children contain the genes of their parents."
+
+	contains
+		See branch containment.
+
+	TopGit
+		Excellent system for managing a history of changes to one
+		or more possibly interrelated patches.
+
+	TopGit branch
+		A Git branch that has an associated TopGit base.  Conceptually
+		it represents a single patch that is the difference between
+		the associated TopGit base and the TopGit branch.  In other
+		words ``git diff-tree <TopGit base> <TopGit branch>`` except
+		that any ``.topdeps`` and/or ``.topmsg`` files are excluded
+		from the result and the contents of the ``.topmsg`` file from
+		the TopGit branch is prefixed to the result.
+
+	TopGit base
+		A Git branch that records the base upon which a TopGit branch's
+		single conceptual "patch" is built.  The name of the Git branch
+		is derived from the TopGit branch name by stripping off the
+		leading ``refs/heads/`` and appending the correct prefix where
+		all TopGit bases are stored (typically either
+		``refs/top-bases/`` or ``refs/heads/{top-bases}/`` -- the
+		prefix for any given repository can be shown by using the
+		``tg --top-bases`` command).
+
+		All of a TopGit branch's dependencies are merged into the
+		corresponding TopGit base during a ``tg update`` of a branch.
+
+	base
+		See TopGit base.
+
+	TopGit ``[PATCH]`` branch
+		A TopGit branch whose subject starts with ``[PATCH]``.  By
+		convention these TopGit branches contain a single patch
+		(equivalent to a single patch file) and have at least one
+		dependency (i.e. their ``.topdeps`` files are never empty).
+
+	TopGit ``[BASE]`` branch
+		A TopGit branch whose subject starts with ``[BASE]``.  By
+		convention these TopGit branches do not actually contain
+		any changes and their ``.topdeps`` files are empty.  They
+		are used to control a base dependency that another set of
+		branches depends on.
+
+	TopGit ``[STAGE]`` branch
+		A TopGit branch whose subject starts with ``[STAGE]``.  By
+		convention these TopGit branches do not actually contain any
+		changes of their own but do have one or (typically) more
+		dependencies in their ``.topdeps`` file.  These branches are
+		used to bring together one or (typically) more independent
+		TopGit ``[PATCH]`` branches into a single branch so that
+		testing and/or evaluation can be performed on the result.
+
+	out-of-date branch
+		A TopGit branch is considered to be "out-of-date" when ANY of
+		the following are true:
+
+			a) The TopGit branch does NOT contain its
+			   corresponding base.
+
+			b) The TopGit branch does NOT contain its
+			   corresponding remote branch (there may not be
+			   a remote branch in which case this does not apply)
+
+			c) Any of the TopGit branches listed in the branch's
+			   ``.topdeps`` file are NOT contained by the branch.
+			   (See "branch containment" above.)
+
+			d) Any of the TopGit branches listed in the branch's
+			   ``.topdeps`` file are out-of-date.
+
+	remote TopGit branch
+		A Git branch with the same branch name as a TopGit branch
+		but living under ``refs/remotes/```<some remote>```/`` instead
+		of just ``refs/heads/``.
+
+	remote TopGit base
+		The TopGit base branch corresponding to a remote TopGit branch,
+		which lives under ``refs/remotes/`` somewhere (depending on
+		what the output of ``tg --top-bases`` is for that remote).
+		Note that the ``tg update`` process itself is not concerned
+		with remote TopGit bases, only remote TopGit branches.
 
 
 REFERENCES
@@ -1445,7 +1615,7 @@ The following references are useful to understand the development of
 topgit and its subcommands.
 
 * tg depend:
-  http://lists-archives.org/git/688698-add-list-and-rm-sub-commands-to-tg-depend.html
+  http://public-inbox.org/git/36ca99e90904091034m4d4d31dct78acb333612e678@mail.gmail.com/T/#u
 
 
 THIRD-PARTY SOFTWARE
