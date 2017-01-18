@@ -42,10 +42,6 @@ while [ -n "$1" ]; do
 	shift
 done
 
-quotearg() {
-	printf '%s' "$1" | sed 's/\(['\''!]\)/'\'\\\\\\1\''/g'
-}
-
 head="$(git symbolic-ref -q HEAD)" || :
 head="${head#refs/heads/}"
 
@@ -103,12 +99,12 @@ else
 	else
 		cmd="git diff-tree -p --stat --summary ${binary:+--binary}"
 		while [ $# -gt 0 -a "$1" != "--" ]; do
-			cmd="$cmd '$(quotearg "$1")'"
+			cmd="$cmd $(quotearg "$1")"
 			shift
 		done
-		cmd="$cmd '$(quotearg "$b_tree")' '$(quotearg "$t_tree")'"
+		cmd="$cmd $(quotearg "$b_tree") $(quotearg "$t_tree")"
 		while [ $# -gt 0 ]; do
-			cmd="$cmd '$(quotearg "$1")'"
+			cmd="$cmd $(quotearg "$1")"
 			shift
 		done
 		eval "$cmd"

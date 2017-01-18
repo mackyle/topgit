@@ -63,6 +63,37 @@ die()
 	exit 1
 }
 
+# shift off first arg then return "$*" properly quoted in single-quotes
+# if $1 was '' output goes to stdout otherwise it's assigned to $1
+# the final \n, if any, is omitted from the result but any others are included
+v_quotearg()
+{
+	_quotearg_v="$1"
+	shift
+	set -- "$_quotearg_v" \
+	"sed \"s/'/'\\\\\\''/g;1s/^/'/;\\\$s/\\\$/'/;s/'''/'/g;1s/^''\\(.\\)/\\1/\"" "$*"
+	unset _quotearg_v
+	if [ -z "$3" ]; then
+		if [ -z "$1" ]; then
+			echo "''"
+		else
+			eval "$1=\"''\""
+		fi
+	else
+		if [ -z "$1" ]; then
+			printf "%s$4" "$3" | eval "$2"
+		else
+			eval "$1="'"$(printf "%s$4" "$3" | eval "$2")"'
+		fi
+	fi
+}
+
+# same as v_quotearg except there's no extra $1 so output always goes to stdout
+quotearg()
+{
+	v_quotearg '' "$@"
+}
+
 vcmp()
 {
 	# Compare $1 to $3 each of which must match ^[^0-9]*\d*(\.\d*)*.*$

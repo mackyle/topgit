@@ -36,10 +36,6 @@ while [ -n "$1" ]; do
 	shift
 done
 
-quotearg() {
-	printf '%s' "$1" | sed 's/\(['\''!]\)/'\'\\\\\\1\''/g'
-}
-
 name="$(verify_topgit_branch "${name:-HEAD}")"
 base_rev="$(git rev-parse --short --verify "refs/$topbases/$name" -- 2>/dev/null)" ||
 	die "not a TopGit-controlled branch"
@@ -53,12 +49,12 @@ if [ -z "$hasdd" ]; then
 else
 	cmd='git log --first-parent --no-merges'
 	while [ $# -gt 0 -a "$1" != "--" ]; do
-		cmd="$cmd '$(quotearg "$1")'"
+		cmd="$cmd $(quotearg "$1")"
 		shift
 	done
-	cmd="$cmd '$(quotearg "refs/$topbases/$name".."$name")'"
+	cmd="$cmd $(quotearg "refs/$topbases/$name".."$name")"
 	while [ $# -gt 0 ]; do
-		cmd="$cmd '$(quotearg "$1")'"
+		cmd="$cmd $(quotearg "$1")"
 		shift
 	done
 	eval "$cmd"
