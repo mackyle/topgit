@@ -7,7 +7,7 @@
 lf="$(printf '\n.')" && lf="${lf%?}"
 tab="$(printf '\t.')" && tab="${tab%?}"
 USAGE="Usage: ${tgname:-tg} [...] revert (-f | -i | -n) [-q] [--tgish-only] [--no-deps] [--no-stash] [--exclude <ref>...] (<tagname> | --stash) [<ref>...]"
-USAGE="$USAGE$lf   Or: ${tgname:-tg} [...] revert [-l] [--tgish-only] [(--deps | --rdeps)] [--exclude <ref>...] (<tagname> | --stash) [(--heads | <ref>...)]"
+USAGE="$USAGE$lf   Or: ${tgname:-tg} [...] revert [-l] [--no-short] [--tgish-only] [(--deps | --rdeps)] [--exclude <ref>...] (<tagname> | --stash) [(--heads | <ref>...)]"
 
 usage()
 {
@@ -32,6 +32,7 @@ nodeps=
 nostash=
 exclude=
 quiet=
+short=
 
 while [ $# -gt 0 ]; do case "$1" in
 	-h|--help)
@@ -42,6 +43,9 @@ while [ $# -gt 0 ]; do case "$1" in
 		;;
 	-l|--list)
 		list=1
+		;;
+	--short|--short=*|--no-short)
+		short="$1"
 		;;
 	--deps|--deps-only)
 		deps=1
@@ -93,10 +97,11 @@ while [ $# -gt 0 ]; do case "$1" in
 esac; shift; done
 [ -z "$exclude" ] || exclude="$exclude "
 
-[ -z "$list" -o -z "$force$interact$dryrun$nodeps$nostash" ] || usage 1
-[ -z "$force$interact$dryrun" -o -z "$list$deps$rdeps" ] || usage 1
+[ -z "$list$short" -o -z "$force$interact$dryrun$nodeps$nostash" ] || usage 1
+[ -z "$force$interact$dryrun" -o -z "$list$short$deps$rdeps" ] || usage 1
 [ -z "$deps" -o -z "$rdeps" ] || usage 1
 [ -n "$list$force$interact$dryrun" ] || list=1
+[ -z "$list" -o -n "$short" ] || short=--short
 [ -n "$1" ] || { echo "Tag name required" >&2; usage 1; }
 tagname="$1"
 shift
@@ -239,7 +244,7 @@ show_rdep()
 {
 	case "$exclude" in *" refs/heads/$_dep "*) return; esac
 	[ -z "$tgish" -o -n "$_dep_is_tgish" ] || return 0
-	printf '%s %s\n' "$_depchain" "$(ref_exists_rev_short "refs/heads/$_dep")~$_dep"
+	printf '%s %s\n' "$_depchain" "$(ref_exists_rev_short "refs/heads/$_dep" $short)~$_dep"
 }
 
 show_rdeps()
@@ -282,7 +287,7 @@ if [ -n "$list" ]; then
 			case "$exclude" in *" $name "*) continue; esac
 			[ -z "$refs" ] || case " $refs " in *" $name "*);;*) continue; esac
 			[ -z "$tgish" ] || is_tgish "$name" || continue
-			printf '%s %s\n' "$(git rev-parse --verify --quiet --short "$rev" --)" "$name"
+			printf '%s %s\n' "$(git rev-parse --verify --quiet $short "$rev" --)" "$name"
 		done <"$trf"
 		exit 0
 	fi
@@ -290,7 +295,7 @@ if [ -n "$list" ]; then
 		refslist | show_deps | LC_ALL=C sort -u -b -k1,1 |
 		join - "$trf" |
 		while read -r name rev; do
-			printf '%s %s\n' "$(git rev-parse --verify --quiet --short "$rev" --)" "$name"
+			printf '%s %s\n' "$(git rev-parse --verify --quiet $short "$rev" --)" "$name"
 		done
 		exit 0
 	fi

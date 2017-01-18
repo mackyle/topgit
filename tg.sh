@@ -457,6 +457,7 @@ ref_exists_rev()
 }
 
 # Same as ref_exists_rev but output is abbreviated hash
+# Optional second argument defaults to --short but may be any --short=.../--no-short option
 ref_exists_rev_short()
 {
 	case "$1" in
@@ -467,7 +468,7 @@ ref_exists_rev_short()
 		*)
 			die "ref_exists_rev_short requires fully-qualified ref name"
 	esac
-	[ -n "$tg_read_only" ] || { git rev-parse --quiet --verify --short "$1^0" -- 2>/dev/null; return; }
+	[ -n "$tg_read_only" ] || { git rev-parse --quiet --verify ${2:---short} "$1^0" -- 2>/dev/null; return; }
 	_result=
 	_result_rev=
 	{ read -r _result _result_rev <"$tg_tmp_dir/cached/$1/.rfs"; } 2>/dev/null || :
@@ -475,7 +476,7 @@ ref_exists_rev_short()
 	_result_rev="$(rev_parse "$1")"
 	_result=$?
 	if [ $_result -eq 0 ]; then
-		_result_rev="$(git rev-parse --verify --short --quiet "$_result_rev" --)"
+		_result_rev="$(git rev-parse --verify ${2:---short} --quiet "$_result_rev" --)"
 		_result=$?
 	fi
 	[ -d "$tg_tmp_dir/cached/$1" ] || mkdir -p "$tg_tmp_dir/cached/$1" 2>/dev/null

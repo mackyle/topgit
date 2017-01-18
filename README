@@ -1259,7 +1259,8 @@ tg revert
 	of their dependencies in a single list with no duplicates.  The
 	``--rdeps`` option shows a display similar to ``tg summary --rdeps``
 	for each ref or all independent heads if no ref is given on the command
-	line.
+	line.  The standard ``--no-short``, ``--short=n`` etc. options may be
+	used to override the default ``--short`` output.
 
 	The revert mode has three submodes, dry-run mode (``-n`` or
 	``--dry-run``), force mode (``-f`` or ``--force``) and interactive mode
