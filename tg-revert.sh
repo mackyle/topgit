@@ -7,7 +7,7 @@
 lf="$(printf '\n.')" && lf="${lf%?}"
 tab="$(printf '\t.')" && tab="${tab%?}"
 USAGE="Usage: ${tgname:-tg} [...] revert (-f | -i | -n) [-q] [--tgish-only] [--no-deps] [--no-stash] [--exclude <ref>...] (<tagname> | --stash) [<ref>...]"
-USAGE="$USAGE$lf   Or: ${tgname:-tg} [...] revert [-l] [--no-short] [--tgish-only] [(--deps | --rdeps)] [--exclude <ref>...] (<tagname> | --stash) [(--heads | <ref>...)]"
+USAGE="$USAGE$lf   Or: ${tgname:-tg} [...] revert [-l] [--no-short] [--hash] [--tgish-only] [(--deps | --rdeps)] [--exclude <ref>...] (<tagname> | --stash) [(--heads | <ref>...)]"
 
 usage()
 {
@@ -33,6 +33,7 @@ nostash=
 exclude=
 quiet=
 short=
+hashonly=
 
 while [ $# -gt 0 ]; do case "$1" in
 	-h|--help)
@@ -46,6 +47,9 @@ while [ $# -gt 0 ]; do case "$1" in
 		;;
 	--short|--short=*|--no-short)
 		short="$1"
+		;;
+	--hash|--hash-only)
+		hashonly=1
 		;;
 	--deps|--deps-only)
 		deps=1
@@ -97,11 +101,11 @@ while [ $# -gt 0 ]; do case "$1" in
 esac; shift; done
 [ -z "$exclude" ] || exclude="$exclude "
 
-[ -z "$list$short" -o -z "$force$interact$dryrun$nodeps$nostash" ] || usage 1
-[ -z "$force$interact$dryrun" -o -z "$list$short$deps$rdeps" ] || usage 1
+[ -z "$list$short$hashonly" -o -z "$force$interact$dryrun$nodeps$nostash" ] || usage 1
+[ -z "$force$interact$dryrun" -o -z "$list$short$hashonly$deps$rdeps" ] || usage 1
 [ -z "$deps" -o -z "$rdeps" ] || usage 1
 [ -n "$list$force$interact$dryrun" ] || list=1
-[ -z "$list" -o -n "$short" ] || short=--short
+[ -z "$list" -o -n "$short" ] || if [ -n "$hashonly" ]; then short="--no-short"; else short="--short"; fi
 [ -n "$1" ] || { echo "Tag name required" >&2; usage 1; }
 tagname="$1"
 shift
@@ -244,7 +248,11 @@ show_rdep()
 {
 	case "$exclude" in *" refs/heads/$_dep "*) return; esac
 	[ -z "$tgish" -o -n "$_dep_is_tgish" ] || return 0
-	printf '%s %s\n' "$_depchain" "$(ref_exists_rev_short "refs/heads/$_dep" $short)~$_dep"
+	if [ -n "$hashonly" ]; then
+		printf '%s %s\n' "$_depchain" "$(ref_exists_rev_short "refs/heads/$_dep" $short)"
+	else
+		printf '%s %s\n' "$_depchain" "$(ref_exists_rev_short "refs/heads/$_dep" $short)~$_dep"
+	fi
 }
 
 show_rdeps()
@@ -258,7 +266,11 @@ show_rdeps()
 			[ -z "$tgish" ] || continue
 			[ -z "$showbreak" ] || echo
 			showbreak=1
-			printf '%s\n' "$_b"
+			if [ -n "$hashonly" ]; then
+				printf '%s\n' "$(ref_exists_rev_short "refs/heads/$_b" $short)"
+			else
+				printf '%s\n' "$(ref_exists_rev_short "refs/heads/$_b" $short)~$_b"
+			fi
 			continue
 		fi
 		case "$_b" in refs/"$topbases"/*) _b="refs/heads/${_b#refs/$topbases/}"; esac
@@ -268,7 +280,11 @@ show_rdeps()
 		[ -z "$showbreak" ] || echo
 		showbreak=1
 		{
-			echo "$(ref_exists_rev_short "refs/heads/$_b")~$_b"
+			if [ -n "$hashonly" ]; then
+				printf '%s\n' "$(ref_exists_rev_short "refs/heads/$_b" $short)"
+			else
+				printf '%s\n' "$(ref_exists_rev_short "refs/heads/$_b" $short)~$_b"
+			fi
 			recurse_preorder=1
 			recurse_deps show_rdep "$_b"
 		} | sed -e 's/[^ ][^ ]*[ ]/  /g' -e 's/~/ /'
@@ -287,7 +303,11 @@ if [ -n "$list" ]; then
 			case "$exclude" in *" $name "*) continue; esac
 			[ -z "$refs" ] || case " $refs " in *" $name "*);;*) continue; esac
 			[ -z "$tgish" ] || is_tgish "$name" || continue
-			printf '%s %s\n' "$(git rev-parse --verify --quiet $short "$rev" --)" "$name"
+			if [ -n "$hashonly" ]; then
+				printf '%s\n' "$(git rev-parse --verify --quiet $short "$rev" --)"
+			else
+				printf '%s %s\n' "$(git rev-parse --verify --quiet $short "$rev" --)" "$name"
+			fi
 		done <"$trf"
 		exit 0
 	fi
@@ -295,7 +315,11 @@ if [ -n "$list" ]; then
 		refslist | show_deps | LC_ALL=C sort -u -b -k1,1 |
 		join - "$trf" |
 		while read -r name rev; do
-			printf '%s %s\n' "$(git rev-parse --verify --quiet $short "$rev" --)" "$name"
+			if [ -n "$hashonly" ]; then
+				printf '%s\n' "$(git rev-parse --verify --quiet $short "$rev" --)"
+			else
+				printf '%s %s\n' "$(git rev-parse --verify --quiet $short "$rev" --)" "$name"
+			fi
 		done
 		exit 0
 	fi

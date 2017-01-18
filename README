@@ -1260,7 +1260,11 @@ tg revert
 	``--rdeps`` option shows a display similar to ``tg summary --rdeps``
 	for each ref or all independent heads if no ref is given on the command
 	line.  The standard ``--no-short``, ``--short=n`` etc. options may be
-	used to override the default ``--short`` output.
+	used to override the default ``--short`` output.  With ``--hash`` (or
+	``--hash-only``) show only the hash in ``--list`` mode in which case
+	the default is ``--no-short``.   The ``--hash`` option can be used much
+	like the ``git rev-parse --verify`` command to extract a specific hash
+	value out of a TopGit tag.
 
 	The revert mode has three submodes, dry-run mode (``-n`` or
 	``--dry-run``), force mode (``-f`` or ``--force``) and interactive mode
