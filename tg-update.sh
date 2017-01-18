@@ -117,13 +117,14 @@ update_branch() {
 		fi
 	fi
 	if [ -s "$_depcheck" ]; then
+		<"$_depcheck" \
+			sed 's/ [^ ]* *$//' | # last is $_update_name
+			sed 's/.* \([^ ]*\)$/+\1/' | # only immediate dependencies
+			sed 's/^\([^+]\)/-\1/' | # now each line is +branch or -branch (+ == recurse)
+			>"$_depcheck.ideps" \
+			uniq -s 1 # fold branch lines; + always comes before - and thus wins within uniq
+
 		stash_now_if_requested
-		# We need to switch to the base branch
-		# ...but only if we aren't there yet (from failed previous merge)
-		_HEAD="$(git symbolic-ref -q HEAD)" || :
-		if [ "$_HEAD" = "${_HEAD#refs/$topbases/}" ]; then
-			switch_to_base "$_update_name"
-		fi
 
 		while read -r depline; do
 			dep="${depline#?}"
@@ -141,7 +142,6 @@ update_branch() {
 					continue
 				esac
 				info "Recursing to $dep..."
-				git checkout -q "$dep"
 				while ! recursive_update "$dep"; do
 					# The merge got stuck! Let the user fix it up.
 					info "You are in a subshell. If you abort the merge,"
@@ -165,17 +165,51 @@ update_branch() {
 						fi
 					fi
 				done
-				switch_to_base "$_update_name"
 			fi
+		done <"$_depcheck.ideps"
 
+		# Create a list of all the fully qualified ref names that need
+		# to be merged into $_update_name's base.  This could be done
+		# as an octopus merge if there are no conflicts...
+		set --
+		while read -r dep; do
+			dep="${dep#?}"
+			case "$dep" in
+			"refs"/*)
+				set -- "$@" "$dep";;
+			*)
+				set -- "$@" "refs/heads/$dep";;
+			esac
+		done <"$_depcheck.ideps"
+
+		# Make sure we're on the base branch now
+		switch_to_base "$_update_name"
+
+		for fulldep in "$@"; do
 			# This will be either a proper topic branch
 			# or a remote base.  (branch_needs_update() is called
 			# only on the _dependencies_, not our branch itself!)
 
+			case "$fulldep" in
+			"refs/heads"/*)
+				dep="${fulldep#refs/heads/}";;
+			"refs"/*)
+				dep="${fulldep#refs/}";;
+			*)
+				dep="$fulldep";; # this should be a programmer error
+			esac
+
 			info "Updating $_update_name base with $dep changes..."
 			become_non_cacheable
-			case "$dep" in refs/*) fulldep="$dep";; *) fulldep="refs/heads/$dep"; esac
-			if ! git_merge -m "tgupdate: merge ${dep#refs/} into $topbases/$_update_name" "$fulldep^0"; then
+
+			# We need to switch to the base branch
+			# ...but only if we aren't there yet (from failed previous merge)
+			_HEAD="$(git symbolic-ref -q HEAD)" || :
+			if [ "$_HEAD" != "refs/$topbases/$_update_name" ]; then
+				switch_to_base "$_update_name"
+			fi
+
+			if ! git_merge -m "tgupdate: merge $dep into $topbases/$_update_name" "$fulldep^0"; then
 				if [ -z "$TG_RECURSIVE" ]; then
 					resume="\`$tgdisplay update${skip:+ --skip} $_update_name\` again"
 				else # subshell
@@ -188,15 +222,7 @@ update_branch() {
 				rm "$_depcheck"
 				exit 2
 			fi
-		done <<-EOT
-		$(
-			<"$_depcheck" \
-			sed 's/ [^ ]* *$//' | # last is $_update_name
-			sed 's/.* \([^ ]*\)$/+\1/' | # only immediate dependencies
-			sed 's/^\([^+]\)/-\1/' | # now each line is +branch or -branch (+ == recurse)
-			uniq -s 1 # fold branch lines; + always comes before - and thus wins within uniq
-		)
-		EOT
+		done
 	else
 		info "The base is up-to-date."
 	fi
