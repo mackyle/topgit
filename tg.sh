@@ -1408,6 +1408,11 @@ else
 			shift
 			break;;
 
+		--top-bases)
+			cmd=top-bases
+			shift
+			break;;
+
 		-r)
 			shift
 			if [ -z "$1" ]; then
@@ -1493,6 +1498,12 @@ else
 		hooks-path)
 			# Internal command
 			echol "$TG_INST_HOOKSDIR";;
+
+		top-bases)
+			# Maintenance command
+			git_dir="$(git rev-parse --git-dir)"
+			set_topbases
+			echol "refs/$topbases";;
 
 		*)
 			[ -r "$TG_INST_CMDDIR"/tg-$cmd ] || {
