@@ -339,12 +339,12 @@ setup_hook()
 	hook_chain=
 	if [ -s "$git_dir/hooks/$1" -a -x "$git_dir/hooks/$1" ]; then
 		hook_call="$hook_call"' || exit $?'
-		if ! LC_ALL=C sed -n 1p <"$git_dir/hooks/$1" | LC_ALL=C grep -Fqx "#!@SHELL_PATH@"; then
+		if [ -L "$git_dir/hooks/$1" ] || ! LC_ALL=C sed -n 1p <"$git_dir/hooks/$1" | LC_ALL=C grep -Fqx "#!@SHELL_PATH@"; then
 			chain_num=
 			while [ -e "$git_dir/hooks/$1-chain$chain_num" ]; do
 				chain_num=$(( $chain_num + 1 ))
 			done
-			cp -p "$git_dir/hooks/$1" "$git_dir/hooks/$1-chain$chain_num"
+			mv -f "$git_dir/hooks/$1" "$git_dir/hooks/$1-chain$chain_num"
 			hook_chain=1
 		fi
 	else
