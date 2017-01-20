@@ -50,7 +50,9 @@ current="$(strip_ref "$(git symbolic-ref -q HEAD)")" || :
 if [ -z "$all" ]; then
 	name="$(verify_topgit_branch "${name:-HEAD}")"
 else
-	[ -n "$current" ] || die "cannot return to detached tree; switch to another branch"
+	[ -n "$current" ] || die "cannot return to detached HEAD; switch to another branch"
+	[ -n "$(git rev-parse --verify --quiet HEAD --)" ] ||
+		die "cannot return to unborn branch; switch to another branch"
 fi
 
 ensure_clean_tree
@@ -73,6 +75,7 @@ stash_now_if_requested() {
 
 recursive_update() {
 	_ret=0
+	on_base=
 	(
 		TG_RECURSIVE="[$1] $TG_RECURSIVE"
 		PS1="[$1] $PS1"
@@ -93,6 +96,18 @@ git_merge() {
 	git merge $auhopt --no-stat "$@" || _ret=$?
 	[ "$_ret" != "0" ] || git --no-pager diff --shortstat "$_oldhead" HEAD^0 --
 	return $_ret
+}
+
+on_base=
+do_base_switch() {
+	[ -n "$1" ] || return 0
+	if
+		[ "$1" != "$on_base" ] ||
+		[ "$(git symbolic-ref -q HEAD)" != "refs/$topbases/$1" ]
+	then
+		switch_to_base "$1"
+		on_base="$1"
+	fi
 }
 
 update_branch() {
@@ -182,8 +197,8 @@ update_branch() {
 			esac
 		done <"$_depcheck.ideps"
 
-		# Make sure we're on the base branch now
-		switch_to_base "$_update_name"
+		# Make sure we end up on the correct base branch
+		on_base=
 
 		for fulldep in "$@"; do
 			# This will be either a proper topic branch
@@ -204,12 +219,10 @@ update_branch() {
 
 			# We need to switch to the base branch
 			# ...but only if we aren't there yet (from failed previous merge)
-			_HEAD="$(git symbolic-ref -q HEAD)" || :
-			if [ "$_HEAD" != "refs/$topbases/$_update_name" ]; then
-				switch_to_base "$_update_name"
-			fi
+			do_base_switch "$_update_name"
 
-			if ! git_merge -m "tgupdate: merge $dep into $topbases/$_update_name" "$fulldep^0"; then
+			msg="tgupdate: merge $dep into $topbases/$_update_name"
+			if ! git_merge -m "$msg" "$fulldep^0"; then
 				if [ -z "$TG_RECURSIVE" ]; then
 					resume="\`$tgdisplay update${skip:+ --skip} $_update_name\` again"
 				else # subshell
@@ -248,7 +261,8 @@ update_branch() {
 			become_non_cacheable
 			# *DETACH* our HEAD now!
 			git checkout -q --detach "refs/$topbases/$_update_name"
-			if ! git_merge -m "tgupdate: merge ${_rname#refs/} onto $topbases/$_update_name" "$_rname^0"; then
+			msg="tgupdate: merge ${_rname#refs/} onto $topbases/$_update_name"
+			if ! git_merge -m "$msg" "$_rname^0"; then
 				info "Oops, you will need to help me out here a bit."
 				info "Please commit merge resolution and call:"
 				info "git$gitcdopt checkout $_update_name && git$gitcdopt merge <commitid>"
@@ -272,7 +286,8 @@ update_branch() {
 	stash_now_if_requested
 	info "Updating $_update_name against new base..."
 	become_non_cacheable
-	if ! git_merge -m "tgupdate: merge ${plusextra}$topbases/$_update_name into $_update_name" "$merge_with^0"; then
+	msg="tgupdate: merge ${plusextra}$topbases/$_update_name into $_update_name"
+	if ! git_merge -m "$msg" "$merge_with^0"; then
 		if [ -z "$TG_RECURSIVE" ]; then
 			info "Please commit merge resolution. No need to do anything else"
 			info "You can abort this operation using \`git$gitcdopt reset --hard\` now"
@@ -289,7 +304,7 @@ update_branch() {
 tg_read_only=1
 v_create_ref_cache
 
-[ -z "$all" ] && { update_branch $name; exit; }
+[ -z "$all" ] && { update_branch "$name" && git checkout -q "$name"; exit; }
 
 do_non_annihilated_branches_patterns() {
 	while read -r _pat && [ -n "$_pat" ]; do
