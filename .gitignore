@@ -18,6 +18,7 @@
 /config.mak
 /hooks/pre-commit
 /tg
+/tg--index-merge-one-file
 /tg-annihilate
 /tg-annihilate.txt
 /tg-annihilate.html

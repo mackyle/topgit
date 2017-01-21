@@ -17,10 +17,12 @@ cmddir = $(prefix)/libexec/topgit
 sharedir = $(prefix)/share/topgit
 hooksdir = $(cmddir)/hooks
 
-commands_in := $(wildcard tg-*.sh)
+commands_in := $(wildcard tg-[!-]*.sh)
+utils_in := $(wildcard tg--*.sh)
 hooks_in = hooks/pre-commit.sh
 
 commands_out = $(patsubst %.sh,%,$(commands_in))
+utils_out = $(patsubst %.sh,%,$(utils_in))
 hooks_out = $(patsubst %.sh,%,$(hooks_in))
 help_out = $(patsubst %.sh,%.txt,tg-help.sh $(commands_in))
 html_out = $(patsubst %.sh,%.html,tg-help.sh tg-tg.sh $(commands_in))
@@ -39,14 +41,14 @@ endif
 
 .PHONY: FORCE
 
-all::	shell_compatibility_test precheck $(commands_out) $(hooks_out) bin-wrappers/tg $(help_out) tg-tg.txt
+all::	shell_compatibility_test precheck $(commands_out) $(utils_out) $(hooks_out) bin-wrappers/tg $(help_out) tg-tg.txt
 
 please_set_SHELL_PATH_to_a_more_modern_shell:
 	@$$(:)
 
 shell_compatibility_test: please_set_SHELL_PATH_to_a_more_modern_shell
 
-tg $(commands_out) $(hooks_out): % : %.sh Makefile TG-BUILD-SETTINGS
+tg $(commands_out) $(utils_out) $(hooks_out): % : %.sh Makefile TG-BUILD-SETTINGS
 	@echo "[SED] $@"
 	@sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
 		-e 's#@cmddir@#$(cmddir)#g;' \
@@ -60,7 +62,7 @@ tg $(commands_out) $(hooks_out): % : %.sh Makefile TG-BUILD-SETTINGS
 	chmod +x $@+ && \
 	mv $@+ $@
 
-bin-wrappers/tg : $(commands_out) $(hooks_out) tg
+bin-wrappers/tg : $(commands_out) $(utils_out) $(hooks_out) tg
 	@echo "[WRAPPER] $@"
 	@[ -d bin-wrappers ] || mkdir bin-wrappers
 	@echo '#!$(SHELL_PATH_SQ)' >"$@"
@@ -84,11 +86,11 @@ install-doc:: install-html
 
 html:: topgit.html $(html_out)
 
-tg-tg.txt: README create-html-usage.pl $(wildcard tg-*.sh)
+tg-tg.txt: README create-html-usage.pl $(wildcard tg-[!-]*.sh)
 	@echo '[HELP] tg'
 	@perl ./create-html-usage.pl --text < README > $@
 
-topgit.html: README create-html-usage.pl $(wildcard tg-*.sh)
+topgit.html: README create-html-usage.pl $(wildcard tg-[!-]*.sh)
 	@echo '[HTML] topgit'
 	@perl ./create-html-usage.pl < README | rst2html.py - $@
 
@@ -112,7 +114,7 @@ install:: all
 	install -d -m 755 "$(DESTDIR)$(bindir)"
 	install tg "$(DESTDIR)$(bindir)"
 	install -d -m 755 "$(DESTDIR)$(cmddir)"
-	install $(commands_out) "$(DESTDIR)$(cmddir)"
+	install $(commands_out) $(utils_out) "$(DESTDIR)$(cmddir)"
 	install -d -m 755 "$(DESTDIR)$(hooksdir)"
 	install $(hooks_out) "$(DESTDIR)$(hooksdir)"
 	install -d -m 755 "$(DESTDIR)$(sharedir)"
@@ -128,7 +130,7 @@ install-html:: html
 .PHONY: clean
 
 clean::
-	rm -f tg $(commands_out) $(hooks_out) $(help_out) topgit.html $(html_out)
+	rm -f tg $(commands_out) $(utils_out) $(hooks_out) $(help_out) topgit.html $(html_out)
 	rm -f TG-BUILD-SETTINGS
 	rm -rf bin-wrappers
 	+@$(MAKE) -C t clean

@@ -86,6 +86,14 @@ recursive_update() {
 	return $_ret
 }
 
+# If HEAD is a symref to "$1" detach it at its current value
+detach_symref_head_on_branch() {
+	_hsr="$(git symbolic-ref -q HEAD --)" && [ -n "$_hsr" ] || return 0
+	_hrv="$(git rev-parse --quiet --verify HEAD --)" && [ -n "$_hrv" ] ||
+		die "cannot detach_symref_head_on_branch from unborn branch $_hsr"
+	git update-ref --no-deref -m "detaching HEAD from $_hsr to safely update it" HEAD "$_hrv"
+}
+
 # run git merge with the passed in arguments AND --no-stat
 # return the exit status of git merge
 # if the returned exit status is no error show a shortstat before
@@ -94,8 +102,106 @@ git_merge() {
 	_oldhead="$(git rev-parse --verify HEAD^0)"
 	_ret=0
 	git merge $auhopt --no-stat "$@" || _ret=$?
-	[ "$_ret" != "0" ] || git --no-pager diff --shortstat "$_oldhead" HEAD^0 --
+	[ "$_ret" != "0" ] || git --no-pager diff-tree --shortstat "$_oldhead" HEAD^0 --
 	return $_ret
+}
+
+# similar to git_merge but operates exclusively using a separate index and temp dir
+# only trivial aggressive automatic (i.e. simple) merges are supported
+#
+# $1 => '' to discard result, 'refs/?*' to update the specified ref or a varname
+# $2 => '-m' MUST be '-m'
+# $3 => commit message AND, if $1 matches refs/?* the update-ref message
+# $4 => commit-ish to merge as "ours"
+# $5 => commit-ish to merge as "theirs"
+#
+# all merging is done in a separate index (or temporary files for simple merges)
+# if successful the ref or var is updated with the result
+# otherwise everything is left unchanged and a silent failure occurs
+# if successful and $1 matches refs/?* it WILL BE UPDATED to a new commit using the
+# message and appropriate parents AND HEAD WILL BE DETACHED first if it's a symref
+# to the same ref
+# otherwise if $1 does not match refs/?* and is not empty the named variable will
+# be set to contain the resulting commit from the merge
+# the working tree and index ARE LEFT COMPLETELY UNTOUCHED no matter what
+v_attempt_index_merge() {
+	[ "$#" -eq 5 ] && [ "$2" = "-m" ] && [ -n "$3" ] && [ -n "$4" ] && [ -n "$5" ] ||
+		die "programmer error: invalid arguments to v_attempt_index_merge: $*"
+	_var="$1"
+	_msg="$3"
+	_head="$4"
+	shift 4
+	_mmsg=
+	_newc=
+	_nodt=
+	_same=
+	rh="$(git rev-parse --quiet --verify "$_head^0" --)" && [ -n "$rh" ] || return 1
+	if mb="$(git merge-base "$_head" "$1")" && [ -n "$mb" ]; then
+		r1="$(git rev-parse --quiet --verify "$1^0" --)" && [ -n "$r1" ] || return 1
+		if [ "$rh" = "$mb" ]; then
+			_mmsg="Fast-forward."
+			newc="$r1"
+			_nodt=1
+		elif [ "$r1" = "$mb" ]; then
+			_mmsg="Already up-to-date."
+			newc="$rh"
+			_nodt=1
+			_same=1
+		fi
+	else
+		mb="$(git hash-object -w -t tree --stdin < /dev/null)"
+	fi
+	if [ -z "$_newc" ]; then
+		inew="$tg_tmp_dir/index.$$"
+		itmp="$tg_tmp_dir/output.$$"
+		! [ -e "$inew" ] || rm -f "$inew"
+		GIT_INDEX_FILE="$inew" git read-tree -m --aggressive -i "$mb" "$_head" "$1" || { rm -f "$inew"; return 1; }
+		GIT_INDEX_FILE="$inew" git reset -q "$_head" -- :/.topdeps :/.topmsg >/dev/null 2>&1 || { rm -f "$inew"; return 1; }
+		GIT_INDEX_FILE="$inew" git ls-files --unmerged --full-name --abbrev :/ >"$itmp" 2>&1 || { rm -f "$inew" "$itmp"; return 1; }
+		_auto=
+		! [ -s "$itmp" ] || {
+			if ! GIT_INDEX_FILE="$inew" TG_TMP_DIR="$tg_tmp_dir" git merge-index -q "$TG_INST_CMDDIR/tg--index-merge-one-file" -a >"$itmp" 2>&1; then
+				rm -f "$inew" "$itmp"
+				return 1
+			fi
+			cat "$itmp"
+			_auto=" automatic"
+		}
+		rm -f "$itmp"
+		newt="$(GIT_INDEX_FILE="$inew" git write-tree)" && [ -n "$newt" ] || { rm -f "$inew"; return 1; }
+		rm -f "$inew"
+		newc="$(git commit-tree -p "$_head" -p "$1" -m "$_msg" "$newt")" && [ -n "$newc" ] || return 1
+		_mmsg="Merge made by the 'trivial aggressive$_auto' strategy."
+	fi
+	case "$_var" in
+	refs/?*)
+		if [ -n "$_same" ]; then
+			_same=
+			if rv="$(git rev-parse --quiet --verify "$_var" --)" && [ "$rv"  = "$newc" ]; then
+				_same=1
+			fi
+		fi
+		if [ -z "$_same" ] ; then
+			detach_symref_head_on_branch "$_head" || return 1
+			# git update-ref returns 0 even on failure :(
+			git update-ref -m "$_msg" "$_var" "$newc" || return 1
+		fi
+		;;
+	?*)
+		eval "$_var="'"$newc"'
+		;;
+	esac
+	echo "$_mmsg"
+	[ -n "$_nodt" ] || git --no-pager diff-tree --shortstat "$rh" "$newc" --
+	return 0
+}
+
+# shortcut that passes $3 as a preceding argument (which must match refs/?*)
+attempt_index_merge() {
+	case "$3" in refs/?*);;*)
+		die "programmer error: invalid arguments to attempt_index_merge: $*"
+	esac
+	v_attempt_index_merge "$3" "$@"
 }
 
 on_base=
@@ -216,13 +322,16 @@ update_branch() {
 
 			info "Updating $_update_name base with $dep changes..."
 			become_non_cacheable
-
-			# We need to switch to the base branch
-			# ...but only if we aren't there yet (from failed previous merge)
-			do_base_switch "$_update_name"
-
 			msg="tgupdate: merge $dep into $topbases/$_update_name"
-			if ! git_merge -m "$msg" "$fulldep^0"; then
+			if
+				! attempt_index_merge -m "$msg" "refs/$topbases/$_update_name" "$fulldep^0" &&
+				! {
+					# We need to switch to the base branch
+					# ...but only if we aren't there yet (from failed previous merge)
+					do_base_switch "$_update_name" || die "do_base_switch failed" &&
+					git_merge -m "$msg" "$fulldep^0"
+				}
+			then
 				if [ -z "$TG_RECURSIVE" ]; then
 					resume="\`$tgdisplay update${skip:+ --skip} $_update_name\` again"
 				else # subshell
@@ -240,17 +349,11 @@ update_branch() {
 		info "The base is up-to-date."
 	fi
 
-	# Home, sweet home...
-	# (We want to always switch back, in case we were on the base from failed
-	# previous merge.)
-	git checkout -q "$_update_name"
-
-	merge_with="refs/$topbases/$_update_name"
-
 
 	## Second, update our head with the remote branch
 
 	plusextra=
+	merge_with="refs/$topbases/$_update_name"
 	if has_remote "$_update_name"; then
 		_rname="refs/remotes/$base_remote/$_update_name"
 		if branch_contains "refs/heads/$_update_name" "$_rname"; then
@@ -259,10 +362,16 @@ update_branch() {
 			stash_now_if_requested
 			info "Reconciling $_update_name base with remote branch updates..."
 			become_non_cacheable
-			# *DETACH* our HEAD now!
-			git checkout -q --detach "refs/$topbases/$_update_name"
 			msg="tgupdate: merge ${_rname#refs/} onto $topbases/$_update_name"
-			if ! git_merge -m "$msg" "$_rname^0"; then
+			if
+				! v_attempt_index_merge "merge_with" -m "$msg" "refs/$topbases/$_update_name" "$_rname^0" &&
+				! {
+					# *DETACH* our HEAD now!
+					git checkout -q --detach "refs/$topbases/$_update_name" || die "git checkout failed" &&
+					git_merge -m "$msg" "$_rname^0" &&
+					merge_with="$(git rev-parse --verify HEAD --)"
+				}
+			then
 				info "Oops, you will need to help me out here a bit."
 				info "Please commit merge resolution and call:"
 				info "git$gitcdopt checkout $_update_name && git$gitcdopt merge <commitid>"
@@ -270,9 +379,7 @@ update_branch() {
 				exit 4
 			fi
 			# Go back but remember we want to merge with this, not base
-			merge_with="$(git rev-parse --verify HEAD --)"
 			plusextra="${_rname#refs/}+"
-			git checkout -q "$_update_name"
 		fi
 	fi
 
@@ -287,7 +394,16 @@ update_branch() {
 	info "Updating $_update_name against new base..."
 	become_non_cacheable
 	msg="tgupdate: merge ${plusextra}$topbases/$_update_name into $_update_name"
-	if ! git_merge -m "$msg" "$merge_with^0"; then
+	if
+		! attempt_index_merge -m "$msg" "refs/heads/$_update_name" "$merge_with^0" &&
+		! {
+			# Home, sweet home...
+			# (We want to always switch back, in case we were
+			# on the base from failed previous merge.)
+			git checkout -q "$_update_name" || die "git checkout failed" &&
+			git_merge -m "$msg" "$merge_with^0"
+		}
+	then
 		if [ -z "$TG_RECURSIVE" ]; then
 			info "Please commit merge resolution. No need to do anything else"
 			info "You can abort this operation using \`git$gitcdopt reset --hard\` now"

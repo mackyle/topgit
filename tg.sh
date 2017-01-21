@@ -955,7 +955,7 @@ do_help()
 
 		cmds=
 		sep=
-		for cmd in "$TG_INST_CMDDIR"/tg-*; do
+		for cmd in "$TG_INST_CMDDIR"/tg-[!-]*; do
 			! [ -r "$cmd" ] && continue
 			# strip directory part and "tg-" prefix
 			cmd="${cmd##*/}"
