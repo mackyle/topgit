@@ -69,7 +69,7 @@ stash_now_if_requested() {
 		msg="$msg $name"
 		stashb="$name"
 	fi
-	$tg tag --quiet -m "$msg" --stash "$stashb" || die "requested --stash failed"
+	$tg tag -q -q -m "$msg" --stash "$stashb" || die "requested --stash failed"
 	stash=
 }
 
@@ -132,18 +132,18 @@ v_attempt_index_merge() {
 	_head="$4"
 	shift 4
 	_mmsg=
-	_newc=
+	newc=
 	_nodt=
 	_same=
 	rh="$(git rev-parse --quiet --verify "$_head^0" --)" && [ -n "$rh" ] || return 1
 	if mb="$(git merge-base "$_head" "$1")" && [ -n "$mb" ]; then
 		r1="$(git rev-parse --quiet --verify "$1^0" --)" && [ -n "$r1" ] || return 1
 		if [ "$rh" = "$mb" ]; then
-			_mmsg="Fast-forward."
+			_mmsg="Fast-forward (no commit created)"
 			newc="$r1"
 			_nodt=1
 		elif [ "$r1" = "$mb" ]; then
-			_mmsg="Already up-to-date."
+			_mmsg="Already up-to-date!"
 			newc="$rh"
 			_nodt=1
 			_same=1
@@ -151,12 +151,11 @@ v_attempt_index_merge() {
 	else
 		mb="$(git hash-object -w -t tree --stdin < /dev/null)"
 	fi
-	if [ -z "$_newc" ]; then
+	if [ -z "$newc" ]; then
 		inew="$tg_tmp_dir/index.$$"
 		itmp="$tg_tmp_dir/output.$$"
 		! [ -e "$inew" ] || rm -f "$inew"
 		GIT_INDEX_FILE="$inew" git read-tree -m --aggressive -i "$mb" "$_head" "$1" || { rm -f "$inew"; return 1; }
-		GIT_INDEX_FILE="$inew" git reset -q "$_head" -- :/.topdeps :/.topmsg >/dev/null 2>&1 || { rm -f "$inew"; return 1; }
 		GIT_INDEX_FILE="$inew" git ls-files --unmerged --full-name --abbrev :/ >"$itmp" 2>&1 || { rm -f "$inew" "$itmp"; return 1; }
 		_auto=
 		! [ -s "$itmp" ] || {
@@ -164,8 +163,10 @@ v_attempt_index_merge() {
 				rm -f "$inew" "$itmp"
 				return 1
 			fi
-			cat "$itmp"
-			_auto=" automatic"
+			if [ -s "$itmp" ]; then
+				cat "$itmp"
+				_auto=" automatic"
+			fi
 		}
 		rm -f "$itmp"
 		newt="$(GIT_INDEX_FILE="$inew" git write-tree)" && [ -n "$newt" ] || { rm -f "$inew"; return 1; }

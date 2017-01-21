@@ -41,23 +41,28 @@ fi
 if [ -z "$newhash" ]; then
 	# mode must match 100\o\o\o
 	case "$6" in 100[0-7][0-7][0-7]);;*) exit 1; esac
-	tg_tmp_dir="${TG_TMP_DIR:-/tmp}"
-	basef="$tg_tmp_dir/tgmerge_$$_base"
-	oursf="$tg_tmp_dir/tgmerge_$$_ours"
-	thrsf="$tg_tmp_dir/tgmerge_$$_thrs"
-	trap 'rm -f "$basef" "$oursf" "$thrsf"' EXIT
-	trap 'exit 129' HUP
-	trap 'exit 130' INT
-	trap 'exit 131' QUIT
-	trap 'exit 134' ABRT
-	trap 'exit 141' PIPE
-	trap 'exit 143' TERM
-	git cat-file blob "$1" >"$basef" || exit 1
-	git cat-file blob "$2" >"$oursf" || exit 1
-	git cat-file blob "$3" >"$thrsf" || exit 1
-	git merge-file --quiet "$oursf" "$basef" "$thrsf" >/dev/null 2>&1 || exit 1
-	printf '%s\n' "Auto-merging $4"
-	newhash="$(git hash-object -w --stdin <"$oursf" 2>/dev/null)"
+	if [ "$4" = ".topdeps" ] || [ "$4" = ".topmsg" ]; then
+		# resolution for these two is always silently "ours" never a merge
+		newhash="$2"
+	else
+		tg_tmp_dir="${TG_TMP_DIR:-/tmp}"
+		basef="$tg_tmp_dir/tgmerge_$$_base"
+		oursf="$tg_tmp_dir/tgmerge_$$_ours"
+		thrsf="$tg_tmp_dir/tgmerge_$$_thrs"
+		trap 'rm -f "$basef" "$oursf" "$thrsf"' EXIT
+		trap 'exit 129' HUP
+		trap 'exit 130' INT
+		trap 'exit 131' QUIT
+		trap 'exit 134' ABRT
+		trap 'exit 141' PIPE
+		trap 'exit 143' TERM
+		git cat-file blob "$1" >"$basef" || exit 1
+		git cat-file blob "$2" >"$oursf" || exit 1
+		git cat-file blob "$3" >"$thrsf" || exit 1
+		git merge-file --quiet "$oursf" "$basef" "$thrsf" >/dev/null 2>&1 || exit 1
+		printf '%s\n' "Auto-merging $4"
+		newhash="$(git hash-object -w --stdin <"$oursf" 2>/dev/null)"
+	fi
 fi
 
 [ -n "$newhash" ] || exit 1

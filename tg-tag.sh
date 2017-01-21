@@ -40,7 +40,7 @@ stash=
 reflogmsg=
 notype=
 setreflogmsg=
-quiet=
+quiet=0
 noneok=
 clear=
 delete=
@@ -65,7 +65,7 @@ while [ $# -gt 0 ]; do case "$1" in
 		usage
 		;;
 	-q|--quiet)
-		quiet=1
+		quiet=$(( $quiet + 1 ))
 		;;
 	--none-ok)
 		noneok=1
@@ -368,7 +368,7 @@ if [ $# -eq 1 ] && [ "$1" = "--all" ]; then
 	outofdateok=1
 	all=1
 	if [ $# -eq 0 ]; then
-		if [ -n "$quiet" -a -n "$noneok" ]; then
+		if [ "$quiet" -gt 0 -a -n "$noneok" ]; then
 			exit 0
 		else
 			die "no TopGit branches found"
@@ -389,7 +389,7 @@ while read -r obj typ ref && [ -n "$obj" -a -n "$typ" ]; do
 	case " $ignore " in *" $ref "*) continue; esac
 	if [ "$typ" != "commit" -a "$typ" != "tag" ]; then
 		[ -n "$anyrefok" ] || die "not a committish (is a '$typ') ref: $ref"
-		warn "ignoring non-committish (is a '$typ') ref: $ref"
+		[ "$quiet" -ge 2 ] || warn "ignoring non-committish (is a '$typ') ref: $ref"
 		ignore="${ignore:+$ignore }$ref"
 		continue
 	fi
@@ -397,7 +397,7 @@ while read -r obj typ ref && [ -n "$obj" -a -n "$typ" ]; do
 		newlist="${newlist:+$newlist }$ref"
 	esac
 	if [ "$typ" = "tag" ]; then
-		warn "storing as lightweight tag instead of 'tag' object: $ref"
+		[ "$quiet" -ge 2 ] || warn "storing as lightweight tag instead of 'tag' object: $ref"
 		ignore="${ignore:+$ignore }$ref"
 	fi
 done <<-EOT
@@ -417,7 +417,7 @@ for b; do
 		[ -n "$anyrefok" ] || die "no such symbolic ref name: $b"
 		fullhash="$(git rev-parse --verify --quiet "$b" --)" || die "no such ref: $b"
 		case " $extrarefs " in *" $b "*);;*)
-			warn "including non-symbolic ref only in parents calculation: $b"
+			[ "$quiet" -ge 2 ] || warn "including non-symbolic ref only in parents calculation: $b"
 			extrarefs="${extrarefs:+$extrarefs }$fullhash"
 		esac
 		continue
@@ -427,7 +427,7 @@ for b; do
 			added=
 			tgish=1
 			ref_exists "refs/heads/${sfn#refs/$topbases/}" || tgish=
-			[ -n "$anyrefok" ] || [ -n "$tgish" ] ||
+			[ -n "$anyrefok" ] || [ -n "$tgish" ] || [ "$quiet" -ge 2 ] ||
 				warn "including TopGit base that's missing its head: $sfn"
 			case " $allrefs " in *" $sfn "*);;*)
 				allrefs="${allrefs:+$allrefs }$sfn"
@@ -640,7 +640,7 @@ esac
 
 init_reflog "$refname"
 if [ "$reftype" = "tag" -a -n "$signed" ]; then
-	[ -z "$quiet" ] || exec >/dev/null
+	[ "$quiet" -eq 0 ] || exec >/dev/null
 	git tag -F "$git_dir/TGTAG_FINALMSG" ${signed:+-s} ${force:+-f} \
 		${keyid:+-u} ${keyid} "$tagname" "$tagtarget"
 else
@@ -670,6 +670,6 @@ else
 		;;
 	esac
 	git update-ref -m "$updmsg" "$refname" "$newtag"
-	[ -z "$old" -o -n "$quiet" ] || printf "Updated $reftype '%s' (was %s)\n" "$tagname" "$old"
+	[ -z "$old" -o "$quiet" -gt 0 ] || printf "Updated $reftype '%s' (was %s)\n" "$tagname" "$old"
 fi
 rm -f "$git_dir/TAG_EDITMSG" "$git_dir/TGTAG_FINALMSG"
