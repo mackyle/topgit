@@ -4,8 +4,6 @@
 # All rights reserved.
 # GPLv2
 
-lf="$(printf '\n.')" && lf="${lf%?}"
-tab="$(printf '\t.')" && tab="${tab%?}"
 USAGE="Usage: ${tgname:-tg} [...] tag [-s | -u <key-id>] [-f] [-q] [--no-edit] [-m <msg> | -F <file>] (<tagname> | --refs) [<branch>...]"
 USAGE="$USAGE$lf   Or: ${tgname:-tg} [...] tag (-g | --reflog) [--reflog-message | --commit-message] [--no-type] [-n <number> | -number] [<tagname>]"
 USAGE="$USAGE$lf   Or: ${tgname:-tg} [...] tag (--clear | --delete) <tagname>"

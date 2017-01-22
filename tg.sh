@@ -17,6 +17,9 @@ octet4="$octet$octet$octet$octet"
 octet19="$octet4$octet4$octet4$octet4$octet$octet$octet"
 octet20="$octet4$octet4$octet4$octet4$octet4"
 nullsha="0000000000000000000000000000000000000000"
+tab='	'
+lf='
+'
 
 ## Auxiliary functions
 
