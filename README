@@ -636,6 +636,10 @@ tg annihilate
 	(base == head, except for changes to the .top* files); use
 	``-f`` to annihilate a non-empty branch.
 
+	After completing the annihilation itself, normally ``tg update``
+	is run on any modified dependents.  Use the ``--no-update`` option
+	to suppress running ``tg update``.
+
 tg depend
 ~~~~~~~~~
 	Change the dependencies of a TopGit-controlled topic branch.
