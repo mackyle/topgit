@@ -433,7 +433,7 @@ while [ -n "$merge" ]; do
 	quiet_info "Merging $name base with $branch..."
 
 	if ! git merge $auhopt -m "tgcreate: merge $branch into $topbases/$name" "$branch^0"; then
-		info "Please commit merge resolution and call: $tgdisplay create"
+		info "Please commit merge resolution and call: $tgdisplay create --continue"
 		info "It is also safe to abort this operation using:"
 		info "git$gitcdopt reset --hard some_branch"
 		info "(You are on a detached HEAD now.)"
