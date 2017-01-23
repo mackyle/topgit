@@ -114,6 +114,7 @@ git_merge() {
 # $3 => commit message AND, if $1 matches refs/?* the update-ref message
 # $4 => commit-ish to merge as "ours"
 # $5 => commit-ish to merge as "theirs"
+# [$6...] => more commit-ishes to merge as "theirs" in octopus
 #
 # all merging is done in a separate index (or temporary files for simple merges)
 # if successful the ref or var is updated with the result
@@ -125,54 +126,109 @@ git_merge() {
 # be set to contain the resulting commit from the merge
 # the working tree and index ARE LEFT COMPLETELY UNTOUCHED no matter what
 v_attempt_index_merge() {
-	[ "$#" -eq 5 ] && [ "$2" = "-m" ] && [ -n "$3" ] && [ -n "$4" ] && [ -n "$5" ] ||
+	[ "$#" -ge 5 ] && [ "$2" = "-m" ] && [ -n "$3" ] && [ -n "$4" ] && [ -n "$5" ] ||
 		die "programmer error: invalid arguments to v_attempt_index_merge: $*"
 	_var="$1"
 	_msg="$3"
 	_head="$4"
 	shift 4
+	rh="$(git rev-parse --quiet --verify "$_head^0" --)" && [ -n "$rh" ] || return 1
+	orh="$rh"
 	_mmsg=
 	newc=
 	_nodt=
 	_same=
-	rh="$(git rev-parse --quiet --verify "$_head^0" --)" && [ -n "$rh" ] || return 1
-	if mb="$(git merge-base "$_head" "$1")" && [ -n "$mb" ]; then
-		r1="$(git rev-parse --quiet --verify "$1^0" --)" && [ -n "$r1" ] || return 1
-		if [ "$rh" = "$mb" ]; then
-			_mmsg="Fast-forward (no commit created)"
-			newc="$r1"
-			_nodt=1
-		elif [ "$r1" = "$mb" ]; then
-			_mmsg="Already up-to-date!"
-			newc="$rh"
-			_nodt=1
-			_same=1
-		fi
-	else
+	_mt=
+	_octo=
+	if [ $# -gt 1 ]; then
+		ihl="$(git merge-base --independent "$@")" || return 1
+		set -- $ihl
+		[ $# -ge 1 ] && [ -n "$1" ] || return 1
+	fi
+	[ $# -eq 1 ] || _octo=1
+	mb="$(git merge-base ${_octo:+--octopus} "$rh" "$@")" && [ -n "$mb" ] || {
 		mb="$(git hash-object -w -t tree --stdin < /dev/null)"
+		_mt=1
+	}
+	if [ -z "$_mt" ]; then
+		if [ -n "$_octo" ]; then
+			while [ $# -gt 1 ] && mbh="$(git merge-base "$rh" "$1")" && [ -n "$mbh" ]; do
+				if [ "$rh" = "$mbh" ]; then
+					_mmsg="Fast-forward (no commit created)"
+					rh="$1"
+					shift
+				elif [ "$1" = "$mbh" ]; then
+					shift
+				else
+					break;
+				fi
+			done
+			if [ $# -eq 1 ]; then
+				_octo=
+				mb="$(git merge-base "$rh" "$1")" && [ -n "$mb" ] || return 1
+			fi
+		fi
+		if [ -z "$_octo" ]; then
+			r1="$(git rev-parse --quiet --verify "$1^0" --)" && [ -n "$r1" ] || return 1
+			set -- "$r1"
+			if [ "$rh" = "$mb" ]; then
+				_mmsg="Fast-forward (no commit created)"
+				newc="$r1"
+				_nodt=1
+			elif [ "$r1" = "$mb" ]; then
+				[ -n "$_mmsg" ] || _mmsg="Already up-to-date!"
+				newc="$rh"
+				_nodt=1
+				_same=1
+			fi
+		fi
 	fi
 	if [ -z "$newc" ]; then
 		inew="$tg_tmp_dir/index.$$"
-		itmp="$tg_tmp_dir/output.$$"
 		! [ -e "$inew" ] || rm -f "$inew"
-		GIT_INDEX_FILE="$inew" git read-tree -m --aggressive -i "$mb" "$_head" "$1" || { rm -f "$inew"; return 1; }
-		GIT_INDEX_FILE="$inew" git ls-files --unmerged --full-name --abbrev :/ >"$itmp" 2>&1 || { rm -f "$inew" "$itmp"; return 1; }
+		itmp="$tg_tmp_dir/output.$$"
+		imrg="$tg_tmp_dir/auto.$$"
+		[ -z "$_octo" ] || >"$imrg"
 		_auto=
-		! [ -s "$itmp" ] || {
-			if ! GIT_INDEX_FILE="$inew" TG_TMP_DIR="$tg_tmp_dir" git merge-index -q "$TG_INST_CMDDIR/tg--index-merge-one-file" -a >"$itmp" 2>&1; then
-				rm -f "$inew" "$itmp"
-				return 1
+		_parents=
+		_newrh="$rh"
+		while :; do
+			if [ -n "$_parents" ]; then
+				if [ "$(git rev-list --count --max-count=1 "$1" --not "$_newrh" --)" = "0" ]; then
+					shift
+					continue
+				fi
 			fi
-			if [ -s "$itmp" ]; then
-				cat "$itmp"
-				_auto=" automatic"
+			GIT_INDEX_FILE="$inew" git read-tree -m --aggressive -i "$mb" "$rh" "$1" || { rm -f "$inew" "$imrg"; return 1; }
+			GIT_INDEX_FILE="$inew" git ls-files --unmerged --full-name --abbrev :/ >"$itmp" 2>&1 || { rm -f "$inew" "$itmp" "$imrg"; return 1; }
+			! [ -s "$itmp" ] || {
+				if ! GIT_INDEX_FILE="$inew" TG_TMP_DIR="$tg_tmp_dir" git merge-index -q "$TG_INST_CMDDIR/tg--index-merge-one-file" -a >"$itmp" 2>&1; then
+					rm -f "$inew" "$itmp" "$imrg"
+					return 1
+				fi
+				if [ -s "$itmp" ]; then
+					if [ -n "$_octo" ]; then
+						cat "$itmp" >>"$imrg"
+					else
+						cat "$itmp"
+					fi
+					_auto=" automatic"
+				fi
+			}
+			rm -f "$itmp"
+			newt="$(GIT_INDEX_FILE="$inew" git write-tree)" && [ -n "$newt" ] || { rm -f "$inew" "$imrg"; return 1; }
+			_parents="${_parents:+$_parents }-p $1"
+			if [ $# -gt 1 ]; then
+				rh="$newt"
+				shift
+				continue
 			fi
-		}
-		rm -f "$itmp"
-		newt="$(GIT_INDEX_FILE="$inew" git write-tree)" && [ -n "$newt" ] || { rm -f "$inew"; return 1; }
-		rm -f "$inew"
-		newc="$(git commit-tree -p "$_head" -p "$1" -m "$_msg" "$newt")" && [ -n "$newc" ] || return 1
-		_mmsg="Merge made by the 'trivial aggressive$_auto' strategy."
+			break;
+		done
+		[ -z "$_octo" ] || LC_ALL=C sort -u <"$imrg"
+		rm -f "$inew" "$imrg"
+		newc="$(git commit-tree -p "$orh" $_parents -m "$_msg" "$newt")" && [ -n "$newc" ] || return 1
+		_mmsg="Merge made by the 'trivial aggressive$_auto${_octo:+ octopus}' strategy."
 	fi
 	case "$_var" in
 	refs/?*)
@@ -182,8 +238,8 @@ v_attempt_index_merge() {
 				_same=1
 			fi
 		fi
-		if [ -z "$_same" ] ; then
-			detach_symref_head_on_branch "$_head" || return 1
+		if [ -z "$_same" ]; then
+			detach_symref_head_on_branch "$_var" || return 1
 			# git update-ref returns 0 even on failure :(
 			git update-ref -m "$_msg" "$_var" "$newc" || return 1
 		fi
@@ -193,7 +249,7 @@ v_attempt_index_merge() {
 		;;
 	esac
 	echo "$_mmsg"
-	[ -n "$_nodt" ] || git --no-pager diff-tree --shortstat "$rh" "$newc" --
+	[ -n "$_nodt" ] || git --no-pager diff-tree --shortstat "$orh" "$newc" --
 	return 0
 }
 
@@ -291,21 +347,49 @@ update_branch() {
 		done <"$_depcheck.ideps"
 
 		# Create a list of all the fully qualified ref names that need
-		# to be merged into $_update_name's base.  This could be done
-		# as an octopus merge if there are no conflicts...
+		# to be merged into $_update_name's base.  This will be done
+		# as an octopus merge if there are no conflicts.
+		deplist=
+		deplines=
 		set --
 		while read -r dep; do
 			dep="${dep#?}"
 			case "$dep" in
 			"refs"/*)
-				set -- "$@" "$dep";;
+				set -- "$@" "$dep"
+				case "$dep" in
+				"refs/heads"/*)
+					d="${dep#refs/heads/}"
+					deplist="${deplist:+$deplist }$d"
+					deplines="$deplines$d$lf"
+					;;
+				*)
+					d="${dep#refs/}"
+					deplist="${deplist:+$deplist }$d"
+					deplines="$deplines$d$lf"
+					;;
+				esac
+				;;
 			*)
-				set -- "$@" "refs/heads/$dep";;
+				set -- "$@" "refs/heads/$dep"
+				deplist="${deplist:+$deplist }$dep"
+				deplines="$deplines$dep$lf"
+				;;
 			esac
 		done <"$_depcheck.ideps"
 
 		# Make sure we end up on the correct base branch
 		on_base=
+		if [ $# -ge 2 ]; then
+			info "Updating $_update_name base with deps: $deplist"
+			become_non_cacheable
+			msg="tgupdate: octopus merge $# deps into $topbases/$_update_name$lf$lf$deplines"
+			if attempt_index_merge -m "$msg" "refs/$topbases/$_update_name" "$@"; then
+				set --
+			else
+				info "Octopus merge failed; falling back to multiple 3-way merges"
+			fi
+		fi
 
 		for fulldep in "$@"; do
 			# This will be either a proper topic branch
