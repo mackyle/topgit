@@ -86,11 +86,11 @@ install-doc:: install-html
 
 html:: topgit.html $(html_out)
 
-tg-tg.txt: README create-html-usage.pl $(wildcard tg-[!-]*.sh)
+tg-tg.txt: README create-html-usage.pl $(commands_in)
 	@echo '[HELP] tg'
 	@perl ./create-html-usage.pl --text < README > $@
 
-topgit.html: README create-html-usage.pl $(wildcard tg-[!-]*.sh)
+topgit.html: README create-html-usage.pl $(commands_in)
 	@echo '[HTML] topgit'
 	@perl ./create-html-usage.pl < README | rst2html.py - $@
 
