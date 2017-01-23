@@ -4,10 +4,11 @@
 # All rights reserved.
 # GPLv2
 
-USAGE="Usage: ${tgname:-tg} [...] tag [-s | -u <key-id>] [-f] [-q] [--no-edit] [-m <msg> | -F <file>] (<tagname> | --refs) [<branch>...]"
-USAGE="$USAGE$lf   Or: ${tgname:-tg} [...] tag (-g | --reflog) [--reflog-message | --commit-message] [--no-type] [-n <number> | -number] [<tagname>]"
-USAGE="$USAGE$lf   Or: ${tgname:-tg} [...] tag (--clear | --delete) <tagname>"
-USAGE="$USAGE$lf   Or: ${tgname:-tg} [...] tag --drop <tagname>@{n}"
+USAGE="\
+Usage: ${tgname:-tg} [...] tag [-s | -u <key-id>] [-f] [-q] [--no-edit] [-m <msg> | -F <file>] (<tagname> | --refs) [<branch>...]
+   Or: ${tgname:-tg} [...] tag (-g | --reflog) [--reflog-message | --commit-message] [--no-type] [-n <number> | -number] [<tagname>]
+   Or: ${tgname:-tg} [...] tag (--clear | --delete) <tagname>
+   Or: ${tgname:-tg} [...] tag --drop <tagname>@{n}"
 
 usage()
 {
