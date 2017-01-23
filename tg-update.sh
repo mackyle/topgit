@@ -1,11 +1,11 @@
 #!/bin/sh
 # TopGit - A different patch queue manager
 # Copyright (C) Petr Baudis <pasky@suse.cz>  2008
-# Copyright (C) Kyle J. McKay <mackyle@gmail.com>  2015,2016
+# Copyright (C) Kyle J. McKay <mackyle@gmail.com>  2015,2016,2017
 # All rights reserved.
 # GPLv2
 
-name= # Branch to update
+names= # Branch(es) to update
 all= # Update all branches
 pattern= # Branch selection filter for -a
 current= # Branch we are currently on
@@ -19,10 +19,24 @@ fi
 
 ## Parse options
 
+USAGE="\
+Usage: ${tgname:-tg} [...] update [--[no-]stash] [--skip] ([<name>...] | -a [<pattern>...])"
+
+usage()
+{
+	if [ "${1:-0}" != 0 ]; then
+		printf '%s\n' "$USAGE" >&2
+	else
+		printf '%s\n' "$USAGE"
+	fi
+	exit ${1:-0}
+}
+
 while [ -n "$1" ]; do
 	arg="$1"; shift
 	case "$arg" in
 	-a|--all)
+		[ -z "$names$pattern" ] || usage 1
 		all=1;;
 	--skip)
 		skip=1;;
@@ -30,13 +44,13 @@ while [ -n "$1" ]; do
 		stash=1;;
 	--no-stash)
 		stash=;;
+	-h)
+		usage;;
 	-*)
-		echo "Usage: ${tgname:-tg} [...] update [--[no-]stash] [--skip] ([<name>] | -a [<pattern>...])" >&2
-		exit 1;;
+		usage 1;;
 	*)
 		if [ -z "$all" ]; then
-			[ -z "$name" ] || die "name already specified ($name)"
-			name="$arg"
+			names="${names:+$names }$arg"
 		else
 			pattern="${pattern:+$pattern }refs/$topbases/$(strip_ref "$arg")"
 		fi
@@ -47,8 +61,19 @@ origpattern="$pattern"
 [ -z "$pattern" ] && pattern="refs/$topbases"
 
 current="$(strip_ref "$(git symbolic-ref -q HEAD)")" || :
+[ -n "$all$names" ] || names="HEAD"
 if [ -z "$all" ]; then
-	name="$(verify_topgit_branch "${name:-HEAD}")"
+	clean_names() {
+		names=
+		while [ $# -gt 0 ]; do
+			name="$(verify_topgit_branch "$1")"
+			case " $names " in *" $name "*);;*)
+				names="${names:+$names }$name"
+			esac
+			shift
+		done
+	}
+	clean_names $names
 else
 	[ -n "$current" ] || die "cannot return to detached HEAD; switch to another branch"
 	[ -n "$(git rev-parse --verify --quiet HEAD --)" ] ||
@@ -64,12 +89,12 @@ stash_now_if_requested() {
 	msg="tgupdate: autostash before update"
 	if [ -n "$all" ]; then
 		msg="$msg --all${origpattern:+ $origpattern}"
-		stashb="--all"
+		set -- "--all"
 	else
-		msg="$msg $name"
-		stashb="$name"
+		msg="$msg $names"
+		set -- $names
 	fi
-	$tg tag -q -q -m "$msg" --stash "$stashb" || die "requested --stash failed"
+	$tg tag -q -q -m "$msg" --stash "$@" || die "requested --stash failed"
 	stash=
 }
 
@@ -505,7 +530,16 @@ update_branch() {
 tg_read_only=1
 v_create_ref_cache
 
-[ -z "$all" ] && { update_branch "$name" && git checkout -q "$name"; exit; }
+if [ -z "$all" ]; then
+	for name in $names; do
+		update_branch "$name" || exit
+	done
+	case "$names" in *" "*)
+		info "Returning to $current..."
+	esac
+	git checkout -q "$current"
+	exit
+fi
 
 do_non_annihilated_branches_patterns() {
 	while read -r _pat && [ -n "$_pat" ]; do
