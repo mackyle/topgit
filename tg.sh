@@ -1317,9 +1317,12 @@ set_topbases()
 # an empty log file to exist so that ref changes will be logged
 # "$1" must be a fully-qualified refname (i.e. start with "refs/")
 # However, if "$1" is "refs/tgstash" then always make the reflog
+# The only ref not under refs/ that Git will write a reflog for is HEAD;
+# no matter what, it will NOT update a reflog for any other bare refs so
+# just quietly succeed when passed TG_STASH without doing anything.
 init_reflog()
 {
-	[ -n "$1" ] || return 0
+	[ -n "$1" ] && [ "$1" != "TG_STASH" ] || return 0
 	[ -n "$logrefupdates" ] || [ "$1" = "refs/tgstash" ] || return 0
 	case "$1" in refs/heads/*) return 0;; refs/*[!/]);; *) return 1; esac
 	mkdir -p "$git_dir/logs/${1%/*}" 2>/dev/null || :

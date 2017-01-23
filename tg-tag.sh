@@ -36,6 +36,7 @@ outofdateok=
 anyrefok=
 defbranch=HEAD
 stash=
+anonymous=
 reflogmsg=
 notype=
 setreflogmsg=
@@ -44,6 +45,7 @@ noneok=
 clear=
 delete=
 drop=
+anonymous=
 
 is_numeric()
 {
@@ -192,6 +194,12 @@ while [ $# -gt 0 ]; do case "$1" in
 		defbranch=--all
 		break
 		;;
+	--anonymous)
+		anonymous=1
+		defbranch=--all
+		quiet=2
+		break
+		;;
 	-?*)
 		echo "Unknown option: $1" >&2
 		usage 1
@@ -211,7 +219,8 @@ while [ $# -gt 0 ]; do case "$1" in
 		;;
 esac; shift; done
 
-[ -z "$stash" -o -n "$reflog$drop$clear$delete" ] || { outofdateok=1; force=1; defnoedit=1; }
+[ "$stash$anonymous" != "11" ] || usage 1
+[ -z "$stash$anonymous" -o -n "$reflog$drop$clear$delete" ] || { outofdateok=1; force=1; defnoedit=1; }
 [ -n "$noedit" ] || noedit="$defnoedit"
 [ "$noedit" != "0" ] || noedit=
 [ -z "$reflog" -o -z "$drop$clear$delete$signed$keyid$force$msg$msgfile$noedit$refsonly$outofdateok" ] || usage 1
@@ -227,6 +236,7 @@ esac; shift; done
 tagname="$1"
 shift
 [ "$tagname" != "--stash" ] || tagname=refs/tgstash
+[ "$tagname" != "--anonymous" ] || tagname=TG_STASH
 case "$tagname" in --stash"@{"*"}")
 	strip="${tagname#--stash??}"
 	strip="${strip%?}"
@@ -239,7 +249,7 @@ case "$refname" in [!@]*"@{"*"}")
 	refname="${refname%@*}"
 	sfx="${sfx#$refname}"
 esac
-case "$refname" in HEAD|refs/*);;*)
+case "$refname" in HEAD|TG_STASH|refs/*);;*)
 	if reftest="$(git rev-parse --revs-only --symbolic-full-name "$refname" -- 2>/dev/null)" &&
 	   [ -n "$reftest" ]; then
 		if [ -n "$reflog$drop$clear$delete" ]; then
