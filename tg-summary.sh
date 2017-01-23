@@ -23,7 +23,7 @@ withdeps=
 
 usage()
 {
-	echo "Usage: ${tgname:-tg} [...] summary [-t | --list | --heads | --sort | --deps | --deps-only | --rdeps | --graphviz] [-i | -w] [--tgish-only] [--with-deps] [--exclude branch]... [--all | branch...]" >&2
+	echo "Usage: ${tgname:-tg} [...] summary [-t | --list | --heads | --sort | --deps | --deps-only | --rdeps | --graphviz] [-i | -w] [--tgish-only] [--with[out]-deps] [--exclude branch]... [--all | branch...]" >&2
 	exit 1
 }
 
@@ -40,6 +40,9 @@ while [ -n "$1" ]; do
 	--with-deps)
 		head=HEAD
 		withdeps=1;;
+	--without-deps)
+		head=HEAD
+		withdeps=0;;
 	--graphviz)
 		graphviz=1;;
 	--sort)
@@ -70,12 +73,14 @@ while [ -n "$1" ]; do
 	esac
 	shift
 done
+defwithdeps=1
 [ -z "$exclude" ] || exclude="$exclude "
 if [ "$1" = "--all" ]; then
 	[ -z "$withdeps" ] || die "mutually exclusive options given"
 	[ $# -eq 1 ] || usage
 	shift
 	head=
+	defwithdeps=
 fi
 [ "$heads$rdeps" != "11" ] || head=
 [ $# -ne 0 -o -z "$head" ] || set -- "$head"
@@ -177,6 +182,8 @@ if [ -n "$rdeps" ]; then
 	exit 0
 fi
 
+[ -n "$withdeps" ] || withdeps="$defwithdeps"
+[ "$withdeps" != "0" ] || withdeps=
 if [ -n "$withdeps" ]; then
 	savetgish="$tgish"
 	tgish=1

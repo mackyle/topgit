@@ -837,7 +837,9 @@ tg summary
 	``tg summary --deps-only --tgish`` on the list of branches.  This can
 	be helpful in limiting ``tg summary`` output to only the list of given
 	branches and their dependencies when many TopGit-controlled branches
-	are present in the repository.
+	are present in the repository.  When it would be allowed,
+	``--with-deps`` is now the default.  Use ``--without-deps`` to switch
+	back to the old behavior.
 
 	With ``--exclude branch``, branch can be excluded from the output
 	meaning	it will be skipped and its name will be omitted from any
@@ -851,7 +853,7 @@ tg summary
 
 	Note that the branch name can be specified as ``HEAD`` or ``@`` as a
 	shortcut for the TopGit-controlled branch that ``HEAD`` is a
-	symbolic ref to.
+	symbolic ref to.  The ``tg summary @`` command can be quite useful.
 
 	Options:
 	  -i		Use TopGit metadata from the index instead of the branch
