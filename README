@@ -1071,9 +1071,10 @@ tg update
 	When ``-a`` (or ``--all``) is specifed, updates all topic branches
 	matched by ``<pattern>``'s (see ``git-for-each-ref(1)`` for details),
 	or all if no ``<pattern>`` is given.  Any topic branches with missing
-	dependencies will be skipped entirely unless ``--skip`` is specified.
+	dependencies will be skipped entirely unless ``--skip-missing`` is
+	specified.
 
-	When ``--skip`` is specifed, an attempt is made to update topic
+	When ``--skip-missing`` is specifed, an attempt is made to update topic
 	branches with missing dependencies by skipping only the dependencies
 	that are missing.  Caveat utilitor.
 

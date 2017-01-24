@@ -9,7 +9,7 @@ names= # Branch(es) to update
 all= # Update all branches
 pattern= # Branch selection filter for -a
 current= # Branch we are currently on
-skip= # skip missing dependencies
+skipms= # skip missing dependencies
 stash= # tgstash refs before changes
 
 if [ "$(git config --get --bool topgit.autostash 2>/dev/null)" != "false" ]; then
@@ -20,7 +20,7 @@ fi
 ## Parse options
 
 USAGE="\
-Usage: ${tgname:-tg} [...] update [--[no-]stash] [--skip] ([<name>...] | -a [<pattern>...])"
+Usage: ${tgname:-tg} [...] update [--[no-]stash] [--skip-missing] ([<name>...] | -a [<pattern>...])"
 
 usage()
 {
@@ -38,8 +38,8 @@ while [ -n "$1" ]; do
 	-a|--all)
 		[ -z "$names$pattern" ] || usage 1
 		all=1;;
-	--skip)
-		skip=1;;
+	--skip-missing)
+		skipms=1;;
 	--stash)
 		stash=1;;
 	--no-stash)
@@ -310,7 +310,7 @@ update_branch() {
 	needs_update "$_update_name" >"$_depcheck" || :
 	if [ -n "$missing_deps" ]; then
 		msg="Some dependencies are missing: $missing_deps"
-		if [ -n "$skip" ]; then
+		if [ -n "$skipms" ]; then
 			info "$msg; skipping"
 		elif [ -z "$all" ]; then
 			die "$msg"
@@ -443,7 +443,7 @@ update_branch() {
 				}
 			then
 				if [ -z "$TG_RECURSIVE" ]; then
-					resume="\`$tgdisplay update${skip:+ --skip} $_update_name\` again"
+					resume="\`$tgdisplay update${skipms:+ --skip-missing} $_update_name\` again"
 				else # subshell
 					resume='exit'
 				fi
@@ -517,7 +517,7 @@ update_branch() {
 		if [ -z "$TG_RECURSIVE" ]; then
 			info "Please commit merge resolution. No need to do anything else"
 			info "You can abort this operation using \`git$gitcdopt reset --hard\` now"
-			info "and retry this merge later using \`$tgdisplay update${skip:+ --skip}\`."
+			info "and retry this merge later using \`$tgdisplay update${skipms:+ --skip-missing}\`."
 		else # subshell
 			info "Please commit merge resolution and call exit."
 			info "You can abort this operation using \`git$gitcdopt reset --hard\`."
