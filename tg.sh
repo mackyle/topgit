@@ -334,25 +334,25 @@ setup_hook()
 {
 	tgname="${0##*/}"
 	hook_call="\"\$(\"$tgname\" --hooks-path)\"/$1 \"\$@\""
-	if [ -f "$git_dir/hooks/$1" ] && LC_ALL=C grep -Fq "$hook_call" "$git_dir/hooks/$1"; then
+	if [ -f "$git_common_dir/hooks/$1" ] && LC_ALL=C grep -Fq "$hook_call" "$git_common_dir/hooks/$1"; then
 		# Another job well done!
 		return
 	fi
 	# Prepare incantation
 	hook_chain=
-	if [ -s "$git_dir/hooks/$1" -a -x "$git_dir/hooks/$1" ]; then
+	if [ -s "$git_common_dir/hooks/$1" -a -x "$git_common_dir/hooks/$1" ]; then
 		hook_call="$hook_call"' || exit $?'
-		if [ -L "$git_dir/hooks/$1" ] || ! LC_ALL=C sed -n 1p <"$git_dir/hooks/$1" | LC_ALL=C grep -Fqx "#!@SHELL_PATH@"; then
+		if [ -L "$git_common_dir/hooks/$1" ] || ! LC_ALL=C sed -n 1p <"$git_common_dir/hooks/$1" | LC_ALL=C grep -Fqx "#!@SHELL_PATH@"; then
 			chain_num=
-			while [ -e "$git_dir/hooks/$1-chain$chain_num" ]; do
+			while [ -e "$git_common_dir/hooks/$1-chain$chain_num" ]; do
 				chain_num=$(( $chain_num + 1 ))
 			done
-			mv -f "$git_dir/hooks/$1" "$git_dir/hooks/$1-chain$chain_num"
+			mv -f "$git_common_dir/hooks/$1" "$git_common_dir/hooks/$1-chain$chain_num"
 			hook_chain=1
 		fi
 	else
 		hook_call="exec $hook_call"
-		[ -d "$git_dir/hooks" ] || mkdir "$git_dir/hooks" || :
+		[ -d "$git_common_dir/hooks" ] || mkdir "$git_common_dir/hooks" || :
 	fi
 	# Don't call hook if tg is not installed
 	hook_call="if command -v \"$tgname\" >/dev/null 2>&1; then $hook_call; fi"
@@ -363,22 +363,22 @@ setup_hook()
 		if [ -n "$hook_chain" ]; then
 			echol "exec \"\$0-chain$chain_num\" \"\$@\""
 		else
-			[ ! -s "$git_dir/hooks/$1" ] || cat "$git_dir/hooks/$1"
+			[ ! -s "$git_common_dir/hooks/$1" ] || cat "$git_common_dir/hooks/$1"
 		fi
-	} >"$git_dir/hooks/$1+"
-	chmod a+x "$git_dir/hooks/$1+"
-	mv "$git_dir/hooks/$1+" "$git_dir/hooks/$1"
+	} >"$git_common_dir/hooks/$1+"
+	chmod a+x "$git_common_dir/hooks/$1+"
+	mv "$git_common_dir/hooks/$1+" "$git_common_dir/hooks/$1"
 }
 
 # setup_ours (no arguments)
 setup_ours()
 {
-	if [ ! -s "$git_dir/info/attributes" ] || ! grep -q topmsg "$git_dir/info/attributes"; then
-		[ -d "$git_dir/info" ] || mkdir "$git_dir/info"
+	if [ ! -s "$git_common_dir/info/attributes" ] || ! grep -q topmsg "$git_common_dir/info/attributes"; then
+		[ -d "$git_common_dir/info" ] || mkdir "$git_common_dir/info"
 		{
 			echo ".topmsg	merge=ours"
 			echo ".topdeps	merge=ours"
-		} >>"$git_dir/info/attributes"
+		} >>"$git_common_dir/info/attributes"
 	fi
 	if ! git config merge.ours.driver >/dev/null; then
 		git config merge.ours.name '"always keep ours" merge driver'
@@ -1268,9 +1268,23 @@ strftime()
 	fi
 }
 
+setup_git_dirs()
+{
+	[ -n "$git_dir" ] || git_dir="$(git rev-parse --git-dir)"
+	if [ -z "$git_common_dir" ]; then
+		if vcmp "$git_version" '>=' "2.5"; then
+			git_common_dir="$(git rev-parse --git-common-dir)"
+		else
+			git_common_dir="$git_dir"
+		fi
+	fi
+	[ -n "$git_dir" ] && [ -n "$git_common_dir" ] &&
+	[ -d "$git_dir" ] && [ -d "$git_common_dir" ] || die "Not a git repository"
+}
+
 basic_setup()
 {
-	git_dir="$(git rev-parse --git-dir)"
+	setup_git_dirs
 	[ -n "$base_remote" ] || base_remote="$(git config topgit.remote 2>/dev/null)" || :
 	tgsequester="$(git config --bool topgit.sequester 2>/dev/null)" || :
 	tgnosequester=
@@ -1304,7 +1318,7 @@ initial_setup()
 
 	# make sure global cache directory exists inside GIT_DIR
 
-	tg_cache_dir="$git_dir/tg-cache"
+	tg_cache_dir="$git_common_dir/tg-cache"
 	[ -d "$tg_cache_dir" ] || mkdir "$tg_cache_dir"
 
 	# create global temporary directories, inside GIT_DIR
@@ -1426,9 +1440,9 @@ init_reflog()
 {
 	[ -n "$1" ] && [ "$1" != "TG_STASH" ] || return 0
 	[ -n "$logrefupdates" ] || [ "$1" = "refs/tgstash" ] || return 0
-	case "$1" in refs/heads/*) return 0;; refs/*[!/]);; *) return 1; esac
-	mkdir -p "$git_dir/logs/${1%/*}" 2>/dev/null || :
-	{ >>"$git_dir/logs/$1" || :; } 2>/dev/null
+	case "$1" in refs/heads/*|HEAD) return 0;; refs/*[!/]);; *) return 1; esac
+	mkdir -p "$git_common_dir/logs/${1%/*}" 2>/dev/null || :
+	{ >>"$git_common_dir/logs/$1" || :; } 2>/dev/null
  }
 
 # store the "realpath" for "$2" in "$1" except the leaf is not resolved if it's
@@ -1559,7 +1573,7 @@ else
 				exit 1
 			fi
 			cd "$1"
-			unset GIT_DIR
+			unset GIT_DIR GIT_COMMON_DIR
 			explicit_dir="$1"
 			gitcdopt=" -C \"$explicit_dir\""
 			tg="$tgdir$tgname"
@@ -1621,7 +1635,7 @@ else
 
 		top-bases)
 			# Maintenance command
-			git_dir="$(git rev-parse --git-dir)"
+			setup_git_dirs
 			set_topbases
 			echol "refs/$topbases";;
 

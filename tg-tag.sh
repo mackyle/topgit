@@ -270,6 +270,8 @@ esac
 refname="$refname$sfx"
 reftype=tag
 case "$refname" in refs/tags/*) tagname="${refname#refs/tags/}";; *) reftype=ref; tagname="$refname"; esac
+logbase="$git_common_dir"
+[ "$refname" != "HEAD" ] || logbase="$git_dir"
 [ -z "$reflog$drop$clear$delete" -o $# -eq 0 ] || usage 1
 if [ -n "$drop$clear$delete" ]; then
 	if [ -n "$sfx" ]; then
@@ -283,11 +285,11 @@ if [ -n "$drop$clear$delete" ]; then
 		printf "Deleted $reftype '%s' (was %s)\n" "$tagname" "$old"
 		exit 0
 	elif [ -n "$clear" ]; then
-		[ -f "$git_dir/logs/$refname" ] || die "no reflog found for: $refname"
-		[ -s "$git_dir/logs/$refname" ] || die "empty reflog found for: $refname"
-		cp -p "$git_dir/logs/$refname" "$git_dir/logs/$refname^-+" || die "cp failed"
-		sed -n '$p' <"$git_dir/logs/$refname^-+" >"$git_dir/logs/$refname" || die "reflog clear failed"
-		rm -f "$git_dir/logs/$refname^-+"
+		[ -f "$logbase/logs/$refname" ] || die "no reflog found for: $refname"
+		[ -s "$logbase/logs/$refname" ] || die "empty reflog found for: $refname"
+		cp -p "$logbase/logs/$refname" "$logbase/logs/$refname^-+" || die "cp failed"
+		sed -n '$p' <"$logbase/logs/$refname^-+" >"$logbase/logs/$refname" || die "reflog clear failed"
+		rm -f "$logbase/logs/$refname^-+"
 		printf "Cleared $reftype '%s' reflog to single @{0} entry\n" "$tagname"
 		exit 0
 	else
@@ -301,7 +303,7 @@ if [ -n "$reflog" ]; then
 	[ "$refname" = "refs/tgstash" -o -n "$setreflogmsg" ] || reflogmsg=1
 	git rev-parse --verify --quiet "$refname" -- >/dev/null ||
 	die "no such ref: $refname"
-	[ -s "$git_dir/logs/$refname" ] ||
+	[ -s "$logbase/logs/$refname" ] ||
 	die "no reflog present for $reftype: $tagname"
 	showref="$(git rev-parse --revs-only --abbrev-ref=strict "$refname" --)"
 	hashcolor=
@@ -318,7 +320,7 @@ if [ -n "$reflog" ]; then
 	setup_strftime
 	output()
 	{
-		sed 's/[^ ][^ ]* //' <"$git_dir/logs/$refname" |
+		sed 's/[^ ][^ ]* //' <"$logbase/logs/$refname" |
 		awk '{a[i++]=$0} END {for (j=i-1; j>=0;) print a[j--]}' |
 		git cat-file --batch-check='%(objectname) %(objecttype) %(rest)' |
 		{
