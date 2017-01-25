@@ -963,6 +963,7 @@ do_help()
 			# strip directory part and "tg-" prefix
 			cmd="${cmd##*/}"
 			cmd="${cmd#tg-}"
+			[ "$cmd" != "summary" ] || cmd="status|$cmd"
 			cmds="$cmds$sep$cmd"
 			sep="|"
 		done
@@ -1007,6 +1008,102 @@ do_help()
 		echo "${0##*/}: no help for $1" 1>&2
 		do_help
 		exit 1
+	fi
+}
+
+check_status()
+{
+	git_state=
+	git_remove=
+	if [ -e "$git_dir/MERGE_HEAD" ]; then
+		git_state="merge"
+	elif [ -e "$git_dir/rebase-apply/applying" ]; then
+		git_state="am"
+		git_remove="$git_dir/rebase-apply"
+	elif [ -e "$git_dir/rebase-apply" ]; then
+		git_state="rebase"
+		git_remove="$git_dir/rebase-apply"
+	elif [ -e "$git_dir/rebase-merge" ]; then
+		git_state="rebase"
+		git_remove="$git_dir/rebase-merge"
+	elif [ -e "$git_dir/CHERRY_PICK_HEAD" ]; then
+		git_state="cherry-pick"
+	elif [ -e "$git_dir/BISECT_LOG" ]; then
+		git_state="bisect"
+	elif [ -e "$git_dir/REVERT_HEAD" ]; then
+		git_state="revert"
+	fi
+	git_remove="${git_remove#./}"
+
+	tg_state=
+	tg_remove=
+	if [ -e "$git_dir/tg-update" ]; then
+		tg_state="update"
+		tg_remove="$git_dir/tg-update"
+	elif [ -e "$git_dir/tg-create" ]; then
+		tg_state="create"
+		tg_remove="$git_dir/tg-create"
+	fi
+	tg_remove="${tg_remove#./}"
+}
+
+# Show status information
+do_status()
+{
+	check_status
+	symref="$(git symbolic-ref --quiet HEAD)" || :
+	headrv="$(git rev-parse --quiet --verify --short HEAD --)" || :
+	if [ -n "$symref" ]; then
+		echol "HEAD -> $symref (${headrv:-unborn})"
+	else
+		echol "HEAD -> ${headrv:-?}"
+	fi
+	if [ -n "$tg_state" ]; then
+		extra=
+		if [ "$tg_state" = "update" ]; then
+			IFS= read -r uname <"$git_dir/tg-update/name" || :
+			[ -z "$uname" ] ||
+			extra="; currently updating branch '$uname'"
+		fi
+		echol "tg $tg_state in progress$extra"
+		if [ -s "$git_dir/tg-update/fullcmd" ] && [ -s "$git_dir/tg-update/names" ]; then
+			printf 'You are currently updating as a result of:\n  '
+			cat "$git_dir/tg-update/fullcmd"
+			bcnt="$(( $(wc -w < "$git_dir/tg-update/names") ))"
+			if [ $bcnt -gt 1 ]; then
+				pcnt=0
+				! [ -s "$git_dir/tg-update/processed" ] ||
+				pcnt="$(( $(wc -w < "$git_dir/tg-update/processed") ))"
+				echo "$pcnt of $bcnt branches updated so far"
+			fi
+		fi
+		if [ "$tg_state" = "update" ]; then
+			echol '  (use "tg update --continue" to continue)'
+			echol '  (use "tg update --skip" to skip this branch and continue)'
+			echol '  (use "tg update --stop" to stop and retain updates so far)'
+			echol '  (use "tg update --abort" to restore pre-update state)'
+		fi
+	fi
+	[ -z "$git_state" ] || echo "git $git_state in progress"
+	if [ "$git_state" = "merge" ]; then
+		ucnt="$(( $(git ls-files --unmerged --full-name --abbrev :/ | wc -l) ))"
+		if [ $ucnt -gt 0 ]; then
+			echo 'fix conflicts and then "git commit" the result'
+		else
+			echo 'all conflicts fixed; run "git commit" to record result'
+		fi
+	fi
+	if [ -z "$git_state" ]; then
+		ccnt="$(( $(git status --porcelain -uno | wc -l) ))"
+		untr=
+		if [ "$ccnt" -eq 0 ]; then
+			if git status --porcelain | grep -q '^[?]'; then
+				untr="; non-ignored, untracked files present"
+			fi
+			echo "working directory is clean$untr"
+		else
+			echo "working directory is DIRTY"
+		fi
 	fi
 }
 
@@ -1171,6 +1268,21 @@ strftime()
 	fi
 }
 
+basic_setup()
+{
+	git_dir="$(git rev-parse --git-dir)"
+	[ -n "$base_remote" ] || base_remote="$(git config topgit.remote 2>/dev/null)" || :
+	tgsequester="$(git config --bool topgit.sequester 2>/dev/null)" || :
+	tgnosequester=
+	[ "$tgsequester" != "false" ] || tgnosequester=1
+	unset tgsequester
+
+	# catch errors if topbases is used without being set
+	unset tg_topbases_set
+	topbases="programmer*:error"
+	oldbases="$topbases"
+}
+
 ## Initial setup
 initial_setup()
 {
@@ -1179,21 +1291,16 @@ initial_setup()
 	GIT_MERGE_AUTOEDIT=no
 	export GIT_MERGE_AUTOEDIT
 
+	basic_setup
 	auhopt=
 	! vcmp "$git_version" '>=' "2.9" || auhopt="--allow-unrelated-histories"
-	git_dir="$(git rev-parse --git-dir)"
 	root_dir="$(git rev-parse --show-cdup)"; root_dir="${root_dir:-.}"
 	logrefupdates="$(git config --bool core.logallrefupdates 2>/dev/null)" || :
 	[ "$logrefupdates" = "true" ] || logrefupdates=
-	tgsequester="$(git config --bool topgit.sequester 2>/dev/null)" || :
-	tgnosequester=
-	[ "$tgsequester" != "false" ] || tgnosequester=1
-	unset tgsequester
 
 	# make sure root_dir doesn't end with a trailing slash.
 
 	root_dir="${root_dir%/}"
-	[ -n "$base_remote" ] || base_remote="$(git config topgit.remote 2>/dev/null)" || :
 
 	# make sure global cache directory exists inside GIT_DIR
 
@@ -1211,11 +1318,6 @@ initial_setup()
 	trap 'exit 143' TERM
 	tg_tmp_dir="$(mktemp -d "$git_dir/tg-tmp.XXXXXX")"
 	tg_ref_cache="$tg_tmp_dir/tg~ref-cache"
-
-	# catch errors if topbases is used without being set
-	unset tg_topbases_set
-	topbases="programmer*:error"
-	oldbases="$topbases"
 }
 
 set_topbases()
@@ -1409,6 +1511,11 @@ else
 			shift
 			break;;
 
+		status|--status)
+			cmd=status
+			shift
+			break;;
+
 		--hooks-path)
 			cmd=hooks-path
 			shift
@@ -1501,6 +1608,13 @@ else
 			do_help "$@"
 			exit 0;;
 
+		status)
+			unset base_remote
+			basic_setup
+			set_topbases
+			do_status "$@"
+			exit 0;;
+
 		hooks-path)
 			# Internal command
 			echol "$TG_INST_HOOKSDIR";;
@@ -1548,6 +1662,7 @@ else
 			esac
 			[ -z "$_use_ref_cache" ] || v_create_ref_cache
 
+			fullcmd="${tgname:-tg} $cmd $*"
 			. "$TG_INST_CMDDIR"/tg-$cmd;;
 	esac
 

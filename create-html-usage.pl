@@ -22,6 +22,8 @@ sub get_tg_usage($)
 		return split "\n", $usage;
 	} elsif ($name eq "help") {
 		return "tg help [-w] [<command>]";
+	} elsif ($name eq "status") {
+		return "tg status [-v]";
 	}
 	return undef;
 }

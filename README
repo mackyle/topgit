@@ -476,6 +476,7 @@ The ``tg`` tool has several subcommands:
 	:`tg rebase`_:	    Auto continue git rebase if rerere resolves conflicts
 	:`tg remote`_:	    Set up remote for fetching/pushing TopGit branches
 	:`tg revert`_:	    Revert ref(s) to a state stored in a ``tg tag``
+	:`tg status`_:	    Show current TopGit status (e.g. in-progress update)
 	:`tg summary`_:	    Show various information about TopGit branches
 	:`tg tag`_:	    Create tag that records current TopGit branch state
 	:`tg update`_:	    Update TopGit branch(es) with respect to dependencies
@@ -495,6 +496,12 @@ tg help
 	 $ tg help tg
 	 # to get help on TopGit itself in a browser
 	 $ tg help -w tg
+
+tg status
+~~~~~~~~~
+	Our sophisticated status facility.  Similar to Git's status command
+	but shows any in-progress update that's awaiting a merge resolution
+	or any other on-going TopGit activity (such as a branch creation).
 
 tg create
 ~~~~~~~~~
