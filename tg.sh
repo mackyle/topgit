@@ -642,6 +642,8 @@ non_annihilated_branches()
 # Make sure our tree is clean
 ensure_clean_tree()
 {
+	check_status
+	[ -z "$tg_state$git_state" ] || { do_status; exit 1; }
 	git update-index --ignore-submodules --refresh ||
 		die "the working directory has uncommitted changes (see above) - first commit or reset them"
 	[ -z "$(git diff-index --cached --name-status -r --ignore-submodules HEAD --)" ] ||
