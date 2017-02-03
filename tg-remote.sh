@@ -30,11 +30,11 @@ git config "remote.$name.url" >/dev/null || die "unknown remote '$name'"
 
 ## Configure the remote
 
-git config --replace-all "remote.$name.fetch" "+refs/$topbases/*:refs/remotes/$name/$topbases/*" "\\+refs/$topbases/\\*:refs/remotes/$name/$topbases/\\*"
+git config --replace-all "remote.$name.fetch" "+refs/$topbases/*:refs/remotes/$name/${topbases#heads/}/*" "\\+refs/$topbasesrx/\\*:refs/remotes/$name/${topbasesrx#heads/}/\\*"
 
-if git config --get-all "remote.$name.push" "\\+refs/$topbases/\\*:refs/$topbases/\\*" >/dev/null && test "xtrue" != "x$(git config --bool --get topgit.dontwarnonoldpushspecs)"; then
+if git config --get-all "remote.$name.push" "\\+refs/top-bases/\\*:refs/top-bases/\\*" >/dev/null && test "xtrue" != "x$(git config --bool --get topgit.dontwarnonoldpushspecs)"; then
 	info "Probably you want to remove the push specs introduced by an old version of topgit:"
-	info '       git config --unset-all "remote.'"$name"'.push" "\\+refs/'"$topbases"'/\\*:refs/'"$topbases"'/\\*"'
+	info '       git config --unset-all "remote.'"$name"'.push" "\\+refs/top-bases/\\*:refs/top-bases/\\*"'
 	info '       git config --unset-all "remote.'"$name"'.push" "\\+refs/heads/\\*:refs/heads/\\*"'
 	info '(or use git config --bool --add topgit.dontwarnonoldpushspecs true to get rid of this warning)'
 fi
@@ -57,14 +57,14 @@ info "Populating local topic branches from remote '$name'..."
 ## lookup as a non-exist "refs/heads/$topbases/XX", and would be
 ## deleted by accident.
 git fetch --prune "$name" \
-	"+refs/$topbases/*:refs/remotes/$name/$topbases/*" \
+	"+refs/$topbases/*:refs/remotes/$name/${topbases#heads/}/*" \
 	"+refs/heads/*:refs/remotes/$name/*"
 
-git for-each-ref --format='%(objectname) %(refname)' "refs/remotes/$name/$topbases" |
+git for-each-ref --format='%(objectname) %(refname)' "refs/remotes/$name/${topbases#heads/}" |
 	while read rev ref; do
-		branch="${ref#refs/remotes/$name/$topbases/}"
+		branch="${ref#refs/remotes/$name/${topbases#heads/}/}"
 		if ! git rev-parse --verify "refs/remotes/$name/$branch" -- >/dev/null 2>&1; then
-			info "Skipping remote $name/$topbases/$branch that's missing its branch"
+			info "Skipping remote $name/${topbases#heads/}/$branch that's missing its branch"
 			continue
 		fi
 		if git rev-parse --verify "refs/heads/$branch" -- >/dev/null 2>&1; then

@@ -1296,6 +1296,7 @@ basic_setup()
 	# catch errors if topbases is used without being set
 	unset tg_topbases_set
 	topbases="programmer*:error"
+	topbasesrx="programmer*:error}"
 	oldbases="$topbases"
 }
 
@@ -1356,9 +1357,11 @@ set_topbases()
 		case "$tgtb" in
 		heads)
 			topbases="heads/{top-bases}"
+			topbasesrx="heads/[{]top-bases[}]"
 			oldbases="top-bases";;
 		refs)
 			topbases="top-bases"
+			topbasesrx="top-bases"
 			oldbases="heads/{top-bases}";;
 		esac
 		# MUST NOT be exported
@@ -1383,6 +1386,7 @@ set_topbases()
 					break;
 				else
 					topbases="heads/{top-bases}"
+					topbasesrx="heads/[{]top-bases[}]"
 					oldbases="top-bases"
 				fi
 			esac;;
@@ -1393,6 +1397,7 @@ set_topbases()
 					break;
 				else
 					topbases="top-bases"
+					topbasesrx="top-bases"
 					oldbases="heads/{top-bases}"
 				fi
 			esac;;
@@ -1405,6 +1410,7 @@ set_topbases()
 		if [ -n "$1" ]; then
 			# hook script always prefers newer without complaint
 			topbases="heads/{top-bases}"
+			topbasesrx="heads/[{]top-bases[}]"
 			oldbases="top-bases"
 		else
 			# Complain and die
@@ -1422,6 +1428,7 @@ set_topbases()
 	[ -n "$topbases" ] || {
 		# default is still top-bases for now
 		topbases="top-bases"
+		topbasesrx="top-bases"
 		oldbases="heads/{top-bases}"
 	}
 	# MUST NOT be exported
