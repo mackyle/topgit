@@ -20,7 +20,8 @@ fi
 ## Parse options
 
 USAGE="\
-Usage: ${tgname:-tg} [...] update [--[no-]stash] [--skip-missing] ([<name>...] | -a [<pattern>...])"
+Usage: ${tgname:-tg} [...] update [--[no-]stash] [--skip-missing] ([<name>...] | -a [<pattern>...])
+   Or: ${tgname:-tg} --continue | -skip | --stop | --abort"
 
 usage()
 {
@@ -32,70 +33,213 @@ usage()
 	exit ${1:-0}
 }
 
-while [ -n "$1" ]; do
-	arg="$1"; shift
-	case "$arg" in
-	-a|--all)
-		[ -z "$names$pattern" ] || usage 1
-		all=1;;
-	--skip-missing)
-		skipms=1;;
-	--stash)
-		stash=1;;
-	--no-stash)
-		stash=;;
-	-h)
-		usage;;
-	-*)
-		usage 1;;
-	*)
-		if [ -z "$all" ]; then
-			names="${names:+$names }$arg"
-		else
-			pattern="${pattern:+$pattern }refs/$topbases/$(strip_ref "$arg")"
-		fi
-		;;
-	esac
-done
-origpattern="$pattern"
-[ -z "$pattern" ] && pattern="refs/$topbases"
+state_dir="$git_dir/tg-update"
+mergeours=
+mergetheirs=
+mergeresult=
+stashhash=
 
-current="$(strip_ref "$(git symbolic-ref -q HEAD)")" || :
-[ -n "$all$names" ] || names="HEAD"
-if [ -z "$all" ]; then
-	clean_names() {
-		names=
-		while [ $# -gt 0 ]; do
-			name="$(verify_topgit_branch "$1")"
-			case " $names " in *" $name "*);;*)
-				names="${names:+$names }$name"
+is_active() {
+	[ -d "$state_dir" ] || return 1
+	[ -s "$state_dir/fullcmd" ] || return 1
+	[ -f "$state_dir/remote" ] || return 1
+	[ -f "$state_dir/skipms" ] || return 1
+	[ -f "$state_dir/all" ] || return 1
+	[ -s "$state_dir/current" ] || return 1
+	[ -s "$state_dir/stashhash" ] || return 1
+	[ -s "$state_dir/name" ] || return 1
+	[ -s "$state_dir/names" ] || return 1
+	[ -f "$state_dir/processed" ] || return 1
+	[ -f "$state_dir/mergeours" ] || return 1
+	[ -f "$state_dir/mergeours" ] || return 1
+	if [ -s "$state_dir/mergeours" ]; then
+		[ -s "$state_dir/mergetheirs" ] || return 1
+	else
+		! [ -s "$state_dir/mergetheirs" ] || return 1
+	fi
+}
+
+restore_state() {
+	is_active || die "programmer error"
+	IFS= read -r fullcmd <"$state_dir/fullcmd" && [ -n "$fullcmd" ]
+	IFS= read -r base_remote <"$state_dir/remote" || :
+	IFS= read -r skipms <"$state_dir/skipms" || :
+	IFS= read -r all <"$state_dir/all" || :
+	IFS= read -r current <"$state_dir/current" && [ -n "$current" ]
+	IFS= read -r stashhash <"$state_dir/stashhash" && [ -n "$stashhash" ]
+	IFS= read -r name <"$state_dir/name" && [ -n "$name" ]
+	IFS= read -r names <"$state_dir/names" && [ -n "$names" ]
+	IFS= read -r processed <"$state_dir/processed" || :
+	IFS= read -r mergeours <"$state_dir/mergeours" || :
+	IFS= read -r mergetheirs <"$state_dir/mergetheirs" || :
+	if [ -n "$mergeours" ] && [ -n "$mergetheirs" ]; then
+		headhash="$(git rev-parse --quiet --verify HEAD --)" || :
+		if [ -n "$headhash" ]; then
+			parents="$(git --no-pager log -n 1 --format='format:%P' "$headhash" -- 2>/dev/null)" || :
+			if [ "$parents" = "$mergeours $mergetheirs" ]; then
+				mergeresult="$headhash"
+			fi
+		fi
+		if [ -z "$mergeresult" ]; then
+			mergeours=
+			mergetheirs=
+		fi
+	fi
+	restored=1
+}
+
+clear_state() {
+	! [ -e "$state_dir" ] || rm -rf "$state_dir" >/dev/null 2>&1 || :
+}
+
+restarted=
+isactive=
+! is_active || isactive=1
+if [ -n "$isactive" ] || [ $# -eq 1 -a x"$1" = x"--abort" ]; then
+	[ $# -eq 1 ] && [ x"$1" != x"--status" ] || { do_status; exit 0; }
+	case "$1" in
+	--abort)
+		current=
+		stashhash=
+		if [ -n "$isactive" ]; then
+			IFS= read -r current <"$state_dir/current" || :
+			IFS= read -r stashhash <"$state_dir/stashhash" || :
+		fi
+		clear_state
+		if [ -n "$isactive" ]; then
+			if [ -n "$stashhash" ]; then
+				$tg revert -f -q -q --no-stash "$stashhash" >/dev/null 2>&1 || :
+			fi
+			if [ -n "$current" ]; then
+				info "Ok, update aborted, returning to $current"
+				git checkout -f -q "$current"
+			else
+				info "Ok, update aborted.  Now, you just need to"
+				info "switch back to some sane branch using \`git$gitcdopt checkout\`."
+			fi
+		else
+			info "No update was active"
+		fi
+		exit 0
+		;;
+	--stop)
+		clear_state
+		info "Ok, update stopped.  Now, you just need to"
+		info "switch back to some sane branch using \`git$gitcdopt checkout\`."
+		exit 0
+		;;
+	--continue|--skip)
+		restore_state
+		if [ "$1" = "--skip" ]; then
+			info "Ok, I will try to continue without updating this branch."
+			git reset --hard -q
+			case " $processed " in *" $name "*);;*)
+				processed="${processed:+$processed }$name"
 			esac
-			shift
-		done
-	}
-	clean_names $names
-else
-	[ -n "$current" ] || die "cannot return to detached HEAD; switch to another branch"
-	[ -n "$(git rev-parse --verify --quiet HEAD --)" ] ||
-		die "cannot return to unborn branch; switch to another branch"
+		fi
+		# assume user fixed it
+		# we could be left on a detached HEAD if we were resolving
+		# a conflict while merging a base in, fix it with a checkout
+		git checkout -q "$(strip_ref "$name")"
+		;;
+	*)
+		do_status
+		exit 1
+	esac
+fi
+clear_state
+
+if [ -z "$restored" ]; then
+	while [ -n "$1" ]; do
+		arg="$1"; shift
+		case "$arg" in
+		-a|--all)
+			[ -z "$names$pattern" ] || usage 1
+			all=1;;
+		--skip-missing)
+			skipms=1;;
+		--stash)
+			stash=1;;
+		--no-stash)
+			stash=;;
+		-h)
+			usage;;
+		-*)
+			usage 1;;
+		*)
+			if [ -z "$all" ]; then
+				names="${names:+$names }$arg"
+			else
+				pattern="${pattern:+$pattern }refs/$topbases/$(strip_ref "$arg")"
+			fi
+			;;
+		esac
+	done
+	origpattern="$pattern"
+	[ -z "$pattern" ] && pattern="refs/$topbases"
+
+	processed=
+	current="$(strip_ref "$(git symbolic-ref -q HEAD)")" || :
+	[ -n "$all$names" ] || names="HEAD"
+	if [ -z "$all" ]; then
+		clean_names() {
+			names=
+			while [ $# -gt 0 ]; do
+				name="$(verify_topgit_branch "$1")"
+				case " $names " in *" $name "*);;*)
+					names="${names:+$names }$name"
+				esac
+				shift
+			done
+		}
+		clean_names $names
+	else
+		[ -n "$current" ] || die "cannot return to detached HEAD; switch to another branch"
+		[ -n "$(git rev-parse --verify --quiet HEAD --)" ] ||
+			die "cannot return to unborn branch; switch to another branch"
+	fi
+	ensure_clean_tree
 fi
 
-ensure_clean_tree
+save_state() {
+	mkdir -p "$state_dir"
+	printf '%s\n' "$fullcmd" >"$state_dir/fullcmd"
+	printf '%s\n' "$base_remote" >"$state_dir/remote"
+	printf '%s\n' "$skipms" >"$state_dir/skipms"
+	printf '%s\n' "$all" >"$state_dir/all"
+	printf '%s\n' "$current" >"$state_dir/current"
+	printf '%s\n' "$stashhash" >"$state_dir/stashhash"
+	printf '%s\n' "$name" >"$state_dir/name"
+	printf '%s\n' "$names" >"$state_dir/names"
+	printf '%s\n' "$processed" >"$state_dir/processed"
+	printf '%s\n' "$1" >"$state_dir/mergeours"
+	printf '%s\n' "$2" >"$state_dir/mergetheirs"
+}
 
 stash_now_if_requested() {
 	[ -z "$TG_RECURSIVE" ] || return 0
+	[ -z "$stashhash" ] || return 0
 	ensure_ident_available
-	[ -n "$stash" ] || return 0
 	msg="tgupdate: autostash before update"
 	if [ -n "$all" ]; then
 		msg="$msg --all${origpattern:+ $origpattern}"
-		set -- "--all"
 	else
 		msg="$msg $names"
-		set -- $names
 	fi
-	$tg tag -q -q -m "$msg" --stash "$@" || die "requested --stash failed"
-	stash=
+	set -- $names
+	if [ -n "$stash" ]; then
+		$tg tag -q -q -m "$msg" --stash "$@"  &&
+		stashhash="$(git rev-parse --quiet --verify refs/tgstash --)" &&
+		[ -n "$stashhash" ] &&
+		[ "$(git cat-file -t "$stashhash" -- 2>/dev/null)" = "tag" ] ||
+		die "requested --stash failed"
+	else
+		$tg tag --anonymous "$@" &&
+		stashhash="$(git rev-parse --quiet --verify TG_STASH --)" &&
+		[ -n "$stashhash" ] &&
+		[ "$(git cat-file -t "$stashhash" -- 2>/dev/null)" = "tag" ] ||
+		die "anonymous --stash failed"
+	fi
 }
 
 recursive_update() {
@@ -345,29 +489,7 @@ update_branch() {
 					continue
 				esac
 				info "Recursing to $dep..."
-				while ! recursive_update "$dep"; do
-					# The merge got stuck! Let the user fix it up.
-					info "You are in a subshell. If you abort the merge,"
-					info "use \`exit 1\` to abort the recursive update altogether."
-					info "Use \`exit 2\` to skip updating this branch and continue."
-					if "${SHELL:-@SHELL_PATH@}" -i </dev/tty; then
-						# assume user fixed it
-						# we could be left on a detached HEAD if we were resolving
-						# a conflict while merging a base in, fix it with a checkout
-						git checkout -q "$(strip_ref "$dep")"
-						continue
-					else
-						ret=$?
-						if [ $ret -eq 2 ]; then
-							info "Ok, I will try to continue without updating this branch."
-							break
-						else
-							info "Ok, you aborted the merge. Now, you just need to"
-							info "switch back to some sane branch using \`git$gitcdopt checkout\`."
-							exit 3
-						fi
-					fi
-				done
+				recursive_update "$dep" || exit 3
 			fi
 		done <"$_depcheck.ideps"
 
@@ -442,17 +564,11 @@ update_branch() {
 					git_merge -m "$msg" "$fulldep^0"
 				}
 			then
-				if [ -z "$TG_RECURSIVE" ]; then
-					resume="\`$tgdisplay update${skipms:+ --skip-missing} $_update_name\` again"
-				else # subshell
-					resume='exit'
-				fi
-				info "Please commit merge resolution and call $resume."
-				info "It is also safe to abort this operation using \`git$gitcdopt reset --hard\`,"
-				info "but please remember that you are on the base branch now;"
-				info "you will want to switch to some normal branch afterwards."
 				rm "$_depcheck"
-				exit 2
+				save_state
+				info "Please commit merge resolution and call \`$tgdisplay update --continue\`"
+				info "(use \`$tgdisplay status\` to see more options)"
+				exit 3
 			fi
 		done
 	else
@@ -473,7 +589,18 @@ update_branch() {
 			info "Reconciling $_update_name base with remote branch updates..."
 			become_non_cacheable
 			msg="tgupdate: merge ${_rname#refs/} onto $topbases/$_update_name"
+			checkours=
+			checktheirs=
+			got_merge_with=
+			if [ -n "$mergeresult" ]; then
+				checkours="$(git rev-parse --verify --quiet "refs/$topbases/$_update_name^0" --)" || :
+				checktheirs="$(git rev-parse --verify --quiet "$_rname^0" --)" || :
+				if [ "$mergeours" = "$checkours" ] && [ "$mergetheirs" = "$checktheirs" ]; then
+					got_merge_with="$mergeresult"
+				fi
+			fi
 			if
+				[ -z "$got_merge_with" ] &&
 				! v_attempt_index_merge "merge_with" -m "$msg" "refs/$topbases/$_update_name" "$_rname^0" &&
 				! {
 					# *DETACH* our HEAD now!
@@ -482,13 +609,15 @@ update_branch() {
 					merge_with="$(git rev-parse --verify HEAD --)"
 				}
 			then
-				info "Oops, you will need to help me out here a bit."
-				info "Please commit merge resolution and call:"
-				info "git$gitcdopt checkout $_update_name && git$gitcdopt merge <commitid>"
-				info "It is also safe to abort this operation using: git$gitcdopt reset --hard $_update_name"
-				exit 4
+				save_state \
+					"$(git rev-parse --verify --quiet "refs/$topbases/$_update_name^0" --)" \
+					"$(git rev-parse --verify --quiet "$_rname^0" --)"
+				info "Please commit merge resolution and call \`$tgdisplay update --continue\`"
+				info "(use \`$tgdisplay status\` to see more options)"
+				exit 3
 			fi
 			# Go back but remember we want to merge with this, not base
+			[ -z "$got_merge_with" ] || merge_with="$got_merge_with"
 			plusextra="${_rname#refs/}+"
 		fi
 	fi
@@ -514,32 +643,16 @@ update_branch() {
 			git_merge -m "$msg" "$merge_with^0"
 		}
 	then
-		if [ -z "$TG_RECURSIVE" ]; then
-			info "Please commit merge resolution. No need to do anything else"
-			info "You can abort this operation using \`git$gitcdopt reset --hard\` now"
-			info "and retry this merge later using \`$tgdisplay update${skipms:+ --skip-missing}\`."
-		else # subshell
-			info "Please commit merge resolution and call exit."
-			info "You can abort this operation using \`git$gitcdopt reset --hard\`."
-		fi
-		exit 4
+		save_state
+		info "Please commit merge resolution and call \`$tgdisplay update --continue\`"
+		info "(use \`$tgdisplay status\` to see more options)"
+		exit 3
 	fi
 }
 
 # We are "read-only" and cacheable until the first change
 tg_read_only=1
 v_create_ref_cache
-
-if [ -z "$all" ]; then
-	for name in $names; do
-		update_branch "$name" || exit
-	done
-	case "$names" in *" "*)
-		info "Returning to $current..."
-	esac
-	git checkout -q "$current"
-	exit
-fi
 
 do_non_annihilated_branches_patterns() {
 	while read -r _pat && [ -n "$_pat" ]; do
@@ -561,13 +674,24 @@ do_non_annihilated_branches() {
 	fi
 }
 
-while read name && [ -n "$name" ]; do
-	info "Proccessing $name..."
-	update_branch "$name" || exit
-done <<-EOT
-	$(do_non_annihilated_branches)
-EOT
+if [ -n "$all" ] && [ -z "$restored" ]; then
+	names=
+	while read name && [ -n "$name" ]; do
+		case " $names " in *" $name "*);;*)
+			names="${names:+$names }$name"
+		esac
+	done <<-EOT
+		$(do_non_annihilated_branches)
+	EOT
+fi
 
+for name in $names; do
+	case " $processed " in *" $name "*) continue; esac
+	[ -z "$all" ] && case "$names" in *" "*) ! :; esac || info "Proccessing $name..."
+	update_branch "$name" || exit
+	processed="${processed:+$processed }$name"
+done
+
+[ -z "$all" ] && case "$names" in *" "*) ! :; esac ||
 info "Returning to $current..."
 git checkout -q "$current"
-# vim:noet

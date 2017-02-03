@@ -130,13 +130,13 @@ SYNOPSIS
 	tg: Creating t/whatever base from t/revlist/author-fixed...
 	tg: Merging t/whatever base with t/gitweb/nifty-links...
 	Merge failed!
-	tg: Please commit merge resolution and call: tg create
+	tg: Please commit merge resolution and call: tg create --continue
 	tg: It is also safe to abort this operation using `git reset --hard`
 	tg: but please remember you are on the base branch now;
 	tg: you will want to switch to a different branch.
 	$ ..resolve..
 	$ git commit
-	$ tg create
+	$ tg create --continue
 	tg: Resuming t/whatever setup...
 	$ ..hack..
 	$ git commit
@@ -157,20 +157,18 @@ SYNOPSIS
 	$ tg update
 	tg: Updating base with t/gitweb/nifty-links changes...
 	Merge failed!
-	tg: Please commit merge resolution and call `tg update` again.
-	tg: It is also safe to abort this operation using `git reset --hard`,
-	tg: but please remember you are on the base branch now;
-	tg: you will want to switch to a different branch.
+	tg: Please commit merge resolution and call `tg update --continue`
+	tg: (use `tg status` to see more options)
 	$ ..resolve..
 	$ git commit
-	$ tg update
+	$ tg update --continue
 	tg: Updating t/whatever against new base...
 	Merge failed!
-	tg: Please resolve the merge and commit. No need to do anything else.
-	tg: You can abort this operation using `git reset --hard` now
-	tg: and retry this merge later using `tg update`.
+	tg: Please commit merge resolution and call `tg update --continue`
+	tg: (use `tg status` to see more options)
 	$ ..resolve..
 	$ git commit
+	$ tg update --continue
 
 	## Update a single topic branch and propagate the changes
 	## further through the dependency chain
@@ -189,24 +187,18 @@ SYNOPSIS
 	tg: Recursing to t/gitweb/nifty-links...
 	[t/gitweb/nifty-links] tg: Updating base with t/gitweb/pathinfo-action changes...
 	Merge failed!
-	[t/gitweb/nifty-links] tg: Please commit merge resolution and call `tg update` again.
-	[t/gitweb/nifty-links] tg: It is also safe to abort this operation using `git reset --hard`,
-	[t/gitweb/nifty-links] tg: but please remember you are on the base branch now;
-	[t/gitweb/nifty-links] tg: you will want to switch to a different branch.
-	[t/gitweb/nifty-links] tg: You are in a subshell. If you abort the merge,
-	[t/gitweb/nifty-links] tg: use `exit` to abort the recursive update altogether.
-	[t/gitweb/nifty-links] $ ..resolve..
-	[t/gitweb/nifty-links] $ git commit
-	[t/gitweb/nifty-links] $ tg update
+	[t/gitweb/nifty-links] tg: Please commit merge resolution and call `tg update --continue`
+	[t/gitweb/nifty-links] tg: (use `tg status` to see more options)
+	$ ..resolve..
+	$ git commit
+	$ tg update --continue
 	[t/gitweb/nifty-links] tg: Updating t/gitweb/nifty-links against new base...
 	Merge failed!
-	[t/gitweb/nifty-links] tg: Please resolve the merge and commit.
-	[t/gitweb/nifty-links] tg: You can abort this operation using `git reset --hard`.
-	[t/gitweb/nifty-links] tg: You are in a subshell. After you either commit or abort
-	[t/gitweb/nifty-links] tg: your merge, use `exit` to proceed with the recursive update.
-	[t/gitweb/nifty-links] $ ..resolve..
-	[t/gitweb/nifty-links] $ git commit
-	[t/gitweb/nifty-links] $ exit
+	[t/gitweb/nifty-links] tg: Please commit merge resolution and call `tg update --continue`
+	[t/gitweb/nifty-links] tg: (use `tg status` to see more options)
+	$ ..resolve..
+	$ git commit
+	$ tg update --continue
 	tg: Updating base with t/gitweb/nifty-links changes...
 	tg: Updating t/whatever against new base...
 
