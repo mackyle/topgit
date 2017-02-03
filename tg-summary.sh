@@ -73,7 +73,7 @@ while [ -n "$1" ]; do
 	esac
 	shift
 done
-defwithdeps=1
+[ $# -eq 0 ] || defwithdeps=1
 [ -z "$exclude" ] || exclude="$exclude "
 if [ "$1" = "--all" ]; then
 	[ -z "$withdeps" ] || die "mutually exclusive options given"
@@ -125,12 +125,14 @@ if [ -n "$heads" -a -z "$rdeps" ]; then
 	exit 0
 fi
 
+skip_ann=
 show_dep() {
 	case "$exclude" in *" $_dep "*) return; esac
 	case " $seen_deps " in *" $_dep "*) return 0; esac
 	seen_deps="${seen_deps:+$seen_deps }$_dep"
 	[ -z "$tgish" -o -n "$_dep_is_tgish" ] || return 0
-	printf '%s\n' "$_dep"
+	[ -z "$skip_ann" ] || ! branch_annihilated "$_dep" && printf '%s\n' "$_dep"
+	return 0
 }
 
 show_deps()
@@ -141,7 +143,8 @@ show_deps()
 		case "$exclude" in *" $_b "*) continue; esac
 		case " $recurse_deps_exclude " in *" $_b "*) continue; esac
 		seen_deps=
-		_dep="$_b"; _dep_is_tgish=1; show_dep
+		save_skip="$skip_ann"
+		_dep="$_b"; _dep_is_tgish=1; skip_ann=; show_dep; skip_ann="$save_skip"
 		recurse_deps show_dep "$_b"
 		recurse_deps_exclude="$recurse_deps_exclude $seen_deps"
 	done
@@ -187,7 +190,7 @@ fi
 if [ -n "$withdeps" ]; then
 	savetgish="$tgish"
 	tgish=1
-	branches="$(show_deps | LC_ALL=C sort -u -b -k1,1)"
+	branches="$(skip_ann=1; show_deps | LC_ALL=C sort -u -b -k1,1)"
 	tgish="$savetgish"
 fi
 
