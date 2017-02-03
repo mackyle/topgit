@@ -35,6 +35,7 @@ name="$(verify_topgit_branch HEAD)"
 [ -z "$force" ] && { branch_empty "$name" || die "branch is non-empty: $name"; }
 
 ## Annihilate
+ensure_clean_tree
 ensure_ident_available
 mb="$(git merge-base "refs/$topbases/$name" "refs/heads/$name")"
 git read-tree "$mb^{tree}"
@@ -46,7 +47,9 @@ git commit --no-verify -m"TopGit branch $name annihilated."
 dependencies="$(tg prev -w)"
 updatelist=
 while read dependent && [ -n "$dependent" ]; do
-	git checkout -f "refs/heads/$dependent"
+	# to avoid ambiguity with checkout -f we must use symbolic-ref + reset
+	git symbolic-ref HEAD "refs/heads/$dependent"
+	git reset -q --hard
 	needupdate=
 	while read dependency && [ -n "$dependency" ]; do
 		! $tg depend add --no-update "$dependency" >/dev/null 2>&1 || needupdate=1
