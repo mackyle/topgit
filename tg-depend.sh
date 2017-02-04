@@ -5,9 +5,9 @@
 # All rights reserved.
 # GPLv2
 
-USAGE="Usage: ${tgname:-tg} [...] depend add [--no-update | --no-commit] <name>"
+USAGE="Usage: ${tgname:-tg} [...] depend add [--no-update | --no-commit] <name>..."
 
-name=
+names=
 
 usage()
 {
@@ -40,41 +40,66 @@ while [ -n "$1" ]; do
 	-*)
 		usage;;
 	*)
-		[ -z "$name" ] || die "name already specified ($name)"
-		name="$arg";;
+		names="${names:+$names }$arg";;
 	esac
 done
 
 
 ## Sanity checks
 
-[ -n "$name" ] || die "no branch name specified"
-branchrev="$(git rev-parse --verify "refs/heads/$name" -- 2>/dev/null)" ||
+[ -n "$names" ] || die "no branch name specified"
+oldnames="$names "
+names=
+while
+	name="${oldnames%% *}"
+	oldnames="${oldnames#* }"
+	[ -n "$name" ]
+do
+	case " $names " in *" $name "*) continue; esac
+	git rev-parse --quiet --verify "refs/heads/$name" -- >/dev/null ||
 	die "invalid branch name: $name"
+	names="${names:+$names }$name"
+done
+unset oldnames
 
 # Check that we are on a TopGit branch.
 current_name="$(verify_topgit_branch HEAD)"
 
+check_new_dep()
+{
+	[ "$1" != "$current_name" ] ||
+		die "$current_name cannot depend on itself."
+	! grep -F -q -x -e "$1" "$root_dir/.topdeps" ||
+		die "$tgname: $current_name already depends on $1"
+	echol "$current_name" "$1" >>"$depsf"
+	tsort >/dev/null <"$depsf" ||
+		die "$tgname: that dependency ($1) would introduce a dependency loop"
+}
+
 ## Record new dependency
 depend_add()
 {
-	[ "$name" = "$current_name" ] &&
-		die "$name cannot depend on itself."
-
-	{ $tg summary --deps; echo "$current_name" "$name"; } |
-		tsort >/dev/null ||
-		die "$tgname: that dependency would introduce a dependency loop"
-
-	grep -F -x -e "$name" "$root_dir/.topdeps" >/dev/null &&
-		die "$tgname: $current_name already depends on $name"
-
+	[ -z "$(git status --porcelain -- :/.topdeps)" ] ||
+		die ".topdeps has uncommitted changes"
+	depsf="$(get_temp depslist)"
+	$tg summary --deps >"$depsf"
+	for name in $names; do
+		check_new_dep "$name"
+	done
 	[ -n "$nocommit" ] || ensure_ident_available
-	echol "$name" >>"$root_dir/.topdeps"
+	for name in $names; do
+		echol "$name" >>"$root_dir/.topdeps"
+	done
 	git add -f "$root_dir/.topdeps"
-	msg=".topdeps: add new dependency $name"
+	case "$names" in
+	*" "*)
+		msg=".topdeps: add dependencies: $names";;
+	*)
+		msg=".topdeps: add new dependency $name";;
+	esac
 	[ -z "$nocommit" ] || {
 		[ -s "$git_dir/MERGE_MSG" ] || printf '%s\n' "$msg" >"$git_dir/MERGE_MSG"
-		info "added new dependency $name to .topdeps and staged it"
+		info "updated .topdeps and staged the change"
 		info "run \`git commit\` then \`tg update\` to complete addition"
 		exit 0
 	}
@@ -88,9 +113,8 @@ depend_add()
 		warn "be sure to run \`tg update\` when worktree is clean"
 		exit 1
 	}
-	$tg update
+	set -- "$current_name"
+	. "$TG_INST_CMDDIR"/tg-update
 }
 
 depend_$subcmd
-
-# vim:noet
