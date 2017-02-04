@@ -65,23 +65,16 @@ info "branch successfully annihilated: $name"
 now="now"
 if [ -n "$updatelist" ]; then
 	if [ -n "$update" ]; then
-		info "now updating affected branches: $updatelist"
-		while read dependent && [ -n "$dependent" ]; do
-			$tg update "$dependent"
-		done <<-EOT
-		$(sed 'y/ /\n/' <<-LIST
-		$updatelist
-		LIST
-		)
-		EOT
+		now="after the update completes"
 	else
 		info "skipping update because --no-update given"
 		info "be sure to update affected branches: $updatelist"
 		now="after updating"
 	fi
 fi
-
 info "If you have shared your work, you might want to run ${tgname:-tg} push $name $now."
-git status
-
-# vim:noet
+if [ -n "$updatelist" ] && [ -n "$update" ]; then
+	info "now updating affected branches: $updatelist"
+	set -- $updatelist
+	. "$TG_INST_CMDDIR"/tg-update
+fi
