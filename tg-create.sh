@@ -424,34 +424,6 @@ if [ -n "$merge" -a -z "$restarted" ]; then
 fi
 
 
-## Merge other dependencies into the base
-
-while [ -n "$merge" ]; do
-	# Unshift the first item from the to-merge list
-	branch="${merge%% *}"
-	merge="${merge#* }"
-	quiet_info "Merging $name base with $branch..."
-
-	if ! git merge $auhopt -m "tgcreate: merge $branch into $topbases/$name" "$branch^0"; then
-		info "Please commit merge resolution and call: $tgdisplay create --continue"
-		info "It is also safe to abort this operation using:"
-		info "git$gitcdopt reset --hard some_branch"
-		info "(You are on a detached HEAD now.)"
-		mkdir -p "$git_dir/tg-create"
-		printf '%s\n' "$name" >"$git_dir/tg-create/name"
-		printf '%s\n' "$deps" >"$git_dir/tg-create/deps"
-		printf '%s\n' "$merge" >"$git_dir/tg-create/merge"
-		printf '%s\n' "$msg" >"$git_dir/tg-create/msg"
-		printf '%s\n' "$topmsg" >"$git_dir/tg-create/topmsg"
-		printf '%s\n' "$nocommit" >"$git_dir/tg-create/nocommit"
-		printf '%s\n' "$noedit" >"$git_dir/tg-create/noedit"
-		printf '%s\n' "$warntop" >"$git_dir/tg-create/warntop"
-		printf '%s\n' "$quiet" >"$git_dir/tg-create/quiet"
-		exit 2
-	fi
-done
-
-
 ## Set up the topic branch
 
 init_reflog "refs/$topbases/$name"
@@ -489,6 +461,7 @@ if [ -n "$nocommit" ]; then
 	else
 		quiet_info "Please make the initial commit."
 	fi
+	quiet_info "Remember to run $tgdisplay update afterwards."
 	quiet_info "To abort:"
 	quiet_info "  git$gitcdopt rm -f .top* && git$gitcdopt checkout ${deps%% *} && $tgdisplay delete $name"
 	exit 0
@@ -504,6 +477,8 @@ else
 	cat "$root_dir/.topmsg"
 fi >"$git_dir/MERGE_MSG"
 quiet_info "Topic branch $name created."
-exit 0
-
-# vim:noet
+[ -n "$merge" ] || exit 0
+## Merge other dependencies into the base
+quiet_info "Running $tgname update to merge in dependencies."
+set -- "$name"
+. "$TG_INST_CMDDIR"/tg-update
