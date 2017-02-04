@@ -78,7 +78,7 @@ branch_contains "refs/heads/$name" "refs/$topbases/$name" ||
 
 if has_remote "$name"; then
 	echo "Remote Mate: $base_remote/$name"
-	branch_contains "refs/$topbases/$name" "refs/remotes/$base_remote/$topbases/$name" ||
+	branch_contains "refs/$topbases/$name" "refs/remotes/$base_remote/${topbases#heads/}/$name" ||
 		echo "* Local base is out of date wrt. the remote base."
 	branch_contains "refs/heads/$name" "refs/remotes/$base_remote/$name" ||
 		echo "* Local head is out of date wrt. the remote head."
