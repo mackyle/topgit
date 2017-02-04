@@ -197,7 +197,10 @@ if [ -n "$rname" ]; then
 	has_remote "$rname" || die "no branch $rname in remote $base_remote"
 	init_reflog "refs/$topases/$name"
 	msg="tgcreate: $name -r $rname"
-	git update-ref -m "$msg" "refs/$topbases/$name" "refs/remotes/$base_remote/$topbases/$rname" ""
+	tbrv="$(ref_exists_rev "refs/remotes/$base_remote/${topbases#heads/}/$rname")" ||
+	tbrv="$(ref_exists_rev "refs/remotes/$base_remote/${oldbases#heads/}/$rname")" ||
+	die "no branch $rname in remote $base_remote"
+	git update-ref -m "$msg" "refs/$topbases/$name" "$tbrv" ""
 	git update-ref -m "$msg" "refs/heads/$name" "refs/remotes/$base_remote/$rname" ""
 	quiet_info "Topic branch $name based on $base_remote : $rname set up."
 	exit 0
