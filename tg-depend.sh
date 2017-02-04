@@ -65,15 +65,23 @@ unset oldnames
 # Check that we are on a TopGit branch.
 current_name="$(verify_topgit_branch HEAD)"
 
+check_cycle_name()
+{
+	[ "$current_name" != "$_dep" ] ||
+		die "$tgname: that dependency ($newly_added) would introduce a dependency loop"
+}
+
 check_new_dep()
 {
 	[ "$1" != "$current_name" ] ||
 		die "$current_name cannot depend on itself."
 	! grep -F -q -x -e "$1" "$root_dir/.topdeps" ||
 		die "$tgname: $current_name already depends on $1"
-	echol "$current_name" "$1" >>"$depsf"
-	tsort >/dev/null <"$depsf" ||
-		die "$tgname: that dependency ($1) would introduce a dependency loop"
+	# deps can be non-tgish but we can't run recurse_deps() on them
+	ref_exists "refs/$topbases/$1" || return 0
+	no_remotes=1
+	newly_added="$1"
+	recurse_deps check_cycle_name "$newly_added"
 }
 
 ## Record new dependency
@@ -81,8 +89,9 @@ depend_add()
 {
 	[ -z "$(git status --porcelain -- :/.topdeps)" ] ||
 		die ".topdeps has uncommitted changes"
-	depsf="$(get_temp depslist)"
-	$tg summary --deps >"$depsf"
+	# We are "read-only" and cacheable until the first change
+	tg_read_only=1
+	v_create_ref_cache
 	for name in $names; do
 		check_new_dep "$name"
 	done
@@ -103,6 +112,7 @@ depend_add()
 		info "run \`git commit\` then \`tg update\` to complete addition"
 		exit 0
 	}
+	become_non_cacheable
 	git commit -m "$msg" "$root_dir/.topdeps"
 	[ -z "$noupdate" ] || {
 		info "be sure to run \`tg update\` at some point"
