@@ -1448,8 +1448,7 @@ Then, the base is merged into the remote branch and the result is merged
 to the local branch -- again, to carry over remote conflict resolutions.
 In the future, this order might be adjustable on a per-update basis, in
 case local changes happen to be diverging more than the remote ones.
-(Actually this description seems to be a bit out of date, see the details
-in `The Update Process`_ instead for something a bit more current.)
+(See the details in `The Update Process`_ for more in depth coverage.)
 
 All commands by default refer to the remote that ``tg remote --populate``
 was called on the last time (stored in the ``topgit.remote`` git
@@ -1479,15 +1478,20 @@ are taken:
 
 	3) Each of the branch's direct dependencies (i.e. they are listed in
 	   the branch's ``.topdes`` file) that was updated in the previous
-	   step is now merged into the branch's corresponding base.
+	   step is now merged into the branch's corresponding base.  If a
+	   remote is involved, and the branch's corresponding base does NOT
+	   contain the remote branch's corresponding base that remote base is
+	   also merged into the branch's base at this time as well (it will be
+	   the first item merged into the branch's base).
 
 	4) If the branch has a corresponding remote branch and the branch
 	   does not already contain it, it's merged into the branch's base
-	   (which was possibly updated in step (3)) on a detached HEAD.
-	   Yup, this step can be a bit confusing and no, the updated base from
-	   step (3) has not yet been merged into the branch itself yet either.
-	   If there is no remote branch this step does not apply.  Using a
-	   detached HEAD allows the remote branch to be merged into the
+	   (which was possibly already updated in step (3) to contain the
+	   remote branch's base but not the remote branch itself) on a detached
+	   HEAD.  Yup, this step can be a bit confusing and no, the updated
+	   base from step (3) has not yet been merged into the branch itself
+	   yet either.  If there is no remote branch this step does not apply.
+	   Using a detached HEAD allows the remote branch to be merged into the
 	   contents of the base without actually perturbing the base's ref.
 
 	5) If there is a remote branch present then use the result of step (4)
@@ -1595,12 +1599,19 @@ GLOSSARY
 			   corresponding remote branch (there may not be
 			   a remote branch in which case this does not apply)
 
-			c) Any of the TopGit branches listed in the branch's
+			c) The TopGit branch's base does NOT contain its
+			   corresponding remote branch's base (there may not be
+			   a remote branch in which case this does not apply)
+
+			d) Any of the TopGit branches listed in the branch's
 			   ``.topdeps`` file are NOT contained by the branch.
 			   (See "branch containment" above.)
 
-			d) Any of the TopGit branches listed in the branch's
+			e) Any of the TopGit branches listed in the branch's
 			   ``.topdeps`` file are out-of-date.
+
+		Note that if a remote branch is present and is NOT out-of-date
+		then it will contain its own base and (c) is mostly redundant.
 
 	remote TopGit branch
 		A Git branch with the same branch name as a TopGit branch
@@ -1611,8 +1622,6 @@ GLOSSARY
 		The TopGit base branch corresponding to a remote TopGit branch,
 		which lives under ``refs/remotes/`` somewhere (depending on
 		what the output of ``tg --top-bases`` is for that remote).
-		Note that the ``tg update`` process itself is not concerned
-		with remote TopGit bases, only remote TopGit branches.
 
 
 REFERENCES
