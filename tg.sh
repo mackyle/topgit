@@ -556,7 +556,7 @@ rev_parse_tree()
 }
 
 # has_remote BRANCH
-# Whether BRANCH has a remote equivalent (accepts $topbases/ too)
+# Whether BRANCH has a remote equivalent (accepts ${topbases#heads/}/ too)
 has_remote()
 {
 	[ -n "$base_remote" ] && ref_exists "refs/remotes/$base_remote/$1"
@@ -684,8 +684,8 @@ recurse_deps_internal()
 
 	# If no_remotes is unset also check our base against remote base.
 	# Checking our head against remote head has to be done in the helper.
-	if [ -n "$_is_tgish" -a -z "$no_remotes" ] && has_remote "$topbases/$1"; then
-		echo "0 0 refs/remotes/$base_remote/$topbases/$1 $*"
+	if [ -n "$_is_tgish" -a -z "$no_remotes" ] && has_remote "${topbases#heads/}/$1"; then
+		echo "0 0 refs/remotes/$base_remote/${topbases#heads/}/$1 $*"
 	fi
 
 	# if the branch was annihilated, it is considered to have no dependencies
