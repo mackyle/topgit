@@ -239,8 +239,8 @@ process_branch()
 	[ -z "$base_remote" ] || remote='l'
 	! has_remote "$name" || remote='r'
 	rem_update=' '
-	[ "$remote" != 'r' ] || ! ref_exists "refs/remotes/$base_remote/$topbases/$name" || {
-		branch_contains "refs/$topbases/$name" "refs/remotes/$base_remote/$topbases/$name" &&
+	[ "$remote" != 'r' ] || ! ref_exists "refs/remotes/$base_remote/${topbases#heads/}/$name" || {
+		branch_contains "refs/$topbases/$name" "refs/remotes/$base_remote/${topbases#heads/}/$name" &&
 		branch_contains "refs/heads/$name" "refs/remotes/$base_remote/$name"
 	} || rem_update='R'
 	[ "$remote" != 'r' -o "$rem_update" = 'R' ] || {
