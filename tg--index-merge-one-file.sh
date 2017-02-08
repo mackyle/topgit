@@ -14,6 +14,12 @@
 # $6          => stage 2 mode
 # $7          => stage 3 mode
 
+if [ "$1" = "-h" ] && [ $# -eq 1 ]; then
+	echo "\
+usage: ${tgname:-tg} index-merge-one-file <s1_hash> <s2_hash> <s3_hash> <path> <s1_mode> <s2_mode> <s3_mode>"
+	exit 0
+fi
+
 [ $# -eq 7 ] || exit 1
 
 # We only handle auto merging existing files with the same mode
