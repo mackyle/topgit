@@ -1170,7 +1170,11 @@ tg tag
 	If more than one TopGit branch is given on the command line, a new
 	commit will be created that has an empty tree and all of the given
 	TopGit branches as parents and that commit will be tagged.  If a single
-	TopGit branch is given, then it will be tagged.
+	TopGit branch is given, then it will be tagged.  If the ``--tree``
+	option is used then it will be used instead of an empty tree (a new
+	commit will be created if necessary to guarantee the specified tree is
+	what's in the commit the newly created tag refers to).  The argument to
+	the ``--tree`` option may be any valid treeish.
 
 	All the options for creating a tag serve the same purpose as their Git
 	equivalents except for two.  The ``--refs`` option suppresses tag

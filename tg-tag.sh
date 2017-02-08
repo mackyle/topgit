@@ -1,11 +1,11 @@
 #!/bin/sh
 # TopGit tag command
-# Copyright (C) 2015 Kyle J. McKay <mackyle@gmail.com>
+# Copyright (C) 2015,2017 Kyle J. McKay <mackyle@gmail.com>
 # All rights reserved.
 # GPLv2
 
 USAGE="\
-Usage: ${tgname:-tg} [...] tag [-s | -u <key-id>] [-f] [-q] [--no-edit] [-m <msg> | -F <file>] (<tagname> | --refs) [<branch>...]
+Usage: ${tgname:-tg} [...] tag [-s | -u <key-id>] [-f] [-q] [--no-edit] [-m <msg> | -F <file>] [--tree <treeish>] (<tagname> | --refs) [<branch>...]
    Or: ${tgname:-tg} [...] tag (-g | --reflog) [--reflog-message | --commit-message] [--no-type] [-n <number> | -number] [<tagname>]
    Or: ${tgname:-tg} [...] tag (--clear | --delete) <tagname>
    Or: ${tgname:-tg} [...] tag --drop <tagname>@{n}"
@@ -46,6 +46,7 @@ clear=
 delete=
 drop=
 anonymous=
+treeish=
 
 is_numeric()
 {
@@ -124,6 +125,22 @@ while [ $# -gt 0 ]; do case "$1" in
 		;;
 	--allow-any)
 		anyrefok=1
+		;;
+	--tree|--tree=*)
+		case "$1" in --tree=*)
+			x="$1"
+			shift
+			set -- --tree "${x#--tree=}" "$@"
+		esac
+		if [ $# -lt 2 ]; then
+			echo "The $1 option requires an argument" >&2
+			usage 1
+		fi
+		shift
+		treeish="$(git rev-parse --quiet --verify "$1^{tree}" --)" || {
+			echo "Not a valid treeish: $1" >&2
+			exit 1
+		}
 		;;
 	--refs|--refs-only)
 		refsonly=1
@@ -223,9 +240,9 @@ esac; shift; done
 [ -z "$stash$anonymous" -o -n "$reflog$drop$clear$delete" ] || { outofdateok=1; force=1; defnoedit=1; }
 [ -n "$noedit" ] || noedit="$defnoedit"
 [ "$noedit" != "0" ] || noedit=
-[ -z "$reflog" -o -z "$drop$clear$delete$signed$keyid$force$msg$msgfile$noedit$refsonly$outofdateok" ] || usage 1
+[ -z "$reflog" -o -z "$drop$clear$delete$signed$keyid$force$msg$msgfile$noedit$treeish$refsonly$outofdateok" ] || usage 1
 [ -n "$reflog" -o -z "$setreflogmsg$notype$maxcount" ] || usage 1
-[ -z "$drop$clear$delete" -o -z "$setreflogmsg$notype$maxcount$signed$keyid$force$msg$msgfile$noedit$refsonly$outofdateok" ] || usage 1
+[ -z "$drop$clear$delete" -o -z "$setreflogmsg$notype$maxcount$signed$keyid$force$msg$msgfile$noedit$treeish$refsonly$outofdateok" ] || usage 1
 [ -z "$reflog$drop$clear$delete" -o "$reflog$drop$clear$delete" = "1" ] || usage 1
 [ -z "$maxcount" ] || is_numeric "$maxcount" || die "invalid count: $maxcount"
 [ -z "$maxcount" ] || [ $maxcount -gt 0 ] || die "invalid count: $maxcount"
@@ -630,24 +647,32 @@ git stripspace ${stripcomments:+ --strip-comments} \
 echo "" >>"$git_dir/TGTAG_FINALMSG"
 get_refs >>"$git_dir/TGTAG_FINALMSG"
 
+v_count_args() { eval "$1="'$(( $# - 1 ))'; }
+
 tagtarget=
 case "$allrefs${extrarefs:+ $extrarefs}" in
 	*" "*)
 		parents="$(git merge-base --independent \
 			$(printf '%s^0 ' $allrefs $extrarefs))" ||
 			die "failed: git merge-base --independent"
-		if [ $(printf '%s\n' "$parents" | wc -l) -eq 1 ]; then
-			tagtarget="$parents"
-		else
-			mttree="$(git hash-object -t tree -w --stdin </dev/null)"
-			tagtarget="$(printf '%s\n' "tg tag branch consolidation" "" $branches |
-				git commit-tree $mttree $(printf -- '-p %s ' $parents))"
-		fi
 		;;
 	*)
-		tagtarget="$allrefs^0"
+		parents="$allrefs^0"
 		;;
 esac
+v_count_args pcnt $parents
+if [ $pcnt -eq 1 ]; then
+	tagtarget="$parents"
+	[ -z "$treeish" ] ||
+	[ "$(git rev-parse --quiet --verify "$tagtarget^{tree}" --)" = "$treeish" ] ||
+	tagtarget=
+fi
+if [ -z "$tagtarget" ]; then
+	tagtree="$treeish"
+	[ -n "$tagtree" ] || tagtree="$(git hash-object -t tree -w --stdin </dev/null)"
+	tagtarget="$(printf '%s\n' "tg tag branch consolidation" "" $branches |
+		git commit-tree $tagtree $(printf -- '-p %s ' $parents))"
+fi
 
 init_reflog "$refname"
 if [ "$reftype" = "tag" -a -n "$signed" ]; then
