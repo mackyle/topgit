@@ -334,25 +334,25 @@ setup_hook()
 {
 	tgname="${0##*/}"
 	hook_call="\"\$(\"$tgname\" --hooks-path)\"/$1 \"\$@\""
-	if [ -f "$git_common_dir/hooks/$1" ] && LC_ALL=C grep -Fq "$hook_call" "$git_common_dir/hooks/$1"; then
+	if [ -f "$git_hooks_dir/$1" ] && LC_ALL=C grep -Fq "$hook_call" "$git_hooks_dir/$1"; then
 		# Another job well done!
 		return
 	fi
 	# Prepare incantation
 	hook_chain=
-	if [ -s "$git_common_dir/hooks/$1" -a -x "$git_common_dir/hooks/$1" ]; then
+	if [ -s "$git_hooks_dir/$1" -a -x "$git_hooks_dir/$1" ]; then
 		hook_call="$hook_call"' || exit $?'
-		if [ -L "$git_common_dir/hooks/$1" ] || ! LC_ALL=C sed -n 1p <"$git_common_dir/hooks/$1" | LC_ALL=C grep -Fqx "#!@SHELL_PATH@"; then
+		if [ -L "$git_hooks_dir/$1" ] || ! LC_ALL=C sed -n 1p <"$git_hooks_dir/$1" | LC_ALL=C grep -Fqx "#!@SHELL_PATH@"; then
 			chain_num=
-			while [ -e "$git_common_dir/hooks/$1-chain$chain_num" ]; do
+			while [ -e "$git_hooks_dir/$1-chain$chain_num" ]; do
 				chain_num=$(( $chain_num + 1 ))
 			done
-			mv -f "$git_common_dir/hooks/$1" "$git_common_dir/hooks/$1-chain$chain_num"
+			mv -f "$git_hooks_dir/$1" "$git_hooks_dir/$1-chain$chain_num"
 			hook_chain=1
 		fi
 	else
 		hook_call="exec $hook_call"
-		[ -d "$git_common_dir/hooks" ] || mkdir "$git_common_dir/hooks" || :
+		[ -d "$git_hooks_dir" ] || mkdir -p "$git_hooks_dir" || :
 	fi
 	# Don't call hook if tg is not installed
 	hook_call="if command -v \"$tgname\" >/dev/null 2>&1; then $hook_call; fi"
@@ -363,11 +363,11 @@ setup_hook()
 		if [ -n "$hook_chain" ]; then
 			echol "exec \"\$0-chain$chain_num\" \"\$@\""
 		else
-			[ ! -s "$git_common_dir/hooks/$1" ] || cat "$git_common_dir/hooks/$1"
+			[ ! -s "$git_hooks_dir/$1" ] || cat "$git_hooks_dir/$1"
 		fi
-	} >"$git_common_dir/hooks/$1+"
-	chmod a+x "$git_common_dir/hooks/$1+"
-	mv "$git_common_dir/hooks/$1+" "$git_common_dir/hooks/$1"
+	} >"$git_hooks_dir/$1+"
+	chmod a+x "$git_hooks_dir/$1+"
+	mv "$git_hooks_dir/$1+" "$git_hooks_dir/$1"
 }
 
 # setup_ours (no arguments)
@@ -1283,11 +1283,23 @@ setup_git_dirs()
 	fi
 	[ -n "$git_dir" ] && [ -n "$git_common_dir" ] &&
 	[ -d "$git_dir" ] && [ -d "$git_common_dir" ] || die "Not a git repository"
+	git_hooks_dir="$git_common_dir/hooks"
+	if vcmp "$git_version" '>=' "2.9" && gchp="$(git config --path --get core.hooksPath 2>/dev/null)" && [ -n "$gchp" ]; then
+		case "$gchp" in
+			/[!/]*)
+				git_hooks_dir="$gchp"
+				;;
+			*)
+				[ -n "$1" ] || warn "ignoring non-absolute core.hooksPath: $gchp"
+				;;
+		esac
+		unset gchp
+	fi
 }
 
 basic_setup()
 {
-	setup_git_dirs
+	setup_git_dirs $1
 	[ -n "$base_remote" ] || base_remote="$(git config topgit.remote 2>/dev/null)" || :
 	tgsequester="$(git config --bool topgit.sequester 2>/dev/null)" || :
 	tgnosequester=
@@ -1309,7 +1321,7 @@ initial_setup()
 	GIT_MERGE_AUTOEDIT=no
 	export GIT_MERGE_AUTOEDIT
 
-	basic_setup
+	basic_setup $1
 	auhopt=
 	! vcmp "$git_version" '>=' "2.9" || auhopt="--allow-unrelated-histories"
 	root_dir="$(git rev-parse --show-cdup)"; root_dir="${root_dir:-.}"
@@ -1486,7 +1498,7 @@ if [ -n "$tg__include" ]; then
 
 	# ensure setup happens
 
-	initial_setup
+	initial_setup 1
 	set_topbases 1
 
 else
