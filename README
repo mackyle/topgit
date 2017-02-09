@@ -808,6 +808,9 @@ tg summary
 	combined with ``--rdeps`` behaves as though ``--rdeps`` were run with
 	the output of ``--heads``.
 
+	Using ``--heads-only`` behaves as though the output of ``--heads`` was
+	passed as the list of branches along with ``--without-deps``.
+
 	Alternatively, you can pass ``--graphviz`` to get a dot-suitable output
 	for drawing a dependency graph between the topic branches.
 

@@ -1,7 +1,7 @@
 #!/bin/sh
 # TopGit - A different patch queue manager
 # Copyright (C) Petr Baudis <pasky@suse.cz>  2008
-# Copyright (C) Kyle J. McKay <mackyle@gmail.com>  2015
+# Copyright (C) Kyle J. McKay <mackyle@gmail.com>  2015,2016,2017
 # All rights reserved.
 # GPLv2
 
@@ -15,6 +15,7 @@ head_from=
 branches=
 head=
 heads=
+headsonly=
 exclude=
 tgish=
 withdeps=
@@ -23,7 +24,7 @@ withdeps=
 
 usage()
 {
-	echo "Usage: ${tgname:-tg} [...] summary [-t | --list | --heads | --sort | --deps | --deps-only | --rdeps | --graphviz] [-i | -w] [--tgish-only] [--with[out]-deps] [--exclude branch]... [--all | branch...]" >&2
+	echo "Usage: ${tgname:-tg} [...] summary [-t | --list | --heads[-only] | --sort | --deps[-only] | --rdeps | --graphviz] [-i | -w] [--tgish-only] [--with[out]-deps] [--exclude branch]... [--all | branch...]" >&2
 	exit 1
 }
 
@@ -37,6 +38,8 @@ while [ -n "$1" ]; do
 		terse=1;;
 	--heads)
 		heads=1;;
+	--heads-only)
+		headsonly=1;;
 	--with-deps)
 		head=HEAD
 		withdeps=1;;
@@ -85,11 +88,11 @@ fi
 [ "$heads$rdeps" != "11" ] || head=
 [ $# -ne 0 -o -z "$head" ] || set -- "$head"
 
-[ "$terse$heads$graphviz$sort$deps$depsonly" = "" ] ||
-	[ "$terse$heads$graphviz$sort$deps$depsonly$rdeps" = "1" ] ||
-		[ "$terse$heads$graphviz$sort$deps$depsonly$rdeps" = "11" -a "$heads$rdeps" = "11" ] ||
+[ "$terse$heads$headsonly$graphviz$sort$deps$depsonly" = "" ] ||
+	[ "$terse$heads$headsonly$graphviz$sort$deps$depsonly$rdeps" = "1" ] ||
+	[ "$terse$heads$headsonly$graphviz$sort$deps$depsonly$rdeps" = "11" -a "$heads$rdeps" = "11" ] ||
 	die "mutually exclusive options given"
-[ -z "$withdeps" -o -z "$rdeps$depsonly$heads" ] ||
+[ -z "$withdeps" -o -z "$rdeps$depsonly$heads$headsonly" ] ||
 	die "mutually exclusive options given"
 
 for b; do
@@ -183,6 +186,11 @@ if [ -n "$rdeps" ]; then
 		} | sed -e 's/[^ ][^ ]*[ ]/  /g'
 	done
 	exit 0
+fi
+
+if [ -n "$headsonly" ]; then
+	defwithdeps=
+	branches="$(show_heads)"
 fi
 
 [ -n "$withdeps" ] || withdeps="$defwithdeps"
