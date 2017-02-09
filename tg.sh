@@ -1001,6 +1001,12 @@ do_help()
 			if [ -r "$TG_INST_CMDDIR"/tg-$1 ] ; then
 				"$TG_INST_CMDDIR"/tg-$1 -h 2>&1 || :
 				echo
+			elif [ "$1" = "help" ]; then
+				echo "Usage: ${tgname:-tg} help [-w] [<command>]"
+				echo
+			elif [ "$1" = "status" ]; then
+				echo "Usage: ${tgname:-tg} status [-v] [--exit-code]"
+				echo
 			fi
 			if [ -r "$TG_INST_SHAREDIR/tg-$1.txt" ] ; then
 				cat "$TG_INST_SHAREDIR/tg-$1.txt"
@@ -1053,6 +1059,19 @@ check_status()
 # Show status information
 do_status()
 {
+	do_status_result=0
+	do_status_verbose=
+	while [ $# -gt 0 ] && case "$1" in
+		--verbose|-v)
+			do_status_verbose=1
+			;;
+		--exit-code)
+			do_status_result=2
+			;;
+		*)
+			die "unknown status argument: $1"
+			;;
+	esac; do shift; done
 	check_status
 	symref="$(git symbolic-ref --quiet HEAD)" || :
 	headrv="$(git rev-parse --quiet --verify --short HEAD --)" || :
@@ -1104,6 +1123,7 @@ do_status()
 				untr="; non-ignored, untracked files present"
 			fi
 			echo "working directory is clean$untr"
+			[ -n "$tg_state" ] || do_status_result=0
 		else
 			echo "working directory is DIRTY"
 		fi
@@ -1649,7 +1669,7 @@ else
 			basic_setup
 			set_topbases
 			do_status "$@"
-			exit 0;;
+			exit ${do_status_result:-0};;
 
 		hooks-path)
 			# Internal command

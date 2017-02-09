@@ -496,6 +496,10 @@ tg status
 	but shows any in-progress update that's awaiting a merge resolution
 	or any other on-going TopGit activity (such as a branch creation).
 
+	With the ``--exit-code`` option the exit code will be non-zero if any
+	TopGit or Git operation is currently in progress or the working
+	tree is unclean.
+
 tg create
 ~~~~~~~~~
 	Create a new TopGit-controlled topic branch of the given name
