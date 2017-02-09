@@ -15,8 +15,12 @@ my $last = undef;
 sub get_tg_usage($)
 {
 	my $name = shift;
-	if ( -x "$mydir/tg-$name" ) {
-		my $usage = `"$mydir/tg-$name" -h 2>&1`;
+	my $xname;
+	for ("$mydir/tg-$name", "$mydir/tg--$name") {
+		-x $_ and $xname=$_, last;
+	}
+	if (defined $xname) {
+		my $usage = `"$xname" -h 2>&1`;
 		chomp $usage;
 		$usage =~ s/^(Usage|\s+Or):\s*//mig;
 		return split "\n", $usage;

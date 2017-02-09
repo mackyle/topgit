@@ -461,6 +461,7 @@ The ``tg`` tool has several subcommands:
 	:`tg info`_:	    Show status information about a TopGit branch
 	:`tg log`_:	    Run git log limiting revisions to a TopGit branch
 	:`tg mail`_:	    Shortcut for git send-email with ``tg patch`` output
+	:`tg migrate-bases`_: Transition top-bases to new location
 	:`tg next`_:	    Show branches directly depending on a TopGit branch
 	:`tg patch`_:	    Generate a patch file for a TopGit branch
 	:`tg prev`_:	    Show non-annihilated TopGit dependencies for a branch
@@ -1363,6 +1364,38 @@ tg next
 	  -i		show dependencies based on index instead of branch
 	  -w		show dependencies based on working tree instead of branch
 
+tg migrate-bases
+~~~~~~~~~~~~~~~~
+	Transition top-bases from old location to new location.
+
+	Beginning with TopGit release 0.19.4, TopGit has the ability to store
+	the top-bases refs in either the old ``ref/top-bases/...`` location or
+	the new ``refs/heads/{top-bases}/...`` location.  Starting with TopGit
+	release 0.20.0, the default is the new location.
+
+	By storing the top-bases under heads, Git is less likely to complain
+	when manipulating them, hosting providers are more likely to provide
+	access to them and Git prevents them from pointing at anything other
+	than a commit object.  All in all a win for everyone.
+
+	TopGit attempts to automatically detect whether the new or old location
+	is being used for the top-bases and just do the right thing.  However,
+	by explicitly setting the config value ``topgit.top-bases`` to either
+	``refs`` for the old location or ``heads`` for the new location the
+	auto-detection can be bypassed.  If no top-bases refs are present in
+	the repository the default prior to TopGit release 0.20.0 is to use the
+	old location but starting with TopGit release 0.20.0 the default is to
+	use the new location.
+
+	The ``tg migrate-bases`` command may be used to migrate top-bases refs
+	from the old location to the new location (or, by using the
+	undocumented ``--reverse`` option, vice versa).
+
+	With few exceptions (``tg create -r`` and ``tg revert``), all top-bases
+	refs (both local *and* remote refs) are expected to be stored in the
+	same location (either new or old).  A repository's current location for
+	storing top-bases refs may be shown with the ``tg --top-bases`` command.
+
 TODO: tg rename
 ~~~~~~~~~~~~~~~
 
@@ -1562,7 +1595,8 @@ GLOSSARY
 		all TopGit bases are stored (typically either
 		``refs/top-bases/`` or ``refs/heads/{top-bases}/`` -- the
 		prefix for any given repository can be shown by using the
-		``tg --top-bases`` command).
+		``tg --top-bases`` command and updated using the
+		``tg migrate-bases`` command).
 
 		All of a TopGit branch's dependencies are merged into the
 		corresponding TopGit base during a ``tg update`` of a branch.

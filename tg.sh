@@ -965,6 +965,7 @@ do_help()
 			# strip directory part and "tg-" prefix
 			cmd="${cmd##*/}"
 			cmd="${cmd#tg-}"
+			[ "$cmd" != "migrate-bases" ] || continue
 			[ "$cmd" != "summary" ] || cmd="status|$cmd"
 			cmds="$cmds$sep$cmd"
 			sep="|"
@@ -1649,7 +1650,11 @@ else
 			echol "refs/$topbases";;
 
 		*)
-			[ -r "$TG_INST_CMDDIR"/tg-$cmd ] || {
+			isutil=
+			case "$cmd" in index-merge-one-file)
+				isutil="-"
+			esac
+			[ -r "$TG_INST_CMDDIR"/tg-$isutil$cmd ] || {
 				echo "Unknown subcommand: $cmd" >&2
 				do_help
 				exit 1
@@ -1673,7 +1678,9 @@ else
 			fi
 
 			# everything but rebase needs topbases set
-			[ "$cmd" = "rebase" ] || set_topbases
+			carefully=
+			[ "$cmd" != "migrate-bases" ] || carefully=1
+			[ "$cmd" = "rebase" ] || set_topbases $carefully
 
 			_use_ref_cache=
 			tg_read_only=1
@@ -1686,7 +1693,7 @@ else
 			[ -z "$_use_ref_cache" ] || v_create_ref_cache
 
 			fullcmd="${tgname:-tg} $cmd $*"
-			. "$TG_INST_CMDDIR"/tg-$cmd;;
+			. "$TG_INST_CMDDIR"/tg-$isutil$cmd;;
 	esac
 
 fi
