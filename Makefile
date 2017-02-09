@@ -24,6 +24,7 @@ hooks_in = hooks/pre-commit.sh
 commands_out = $(patsubst %.sh,%,$(commands_in))
 utils_out = $(patsubst %.sh,%,$(utils_in))
 hooks_out = $(patsubst %.sh,%,$(hooks_in))
+PROGRAMS = $(commands_out) $(utils_out)
 help_out = $(patsubst %.sh,%.txt,tg-help.sh tg-status.sh $(commands_in))
 html_out = $(patsubst %.sh,%.html,tg-help.sh tg-status.sh tg-tg.sh $(commands_in))
 
