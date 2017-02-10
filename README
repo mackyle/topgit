@@ -1168,6 +1168,13 @@ tg log
 	Prints the git log of the named topgit branch -- or the current
 	branch, if you don't specify a name.
 
+	This is really just a convenient shortcut for:
+
+	    ``git log --first-parent --no-merges $(tg base <name>)..<name>``
+
+	where ``<name>`` is the name of the TopGit topic branch (or omitted
+	for the current branch).
+
 	NOTE: if you have merged changes from a different repository, this
 	command might not list all interesting commits.
 
