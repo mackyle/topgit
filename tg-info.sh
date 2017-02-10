@@ -1,10 +1,10 @@
 #!/bin/sh
 # TopGit - A different patch queue manager
 # Copyright (C) Petr Baudis <pasky@suse.cz>  2008
-# Copyright (C) Kyle J. McKay <mackyle@gmail.com>  2015
+# Copyright (C) Kyle J. McKay <mackyle@gmail.com>  2015, 2016, 2017
 # GPLv2
 
-USAGE="Usage: ${tgname:-tg} [...] info [--heads] [<name>]"
+USAGE="Usage: ${tgname:-tg} [...] info [--heads | --leaves] [<name>]"
 
 usage()
 {
@@ -19,6 +19,7 @@ usage()
 ## Parse options
 
 heads=
+leaves=
 
 while [ $# -gt 0 ]; do case "$1" in
 	-h|--help)
@@ -26,6 +27,9 @@ while [ $# -gt 0 ]; do case "$1" in
 		;;
 	--heads)
 		heads=1
+		;;
+	--leaves)
+		leaves=1
 		;;
 	-?*)
 		echo "Unknown option: $1" >&2
@@ -35,6 +39,7 @@ while [ $# -gt 0 ]; do case "$1" in
 		break
 		;;
 esac; shift; done
+[ "$heads$leaves" != "11" ] || die "mutually exclusive options --heads and --leaves"
 [ $# -gt 0 ] || set -- HEAD
 [ $# -eq 1 ] || die "name already specified ($1)"
 name="$1"
@@ -59,6 +64,10 @@ if [ -n "$heads" ]; then
 fi
 
 name="$(verify_topgit_branch "${name:-HEAD}")"
+if [ -n "$leaves" ]; then
+	find_leaves "$name"
+	exit 0
+fi
 base_rev="$(git rev-parse --short --verify "refs/$topbases/$name" -- 2>/dev/null)" ||
 	die "not a TopGit-controlled branch"
 

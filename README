@@ -688,6 +688,17 @@ tg info
 	contains the specified commit (which may be any committish -- defaults
 	to ``HEAD`` if not given).  Zero or more results will be output.
 
+	If ``--leaves`` is used then the unique list of leaves of the current
+	or specified topic branch is shown as one fully-qualified ref per line.
+	Duplicates are suppressed and a tag name will be used when appropriate.
+	A "leaf" is any dependency that is either not a TopGit branch or is
+	the base of a non-annihilated TopGit branch with no non-annihilated
+	dependencies.
+
+	A linearized patch series can only be automatically created for a
+	TopGit topic branch (including its recursive dependencies) when exactly
+	one line is output by ``tg info --leaves <topic-branch>``.
+
 tg patch
 ~~~~~~~~
 	Generate a patch from the current or specified topic branch.
@@ -1002,7 +1013,9 @@ tg export
 	``--quilt`` output), use the default ``--collapse`` mode and then use
 	``tg rebase`` (or ``git rebase -m`` directly) on the collapsed branch
 	(with a suitable <upstream>) followed by ``git format-patch`` on the
-	rebased result to produce a conflict-free patch set.
+	rebased result to produce a conflict-free patch set.  A suitable
+	upstream may be determined with the ``tg info --leaves`` command (if
+	it outputs more than one line, linearization will be problematic).
 
 	You have enabled ``git rerere`` haven't you?
 

@@ -661,11 +661,15 @@ is_sha1()
 # recurse_deps_internal NAME [BRANCHPATH...]
 # get recursive list of dependencies with leading 0 if branch exists 1 if missing
 # followed by a 1 if the branch is "tgish" or a 0 if not
+# followed by a 0 for a non-leaf, 1 for a leaf or 2 for annihilated tgish
+# but missing and remotes are always "0"
 # then the branch name followed by its depedency chain (which might be empty)
 # An output line might look like this:
-#   0 1 t/foo/leaf t/foo/int t/stage
+#   0 1 1 t/foo/leaf t/foo/int t/stage
 # If no_remotes is non-empty, exclude remotes
 # If recurse_preorder is non-empty, do a preorder rather than postorder traversal
+# but the leaf info will always be 0 or 2 in that case
+# If with_top_level is non-empty, include the top-level that's normally omitted
 # any branch names in the space-separated recurse_deps_exclude variable
 # are skipped (along with their dependencies)
 recurse_deps_internal()
@@ -673,37 +677,45 @@ recurse_deps_internal()
 	case " $recurse_deps_exclude " in *" $1 "*) return 0; esac
 	_ref_hash=
 	if ! _ref_hash="$(ref_exists_rev "refs/heads/$1")"; then
-		[ -z "$2" ] || echo "1 0 $*"
-		return
+		[ -z "$2" ] || echo "1 0 0 $*"
+		return 0
 	fi
 
 	_is_tgish=0
 	_ref_hash_base=
+	_is_leaf=0
 	! _ref_hash_base="$(ref_exists_rev "refs/$topbases/$1")" || _is_tgish=1
-	[ -z "$recurse_preorder" -o -z "$2" ] || echo "0 $_is_tgish $*"
+	[ "$_is_tgish" = "0" ] || ! branch_annihilated "$1" "$_ref_hash" "$_ref_hash_base" || _is_leaf=2
+	[ -z "$recurse_preorder" -o -z "${2:-$with_top_level}" ] || echo "0 $_is_tgish $_is_leaf $*"
 
 	# If no_remotes is unset also check our base against remote base.
 	# Checking our head against remote head has to be done in the helper.
-	if [ -n "$_is_tgish" -a -z "$no_remotes" ] && has_remote "${topbases#heads/}/$1"; then
-		echo "0 0 refs/remotes/$base_remote/${topbases#heads/}/$1 $*"
+	if [ "$_is_tgish" = "1" ] && [ -z "$no_remotes" ] && has_remote "${topbases#heads/}/$1"; then
+		echo "0 0 0 refs/remotes/$base_remote/${topbases#heads/}/$1 $*"
 	fi
 
 	# if the branch was annihilated, it is considered to have no dependencies
-	if [ -n "$_is_tgish" ] && ! branch_annihilated "$1" "$_ref_hash" "$_ref_hash_base"; then
+	[ "$_is_leaf" = "2" ] || _is_leaf=1
+	if [ "$_is_tgish" = "1" ] && [ "$_is_leaf" = "1" ]; then
 		#TODO: handle nonexisting .topdeps?
-		cat_deps "$1" |
-		while read _dname; do
+		while read _dname && [ -n "$_dname" ]; do
 			# Avoid depedency loops
 			case " $* " in *" $_dname "*)
 				warn "dependency loop detected in branch $_dname"
+				_is_leaf=0
 				continue
 			esac
 			# Shoo shoo, leave our environment alone!
-			(recurse_deps_internal "$_dname" "$@")
-		done
+			_dep_is_leaf=0
+			(recurse_deps_internal "$_dname" "$@") || _dep_is_leaf=$?
+			[ "$_dep_is_leaf" = "2" ] || _is_leaf=0
+		done <<-EOT
+			$(cat_deps "$1")
+		EOT
 	fi
 
-	[ -n "$recurse_preorder" -o -z "$2" ] || echo "0 $_is_tgish $*"
+	[ -n "$recurse_preorder" -o -z "${2:-$with_top_level}" ] || echo "0 $_is_tgish $_is_leaf $*"
+	return ${_is_leaf:-0}
 }
 
 # do_eval CMD
@@ -772,7 +784,8 @@ ensure_ident_available()
 # $_dep for dependency name,
 # $_depchain for space-seperated branch backtrace,
 # $_dep_missing boolean to check whether $_dep is present
-# and the $_dep_is_tgish boolean.
+# and the $_dep_is_tgish and $_dep_annihilated booleans.
+# If recurse_preorder is NOT set then the $_dep_is_leaf boolean is also valid.
 # It can modify $_ret to affect the return value
 # of the whole function.
 # If recurse_deps() hits missing dependencies, it will append
@@ -787,11 +800,11 @@ recurse_deps()
 
 	become_cacheable
 	_depsfile="$(get_temp tg-depsfile)"
-	recurse_deps_internal "$@" >>"$_depsfile"
+	recurse_deps_internal "$@" >>"$_depsfile" || :
 	undo_become_cacheable
 
 	_ret=0
-	while read _ismissing _istgish _dep _name _deppath; do
+	while read _ismissing _istgish _isleaf _dep _name _deppath; do
 		_depchain="$_name${_deppath:+ $_deppath}"
 		_dep_is_tgish=
 		[ "$_istgish" = "0" ] || _dep_is_tgish=1
@@ -802,10 +815,61 @@ recurse_deps()
 				missing_deps="${missing_deps:+$missing_deps }$_dep"
 			esac
 		fi
+		_dep_annihilated=
+		_dep_is_leaf=
+		if [ "$_isleaf" = "1" ]; then
+			_dep_is_leaf=1
+		elif [ "$_isleaf" = "2" ]; then
+			_dep_annihilated=1
+		fi
 		do_eval "$_cmd"
 	done <"$_depsfile"
 	rm -f "$_depsfile"
 	return $_ret
+}
+
+find_leaves_internal()
+{
+	if [ -n "$_dep_is_leaf" ] && [ -z "$_dep_annihilated" ] && [ -z "$_dep_missing" ]; then
+		if [ -n "$_dep_is_tgish" ]; then
+			fulldep="refs/$topbases/$_dep"
+		else
+			fulldep="refs/heads/$_dep"
+		fi
+		case " $seen_leaf_refs " in *" $fulldep "*);;*)
+			seen_leaf_refs="${seen_leaf_refs:+$seen_leaf_refs }$fulldep"
+			if fullrev="$(ref_exists_rev "$fulldep")"; then
+				case " $seen_leaf_revs " in *" $fullrev "*);;*)
+					seen_leaf_revs="${seen_leaf_revs:+$seen_leaf_revs }$fullrev"
+					# See if Git knows it by another name
+					if tagname="$(git describe --exact-match "$fullrev" 2>/dev/null)" && [ -n "$tagname" ]; then
+						echo "refs/tags/$tagname"
+					else
+						echo "$fulldep"
+					fi
+				esac
+			fi
+		esac
+	fi
+}
+
+# find_leaves NAME
+# output (one per line) the unique leaves of NAME
+# a leaf is either
+#   1) a non-tgish dependency
+#   2) the base of a tgish dependency with no non-annihilated dependencies
+# duplicates are suppressed (by commit rev) and remotes are always ignored
+# if a leaf has an exact tag match that will be output
+# note that recurse_deps_exclude IS honored for this operation
+find_leaves()
+{
+	no_remotes=1
+	with_top_level=1
+	recurse_preorder=
+	seen_leaf_refs=
+	seen_leaf_revs=
+	recurse_deps find_leaves_internal "$1"
+	with_top_level=
 }
 
 # branch_needs_update
