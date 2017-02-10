@@ -15,11 +15,28 @@ patch and providing some tools to maintain the branches.
 
 See also:
 
+	:REQUIREMENTS_:	    Installation requirements
 	:USAGE_:	    Command Line details
 	:`NO UNDO`_:	    Where's the undo!!!
 	:CONVENTIONS_:	    Suggestions for organizing your TopGit branches
 	:GLOSSARY_:	    All the TopGit vocabulary in one place
 	:TECHNICAL_:	    How it works behind the scenes
+
+
+REQUIREMENTS
+------------
+
+TopGit is a collection of POSIX shell scripts so a POSIX-compliant shell is
+required along with some standard POSIX-compliant utilities (e.g. sed, awk,
+cat, etc.).  Git version 1.8.5 or later is also required.
+
+The scripts need to be preprocessed and installed and currently the Makefile
+that does this requires GNU make, but that's an install-time-only requirement.
+
+It is possible, however, to use the DESTDIR functionality to install TopGit to
+a staging area on one machine, archive that and then unarchive it on another
+machine to perform an install (provided the build prefix and other options are
+compatible with the final installed location).
 
 
 INSTALLATION
