@@ -1440,6 +1440,7 @@ set_topbases()
 
 	[ -z "$tg_topbases_set" ] || return 0
 
+	topbases_implicit_default=1
 	# See if topgit.top-bases is set to heads or refs
 	tgtb="$(git config "topgit.top-bases" 2>/dev/null)" || :
 	if [ -n "$tgtb" ] && [ "$tgtb" != "heads" ] && [ "$tgtb" != "refs" ]; then
@@ -1462,7 +1463,7 @@ set_topbases()
 			oldbases="heads/{top-bases}";;
 		esac
 		# MUST NOT be exported
-		unset tgtb tg_topbases_set
+		unset tgtb tg_topbases_set topbases_implicit_default
 		tg_topbases_set=1
 		return 0
 	fi
@@ -1518,8 +1519,11 @@ set_topbases()
 			err "set \"topgit.top-bases\" to either \"heads\" to use"
 			err "the new heads/{top-bases} location or \"refs\" to use"
 			err "the old top-bases location."
+			err "(the tg migrate-bases command can also resolve this issue)"
 			die "schizophrenic repository requires topgit.top-bases setting"
 		fi
+	elif [ -n "$topbases" ]; then
+		unset topbases_implicit_default
 	fi
 
 	[ -n "$topbases" ] || {

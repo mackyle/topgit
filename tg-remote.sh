@@ -1,6 +1,8 @@
 #!/bin/sh
 # TopGit - A different patch queue manager
-# (c) Petr Baudis <pasky@suse.cz>  2008
+# (C) Petr Baudis <pasky@suse.cz>  2008
+# (C) Kyle J. McKay <mackyle@gmail.com>  2016,2017
+# All rights reserved.
 # GPLv2
 
 populate= # Set to 1 if we shall seed local branches with this
@@ -27,10 +29,56 @@ done
 
 git config "remote.$name.url" >/dev/null || die "unknown remote '$name'"
 
+fetchdone=
+if [ -n "$topbases_implicit_default" ]; then
+	# set $topbases based on remote bases as the local repository does not have
+	# any bases already present and has not explicitly set topgit.top-bases
+	if [ -n "$populate" ]; then
+		# Do the fetch now but fetch both old and new top-bases
+		fetchdone=1
+		git fetch --prune "$name" \
+			"+refs/top-bases/*:refs/remotes/$name/top-bases/*" \
+			"+refs/heads/*:refs/remotes/$name/*"
+	fi
+	# see if we have any remote bases
+	sawnew=
+	sawold=
+	while read -r rn && [ -n "$rn" ]; do
+		case "$rn" in
+			"refs/remotes/$name/{top-bases}"/?*)
+				sawnew=1;;
+			"refs/remotes/$name/top-bases"/?*)
+				sawold=1;;
+		esac
+		[ "$sawnew$sawold" != "11" ] || break
+	done <<-EOT
+		$(git for-each-ref --format='%(refname)' "refs/remotes/$name/{top-bases}" "refs/remotes/$name/top-bases")
+	EOT
+	if [ "$sawold$sawnew" = "11" ]; then
+		err "remote \"$name\" has top-bases in both locations:"
+		err "  refs/remotes/$name/{top-bases}/..."
+		err "  refs/remotes/$name/top-bases/..."
+		err "set \"topgit.top-bases\" to \"heads\" for the first, preferred location"
+		err "or set \"topgit.top-bases\" to \"refs\" for the second, old location"
+		err "(the \"-c topgit.top-bases=<val>\" option can be used for this)"
+		err "then re-run the tg remote command"
+		err "(the tg migrate-bases command can also help with this problem)"
+		die "schizophrenic remote \"$name\" requires topgit.top-bases setting"
+	fi
+	if [ -n "$sawold$sawnew" ]; then
+		val="heads"
+		[ -z "$sawold" ] || val="refs"
+		GIT_CONFIG_PARAMETERS="${GIT_CONFIG_PARAMETERS:+$GIT_CONFIG_PARAMETERS }'topgit.top-bases=$val'"
+		export GIT_CONFIG_PARAMETERS
+		unset tg_topbases_set
+		set_topbases
+	fi
+fi
 
 ## Configure the remote
 
-git config --replace-all "remote.$name.fetch" "+refs/$topbases/*:refs/remotes/$name/${topbases#heads/}/*" "\\+refs/$topbasesrx/\\*:refs/remotes/$name/${topbasesrx#heads/}/\\*"
+git config --replace-all "remote.$name.fetch" "+refs/$topbases/*:refs/remotes/$name/${topbases#heads/}/*" \
+	"\\+?refs/(top-bases|heads/[{]top-bases[}])/\\*:refs/remotes/$name/(top-bases|[{]top-bases[}])/\\*"
 
 if git config --get-all "remote.$name.push" "\\+refs/top-bases/\\*:refs/top-bases/\\*" >/dev/null && test "xtrue" != "x$(git config --bool --get topgit.dontwarnonoldpushspecs)"; then
 	info "Probably you want to remove the push specs introduced by an old version of topgit:"
@@ -56,7 +104,7 @@ info "Populating local topic branches from remote '$name'..."
 ## lookup would fail and "refs/remotes/$name/$topbases/XX" reverse
 ## lookup as a non-exist "refs/heads/$topbases/XX", and would be
 ## deleted by accident.
-git fetch --prune "$name" \
+[ -n "$fetchdone" ] || git fetch --prune "$name" \
 	"+refs/$topbases/*:refs/remotes/$name/${topbases#heads/}/*" \
 	"+refs/heads/*:refs/remotes/$name/*"
 
@@ -83,5 +131,3 @@ git for-each-ref --format='%(objectname) %(refname)' "refs/remotes/$name/${topba
 
 git config "topgit.remote" "$name"
 info "The remote '$name' is now the default source of topic branches."
-
-# vim:noet
