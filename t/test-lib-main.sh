@@ -903,7 +903,8 @@ do
 		debug=t; shift ;;
 	-i|--i|--im|--imm|--imme|--immed|--immedi|--immedia|--immediat|--immediate)
 		immediate=t; shift ;;
-	-l|--l|--lo|--lon|--long|--long-|--long-t|--long-te|--long-tes|--long-test|--long-tests)
+	-l|--l|--lo|--lon|--long|--long-|--long-t|--long-te|--long-tes|--long-test|--long-tests|\
+	--ex|--exp|--expe|--expen|--expens|--expensi|--expensiv|--expensive)
 		TESTLIB_TEST_LONG=t; export TESTLIB_TEST_LONG; shift ;;
 	-r)
 		shift; test "$#" -ne 0 || {
