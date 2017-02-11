@@ -345,7 +345,12 @@ maybe_setup_verbose() {
 	test -z "$verbose_only" && return
 	if match_pattern_list $test_count $verbose_only
 	then
-		exec 4>&2 3>&1
+		if test "$verbose_log" = "t"
+		then
+			exec 3>>"$TESTLIB_TEST_TEE_OUTPUT_FILE" 4>&3
+		else
+			exec 4>&2 3>&1
+		fi
 		# Emit a delimiting blank line when going from
 		# non-verbose to verbose.  Within verbose mode the
 		# delimiter is printed by test_expect_*.  The choice
@@ -1177,10 +1182,10 @@ test_lib_main_init_funcs
 
 if test -n "$HARNESS_ACTIVE"
 then
-	if test "$verbose" = t || test -n "$verbose_only" && test -z "$TESTLIB_OVERRIDE"
+	if test "$verbose" = t || test -n "$verbose_only" && test -z "$verbose_log$TESTLIB_OVERRIDE"
 	then
 		printf 'Bail out! %s\n' \
-		 'verbose mode forbidden under TAP harness; try --verbose-log'
+		 'verbose mode forbidden under TAP harness; use --verbose-log'
 		exit 1
 	fi
 fi
