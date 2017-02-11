@@ -938,7 +938,7 @@ do
 	--no-chain-lint)
 		TESTLIB_TEST_CHAIN_LINT=0
 		shift ;;
-	-x)
+	-x|--x|--xt|--xtr|--xtra|--xtrac|--xtrace)
 		trace=t
 		verbose=t
 		shift ;;
