@@ -666,11 +666,12 @@ done,*)
 	# Truncate before calling "tee -a" to get rid of the results
 	# from any previous runs.
 	>"$TESTLIB_TEST_TEE_OUTPUT_FILE"
+	>"$BASE.exit"
 
-	(TESTLIB_TEST_TEE_STARTED=done ${SHELL_PATH} "$0" "$@" 2>&1;
-	 echo $? >"$BASE.exit") | tee -a "$TESTLIB_TEST_TEE_OUTPUT_FILE"
-	test "$(cat "$BASE.exit")" = 0
-	exit
+	(ec=0; TESTLIB_TEST_TEE_STARTED=done ${SHELL_PATH} "$0" "$@" 2>&1 || ec=$?
+	 echo $ec >"$BASE.exit") | tee -a "$TESTLIB_TEST_TEE_OUTPUT_FILE"
+	exitcode="$(cat "$BASE.exit" 2>/dev/null)" || :
+	exit ${exitcode:-1}
 	;;
 esac
 
