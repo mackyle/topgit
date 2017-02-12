@@ -591,7 +591,12 @@ test_done() {
 			then
 				say_color pass "# passed all $msg"
 			fi
-			say_tap "1..$test_count$skip_all"
+			test -n "$test_wrote_plan_count" || say_tap "1..$test_count$skip_all"
+		fi
+		if test -n "$test_wrote_plan_count" && test "$test_wrote_plan_count" -ne "$test_count"
+		then
+			say_color error "# plan count of $test_wrote_plan_count does not match run count of $test_count"
+			exit 1
 		fi
 
 		test -d "$remove_trash" &&
@@ -612,12 +617,27 @@ test_done() {
 		if test $test_external_has_tap -eq 0
 		then
 			say_color error "# failed $test_failure among $msg"
-			say_tap "1..$test_count"
+			test -n "$test_wrote_plan_count" || say_tap "1..$test_count"
+		fi
+		if test -n "$test_wrote_plan_count" && test "$test_wrote_plan_count" -ne "$test_count"
+		then
+			say_color error "# plan count of $test_wrote_plan_count does not match run count of $test_count"
 		fi
 
 		exit 1 ;;
 
 	esac
+}
+
+test_plan() {
+	test -n "$1" && test "z$1" = "z${1#*[!0-9]}" || fatal "invalid test_plan argument: $1"
+	test "$1" -eq 0 || test -z "$2" || fatal "invalid test_plan arguments: $*"
+	if test "$1" -eq 0; then
+		skip_all="${2:-skip all tests in $this_test}"
+		test_done
+	fi
+	test $test_external_has_tap -ne 0 || say_tap "1..$1"
+	test_wrote_plan_count="$1"
 }
 
 # Provide an implementation of the 'yes' utility
@@ -1263,6 +1283,7 @@ cd -P "$TRASH_DIRECTORY" || exit 1
 
 this_test=${0##*/}
 this_test=${this_test%%-*}
+test_wrote_plan_count=
 if match_pattern_list "$this_test" $TESTLIB_SKIP_TESTS
 then
 	say_color info >&3 "skipping test $this_test altogether"

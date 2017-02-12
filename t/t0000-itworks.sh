@@ -22,6 +22,8 @@ test_description='Test sanity of test framework
 
 . ./test-lib.sh
 
+test_plan 3
+
 test_expect_success 'it works' ':'
 test_expect_success 'it works on stdin' - <<-'EOT'
 	: && # no more quoting issues but 'tis a bit slower!
