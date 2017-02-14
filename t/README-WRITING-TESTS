@@ -1,0 +1,424 @@
+Writing Tests
+=============
+
+The point of the testing library (available by sourcing the
+test-lib.sh file) is to assist with rapidly writing robust
+tests that produce TAP-compliant output.  (For a quick primer
+on TAP see the README file in the section "TAP - A Quick Overview".)
+
+For a reference guide to the testing library itself see the
+README-TESTLIB file.  For a "how-to" write tests using the testing
+library, keep reading.
+
+
+-----------------
+Test Script Names
+-----------------
+
+Test scripts should be executable POSIX-shell scripts named with an
+initial `t` followed by four (4) digits, a hyphen, more descriptive text
+and a `.sh` suffix.  In other words something like:
+
+    tNNNN-my-test-script.sh
+
+where the "NNNN" part is a four-digit decimal number.
+
+
+--------------------
+Test Script Contents
+--------------------
+
+Each executable test script file should contain (in this order) these
+elements:
+
+  1. A "shebang" line `#!/bin/sh` as the first line
+  2. A non-empty assignment to the `test_description` variable
+  3. A line sourcing the test library with `. ./test-lib.sh`
+  4. An optional call to the `test_plan` function if you're nice
+  5. One or more calls to `test_expect_...`/`test_tolerate_...` functions
+  6. A call to the `test_done` function
+
+Additional shell variable assignments, function definitions and other shell
+code may be interspersed between the "shebang" line and the `test_done` line
+(since `test_done` causes `exit` to be called nothing after it will be run).
+
+Here's an example `t0000-test-true.sh` script:
+
+```sh
+
+#!/bin/sh
+
+test_description='test the true utility'
+
+. ./test-lib.sh
+
+test_plan 2
+
+test_expect_success 'test true utility' '
+	true
+'
+
+test_expect_failure 'test ! true utility' '
+	! true
+'
+
+test_done
+
+```
+
+
+test_plan
+~~~~~~~~~
+
+The `test_plan 2` line causes a `1..2` line to be output to standard output
+telling the TAP processor to expect two test result lines.
+
+The TAP protocol allows this line to be output either _before all_ or
+_after all_ of the test result lines.  Calling `test_plan` causes it to be
+output before, omitting the `test_plan` line causes it to be output after (when
+the `test_done` function is called).
+
+If you are nice and can count you include a `test_plan` call so that the TAP
+harness can output a decent progress display for test scripts with a lot of
+subtests in them.  If you are not so nice (or just plain lazy) you don't.
+
+
+test_expect_success
+~~~~~~~~~~~~~~~~~~~
+
+The example `test_expect_success` call shown above essentially becomes this:
+
+```sh
+
+if eval "true"; then
+	echo "ok 1 - test true utility"
+else
+	echo "not ok 1 - test true utility"
+fi
+
+```
+
+
+test_expect_failure
+~~~~~~~~~~~~~~~~~~~
+
+The example `test_expect_failure` call shown above essentially becomes this:
+
+```sh
+
+if eval "! true"; then
+	echo "ok 2 - test ! true utility # TODO known breakage vanished"
+else
+	echo "not ok 2 - test ! true utility # TODO known breakage"
+fi
+
+```
+
+---------------------
+Non-Zero Result Codes
+---------------------
+
+Sometimes a test "passes" when the command being run returns a non-zero result
+code.
+
+For example, this must produce a non-zero result code to pass:
+
+    git -c my.bad=nada config --bool my.bad
+
+So you could simply write this into the test script:
+
+    ! git -c my.bad=nada config --bool my.bad
+
+The problem with that is that _any_ non-zero result code will cause it to
+succeed even if it dies because of a signal or because the command wasn't found
+or wasn't executable.
+
+The testing library provides three different functions to help with this:
+
+  * `test_must_fail`  
+    Any non-signal exit failure is allowed (but it can be extended with an
+    optional first argument to also permit success and/or `SIGPIPE`).
+  * `test_might_fail`  
+    This is just a shortcut for calling `test_must_fail` with the optional
+    first argument to also allow success.  The end result being that any
+    non-signal error _or_ success is allowed.
+  * `test_expect_code`  
+    The required first argument is the explicit (and only) allowed exit code.
+
+So given those utility functions and knowing that `git` exits with a 128 status
+for the bad boolean, either of these would work:
+
+    test_must_fail git -c my.bad=nada config --bool my.bad
+    test_expect_code 128 git -c my.bad=nada config --bool my.bad
+
+If you want to be picky and require an exact non-zero exit code use the
+`test_expect_code` function.  Otherwise, to just require a non-signal and
+non-zero exit code use the `test_must_fail` function.
+
+An example of when to use the `test_might_fail` option would be when using the
+`git config --unset` command -- it fails if the value being unset is not
+already set.  If you're using it you probably do not care that the value was
+not present just that if it is present it's successfully removed and as long
+as the command does not exit because of a signal like a segment violation it's
+probably fine.
+
+That can be done like so:
+
+    test_might_fail git config --unset might-not.be-set
+
+
+-------------------------------
+Scripts, Functions and Failures
+-------------------------------
+
+This is a perfectly valid test script fragment:
+
+    run_test_one() {
+        # do some testing
+	test_must_fail blah blah blah
+	# do some more testing
+	blah blah blah
+    }
+    
+    test_expect_success 'sample' 'run_test_one'
+
+However, should the test fail, when the failing "script" is output to the log
+the only thing shown will be the single line `run_test_one` which is unlikely
+to be of much help diagnosing the problem.
+
+Instead the above is typically written like so:
+
+    test_expect_success 'sample' '
+        # do some testing
+	test_must_fail blah blah blah
+	# do some more testing
+	blah blah blah
+    '
+
+It's just as readble, just as efficient and should it fail every line in the
+test "script" will appear in the log.
+
+A problem sometimes arises with the quoting.  If the test script itself involves
+some complicated quoting, munging that so that it can be a single-quoted
+argument can be horribly confounding at times.
+
+There are two solutions to the problem.  Either move the noxious quoting issue
+into a separate function and call that from the single-quoted test "script" or
+use the special "-" script.
+
+Anything moved into an external function will not appear in the log of any
+failures (sometimes this is a good thing to keep the log more succinct.  It
+may make sense for "uninteresting" parts of the test "script" to be placed into
+external functions anyway for this reason).
+
+However, when there is a confounding quotation issue but the lines in question
+really do belong in the log of any failures the special "-" script can be used
+to read the script from standard input as a "HERE" document like so:
+
+    test_expect_success 'sample' - <<'SCRIPT'
+        # do some testing
+	test_must_fail blah blah blah
+	# do some more testing
+	blah blah blah
+	# Inside a 'quoted "here doc there are no quoting issues
+    SCRIPT
+
+The single drawback to this approach is that it's less efficient than either of
+the others (a `cat` process must be spawned to read the script) so should be
+reserved for only those unique cases of confounding quotation quandaries.
+
+
+--------------------
+Test Chaining and &&
+--------------------
+
+Consider this test script fragment:
+
+    test_expect_success 'four lines' '
+        one
+        two
+        three
+        four
+    '
+
+What happens if "two" fails but none of the others do?
+
+The answer is "it depends" ;)  In the Git version of the testing framework the
+answer is that the failure of "two" would always be overlooked.
+
+However, both the Git version (and this version) contain a "feature" called
+test chain linting that tries to determine whether or not all of the statements
+in the test were chained together with '&&' to avoid this.
+
+This "feature" is enabled by default and controlled by the
+`TESTLIB_TEST_CHAIN_LINT` variable which may be altered on a per-subtest basis
+or the default changed for an entire test script using the `--chain-lint` or
+`--no-chain-lint` option.
+
+When enabled (the default) it will complain about the above test (with a nasty
+message of "broken &&-chain") and "Bail out!"
+
+Rewriting the script thusly:
+
+    test_expect_success 'four lines' '
+        one &&
+        two &&
+        three &&
+        four
+    '
+
+satisfies the test chain monster and solves the problem where the result of a
+failing "two" could be ignored.
+
+However, the chain linting monster is not terribly smart and this version
+escapes its grasp:
+
+    test_expect_success 'four lines' '{
+        one
+        two
+        three
+        four
+    }'
+
+So while it is indeed helpful in finding these things, it's not foolproof.
+
+Here's where the difference compared with the Git version comes in.  This
+version of the testing library normally "eval"s the "script" in a subshell
+which Git's version does not.  (This can be controlled with the
+`TESTLIB_TEST_NO_SUBSHELL` variable if necessary.)
+
+As a bonus, when the subshell functionality is _not_ disabled (the default)
+the "script" is run in a `set -e` (aka `set -o errexit`) subshell environment.
+
+That's not always foolproof either but it is an improvement and as a result
+this version of the testing library will, indeed, catch a failure of just the
+"two" command in the final example above that uses the `{`...`}` version.
+
+
+-----------------
+More On Subshells
+-----------------
+
+This will not work as expected:
+
+    test_expect_success 'first' '
+        : it works &&
+	itworked=1
+    '
+    
+    test_expect_success 'check' '
+        test "$itworked" = "1"
+    '
+
+While it _will_ succeed in Git's version of the testing library, it will fail
+by default in this one because each test is "eval"'d in a subshell by default.
+
+This also means the `test_when_finished` function normally does not work either
+(although that may eventually be corrected).
+
+To make it so that the first test can affect the environment of the test script
+the `TESTLIB_TEST_NO_SUBSHELL` variable can be set like so:
+
+    TESTLIB_TEST_NO_SUBSHELL=1
+    test_expect_success 'first' '
+        : it works &&
+	itworked=1
+    '
+    unset TESTLIB_TEST_NO_SUBSHELL
+    
+    test_expect_success 'check' '
+        test "$itworked" = "1"
+    '
+
+Strictly speaking it does not need to be unset before the "check" second
+subtest but it doesn't hurt to do so since it is only the first subtest that
+needs to modify the environment of the test script (the "check" subtest just
+reads it but does not modify it).
+
+Setting `TESTLIB_TEST_NO_SUBSHELL` also allows the `test_when_finished`
+function to work (assuming it's used in a context where it would otherwise have
+worked).
+
+Avoid setting the `TESTLIB_TEST_NO_SUBSHELL` if at all possible because
+allowing subtests to affect the environment of the test script itself can
+inadvertently cause subsequent subtests to pass when they shouldn't or
+vice versa in sometimes very subtle and hard to detect ways.
+
+For example, a test script with a hundred subtests in it where one of the early
+subtests leaves behind a variable turd in a variable that one of the later
+subtests assumes is unset.  In a test script with many subtests this
+cross-subtest variable contamination is not really all that uncommon and the
+default of running each subtest in a subshell prevents it from happening in the
+first place.
+
+The test script runs in its very own trash directory.  If you really, really,
+really (but not just "really, really" ;) need to communicate information from
+inside one of the subtest "eval" scripts back out, have it write the
+information into a temporary file in the current directory.
+
+Sometimes just a "flag" is enough so simply creating a file and then testing
+for its existence will do.  The same cross-subtest contamination problem is
+possible with this mechanism as well.  It's best to treat each subtest as a
+black box into which information flows but only a single "ok" or "not ok" comes
+back out.
+
+If all that's needed is to check whether or not the previous subtest succeeded
+then the `LASTOK` prerequisite may be used as described in the next section.
+
+
+-----------------------------
+Chaining Subtests with LASTOK
+-----------------------------
+
+Sometimes while two consecutive subtests are logically separate tests that do
+not belong in a single test, it does not make sense to run the second (or
+several subsequent subtests) if the first one fails.
+
+The special `LASTOK` prerequisite can be used to skip a subtest if the last
+non-skipped subtest in the test script did not succeed.  For the purpose
+of the `LASTOK` prerequisite check, "succeed" means any test result line (even
+if it was ultimately suppressed due to `$test_external_has_tap` not being `0`)
+that begins with "ok".  Any "# SKIP" result lines are totally ignored and do
+not change the state of the `LASTOK` prerequisite.
+
+When a test script starts, the `LASTOK` prerequisite is implicitly true so that
+it will succeed if used on the first subtest in a script file.
+
+Here's an example script to consider:
+
+```sh
+#!/bin/sh
+
+test_description="LASTOK example"
+
+. ./test-lib.sh
+
+test_plan 4 # 'cause we can count
+
+test_expect_success 'works' ':'
+test_expect_success LASTOK 'followup' ':'
+test_expect_success LASTOK 'confirm' 'echo last was ok'
+test_expect_success !LASTOK 'alt' 'echo last was not ok'
+
+test_done
+```
+
+When run, subtests 1-3 are "ok" and subtest 4 is "ok # SKIP".
+
+If the "script" for the first subtest is changed to "! :" instead then
+subtest 1 is "not ok", subtests 2-3 are "ok # SKIP" and subtest 4 is "ok".
+
+Notice how the skipped subtest 2 does not change the value of the `LASTOK`
+prerequisite check in this case so that subtest 3 is also skipped which also
+does not affect the value of `LASTOK` allowing subtest 4 to _not_ be skipped.
+
+If the first subtest is changed to `test_expect_failure` still using the
+altered "! :" script then subtest 1 is "not ok # TODO", subtests 2-3 are
+"ok # SKIP" and subtest 4 is "ok".
+
+The difference between using `test_expect_success` and `test_expect_failure`
+with the altered script "! :" on the first subtest is that using
+`test_expect_success` means the outcome is "1 of 4 failed" versus the
+`test_expect_failure` result of "all 4 passed".
+
+The `LASTOK` literally checks for the "ok" not whether it's a "# TODO" or not.

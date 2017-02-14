@@ -1,0 +1,995 @@
+Testing Library
+===============
+
+The point of the testing library (available by sourcing the
+test-lib.sh file) is to assist with rapidly writing robust
+tests that produce TAP-compliant output.  (For a quick primer
+on TAP see the README file in the section "TAP - A Quick Overview".)
+
+
+----------------------------
+Why Use the Testing Library?
+----------------------------
+
+Because it:
+
+* hopefully helps to allow tests to be written more quickly
+* catches common failures (signal exits, not found etc.)
+* avoids reproducing commonly needed code in every test
+* prevents unwanted "other" lines from ending up in the TAP output
+* allows test results to be aggregated without using "prove"
+* supports easier test debugging
+
+
+---------------
+Getting Started
+---------------
+
+Check out the `README` file for a quick overview of everything in the test
+directory and a brief overview of TAP.
+
+This file, `README-TESTLIB`, serves as a reference of available variables,
+options and functions in the testing library that can be used by test writers
+to create tests.  This file does not, however, provide any "how-to" instruction
+as that's reserved for the `README-WRITING-TESTS` file.
+
+The `README-WRITING-TESTS` file describes how to quickly get started writing
+tests using the testing library and should be perused by anyone who finds the
+simplistic example in the `README` file to be insufficient.  It does not,
+however, serve as a comprehensive reference for the testing library.
+
+
+-------------
+Running Tests
+-------------
+
+Note there is a difference between the way test scripts passed to the various
+test_expect/test_tolerate functions behave compared to Git's testing library.
+In this testing library the scripts passed to those functions are evaluated
+inside a subshell (test_eval_inner_ uses (...) instead of {...}).  This is
+done intentionally so that any errors in the test itself do not abort the
+testing process (and yes, that can happen).  This means that variables set in
+such test scripts DO NOT PERSIST after running the test scripts.  But see the
+TESTLIB_TEST_NO_SUBSHELL variable.
+
+
+---------
+Variables
+---------
+
+- TESTLIB_DIRECTORY
+
+    This directory contains the testing library source code scripts (i.e.
+    `test-lib.sh`, `test-lib-main.sh` and `test-lib-functions.sh`).  This
+    variable is exported.  Should be constant for any given test suite run.
+    If not set, defaults to the real directory of
+    "${TEST_DIRECTORY:-.}/test-lib.sh" (if test-lib.sh is a symblic link
+    somewhere else then that somewhere else directory will be the actual
+    default for TESTLIB_DIRECTORY, NOT the result of dirname).
+
+- EMPTY_DIRECTORY
+
+    This directory will be empty (i.e. no files in it) _AND_ will *NOT* have
+    any write permissions enabled.  Usually this is "$TESTLIB_DIRECTORY/empty".
+
+- TEST_DIRECTORY
+
+    This directory contains the test scripts to be run (e.g. `t1234-foo.sh`)
+    and will often be the same as TESTLIB_DIRECTORY.  It is also exported.
+    Should be constant for any given test suite run.  This directory MUST
+    contain a `test-lib.sh` file even if it's only a symbolic link to the
+    real `test-lib.sh` file (n.b. it _MUST NOT_ be a hard link).
+
+- TEST_OUTPUT_DIRECTORY
+
+    This is the directory containing output from the tests.  It defaults to
+    TEST_DIRECTORY.  Another exported variable.  Should be constant for any
+    given test suite run.
+
+- TRASH_DIRECTORY
+
+    This directory is named after the specific test being run, for example,
+    `trash directory.t0000-foo.sh`.  By default it's located in the
+    TEST_OUTPUT_DIRECTORY but the `--root` option to a test script (options
+    are parsed by the "`. ./test-lib.sh`" line) can change that.  Using the
+    `--root` option to specify a directory on a RAM disk can accelerate
+    testing.  This variable changes for every test and the directory it
+    specifies is automatically created and destroyed (`test-lib.sh` makes
+    that happen).
+
+- TESTLIB_SKIP_TESTS
+
+    This variable can be used to skip whole tests or parts of tests.  It should
+    contain a whitespace-separated list of shell patterns.  If any of the
+    pattern(s) match the test or subtest is skipped.  The patterns are matched
+    against:
+
+       1. the basename of the test with the first `'-'` and everything
+          following stripped off
+
+       2. value from (1) suffixed with `'.'` and the number of the subtest
+          where the first subtest is number 1
+
+    If the test file is `t/t1234-hello-there.sh` then the value used for (1) is
+    "t1234".  For (2) and the second subtest the value is "t1234.2".
+
+    So setting TESTLIB_SKIP_TESTS="t1234 t1235.[235]" will skip test t1234
+    entirely and subtests 2, 3 and 5 of t1235.
+
+- TESTLIB_NO_TOLERATE
+
+    If this is set to any non-empty value then all `test_tolerate_failure`
+    calls are turned into `test_expect_success` calls.
+
+- TESTLIB_TEST_CHAIN_LINT
+
+    This variable defaults to true (any non-empty value).  When true it results
+    in a fatal "Bail out!" error if any test script code (the last argument to
+    the `test_expect_success` function for example) does not have all of its
+    statements connected by `&&`.  This variable may be set to the empty string
+    _BEFORE_ sourcing `test-lib.sh` to disable this.  Alternatively, the
+    checker can be "fooled" by enclosing code in `{ ` ... `;}` or putting it in
+    a separate function that's called.
+
+- TESTLIB_TEST_NO_SUBSHELL
+
+    Normally the various test_expect_.../test_tolerate_... functions eval the
+    test scripts they've been passed inside a subshell so that unexpected
+    failures do not abort the test process.  This precludes, however, making
+    any lasting variable changes in the passed in script.  This is a good
+    thing.  However, if `TESTLIB_TEST_NO_SUBSHELL` is set to a non-empty string
+    then the scripts will NOT be eval'd in a subshell.  Try to avoid using
+    this.  Note that it may be toggled in between
+    test_expect.../test_tolerate_... calls to only enable it for one test for
+    example.
+
+- TEST_NO_CREATE_REPO
+
+    Since the focus of the testing library is on Git or Git-related software
+    all "trash directory...."s are initialized as a non-bare empty Git
+    repository by default.  Setting `TEST_NO_CREATE_REPO` _BEFORE_ sourcing
+    the `test-lib.sh` testing library file will instead result in the "trash"
+    directory for the test just being an empty directory instead.  The
+    function `test_create_repo` can always be used to easily create a
+    repository (or two or more) if desired.
+
+- skip_all
+
+    If set to a non-empty value before calling the `test_done` function and
+    zero tests have been run, then the value will be appended to the output
+    `1..0 # SKIP ` plan line.  If the test matches `$TESTLIB_SKIP_TESTS` when
+    `./test-lib.sh` is sourced, `skip_all` will be set to a suitable value and
+    `test_done` called immediately.
+
+- test_description
+
+    This variable _must_ be set to a non-empty value _before_ sourcing the
+    `test-lib.sh` script.  Other than checking for non-empty, there are no
+    requirements for the value.  It is only used by the `-h`|`--help` options
+    (which are parsed when `test-lib.sh` is sourced).  The only formatting
+    that occurse before it's output is that leading and trailing blank lines
+    are trimmed off.  Recommended format is like a Git check in comment with
+    one summary line and then any optional body separated from the summary
+    line by one blank line if present.  Ideally it should explain enough about
+    the test so that if the test is failing someone other than the test author
+    can debug the problem.
+
+- test_external_has_tap
+
+    The default setting for this variable is `0` and should normally be left
+    set to `0`.  Setting it to any other value causes the output of test plan
+    and test result TAP lines to be suppressed.  It can be useful when one
+    testing library test is using the testing library to run a set of tests
+    thereby preventing the recursive testing library invocation from upsetting
+    the TAP output of the parent.
+
+
+------------
+Test Options
+------------
+
+When `test-lib.sh` is sourced, it parses the options passed to the test.  When
+running tests via the Makefile, setting "TESTLIB_TEST_OPTS" will pass those
+options to _every_ test run by the Makefile.
+
+* --chain-lint | --no-chain-lint
+
+    Set TESTLIB_TEST_CHAIN_LINT to 1 (`--chain-lint`) or 0 (`--no-chain-lint`).
+    See the description of TESTLIB_TEST_CHAIN_LINT above for details.
+
+* --color | --no-color
+
+    Override automatic color detection (color output is normally enabled when
+    output is to a terminal that supports color sequences) and activate
+    (--color) or deactivate (--no-color) color output.  Note that when the
+    environment variable `HARNESS_ACTIVE` is non-empty, color is ALWAYS
+    SUPPRESSED when TAP lines are output and the `#` first character of
+    comment lines also has its color suppressed in that case.
+
+* -d | --debug
+
+    Normally any command preceded by `test_debug` becomes a nop.  (The testing
+    library itself does not use `test_debug` anywhere.)  With `--debug` these
+    lines are activated and actually run instead of being nops.
+
+* -h | --help
+
+    Show the `$test_description` to standard output and `exit 0`.  NO TAP lines
+    of any kind are output when using this option (nor are the
+    $test_description lines prefixed with the `#` comment character).
+
+* -i | --immediate
+
+    When `--immediate` is used, if a test_expect_success... etc. call fails
+    then `exit 1` immediately after showing the `not ok` and quoted (with
+    leading `#` characters) test script.
+
+* -l | --long | --long-tests | --expensive
+
+    Set and export `TESTLIB_TEST_LONG=t`.  The `EXPENSIVE` prereq checks for
+    this and only succeeds when `TESTLIB_TEST_LONG` is non-empty.
+
+* -q | --quiet
+
+    Suppresses some output lines such as "ok" (only when NOT running under a
+    harness) and various output from test_external... functions.  Mainly
+    useful to produce more compact output when NOT running under a TAP harness.
+
+* --root=<path>
+
+    Causes the "trash directories" to be created as subdirectories of `<path>`
+    instead of as subdirectories of `$TEST_OUTPUT_DIRECTORY`.  Specifying a
+    RAM disk location as `<path>` can significantly speed up testing.
+
+* --run=<run-list> | -r <run-list>
+
+    The <run-list> must contain comma or whitespace separated "selectors".  But
+    note that when using "TESTLIB_TEST_OPTS" only comma separated will work.
+
+    A selector must match either !?\d+ or !?\d*-\d* which is to say it's either
+    <num> or <num>- or -<num> or <num>-<num> optionally prefixed with `!`.  The
+    "<num>-" form is a shortcut for <num>-infinity and the "-<num>" form is a
+    shortcut for "1-<num>".
+
+    If the first (or only) selector is prefixed with `!` then it's an exclusion
+    list otherwise it's an inclusion list.
+
+    The "selectors" are processed in left to right order and if the number of
+    the subtest matches the range it will be run if the selector was NOT
+    prefixed with `!` otherwise it will be excluded.
+
+    An "inclusion" list includes and runs ONLY those subtests that are
+    specifically matched by a selector NOT prefixed with `!`.  (Note that
+    a subsequent selector can again exclude a previously included match and
+    vice versa).
+
+    An "exclusion" list runs everything except tests that are specifically
+    excluded by a match.  In other words an "exclusion" list is just a shortcut
+    to avoid adding a "1-" selector to the front of <run-list>.
+
+    For example, "1-4,!3" will run only subtests 1, 2 and 4 but so will
+    "1,2,4".  On the other hand, "!3,1-4" will run ALL subtests except 3
+    (because it's equivalent to "1-,!3,1-4") as will just "!3".
+
+* --tee
+
+    All standard output and standard error from running the test is copied to
+    $TEST_OUTPUT_DIRECTORY/test-results/$(basename $0 .sh).out and as a side
+    effect standard error is redirected to standard out.  The final exit code
+    is written to $TEST_OUTPUT_DIRECTORY/test-results/$(basename $0 .sh).exit
+    as well.
+
+    This is accomplished by running another copy of the test script and
+    redirecting both its standard output and standard error through the `tee`
+    utility and when that copy exits, so too will the "tee" process and it will
+    then use the same exit code as its exit code (unless something went wrong
+    and no exit code was recorded in which case it exits with a result of 1).
+
+    The environment variable TESTLIB_TEST_TEE_OUTPUT_FILE is set (and exported)
+    to the name of the file the output is being "tee"'d into.
+
+* -v | --verbose
+
+    When `--verbose` is used the `test_pause` function will actually pause
+    a test by entering a subshell and `test_external_without_stderr` will show
+    both stdout and stderr output on failure.  Test scripts passed to the
+    test_expect_success... functions are run with standard output and standard
+    error left unchanged (normally it's sent to /dev/null).
+    
+    Automatically enabled by `-x`.
+
+    Note that `--verbose` is not allowed when $HARNESS_ACTIVE.
+
+* --verbose-log
+
+    Enables the `--tee` option and arranges for the standard output and
+    standard error that are enabled by `--verbose` to end up in the same log
+    file that `--tee` creates while not disrupting the output going to the
+    test harness.
+
+    This setting supersedes `--verbose` in that if both are given the output
+    ends up in the log but not on normal standard output or standard error.
+
+    Also if `--verbose-only=...` is used together with this option then only
+    the subtests selected by the `--verbose-only` option value will have their
+    output captured into the log -- the other subtests will have it sent to
+    /dev/null.
+
+    Note that `--verbose-log` *IS* compatible with $HARNESS_ACTIVE.
+
+* --verbose-only=<pattern-list>
+
+    The current subtest number (sub tests are numbered starting at 1) is
+    matched against each pattern in the the whitespace-separated
+    filename-wildcard-pattern list <pattern-list> and if there's a match then
+    `--verbose` is active for that subtest and if there is *NOT* a match then
+    `--verbose` is NOT active for that subtest.
+    
+    For example, `--verbose-only="[1-3] 5"` will enable verbose for
+    subtests 1, 2, 3 and 5 and will DISABLE verbose mode for subtests
+    4,6,7,8,9,10,11,12,13,14,15 etc.  The fancy <run-list> processing of the
+    `--run` option's argument is *NOT* available here.
+
+    Using this option with a non-empty <pattern-list> value completely
+    supersedes any explicit `--verbose` option (before or after).
+    (Using it with an empty value just silently has no effect.)
+
+    Note that `--verbose-only=...` is not allowed when $HARNESS_ACTIVE unless
+    `--verbose-log` is also used.
+
+* -x | --xtrace
+
+    Set the `--verbose` option and temporarily enable the shell's `set -x`
+    option while evaluating the scripts passed to test_expect_success....
+
+    Note, however, that tracing will be suppressed unless verbose is also
+    enabled.  Normally that will always be the case since `-x` also enables
+    `--verbose`.  However, if `--verbose-only` is used then verbose will be
+    toggled on a per-subtest basis and as a result the `-x` option will only
+    be in effect for subtests selected by the `--verbose-only=...` option.
+
+    Note that since this option sets `--verbose` it's not normally allowed
+    when $HARNESS_ACTIVE but setting `--verbose-log` will allow it and send the
+    output to the log file.
+
+
+------------------
+TAP Test Functions
+------------------
+
+These are functions that are intended to ultimately emit either a TAP test plan
+line or a TAP test (aka "subtest") result line.
+
+These functions are intended to be called from the main body of a test script
+(e.g. t-????-*.sh) after having sourced the `./test-lib.sh` script.
+
+
+Test Plan Functions
+~~~~~~~~~~~~~~~~~~~
+
+The purpose of these functions is to output the single, required, TAP test
+plan line.  Additionally the `test_done` function performs some extra work.
+
+- test_done
+
+    Outputs a TAP test plan line.
+
+    MUST be called AFTER any test result functions.  (TAP supports outputting
+    a test plan line either _before all_ test result lines or _after all_
+    test result lines.)
+
+    It may be tempting to output the plan line without using this function.
+    Don't do that.  Failure to use this function will result in test cleanup
+    functions failing to run and the test results aggregation provided by the
+    testing library breaking.
+
+    If `$test_external_has_tap` is set to something other than `0` (the
+    default) then no test plan line will be output but normal test cleanup will
+    take place.
+
+    If `$skip_all` is set to a non-empty value AND 0 tests were run then the
+    `$skip_all` message will be appended to a `1..0 # SKIP ' line (which is,
+    again, suppressed if `$test_external_has_tap` is not `0`).
+
+    The `test_done` function then calls either `exit 0` if there were no
+    unexpected failures or `exit 1` if there were.  Just before calling
+    `exit 0` (but _not_ `exit 1`) the `test_at_end_hook_` function is called
+    which, by default, always succeeds and does nothing but can be re-defined
+    by a test script if such a hook is needed.
+
+    Note that if the test name appears in `$TESTLIB_SKIP_TESTS` (see the
+    description above) then `$skip_all` is automatically set to a suitable
+    value and `test_done` is called immediately when `./test-lib.sh` is
+    sourced.
+
+- test_plan
+
+    This function allows a test plan line to be output first.  If `$skip_all`
+    is set it just passes through to `test_done`.  Otherwise it outputs the
+    test plan line using the first argument as the total test count and then
+    sets `test_wrote_plan_count=$1` so that the required subsequent call to
+    `test_done` does not write a second test plan line.  (But if the value of
+    `$test_external_has_tap`is not 0 it will not output the test plan line.)
+
+    If the argument is 0, then `skip_all` will be set to the second argument
+    (or a suitable default if there is no second argument) and `test_done` will
+    be called immediately.
+
+    Using `test_plan` is inconvenient in that the number of subtests in the
+    file must be known in advance.  Sometimes that's not possible if the number
+    of tests to be run varies depending on test conditions.  Other times it's
+    just damn inconvenient to have to count all those subtests.  ;)
+
+    However, outputting the test plan line in advance makes those fancy test
+    harnesses (like `prove`) show a "1/n" progress rather than "1/?" which is
+    nice to have and that is the reason the `test_plan` function is provided.
+
+    Also if a different number of tests are run than are planned the overall
+    test will fail with an error.
+
+    The `test_done` function MUST STILL BE CALLED at the end of the test script
+    even when `test_plan` is used at the beginning otherwise test aggregation
+    and test cleanup will fail to take place!
+
+    Note that if it's not already clear from the description, use of the
+    `test_plan` function is completely optional, but use of `test_done` is not.
+
+
+Test Result Functions
+~~~~~~~~~~~~~~~~~~~~~
+
+The purpose of these functions is to output one `ok` or `not ok` TAP test
+result line each time they're called.
+
+All of these functions take an optional first argument which is a whitespace
+and/or comma separated list of prerequisites that must be present or the
+test will be skipped.  This is shown as `[<prereqs>]`.  Each prereq in the
+list may be optionally prefixed with a single `!` to require the item *not*
+be present.
+
+All of these functions expect the next argument to be a brief test description
+that will be used in the `ok` or `not ok` output line.  This is shown as
+`<desc>`.
+
+The "external" functions expect two additional arguments which are the
+"external" command to be run and its single argument (use `eval` and a suitable
+string to work around this requirement for exactly two arguments).  These are
+shown as `<cmd>` `<arg>`.
+
+The non-"external" functions expect one additional argument which is the
+test script to be "eval"'d.  However, if the test script argument is `-` then
+the test script will be read from standard input (allowing use of a HERE doc to
+simplify quoting issues), but this is slightly inefficient so avoid using it
+unless it's really needed.  This is shown as `<script>`.  Note that scripts are
+normally "eval"'d inside a subshell to avoid side-effects and uncaught
+failures, but this can be altered with the `TESTLIB_TEST_NO_SUBSHELL` variable
+(see description above).
+
+Test scripts are "eval"'d as the last line of a function so they may exit early
+by using a `return` statement or, if `$TESTLIB_TEST_NO_SUBSHELL` is _NOT_ set
+(which is the default), by using an `exit` statement.
+
+- test_expect_success [<prereqs>] <desc> <script>
+
+    If <prereqs> are present and unsatisfied an "ok # skip" line is output and
+    the <script> is _not_ "eval"'d.  Otherwise, the <script> is "eval"'d and if
+    it succeeds (exit code is 0) then this subtest succeeds and outputs an "ok"
+    line otherwise it outputs a "not ok" line.
+
+- test_expect_failure [<prereqs>] <desc> <script>
+
+    If <prereqs> are present and unsatisfied an "ok # skip" line is output and
+    the <script> is _not_ "eval"'d.  Otherwise, the <script> is "eval"'d and if
+    fails (exit code is _not_ 0) then this subtest outputs a "not ok # todo"
+    line.  If the script succeeds a "ok # todo" line is output which will
+    ultimately produce some warnings and/or complaints about a "known breakage"
+    vanishing or "todo passing".  See the `test_tolerate_failure` function to
+    avoid this.
+
+- test_tolerate_failure [<prereqs>] <desc> <script>
+
+    If <prereqs> are present and unsatisfied an "ok # skip" line is output and
+    the <script> is _not_ "eval"'d.  Otherwise, the <script> is "eval"'d and if
+    fails (exit code is _not_ 0) then this subtest outputs a "not ok # todo"
+    line.  If the script succeeds a plain "ok" line is output (which avoids
+    any complaints about "vanishing" breakages).  However, if the variable
+    `TESTLIB_NO_TOLERATE` is non-empty all `test_tolerate_failure` calls are
+    turned into `test_expect_success` calls instead (meaning a failure causes
+    a regular `not ok` to be output instead of a `not ok # todo`).
+
+    This function is useful for testing things that probably don't work the
+    way they should but are reluctantly tolerated and if they do start working
+    better no fuss should be made about the test suddendly passing.
+
+    It's a nice way to document those "yes, we still have this ugly thing here
+    that we wish we didn't" behaviors.  It can also be used to distinguish
+    "tier 1" supported platforms (those which pass all tests even when
+    `TESTLIB_NO_TOLERATE=1` is set) and "tier 2" supported platforms (those
+    that pass all tests as long as `TESTLIB_NO_TOLERATE` is _not_ set).  (Tier
+    3 would be those platforms that always fail at least one test.)
+
+- test_external [<prereqs>] <desc> <cmd> <arg>
+
+    Behaves just like `test_expect_success` with a script of "<cmd> <arg>"
+    (assuming <cmd> and <arg> are first suitably quoted) except that stdout is
+    always left on stdout even without `--verbose`.
+
+    Use "eval" for <cmd> and pass a script as <arg> to use as a substitute
+    `test_expect_success` that does not redirect stdout or to escape the
+    two argument restriction.
+
+- test_external_without_stderr [<prereqs>] <desc> <cmd> <arg>
+
+    *IMPORTANT*: This function outputs _two_ test result lines!
+
+    If using the `test_plan` function then each `test_external_without_stderr`
+    function call counts as *TWO* planned tests!
+
+    It works just like `test_external` (in fact, it calls test_external first)
+    and then it performs a second subtest to see if _anything_ was output to
+    stderr by "<cmd> <arg>" in which case the second subtest fails otherwise
+    it succeeds.  If the `test_external` first subtest ends up being skipped
+    then nothing will be output to stderr and the second subtest will always
+    succeed (it will not be skipped).  In other words, the second subtest
+    result line is always a plain "ok" or "not ok" and never has any "# skip"
+    or "# todo" added to it even when the first subtest result line does.
+
+    Note that the special prerequiste `LASTOK` behaves as expected here --
+    that is if the first `test_external` call is skipped then its state
+    _does NOT change_ regardless of the outcome of the second "stderr"
+    subtest check.  In addition, if the the `test_external` test is _not_
+    skipped then the `LASTOK` prerequisite is guarantted to only be true
+    provided _both_ the `test_external` call suceeds _and_ no "stderr" output
+    is generated.  In other words, it just does the right thing here so don't
+    worry about it and go ahead and use it.
+
+
+Standard Test Prerequisites
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The test result functions all take an optional first argument which is a comma
+and/or whitespace separated list of positive or negative (prefixed with `!`)
+prerequisites for the test to be run.  *All* off the listed prerequisites for
+each test _must_ be satisfied or it will be skipped.
+
+Additional prerequisites may be set using the `test_set_prereq` function but
+there are a number of pre-defined prerequisites that may be tested:
+
+- `AUTOIDENT`
+
+    The `git var GIT_AUTHOR_IDENT` command succeeds when both `GIT_AUTHOR_NAME`
+    and `GIT_AUTHOR_EMAIL` are unset.
+
+- `BSLASHPSPEC`
+
+    The backslash character (`\`) is allowed in path/file names.  Normally
+    defined _except_ for `MINGW` and `CYGWIN`.
+
+- `CASE_INSENSITIVE_FS`
+
+    File names are case-insensitive (i.e. "foo" and "Foo" refer to the same
+    file).
+
+- `CMDLINE_LIMIT`
+
+    Whether or not the `run_with_limited_cmdline` function appears to work
+    (it does `ulimit -s 128` in a subshell and runs the command assuming that
+    will limit the size of the command line argument list).
+
+- `COLUMNS_CAN_BE_1`
+
+    Set when the shell's `$COLUMNS` variable can be successfully set to 1.
+
+- `CYGWIN`
+
+    The CygWin environment is active.
+
+- `EXECKEEPSPID`
+
+    The process ID before and immediately after an `exec` call stays the
+    same.  Normally defined for all but `MINGW`.
+
+- `EXPENSIVE`
+
+    The `TESTLIB_TEST_LONG` variable is non-empty (see the `--long-tests` aka
+    `--expensive` test option).
+
+- `FILEMODE`
+
+    True if Git thinks the executable bit is supported properly (i.e.
+    Git's `core.filemode` is set to true after `git init`).
+
+- `GREP_STRIPS_CR`
+
+    The grep command strips off CR.  Normally only defined for `MINGW` and
+    `CYGWIN`.
+
+- `LASTOK`
+
+    This is a special prerequisite that always succeeds for the first subtest
+    in a test script and for every subtest thereafter for which the most
+    immediately preceeding non-skipped test was "ok" (regardless of the
+    presence any "# TODO").
+
+    In other words, this can be used to skip a subtest if the preceeding
+    subtest did not succeed.  Since "skipped" tests do not change the state
+    of this prerequisite a single failure can cause a long chain of following
+    subtests that use this prerequisite to be skipped.
+
+- `MINGW`
+
+    The MinGW environment is active.
+
+- `NATIVE_CRLF`
+
+    The native environment uses CR+LF line endings (normally only defined
+    for `MINGW`).
+
+- `NOT_ROOT`
+
+    The `uid -u` command succeeded and returned a non-0 value.
+
+- `UTF8_NFD_TO_NFC`
+
+    The file system automatically converts NFD unicode to NFC unicode.
+
+- `PIPE`
+
+    The `mkfifo` command is supported and works.
+
+- `POSIXPERM`
+
+    Sane, POSIX-style permissions.  *Not* normally defined for `MINGW`.
+
+- `SANITY`
+
+    File permission bits are honored (i.e. after doing `chmod a-r file` then
+    a subsequent `cat file` will fail).  When running as root these "sanity"
+    tests often fail.
+
+- `SED_STRIPS_CR`
+
+    The sed command strips off CR.  Normally only defined for `MINGW` and
+    `CYGWIN`.
+
+- `SYMLINKS`
+
+    Symbolic links created using `ln -s` work.
+
+- `USR_BIN_TIME`
+
+    The result of `test -x /usr/bin/time` is true.
+
+
+-----------------
+Utility Functions
+-----------------
+
+These are convenience functions and while most of them are provided to be
+called from the body of a script passed to one of the test_expect_...
+functions, several of them can also be used from the main body of a test
+script (`say`, `say_color`, `test_debug` and `test_pause` being prime examples
+of such).
+
+These functions are intended to be called only _after_ the `./test-lib.sh`
+script has been sourced.
+
+- die
+
+    Can be used to exit a test script on an unexpected error, should be used
+    after a `||` to preserve the exit code as in:
+
+        perform_some_function perhaps with arguments || die
+
+- error <msg> <goes> <here>
+
+    Cause an instant test `Bail out!` error (including <msg> <goes> <here>).
+
+    The original Git version of this function just did an exit after showing
+    the error without using `Bail out!`, but these errors are terminal and the
+    entire test suite should be stopped if one occurs and that is what will now
+    happen when this function is called.
+
+- list_contains <commalist> <pattern>
+
+    Returns true if comma separated list <commalist> contains any item that
+    matches the filename matching wildcard <pattern>.
+
+    A shortcut for those uncomfortable with the `case` statement.
+
+- sane_unset <varname>...
+
+    An alias for `unset <varname>... || :` to workaround non-conforming shells
+    that return a non-zero status if any of the variables were not already set.
+
+- say <msg> <goes> <here>
+
+    A convenient shortcut for `say_color info <msg> <goes> <here>`
+
+- say_tap <msg> <goes> <here>
+
+    A convenient shortcut for `say_color_tap info <msg> <goes> <here>`
+
+- say_color <color> <msg> <goes> <here>
+
+    Possible <color> values are:
+
+      * "" (the empty string)  
+        plain text with no color, suppressed when `--quiet` in effect
+      * `error`  
+        used for testing failures, typically shown in red
+      * `skip`  
+        used for test skip messages, typically shown in a light color
+      * `warn`  
+        warnings are shown in this, typically yellow (or brown)
+      * `pass`  
+        used when a complete test script passes, usually green
+      * `info`  
+        info messages and non-harness TAP messages, usually a light color
+      * `reset`  
+        turns off color, used internally, should not be used by callers
+
+    Using anything else for <color> ends up outputting plain text followed by
+    the color reset code.
+
+    If `--quiet` is in effect, anything output using `""` (the empty string)
+    as the color name will be supressed entirely.
+
+    If `--no-color` is in effect (perhaps implicitly) the color code sequences
+    are omitted from the output.
+
+    If `$HARNESS_ACTIVE` and the first character of <msg> is `#` then that
+    single character is always output _without_ any preceding color codes (the
+    first character to be in color will be the following one unless, of course,
+    the color name is `""` or `--no-color` is in effect).
+
+- say_color_tap <color> <msg> <goes> <here>
+
+    When `$HARNESS_ACTIVE` this always outputs "<msg> <goes> <here>" _without_
+    any color sequences regardless of the presence of the `--quiet` option.
+
+    If there is no `$HARNESS_ACTIVE` then this call is identical to `say_color`
+    with the exact same arguments.
+
+- test_at_end_hook_
+
+    This function is called by `test_done` if there are no unexpected failures.
+    By default it's defined to be just `:` but should be re-defined be each
+    test script file as needed.  Note that it _will_ be called when the entire
+    test script is skipped with a `1..0` plan line.
+
+- test_cmp <arg>...
+
+    Shortcut for:
+
+        $TESTLIB_TEST_CMP <arg>...
+
+    Useful because `diff -u` will be used where supported instead of `cmp`.
+
+- test_cmp_bin <arg>...
+
+    Shortcut for:
+
+        cmp <arg>...
+
+    There's no real compelling reason to use this other than to look nice
+    next to `test_cmp`.
+
+- test_cmp_rev <expect-rev> <actual-rev>
+
+    Save output of `git rev-parse --verify` on each argument to a file and
+    then run `test_cmp expect.rev actual.rev` on the resulting two files.
+
+- test_commit [--notick] [--signoff] <message> [<file> [<contents> [<tag>]]]
+
+    Create a new Git commit with "<message>" as the commit message optionally
+    having a signed-off-by line (`--signoff`) using the next tick time by
+    calling `test_tick` (unless `--notick` is used).
+    
+    <file> defaults to "<message>.t", <contents> and <tag> default to
+    "<message>".
+
+    The "<contents>" will be written (using `echo`) to <file> which is then
+    added and committed using <message> and then tagged using <message>.
+
+- test_copy_bytes <count>
+
+    This is a shortcut for a call to the `dd` utility (unlike the Git version
+    which uses perl) to transfer <count> bytes (or up to EOF) from stdin to
+    stdout.
+
+- test_create_repo <path>
+
+    Shortcut for:
+
+        (mkdir -p "<path>" && cd "<path>" && git init)
+
+    Except that an empty template directory is used and if that doesn't succeed
+    in suppressing creation of a hooks directory the hooks directory will be
+    renamed to `hooks-disabled`.
+
+    Note that since Git will happily reinitialize an existing Git repository
+    this command can succeed on a pre-existing repository without altering its
+    contents.
+
+- test_debug [<cmd> [<arg>...]]
+
+    This function does nothing (it's a fancy comment) _unless_ `--debug` is
+    used in which case <cmd> [<arg>...] is executed with standard output and
+    standard error redirected to the original standard error of the test
+    script (in other words, you don't need to add `--verbose` to see the
+    output when `--debug` is active).
+
+    Note that this is different than the original Git version that only takes
+    a single argument and "eval"s it (while not guaranteeing anything about
+    where the output goes).  To get the Git "eval" equivalent, use `eval` as
+    the first <arg> and the string to be "eval"'d as the second.
+
+- test_dir_is_empty <dirpath>
+
+    Fail verbosely (with directory contents) unless <dirpath> is an existing
+    and empty (only `.` and `..` entries) directory.
+
+- test_env [VAR=VAL]... <cmd> <arg>...
+
+    In a subshell set and export each `VAR=VAL` and then run `<cmd> <arg>...`.
+
+    Obviously, since it's a subshell no variable changes will persist, but this
+    makes it easy to temporarily change a variable while running some shell
+    function.
+
+- test_expect_code <status> <cmd> [<arg>...]
+
+    Runs `<cmd> <arg>...` and fails verbosely unless the resulting status code
+    is <status>.
+
+- test_have_prereq <PREREQ>...
+
+    Test a list of zero or more whitespace and/or comma separated prereqs
+    (the same as can be given to any of the test result functions).  As with
+    the test result functions, prefixing a prerequisite with a single `!`
+    requires that it _not_ be present.  Result code is 0 if the requirements
+    are satisfied, non-zero if not.
+
+- test_line_count <op> <val> <file>
+
+    Verbosely fails if `test $(( $(wc -l < "<file>") )) "<op>" "<val>"` fails.
+
+- test_match_signal <signum> <exitcode>
+
+    Returns true if <exitcode> represents and exit from signal <signum> (which
+    must be numeric).  This function only exists to accomodate `ksh` which
+    uses 256+<signum> instead of the POSIX 128+<signum> for signal exit codes.
+
+- test_merge <message> <commit>
+
+    Shortcut for:
+    
+        test_tick && git merge -m "<message>" <commit> && git tag "<message>"
+
+- test_might_fail <cmd> [<arg>...]
+
+    Just a shortcut for `test_must_fail ok=success <cmd> <arg>...`.
+
+    This is useful when it's okay for <cmd> to succeed or for it to fail
+    provided the failure is a "normal" (i.e. non-signal) failure.
+
+- test_must_be_empty <file>
+
+    Verbosely complain (and fail) showing <file>'s contents if it's not empty
+    (i.e. -s <file> succeeds).
+
+- test_must_fail [ok=<commalist>] <cmd> [<arg>...]
+
+    Runs `<cmd> <arg>...` and verbosely converts all result codes into either
+    0 or 1 where "normal" failures become 0 and others become 1.
+
+    This function should be used when a failure is required but only if the
+    failure is *not* the result of a signal, command not found or command not
+    executable error.
+
+    If <commalist> contains "success" then a result code of 0 is _not_
+    converted to 1 (it stays 0).  If <commalist> contains "sigpipe" then an
+    exit due to `SIGPIPE` is converted to status 0 (otherwise it becomes 1).
+
+- test_path_is_dir <path> [<msg>]
+
+    Fail verbosely (including <msg> if given) if `test -d <path>` fails.
+
+- test_path_is_file <path> [<msg>]
+
+    Fail verbosely (including <msg> if given) if `test -f <path>` fails.
+
+- test_path_is_missing <path> [<msg>...]
+
+    Fail verbosely (including <msg>... if given) if `test -e <path>` _succeeds_.
+
+- test_pause
+
+    Spawn an interactive `$SHELL` to pause testing until it exits -- causes an
+    error if used without `--verbose`.  Should be used for debugging only.
+
+- test_seq [<start>] <end>
+
+    <start> defaults to 1.
+
+    Output each of the numbers from <start> to <end> inclusive (incrementing by
+    1) each followed by a newline to stdout.  If <end> is less than <start>
+    nothing is output.
+
+- test_set_editor <path-to-editor>
+
+    Set and export the `EDITOR` environment variable but using tricks so that
+    <path-to-editor> is allowed to contain any value (including spaces, quotes,
+    etc.) without needing any special quoting.
+
+- test_set_prereq <PREREQ>
+
+    Indicate that the test prerequisite <PREREQ> is available (should be a
+    single word in ALL CAPS).  It may then be used as a prereq for any of the
+    test result functions or be explicitly tested with `test_have_prereq`.
+
+- test_skip_or_die <mode> <msg>
+
+    Don't use this function, it's confusing, use either `test_plan 0` or
+    `error` directly.
+
+    If <mode> is `auto` it's the same as `test_plan 0 <msg>`.
+
+    If <mode> is `true` it's the same as `error <msg>`.
+
+    If <mode> is anything else it's a more verbose call to `error`.
+
+- test_tick
+
+    Set and export `GIT_COMMITTER_DATE` and `GIT_AUTHOR_DATE` to the same
+    value (initially 1112911993 -- the time of the first Git commit) increasing
+    it by exactly 60 seconds each time `test_tick` is called.
+
+- test_tristate <varname>
+
+    Examines contents of `$<varname>` and sets `$<varname>` to one of `false`
+    `true` or `auto`.  An unset variable becomes `auto` and an empty string
+    variable becomes `false` otherwise there should be no surprises except
+    that anything that is not a Git boolean or `auto` is treated as `true`.
+
+    The original version from the Git test library uses Git itself to do this
+    conversion, but this implementation is strictly shell built-ins.
+
+- test_when_finished <arg>...
+
+    This function only works inside a test script!
+
+    Causes "<arg>..." to be "eval"'d when the current test script (the
+    <script> arg to a test result function) exits.  May be used more than
+    once to schedule multiple items.
+
+    Currently only works when `TESTLIB_TEST_NO_SUBSHELL` is set.
+
+- test_write_lines <arg>...
+
+    A lazy shortcut for:
+
+        printf '%s\n' <arg>...
+
+    Although since it's more characters to type perhaps it's not so lazy. ;)
+
+- verbose <cmd> [<arg>...]
+
+    Run `<cmd> <arg>...` and verbosely complain (showing command and args) if
+    it fails, but the exit status on failure will be converted to 1.
+
+- write_script <file> [<shell-path>] < <script-text>
+
+    Write a shebang line using <shell-path> (default is `$SHELL_PATH`) to
+    <file> and then append <script-text> to it and then finally add execute
+    permission to the resulting <file>.
+
+- yes [<expletive>]
+
+    If <expletive> is omitted, `y` is used.
+
+    Outputs "<expletive>" (and a trailing newline) 99 times.
+
+    This is basically the same as the POSIX `yes` utility except that output
+    is limited to 99 lines and it's implemented entirely as shell code.

@@ -1,0 +1,110 @@
+Test Files
+==========
+
+All tests are shell scripts and must be named to
+match:
+
+    t[0-9][0-9][0-9][0-9]-*.sh
+
+They must output TAP (Test Anything Protocol) compliant
+format.  In particular, only version 12 format is supported,
+NOT version 13.  See `perldoc Test::Harness::TAP` for extensive
+details on the format.  A more formal grammar can be found
+in `perldoc TAP::Parser::Grammar` if desired.  See also
+`perldoc TAP::Parser` and <http://testanything.org> as well for
+copies of the specification.
+
+All tests are run with the current directory set to the same
+directory as the directory containing the test file itself.
+
+
+------------
+Test Library
+------------
+
+A testing library is available to facilitate writing tests.
+
+It should be sourced by test scripts wanting to use it AFTER
+setting the "test_description" variable and then calling the
+provided functions to produce TAP output like so:
+
+    test_description='title of test goes here
+    
+    And any more lines go here much like a standard Git
+    checkin comment although there's no requirement that
+    the description follow any partiuclar layout.  It's
+    only used by the -h|--help functionality.
+    '
+    
+    . ./test-lib.sh
+    
+    test_expect_success 'small test' '
+    	# do some testing
+    	...
+    '
+    
+    ...
+    
+    test_done
+
+For more detailed information on how to use the test-lib.sh
+testing library see the README-TESTLIB and README-WRITING-TESTS
+files.
+
+
+----------------------
+TAP - A Quick Overview
+----------------------
+
+Only output to STDOUT is examined and
+must consist of one of four kinds of lines:
+
+  1) A test plan line matching either:
+     a) "^1..n$" where n is a positive integer
+     b) "^1..0(?![0-9]).*?#\s*(?i)SKIP\S*\s+(.*)$" where $1 is skip reason
+        (this format is only valid if there are no test lines)
+     There MUST BE EXACTLY ONE test plan line and it must appear either
+     BEFORE ALL or AFTER ALL of the test lines.  For example, the following
+     line plans four tests:
+         1..4
+
+  2) Test lines which must either be ALL BEFORE or ALL AFTER the test plan line
+     a) "^ok(?:\s+$stuff?)?$" test succeeds
+     b) "^not ok(?:\s+$stuff?)?$" test fails
+     There must be n test lines where n (possibly 0) is from the test plan.
+     If present, $stuff should match
+        "(\d+)?\s*([^#]*)(?:#\s*(?i)(SKIP|TODO)\b(.*))?"
+     where $1 is the test number and if present must be correct (tests are
+     numbered starting with 1).  $2 is the optional test description and it's
+     customary to start it with "- " to make the output look nice.  If present,
+     $3 is a directive and $4 is the reason for it.  An "ok #TODO" is a known
+     breakage that isn't actually broken.  A "not ok #TODO" is a known breakage
+     (that's still broken).  An "ok #SKIP" is a skipped test.  A "not ok #SKIP"
+     is treated the same as a "not ok" test.  For example, the following shows
+     four test lines for good, skip, bad and known broken respectively:
+         ok 1 - test that works
+	 ok 2 - test might work # SKIP need missing thingamajig to run
+         not ok 3 - test that should have worked
+	 not ok 4 - test known not to work # TODO fix this problem
+
+  3) Diagnostic/Comment lines matching "^#" which are ignored for TAP purposes
+     (If the '#' isn't in column 1 then it's technically an "other" line.)
+     Some harnesses have an option to show comments and "other" lines do NOT
+     qualify, only lines matching "^#" are considered "comments".  For example,
+     all of the following are recognized as comment/diagnostice lines:
+         # Hello
+	 #   some random gobbledygook
+	 # Lines may be located anywhere in the output
+
+  4) An emergency stop line matching "^\s*Bail out!\s*(.*)$" (yes, it IS
+     case-sensitive).  The value of $1 will be shown if present.
+     (A well-written test emits a '1..0 # SKIP ...' line instead, but if
+     something unrecoverable goes wrong in the middle of testing a "Bail out!"
+     line is useful.)  For example:
+         Bail out! my microphone is broken
+     When using prove to run multiple tests a 'Bail out!' line will abort all
+     further testing when it's encountered (including any yet-to-be-run tests).
+
+The handling of other lines is unspecified although generally they are treated
+as lines to be ignored, but should the TAP standard change there is no
+guarantee they will continue to be so treated.
