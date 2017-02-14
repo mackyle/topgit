@@ -1284,6 +1284,7 @@ cd -P "$TRASH_DIRECTORY" || exit 1
 this_test=${0##*/}
 this_test=${this_test%%-*}
 test_wrote_plan_count=
+test_last_subtest_ok=1
 if match_pattern_list "$this_test" $TESTLIB_SKIP_TESTS
 then
 	say_color info >&3 "skipping test $this_test altogether"

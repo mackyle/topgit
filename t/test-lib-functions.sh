@@ -347,13 +347,19 @@ test_have_prereq() {
 		esac
 
 		total_prereq=$(($total_prereq + 1))
-		case "$satisfied_prereq" in
-		*" $prerequisite "*)
-			satisfied_this_prereq=t
-			;;
-		*)
-			satisfied_this_prereq=
-		esac
+		satisfied_this_prereq=
+		if test "$prerequisite" = "LASTOK"
+		then
+			if test -n "$test_last_subtest_ok"
+			then
+				satisfied_this_prereq=t
+			fi
+		else
+			case "$satisfied_prereq" in
+			*" $prerequisite "*)
+				satisfied_this_prereq=t
+			esac
+		fi
 
 		case "$satisfied_this_prereq,$negative_prereq" in
 		t,|,t)
@@ -407,8 +413,10 @@ test_expect_failure_lno() {
 		if test_run_ "$2" expecting_failure
 		then
 			test_known_broken_ok_ "$1"
+			test_last_subtest_ok=1
 		else
 			test_known_broken_failure_ "$1"
+			test_last_subtest_ok=
 		fi
 	fi
 	test_finish_
@@ -439,8 +447,10 @@ test_tolerate_failure_lno() {
 		if test_run_ "$2" tolerating_failure
 		then
 			test_possibly_broken_ok_ "$1"
+			test_last_subtest_ok=1
 		else
 			test_possibly_broken_failure_ "$1"
+			test_last_subtest_ok=
 		fi
 	fi
 	test_finish_
@@ -469,8 +479,10 @@ test_expect_success_lno() {
 		if test_run_ "$2"
 		then
 			test_ok_ "$1"
+			test_last_subtest_ok=1
 		else
 			test_failure_ "$callerlno" "$@"
+			test_last_subtest_ok=
 		fi
 	fi
 	test_finish_
@@ -499,6 +511,7 @@ test_external_lno() {
 	shift
 	test_verify_prereq
 	export test_prereq
+	test_external_skipped=1
 	if ! test_skip "$descr" "$@"
 	then
 		# Announce the script to reduce confusion about the
@@ -519,6 +532,7 @@ test_external_lno() {
 				say_color "" "# test_external test $descr was ok"
 				test_success=$(($test_success + 1))
 			fi
+			test_last_subtest_ok=1
 		else
 			if test $test_external_has_tap -eq 0; then
 				test_failure_ "$callerlno" "$descr" "$@"
@@ -526,7 +540,9 @@ test_external_lno() {
 				say_color error "# test_external test $descr failed: $@"
 				test_failure=$(($test_failure + 1))
 			fi
+			test_last_subtest_ok=
 		fi
+		test_external_skipped=
 	fi
 	unset callerlno
 }
@@ -549,7 +565,7 @@ test_external_without_stderr_lno() {
 	descr="no stderr: $1"
 	shift
 	say >&3 "# expecting no stderr from previous command"
-	if test ! -s "$stderr"
+	if test -n "$test_external_skipped" || test ! -s "$stderr"
 	then
 		rm "$stderr"
 
@@ -560,6 +576,7 @@ test_external_without_stderr_lno() {
 			test_success=$(($test_success + 1))
 		fi
 	else
+		test_last_subtest_ok=
 		if test "$verbose" = t
 		then
 			output=$(echo; echo "# Stderr is:"; cat "$stderr")
