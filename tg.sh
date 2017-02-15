@@ -1772,7 +1772,7 @@ else
 			[ -z "$noremote" ] || unset base_remote
 
 			nomergesetup="$showing_help"
-			case "$cmd" in info|log|summary|rebase|revert|tag)
+			case "$cmd" in base|info|log|summary|rebase|revert|tag)
 				# avoid merge setup where not necessary
 
 				nomergesetup=1
