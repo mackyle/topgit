@@ -18,6 +18,42 @@ All tests are run with the current directory set to the same
 directory as the directory containing the test file itself.
 
 
+-------------------------
+Test Naming and Numbering
+-------------------------
+
+All the test scripts are named like so:
+
+    tNNNN-command-more-info.sh
+
+Where `NNNN` is a 4-digit, 0-padded decimal number.
+
+The first (i.e. leftmost) digit should indicate the category of the test as
+follows:
+
+  0. the testing framework itself and universal stuff
+  1. basic fundamental commands and options (e.g. help, status, --top-bases)
+  2. creation and deletion of tg branches and dependencies and hooks
+  3. graph navigation commands (e.g. prev, next, checkout)
+  4. informational and introspection commands (e.g. summary, info, base)
+  5. update command
+  6. tag and revert
+  7. remote and push
+  8. import and export
+  9. shortcut and utility commands (e.g. files, log, mail, patch, rebase)
+
+The second digit should indicate the command within that group.  In other words
+if the second digit is "3" then all tests numbered 13NN should be testing the
+same command.
+
+Generally a given command should have all its tests in the same family.
+
+The third digit should be used for grouping tests of the same or related
+options of a command when the command supports a lot of options or may instead
+indicate a command "mode" that's being tested (e.g. `tg tag` has several
+different command modes).
+
+
 ------------
 Test Library
 ------------
