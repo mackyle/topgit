@@ -880,7 +880,7 @@ test_create_repo() {
 	mkdir -p "$repo"
 	(
 		cd "$repo" || error "Cannot setup test environment"
-		git init "--template=$EMPTY_DIRECTORY" >&3 2>&4 ||
+		git init --quiet "--template=$EMPTY_DIRECTORY" >&3 2>&4 ||
 		error "cannot run git init -- have you built things yet?"
 		! [ -e .git/hooks ] || mv .git/hooks .git/hooks-disabled
 	) || exit
