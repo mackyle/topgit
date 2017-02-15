@@ -423,7 +423,7 @@ See also the discussion in the `NO UNDO`_ section.
 SPEED AND CACHING
 -----------------
 
-TopGit needs to check many thing to determine whether a TopGit branch is
+TopGit needs to check many things to determine whether a TopGit branch is
 up-to-date or not.  This can involve a LOT of git commands for a complex
 dependency tree.  In order to speed things up, TopGit keeps a cache of results
 in a ``tg-cache`` subdirectory in the ``.git`` directory.
