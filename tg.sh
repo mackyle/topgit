@@ -1355,9 +1355,15 @@ strftime()
 setup_git_dirs()
 {
 	[ -n "$git_dir" ] || git_dir="$(git rev-parse --git-dir)"
+	if [ -n "$git_dir" ] && [ -d "$git_dir" ]; then
+		git_dir="$(cd "$git_dir" && pwd)"
+	fi
 	if [ -z "$git_common_dir" ]; then
 		if vcmp "$git_version" '>=' "2.5"; then
-			git_common_dir="$(git rev-parse --git-common-dir)"
+			# rev-parse --git-common-dir is broken and may give
+			# an incorrect result unless the current directory is
+			# already set to the top level directory
+			git_common_dir="$(cd "./$(git rev-parse --show-cdup)" && cd "$(git rev-parse --git-common-dir)" && pwd)"
 		else
 			git_common_dir="$git_dir"
 		fi
