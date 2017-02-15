@@ -212,6 +212,9 @@ options to _every_ test run by the Makefile.
     library itself does not use `test_debug` anywhere.)  With `--debug` these
     lines are activated and actually run instead of being nops.
 
+    Using this option also prevents the temporary trash directory from being
+    removed even for a successful test.
+
 * -h | --help
 
     Show the `$test_description` to standard output and `exit 0`.  NO TAP lines

@@ -599,14 +599,17 @@ test_done() {
 			exit 1
 		fi
 
+		test -n "$remove_trash" &&
 		test -d "$remove_trash" &&
 		cd "${remove_trash%/*}" &&
 		test_done_td_="${remove_trash##*/}" &&
 		test -e "$test_done_td_" &&
 		rm -rf "$test_done_td_" &&
-		! test -e "$test_done_td_" || {
-			chmod -R u+w "$test_done_td_" &&
-			rm -rf "$test_done_td_"
+		{
+			! test -e "$test_done_td_" || {
+				chmod -R u+w "$test_done_td_" &&
+				rm -rf "$test_done_td_"
+			}
 		}
 
 		test_at_end_hook_
