@@ -1113,9 +1113,6 @@ check_status()
 	if [ -e "$git_dir/tg-update" ]; then
 		tg_state="update"
 		tg_remove="$git_dir/tg-update"
-	elif [ -e "$git_dir/tg-create" ]; then
-		tg_state="create"
-		tg_remove="$git_dir/tg-create"
 	fi
 	tg_remove="${tg_remove#./}"
 }

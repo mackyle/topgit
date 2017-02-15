@@ -147,14 +147,13 @@ SYNOPSIS
 	tg: Creating t/whatever base from t/revlist/author-fixed...
 	tg: Merging t/whatever base with t/gitweb/nifty-links...
 	Merge failed!
-	tg: Please commit merge resolution and call: tg create --continue
+	tg: Please commit merge resolution and call: tg update --continue
 	tg: It is also safe to abort this operation using `git reset --hard`
 	tg: but please remember you are on the base branch now;
 	tg: you will want to switch to a different branch.
 	$ ..resolve..
 	$ git commit
-	$ tg create --continue
-	tg: Resuming t/whatever setup...
+	$ tg update --continue
 	$ ..hack..
 	$ git commit
 
@@ -559,11 +558,9 @@ tg create
 
 	The main task of ``tg create`` is to set up the topic branch base
 	from the dependencies.  This may fail due to merge conflicts if more
-	than one dependencie is given.	In that case, after you commit the
-	conflict resolution, you should call ``tg create`` again (without any
-	arguments or with the single argument ``--continue``); it will then
-	detect that you are on a topic branch base ref and resume the topic
-	branch creation operation.
+	than one dependency is given.	In that case, after you commit the
+	conflict resolution, you should call ``tg update --continue`` to
+	finish merging the dependencies into the new topic branch base.
 
 	With the ``--no-deps`` option at most one dependency may be listed
 	which may be any valid committish (instead of just refs/heads/...) and
