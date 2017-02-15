@@ -1505,7 +1505,7 @@ set_topbases()
 		"refs/heads"/*)
 			hblist="$hblist${rn#refs/heads/} ";;
 	esac; done <<-EOT
-		$(git for-each-ref --format='%(refname)' "refs/heads" "refs/top-bases")
+		$(git for-each-ref --format='%(refname)' "refs/heads" "refs/top-bases" 2>/dev/null)
 	EOT
 	if [ -n "$both" ]; then
 		if [ -n "$1" ]; then
@@ -1763,10 +1763,15 @@ else
 				exit 1
 			}
 
-			initial_setup
+			showing_help=
+			if [ "$*" = "-h" ] || [ "$*" = "--help" ]; then
+				showing_help=1
+			fi
+
+			[ -n "$showing_help" ] || initial_setup
 			[ -z "$noremote" ] || unset base_remote
 
-			nomergesetup=
+			nomergesetup="$showing_help"
 			case "$cmd" in info|log|summary|rebase|revert|tag)
 				# avoid merge setup where not necessary
 
@@ -1781,13 +1786,13 @@ else
 			fi
 
 			# everything but rebase needs topbases set
-			carefully=
+			carefully="$showing_help"
 			[ "$cmd" != "migrate-bases" ] || carefully=1
 			[ "$cmd" = "rebase" ] || set_topbases $carefully
 
 			_use_ref_cache=
 			tg_read_only=1
-			case "$cmd" in
+			case "$cmd$showing_help" in
 				summary|info|export|tag)
 					_use_ref_cache=1;;
 				annihilate|create|delete|depend|import|update)
@@ -1800,5 +1805,3 @@ else
 	esac
 
 fi
-
-# vim:noet
