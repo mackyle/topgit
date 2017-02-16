@@ -441,5 +441,6 @@ quiet_info "Topic branch $name created."
 [ -n "$merge" ] || exit 0
 ## Merge other dependencies into the base
 quiet_info "Running $tgname update to merge in dependencies."
+! [ -f "$git_dir/MERGE_MSG" ] || mv -f "$git_dir/MERGE_MSG" "$git_dir/TGMERGE_MSG" || :
 set -- "$name"
 . "$TG_INST_CMDDIR"/tg-update

@@ -117,6 +117,8 @@ if [ -n "$isactive" ] || [ $# -eq 1 -a x"$1" = x"--abort" ]; then
 				info "Ok, update aborted.  Now, you just need to"
 				info "switch back to some sane branch using \`git$gitcdopt checkout\`."
 			fi
+			! [ -f "$git_dir/TGMERGE_MSG" ] || [ -e "$git_dir/MERGE_MSG" ] ||
+				mv -f "$git_dir/TGMERGE_MSG" "$git_dir/MERGE_MSG" || :
 		else
 			info "No update was active"
 		fi
@@ -126,6 +128,8 @@ if [ -n "$isactive" ] || [ $# -eq 1 -a x"$1" = x"--abort" ]; then
 		clear_state
 		info "Ok, update stopped.  Now, you just need to"
 		info "switch back to some sane branch using \`git$gitcdopt checkout\`."
+		! [ -f "$git_dir/TGMERGE_MSG" ] || [ -e "$git_dir/MERGE_MSG" ] ||
+			mv -f "$git_dir/TGMERGE_MSG" "$git_dir/MERGE_MSG" || :
 		exit 0
 		;;
 	--continue|--skip)
@@ -695,3 +699,5 @@ done
 [ -z "$all" ] && case "$names" in *" "*) ! :; esac ||
 info "Returning to $current..."
 git checkout -q "$current"
+! [ -f "$git_dir/TGMERGE_MSG" ] || [ -e "$git_dir/MERGE_MSG" ] ||
+	mv -f "$git_dir/TGMERGE_MSG" "$git_dir/MERGE_MSG" || :
