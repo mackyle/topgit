@@ -510,14 +510,13 @@ $ tg create t/whatever t/revlist/author-fixed t/gitweb/nifty-links
 tg: Creating t/whatever base from t/revlist/author-fixed...
 tg: Merging t/whatever base with t/gitweb/nifty-links...
 Merge failed!
-tg: Please commit merge resolution and call: tg create --continue
+tg: Please commit merge resolution and call: tg update --continue
 tg: It is also safe to abort this operation using `git reset --hard`
 tg: but please remember you are on the base branch now;
 tg: you will want to switch to a different branch.
 $ ..resolve..
 $ git commit
-$ tg create --continue
-tg: Resuming t/whatever setup...
+$ tg update --continue
 $ ..hack..
 $ git commit
 
@@ -750,7 +749,7 @@ being the same but without the merge conflicts.</p>
 </div>
 <div class="section" id="speed-and-caching">
 <h1>SPEED AND CACHING</h1>
-<p>TopGit needs to check many thing to determine whether a TopGit branch is
+<p>TopGit needs to check many things to determine whether a TopGit branch is
 up-to-date or not.  This can involve a LOT of git commands for a complex
 dependency tree.  In order to speed things up, TopGit keeps a cache of results
 in a <tt class="docutils literal"><span class="pre">tg-cache</span></tt> subdirectory in the <tt class="docutils literal">.git</tt> directory.</p>
@@ -933,11 +932,9 @@ have <tt class="docutils literal">tg create</tt> add these headers with the give
 to <tt class="docutils literal">.topmsg</tt> before invoking the editor.</p>
 <p>The main task of <tt class="docutils literal">tg create</tt> is to set up the topic branch base
 from the dependencies.  This may fail due to merge conflicts if more
-than one dependencie is given.  In that case, after you commit the
-conflict resolution, you should call <tt class="docutils literal">tg create</tt> again (without any
-arguments or with the single argument <tt class="docutils literal"><span class="pre">--continue</span></tt>); it will then
-detect that you are on a topic branch base ref and resume the topic
-branch creation operation.</p>
+than one dependency is given.   In that case, after you commit the
+conflict resolution, you should call <tt class="docutils literal">tg update <span class="pre">--continue</span></tt> to
+finish merging the dependencies into the new topic branch base.</p>
 <p>With the <tt class="docutils literal"><span class="pre">--no-deps</span></tt> option at most one dependency may be listed
 which may be any valid committish (instead of just refs/heads/...) and
 the newly created TopGit-controlled branch will have an empty
@@ -1592,7 +1589,7 @@ used.</p>
 <h2>tg base</h2>
 <blockquote>
 <div class="line-block">
-<div class="line"><tt class="docutils literal">tg <span class="pre">[...]</span> base [ <span class="pre">branch...</span> ]</tt></div>
+<div class="line"><tt class="docutils literal">tg <span class="pre">[...]</span> base <span class="pre">[--short[=n]</span> | <span class="pre">--no-short]</span> <span class="pre">[--]</span> <span class="pre">[branch...]</span></tt></div>
 </div>
 <p>Prints the base commit of each of the named topic branches, or
 the current branch if no branches are named.  Prints an error
