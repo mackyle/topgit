@@ -1583,6 +1583,59 @@ and `tg tag`_), a copy of all the old refs values will be stashed away
 immediately after step (1) before starting step (2), but only if anything is
 actually found to be out-of-date.
 
+Merge Strategies
+~~~~~~~~~~~~~~~~
+
+The ``tg update`` command regularly performs merges while executing an update
+operation.  In order to speed things up, it attempts to do in-index merges
+where possible.  It accomplishes this by using a separate, temporary index
+file and the ``git read-tree -m --aggressive`` command possibly assisted by
+the ``git merge-index`` and ``git merge-file`` commands.  This combination may
+be repeated more than once to perform an octopus in-index merge.  If this
+fails, the files are checked out and a normal ``git merge`` three-way merge is
+performed (possily multiple times).  If the normal ``git merge`` fails then
+user intervention is required to resolve the merge conflict(s) and continue.
+
+Since the ``tg annihilate``, ``tg create`` and ``tg depend add`` commands may
+end up running the ``tg update`` machinery behind the scenes to complete their
+operation they may also result in any of these merge strategies being used.
+
+In addition to the normal Git merge strategies (if the in-index merging fails),
+there are four possible TopGit merge strategies that may be shown.  Since they
+all involve use of the ``git read-tree -m --aggressive`` command they are all
+variations of a "trivial aggressive" merge.  The "trivial" part because all of
+the merges done by ``git read-tree -m`` are described as "trivial" and the
+"aggressive" part because the ``--aggressive`` option is always used.
+
+	1) "trivial aggressive"
+		Only two heads were involved and all merging was completed by
+		the ``git read-tree -m --aggressive`` command.
+
+	2) "trivial aggressive automatic"
+		Only two heads were involved but after the
+		``git read-tree -m --aggressive`` command completed there were
+		still unresolved items and ``git merge-index`` had to be run
+		(using the ``tg index-merge-one-file`` driver) which ultimately
+		ran ``git merge-file`` at least once to perform a simple
+		automatic three-way merge.  Hence the "automatic" description
+		and the "Auto-merging ..." output line(s).
+
+	3) "trivial aggressive octopus"
+		This is the same as a "trivial aggressive" merge except that
+		more than two heads were involved and after merging the first
+		two heads, the ``git read-tree -m --aggressive`` step was
+		repeated again on the result for each additional head.  All
+		merging was completed via multiple
+		``git read-tree -m --aggressive`` commands only.
+		This beast is relatively rare in the wild.
+
+	4) "trivial aggressive automatic octopus"
+		This is very similar to the "trivial aggressive octopus"
+		except that at least one of the ``git read-tree -m --aggressive``
+		commands left unresolved items that were handled the same way
+		as the "trivial aggressive automatic" strategy.  This species
+		is commonly seen in the wild.
+
 
 GLOSSARY
 --------
@@ -1667,6 +1720,33 @@ GLOSSARY
 		TopGit ``[PATCH]`` branches into a single branch so that
 		testing and/or evaluation can be performed on the result.
 
+	merge conflict
+		When merging two (or more) heads that touch the same lines in
+		the file but in different ways the result is a merge conflict
+		that requires manual intervention.  If a merge conflict occurs
+		with more than two heads (an octopus merge) it's generally
+		replaced by multiple three-way merges so that by the time a
+		user sees a merge conflict needing manual resolution, there
+		will be only two heads involved.
+
+	merge strategy
+		A Git merge strategy (see the "MERGE STRATEGIES" section of
+		``git help merge``) or one of the TopGit `merge strategies`_
+		used to merge two or more heads.
+
+	TopGit merge strategy
+		See the `Merge Strategies`_ section above for details but
+		basically these are just in-index merges done using the
+		``git read-tree -m --aggressive`` command one or more times
+		possibily assisted by the ``git merge-index`` and the
+		``git merge-file`` commands.
+
+	octopus merge
+		A merge involving more than two heads.  Note that if there are
+		less than three independent heads the resulting merge that
+		started out as an octopus will end up not actually being an
+		octopus after all.
+
 	out-of-date branch
 		A TopGit branch is considered to be "out-of-date" when ANY of
 		the following are true:
@@ -1694,13 +1774,21 @@ GLOSSARY
 
 	remote TopGit branch
 		A Git branch with the same branch name as a TopGit branch
-		but living under ``refs/remotes/```<some remote>```/`` instead
+		but living under ``refs/remotes/<some remote>/`` instead
 		of just ``refs/heads/``.
 
 	remote TopGit base
 		The TopGit base branch corresponding to a remote TopGit branch,
 		which lives under ``refs/remotes/`` somewhere (depending on
 		what the output of ``tg --top-bases`` is for that remote).
+
+	three-way merge
+		A three-way merge takes a common base and two heads (call them
+		A and B) and creates a new file that is the common base plus
+		all of the changes made between the common base and head A
+		*AND* all of the changes made between the common base and
+		head B.  The technique used to accomplish this is called a
+		"merge strategy".
 
 
 REFERENCES
