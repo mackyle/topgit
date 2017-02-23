@@ -184,6 +184,13 @@ if [ -z "$restored" ]; then
 
 	processed=
 	current="$(strip_ref "$(git symbolic-ref -q HEAD)")" || :
+	if [ -n "$current" ]; then
+		[ -n "$(git rev-parse --verify --quiet HEAD --)" ] ||
+			die "cannot return to unborn branch; switch to another branch"
+	else
+		current="$(git rev-parse --verify --quiet HEAD)" ||
+			die "cannot return to invalid HEAD; switch to another branch"
+	fi
 	[ -n "$all$names" ] || names="HEAD"
 	if [ -z "$all" ]; then
 		clean_names() {
@@ -197,10 +204,6 @@ if [ -z "$restored" ]; then
 			done
 		}
 		clean_names $names
-	else
-		[ -n "$current" ] || die "cannot return to detached HEAD; switch to another branch"
-		[ -n "$(git rev-parse --verify --quiet HEAD --)" ] ||
-			die "cannot return to unborn branch; switch to another branch"
 	fi
 	ensure_clean_tree
 fi
