@@ -282,6 +282,7 @@ git_merge() {
 # similar to git_merge but operates exclusively using a separate index and temp dir
 # only trivial aggressive automatic (i.e. simple) merges are supported
 #
+# [optional] '--no-auto' to suppress "automatic" merging, merge fails instead
 # $1 => '' to discard result, 'refs/?*' to update the specified ref or a varname
 # $2 => '-m' MUST be '-m'
 # $3 => commit message AND, if $1 matches refs/?* the update-ref message
@@ -299,6 +300,11 @@ git_merge() {
 # be set to contain the resulting commit from the merge
 # the working tree and index ARE LEFT COMPLETELY UNTOUCHED no matter what
 v_attempt_index_merge() {
+	_noauto=
+	if [ "$1" = "--no-auto" ]; then
+		_noauto=1
+		shift
+	fi
 	[ "$#" -ge 5 ] && [ "$2" = "-m" ] && [ -n "$3" ] && [ -n "$4" ] && [ -n "$5" ] ||
 		die "programmer error: invalid arguments to v_attempt_index_merge: $*"
 	_var="$1"
@@ -380,6 +386,10 @@ v_attempt_index_merge() {
 					return 1
 				fi
 				if [ -s "$itmp" ]; then
+					if [ -n "$_noauto" ]; then
+						rm -f "$inew" "$itmp" "$imrg"
+						return 1
+					fi
 					if [ -n "$_octo" ]; then
 						cat "$itmp" >>"$imrg"
 					else
@@ -428,10 +438,15 @@ v_attempt_index_merge() {
 
 # shortcut that passes $3 as a preceding argument (which must match refs/?*)
 attempt_index_merge() {
+	_noauto=
+	if [ "$1" = "--no-auto" ]; then
+		_noauto="$1"
+		shift
+	fi
 	case "$3" in refs/?*);;*)
 		die "programmer error: invalid arguments to attempt_index_merge: $*"
 	esac
-	v_attempt_index_merge "$3" "$@"
+	v_attempt_index_merge $_noauto "$3" "$@"
 }
 
 on_base=
@@ -531,6 +546,7 @@ update_branch() {
 
 		# Make sure we end up on the correct base branch
 		on_base=
+		no_auto=
 		if [ $# -ge 2 ]; then
 			info "Updating $_update_name base with deps: $deplist"
 			become_non_cacheable
@@ -539,6 +555,7 @@ update_branch() {
 				set --
 			else
 				info "Octopus merge failed; falling back to multiple 3-way merges"
+				no_auto="--no-auto"
 			fi
 		fi
 
@@ -560,7 +577,7 @@ update_branch() {
 			become_non_cacheable
 			msg="tgupdate: merge $dep into $topbases/$_update_name"
 			if
-				! attempt_index_merge -m "$msg" "refs/$topbases/$_update_name" "$fulldep^0" &&
+				! attempt_index_merge $no_auto -m "$msg" "refs/$topbases/$_update_name" "$fulldep^0" &&
 				! {
 					# We need to switch to the base branch
 					# ...but only if we aren't there yet (from failed previous merge)
