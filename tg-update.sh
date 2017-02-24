@@ -111,8 +111,8 @@ if [ -n "$isactive" ] || [ $# -eq 1 -a x"$1" = x"--abort" ]; then
 				$tg revert -f -q -q --no-stash "$stashhash" >/dev/null 2>&1 || :
 			fi
 			if [ -n "$current" ]; then
-				info "Ok, update aborted, returning to $current"
-				git checkout -f -q "$current"
+				info "Ok, update aborted, returning to ${current#refs/heads/}"
+				checkout_symref_full -f "$current"
 			else
 				info "Ok, update aborted.  Now, you just need to"
 				info "switch back to some sane branch using \`git$gitcdopt checkout\`."
@@ -183,7 +183,7 @@ if [ -z "$restored" ]; then
 	[ -z "$pattern" ] && pattern="refs/$topbases"
 
 	processed=
-	current="$(strip_ref "$(git symbolic-ref -q HEAD)")" || :
+	current="$(git symbolic-ref -q HEAD)" || :
 	if [ -n "$current" ]; then
 		[ -n "$(git rev-parse --verify --quiet HEAD --)" ] ||
 			die "cannot return to unborn branch; switch to another branch"
@@ -717,7 +717,7 @@ for name in $names; do
 done
 
 [ -z "$all" ] && case "$names" in *" "*) ! :; esac ||
-info "Returning to $current..."
-git checkout -q "$current"
+info "Returning to ${current#refs/heads/}..."
+checkout_symref_full "$current"
 ! [ -f "$git_dir/TGMERGE_MSG" ] || [ -e "$git_dir/MERGE_MSG" ] ||
 	mv -f "$git_dir/TGMERGE_MSG" "$git_dir/MERGE_MSG" || :
