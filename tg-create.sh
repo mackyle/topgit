@@ -412,10 +412,11 @@ fi
 git add -f "$root_dir/.topdeps"
 printf '%s\n' "$topmsg" >"$root_dir/.topmsg"
 git add -f "$root_dir/.topmsg"
-printf '%s\n' "$msg" >"$git_dir/MERGE_MSG"
+rm -f "$git_dir/TGMERGE_MSG"
 
 [ -z "$warntop" ] || warn ".topmsg content was reformatted into patch header"
 if [ -n "$nocommit" ]; then
+	printf '%s\n' "$msg" >"$git_dir/MERGE_MSG"
 	quiet_info "Topic branch $name set up."
 	if [ -n "$noedit" ]; then
 		quiet_info "Please fill in .topmsg now and make the initial commit."
@@ -429,18 +430,23 @@ if [ -n "$nocommit" ]; then
 fi
 
 git commit -m "$msg" "$root_dir/.topdeps" "$root_dir/.topmsg" || die "git commit failed"
-subj="$(get_subject <"$root_dir/.topmsg" |
-	sed "s/^[^]]*]//; s/^[ $tab][ $tab]*//; s/[ $tab][ $tab]*\$//")"
-if [ -n "$subj" ]; then
-	printf '%s\n' "$subj" ""
-	sed -e '1,/^$/d' <"$root_dir/.topmsg"
-else
-	cat "$root_dir/.topmsg"
-fi >"$git_dir/MERGE_MSG"
+rawsubj="$(get_subject <"$root_dir/.topmsg")"
+nommsg=1
+case "$rawsubj" in *"["[Pp][Aa][Tt][Cc][Hh]"]"*)
+	nommsg=
+	subj="$(sed "s/^[^]]*]//; s/^[ $tab][ $tab]*//; s/[ $tab][ $tab]*\$//" <<-EOT
+		$rawsubj
+	EOT
+	)"
+	{
+		[ -z "$subj" ] || printf '%s\n' "$subj" ""
+		sed -e '1,/^$/d' <"$root_dir/.topmsg"
+	} >"$git_dir/MERGE_MSG"
+esac
 quiet_info "Topic branch $name created."
 [ -n "$merge" ] || exit 0
 ## Merge other dependencies into the base
 quiet_info "Running $tgname update to merge in dependencies."
-! [ -f "$git_dir/MERGE_MSG" ] || mv -f "$git_dir/MERGE_MSG" "$git_dir/TGMERGE_MSG" || :
+[ -n "$nommsg" ] || ! [ -f "$git_dir/MERGE_MSG" ] || mv -f "$git_dir/MERGE_MSG" "$git_dir/TGMERGE_MSG" || :
 set -- "$name"
 . "$TG_INST_CMDDIR"/tg-update
