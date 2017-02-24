@@ -991,6 +991,7 @@ list_deps()
 # MUST be a committish which if present will be used instead of current FULLREF
 # (and FULLREF will be updated to it as well in that case)
 # With -f it's like git checkout -f (uses read-tree --reset instead of -m)
+# As an extension, FULLREF may also be a full hash to create a detached HEAD
 checkout_symref_full()
 {
 	_mode=-m
@@ -998,18 +999,33 @@ checkout_symref_full()
 		mode="--reset"
 		shift
 	fi
-	case "$1" in refs/?*);;*) die "programmer error: invalid checkout_symref_full \"$1\""; esac
+	_ishash=
+	case "$1" in
+		refs/?*)
+			;;
+		$octet20)
+			_ishash=1
+			[ -z "$2" ] || [ "$1" = "$2" ] ||
+				die "programmer error: invalid checkout_symref_full \"$1\" \"$2\""
+			set -- HEAD "$1"
+			;;
+		*)
+			die "programmer error: invalid checkout_symref_full \"$1\""
+			;;
+	esac
 	_seedrev="$(git rev-parse --quiet --verify "${2:-$1}^0" --)" ||
 		die "invalid committish: \"${2:-$1}\""
 	# We have to do all the hard work ourselves :/
 	# This is like git checkout -b "$1" "$2"
 	# (or just git checkout "$1"),
-	# but never creates a detached HEAD.
+	# but never creates a detached HEAD (unless $1 is a hash)
 	git read-tree -u $_mode HEAD "$_seedrev" &&
 	{
-		[ -z "$2" ] && [ "$(git cat-file -t "$1")" = "commit" ] || git update-ref "$1" "$_seedrev"
-	} &&
-	git symbolic-ref HEAD "$1"
+		[ -z "$2" ] && [ "$(git cat-file -t "$1")" = "commit" ] ||
+		git update-ref "$1" "$_seedrev"
+	} && {
+		[ -n "$_ishash" ] || git symbolic-ref HEAD "$1"
+	}
 }
 
 # switch_to_base NAME [SEED]
