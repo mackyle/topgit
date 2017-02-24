@@ -985,17 +985,37 @@ list_deps()
 		done
 }
 
+# checkout_symref_full [-f] FULLREF [SEED]
+# Just like git checkout -b FULLREF [SEED] except that FULLREF MUST start with
+# refs/ and HEAD is ALWAYS set to a symref to it and [SEED] (default is FULLREF)
+# MUST be a committish which if present will be used instead of current FULLREF
+# (and FULLREF will be updated to it as well in that case)
+# With -f it's like git checkout -f (uses read-tree --reset instead of -m)
+checkout_symref_full()
+{
+	_mode=-m
+	if [ "$1" = "-f" ]; then
+		mode="--reset"
+		shift
+	fi
+	case "$1" in refs/?*);;*) die "programmer error: invalid checkout_symref_full \"$1\""; esac
+	_seedrev="$(git rev-parse --quiet --verify "${2:-$1}^0" --)" ||
+		die "invalid committish: \"${2:-$1}\""
+	# We have to do all the hard work ourselves :/
+	# This is like git checkout -b "$1" "$2"
+	# (or just git checkout "$1"),
+	# but never creates a detached HEAD.
+	git read-tree -u $_mode HEAD "$_seedrev" &&
+	{
+		[ -z "$2" ] && [ "$(git cat-file -t "$1")" = "commit" ] || git update-ref "$1" "$_seedrev"
+	} &&
+	git symbolic-ref HEAD "$1"
+}
+
 # switch_to_base NAME [SEED]
 switch_to_base()
 {
-	_base="refs/$topbases/$1"; _seed="$2"
-	# We have to do all the hard work ourselves :/
-	# This is like git checkout -b "$_base" "$_seed"
-	# (or just git checkout "$_base"),
-	# but does not create a detached HEAD.
-	git read-tree -u -m HEAD "${_seed:-$_base}"
-	[ -z "$_seed" ] || git update-ref "$_base" "$_seed"
-	git symbolic-ref HEAD "$_base"
+	checkout_symref_full "refs/$topbases/$1" "$2"
 }
 
 # run editor with arguments
