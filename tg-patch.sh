@@ -111,6 +111,7 @@ else
 	fi
 fi
 
+echo ''
 echo '-- '
 depon="$(cat_file "refs/heads/$name:.topdeps" $head_from 2>/dev/null | paste -s -d ' ' -)"
 echo "$tgname: ($base_rev..) $name${depon:+ (depends on: $depon)}"
