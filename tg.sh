@@ -427,7 +427,7 @@ branch_contains()
 create_ref_dirs()
 {
 	[ ! -s "$tg_tmp_dir/tg~ref-dirs-created" -a -s "$tg_ref_cache" ] || return 0
-	sed -e 's/ .*$//;'"s~^~$tg_tmp_dir/cached/~" <"$tg_ref_cache" | xargs mkdir -p
+	LC_ALL=C awk -v p="$tg_tmp_dir/cached/" '{print p $1}' <"$tg_ref_cache" | LC_ALL=C tr '\n' '\0' | xargs -0 mkdir -p
 	echo 1 >"$tg_tmp_dir/tg~ref-dirs-created"
 }
 
