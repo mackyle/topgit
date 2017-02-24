@@ -640,6 +640,7 @@ non_annihilated_branches()
 }
 
 # Make sure our tree is clean
+# if optional "$1" given also verify that a checkout to "$1" would succeed
 ensure_clean_tree()
 {
 	check_status
@@ -648,6 +649,8 @@ ensure_clean_tree()
 		die "the working directory has uncommitted changes (see above) - first commit or reset them"
 	[ -z "$(git diff-index --cached --name-status -r --ignore-submodules HEAD --)" ] ||
 		die "the index has uncommited changes"
+	[ -z "$1" ] || git read-tree -n -u -m "$1" ||
+		die "git checkout \"$1\" would fail"
 }
 
 # is_sha1 REF

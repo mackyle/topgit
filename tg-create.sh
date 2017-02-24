@@ -281,6 +281,17 @@ esac; fi
 # Barf now rather than later if missing ident
 ensure_ident_available
 
+if [ -n "$merge" ] && [ -z "$unborn" ]; then
+	# make sure the checkout won't fail
+	branch="${merge%% *}"
+	prefix=refs/heads/
+	[ -z "$nodeps" ] || prefix=
+	git rev-parse --quiet --verify "$prefix$branch^0" >/dev/null ||
+		die "invalid dependency: $branch"
+	git read-tree -n -u -m "$prefix$branch^0" ||
+		die "git checkout \"$branch\" would fail"
+fi
+
 # Get messages
 
 tab="$(printf '\t.')" && tab="${tab%?}"
