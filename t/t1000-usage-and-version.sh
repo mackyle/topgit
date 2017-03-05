@@ -10,8 +10,6 @@ TEST_NO_CREATE_REPO=1
 
 . ./test-lib.sh
 
-GIT_CEILING_DIRECTORIES="$PWD" && export GIT_CEILING_DIRECTORIES
-
 test_plan 8
 
 test_expect_success 'test setup' '
