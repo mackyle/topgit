@@ -135,7 +135,7 @@ if [ "$1" = "--cache" ]; then
 		while read vname && [ -n "$vname" ]; do
 			! isvarset $vname || { quotevar "$vname" qv; printf '%s=%s &&\n' "$vname" "$qv"; }
 		done <<-EOT
-		$(echo $CACHE_VARS | LC_ALL=C sed 'y/ /\n/' | LC_ALL=C sort -u)
+		$(echo $CACHE_VARS $EXPORT_VARS | LC_ALL=C sed 'y/ /\n/' | LC_ALL=C sort -u)
 		say_color_reset
 		EOT
 		echo export $EXPORT_VARS "&&"
