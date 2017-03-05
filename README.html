@@ -2034,6 +2034,72 @@ and <a class="reference internal" href="#tg-tag">tg tag</a>), a copy of all the 
 immediately after step (1) before starting step (2), but only if anything is
 actually found to be out-of-date.</p>
 </div>
+<div class="section" id="merge-strategies">
+<h2>Merge Strategies</h2>
+<p>The <tt class="docutils literal">tg update</tt> command regularly performs merges while executing an update
+operation.  In order to speed things up, it attempts to do in-index merges
+where possible.  It accomplishes this by using a separate, temporary index
+file and the <tt class="docutils literal">git <span class="pre">read-tree</span> <span class="pre">-m</span> <span class="pre">--aggressive</span></tt> command possibly assisted by
+the <tt class="docutils literal">git <span class="pre">merge-index</span></tt> and <tt class="docutils literal">git <span class="pre">merge-file</span></tt> commands.  This combination may
+be repeated more than once to perform an octopus in-index merge.  If this
+fails, the files are checked out and a normal <tt class="docutils literal">git merge</tt> three-way merge is
+performed (possily multiple times).  If the normal <tt class="docutils literal">git merge</tt> fails then
+user intervention is required to resolve the merge conflict(s) and continue.</p>
+<p>Since the <tt class="docutils literal">tg annihilate</tt>, <tt class="docutils literal">tg create</tt> and <tt class="docutils literal">tg depend add</tt> commands may
+end up running the <tt class="docutils literal">tg update</tt> machinery behind the scenes to complete their
+operation they may also result in any of these merge strategies being used.</p>
+<p>In addition to the normal Git merge strategies (if the in-index merging fails),
+there are four possible TopGit merge strategies that may be shown.  Since they
+all involve use of the <tt class="docutils literal">git <span class="pre">read-tree</span> <span class="pre">-m</span> <span class="pre">--aggressive</span></tt> command they are all
+variations of a &quot;trivial aggressive&quot; merge.  The &quot;trivial&quot; part because all of
+the merges done by <tt class="docutils literal">git <span class="pre">read-tree</span> <span class="pre">-m</span></tt> are described as &quot;trivial&quot; and the
+&quot;aggressive&quot; part because the <tt class="docutils literal"><span class="pre">--aggressive</span></tt> option is always used.</p>
+<blockquote>
+<ol class="arabic">
+<li><dl class="first docutils">
+<dt>&quot;trivial aggressive&quot;</dt>
+<dd><p class="first last">Only two heads were involved and all merging was completed by
+the <tt class="docutils literal">git <span class="pre">read-tree</span> <span class="pre">-m</span> <span class="pre">--aggressive</span></tt> command.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>&quot;trivial aggressive automatic&quot;</dt>
+<dd><p class="first last">Only two heads were involved but after the
+<tt class="docutils literal">git <span class="pre">read-tree</span> <span class="pre">-m</span> <span class="pre">--aggressive</span></tt> command completed there were
+still unresolved items and <tt class="docutils literal">git <span class="pre">merge-index</span></tt> had to be run
+(using the <tt class="docutils literal">tg <span class="pre">index-merge-one-file</span></tt> driver) which ultimately
+ran <tt class="docutils literal">git <span class="pre">merge-file</span></tt> at least once to perform a simple
+automatic three-way merge.  Hence the &quot;automatic&quot; description
+and the &quot;Auto-merging ...&quot; output line(s).</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>&quot;trivial aggressive octopus&quot;</dt>
+<dd><p class="first last">This is the same as a &quot;trivial aggressive&quot; merge except that
+more than two heads were involved and after merging the first
+two heads, the <tt class="docutils literal">git <span class="pre">read-tree</span> <span class="pre">-m</span> <span class="pre">--aggressive</span></tt> step was
+repeated again on the result for each additional head.  All
+merging was completed via multiple
+<tt class="docutils literal">git <span class="pre">read-tree</span> <span class="pre">-m</span> <span class="pre">--aggressive</span></tt> commands only.
+This beast is relatively rare in the wild.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>&quot;trivial aggressive automatic octopus&quot;</dt>
+<dd><p class="first last">This is very similar to the &quot;trivial aggressive octopus&quot;
+except that at least one of the <tt class="docutils literal">git <span class="pre">read-tree</span> <span class="pre">-m</span> <span class="pre">--aggressive</span></tt>
+commands left unresolved items that were handled the same way
+as the &quot;trivial aggressive automatic&quot; strategy.  This species
+is commonly seen in the wild.</p>
+</dd>
+</dl>
+</li>
+</ol>
+</blockquote>
+</div>
 </div>
 <div class="section" id="glossary">
 <h1>GLOSSARY</h1>
@@ -2108,6 +2174,29 @@ dependencies in their <tt class="docutils literal">.topdeps</tt> file.  These br
 used to bring together one or (typically) more independent
 TopGit <tt class="docutils literal">[PATCH]</tt> branches into a single branch so that
 testing and/or evaluation can be performed on the result.</dd>
+<dt>merge conflict</dt>
+<dd>When merging two (or more) heads that touch the same lines in
+the file but in different ways the result is a merge conflict
+that requires manual intervention.  If a merge conflict occurs
+with more than two heads (an octopus merge) it's generally
+replaced by multiple three-way merges so that by the time a
+user sees a merge conflict needing manual resolution, there
+will be only two heads involved.</dd>
+<dt>merge strategy</dt>
+<dd>A Git merge strategy (see the &quot;MERGE STRATEGIES&quot; section of
+<tt class="docutils literal">git help merge</tt>) or one of the TopGit <a class="reference internal" href="#merge-strategies">merge strategies</a>
+used to merge two or more heads.</dd>
+<dt>TopGit merge strategy</dt>
+<dd>See the <a class="reference internal" href="#merge-strategies">Merge Strategies</a> section above for details but
+basically these are just in-index merges done using the
+<tt class="docutils literal">git <span class="pre">read-tree</span> <span class="pre">-m</span> <span class="pre">--aggressive</span></tt> command one or more times
+possibily assisted by the <tt class="docutils literal">git <span class="pre">merge-index</span></tt> and the
+<tt class="docutils literal">git <span class="pre">merge-file</span></tt> commands.</dd>
+<dt>octopus merge</dt>
+<dd>A merge involving more than two heads.  Note that if there are
+less than three independent heads the resulting merge that
+started out as an octopus will end up not actually being an
+octopus after all.</dd>
 <dt>out-of-date branch</dt>
 <dd><p class="first">A TopGit branch is considered to be &quot;out-of-date&quot; when ANY of
 the following are true:</p>
@@ -2133,12 +2222,19 @@ then it will contain its own base and (c) is mostly redundant.</p>
 </dd>
 <dt>remote TopGit branch</dt>
 <dd>A Git branch with the same branch name as a TopGit branch
-but living under <tt class="docutils literal"><span class="pre">refs/remotes/```&lt;some</span> remote&gt;`</tt>/`` instead
+but living under <tt class="docutils literal"><span class="pre">refs/remotes/&lt;some</span> remote&gt;/</tt> instead
 of just <tt class="docutils literal">refs/heads/</tt>.</dd>
 <dt>remote TopGit base</dt>
 <dd>The TopGit base branch corresponding to a remote TopGit branch,
 which lives under <tt class="docutils literal">refs/remotes/</tt> somewhere (depending on
 what the output of <tt class="docutils literal">tg <span class="pre">--top-bases</span></tt> is for that remote).</dd>
+<dt>three-way merge</dt>
+<dd>A three-way merge takes a common base and two heads (call them
+A and B) and creates a new file that is the common base plus
+all of the changes made between the common base and head A
+<em>AND</em> all of the changes made between the common base and
+head B.  The technique used to accomplish this is called a
+&quot;merge strategy&quot;.</dd>
 </dl>
 </blockquote>
 </div>
