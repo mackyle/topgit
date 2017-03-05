@@ -826,6 +826,12 @@ fi
 }
 EMPTY_DIRECTORY="$TESTLIB_DIRECTORY/empty"
 export TEST_DIRECTORY TEST_OUTPUT_DIRECTORY EMPTY_DIRECTORY
+GIT_CEILING_DIRECTORIES="$TESTLIB_DIRECTORY"
+[ "$TESTLIB_DIRECTORY" = "$TEST_DIRECTORY" ] ||
+	GIT_CEILING_DIRECTORIES="$TEST_DIRECTORY:$GIT_CEILING_DIRECTORIES"
+[ "$TESTLIB_DIRECTORY" = "$TEST_OUTPUT_DIRECTORY" ] ||
+	GIT_CEILING_DIRECTORIES="$TEST_OUTPUT_DIRECTORY:$GIT_CEILING_DIRECTORIES"
+export GIT_CEILING_DIRECTORIES
 
 ################################################################
 # It appears that people try to run tests with missing perl or git...
@@ -866,6 +872,7 @@ unset VISUAL EMAIL LANGUAGE COLUMNS $("$PERL_PATH" -e '
 		PERF_
 		CURL_VERBOSE
 		TRACE_CURL
+		CEILING_DIRECTORIES
 	));
 	my @vars = grep(/^GIT_/ && !/^GIT_($ok)/o, @env);
 	print join("\n", @vars);
@@ -1252,6 +1259,7 @@ trap 'TESTLIB_EXIT_OK=t; exit 1' USR1
 TRASH_DIRECTORY="trash directory.${0##*/}"
 TRASH_DIRECTORY="${TRASH_DIRECTORY%.sh}"
 test -n "$root" && TRASH_DIRECTORY="$root/$TRASH_DIRECTORY"
+test -n "$root" && GIT_CEILING_DIRECTORIES="$root:$GIT_CEILING_DIRECTORIES"
 case "$TRASH_DIRECTORY" in
 /*) ;; # absolute path is good
  *) TRASH_DIRECTORY="$TEST_OUTPUT_DIRECTORY/$TRASH_DIRECTORY" ;;
