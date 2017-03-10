@@ -9,13 +9,13 @@ Make sure tg status detects everything it should.
 
 test_plan 15
 
-unborn='HEAD -> refs/heads/master (unborn)
+unborn='HEAD -> master [unborn]
 working directory is clean'
 
-born='HEAD -> refs/heads/master (7cfc564)
+born='HEAD -> master [7cfc564]
 working directory is clean'
 
-headborn='HEAD -> refs/heads/master (7cfc564)
+headborn='HEAD -> master [7cfc564]
 '
 allfixed='
 all conflicts fixed; run "git commit" to record result'

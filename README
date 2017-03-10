@@ -512,6 +512,13 @@ tg status
 	but shows any in-progress update that's awaiting a merge resolution
 	or any other on-going TopGit activity (such as a branch creation).
 
+	With a single ``--verbose`` (or ``-v``) option include a short status
+	display for any dirty (but not untracked) files.  This also causes all
+	non file status lines to be prefixed with "## ".
+
+	With two (or more) ``--verbose`` (or ``-v``) options, additionally
+	show full symbolic ref names and unabbreviated hash values.
+
 	With the ``--exit-code`` option the exit code will be non-zero if any
 	TopGit or Git operation is currently in progress or the working
 	tree is unclean.

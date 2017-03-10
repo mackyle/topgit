@@ -1162,12 +1162,22 @@ do_status()
 	do_status_result=0
 	do_status_verbose=
 	do_status_help=
+	abbrev=refs
+	pfx=
 	while [ $# -gt 0 ] && case "$1" in
 		--help|-h)
 			do_status_help=1
 			break;;
-		--verbose|-v)
+		-vv)
+			# kludge in this common bundling option
+			abbrev=
 			do_status_verbose=1
+			pfx="## "
+			;;
+		--verbose|-v)
+			[ -z "$do_status_verbose" ] || abbrev=
+			do_status_verbose=1
+			pfx="## "
 			;;
 		--exit-code)
 			do_status_result=2
@@ -1182,11 +1192,26 @@ do_status()
 	fi
 	check_status
 	symref="$(git symbolic-ref --quiet HEAD)" || :
-	headrv="$(git rev-parse --quiet --verify --short HEAD --)" || :
+	headrv="$(git rev-parse --quiet --verify ${abbrev:+--short} HEAD --)" || :
 	if [ -n "$symref" ]; then
-		echol "HEAD -> $symref (${headrv:-unborn})"
+		uprefpart=
+		if [ -n "$headrv" ]; then
+			upref="$(git rev-parse --symbolic-full-name @{upstream} 2>/dev/null)" || :
+			if [ -n "$upref" ]; then
+				uprefpart=" ... ${upref#$abbrev/remotes/}"
+				mbase="$(git merge-base HEAD "$upref")" || :
+				ahead="$(git rev-list --count HEAD ${mbase:+--not $mbase})" || ahead=0
+				behind="$(git rev-list --count "$upref" ${mbase:+--not $mbase})" || behind=0
+				[ "$ahead$behind" = "00" ] || uprefpart="$uprefpart ["
+				[ "$ahead" = "0" ] || uprefpart="${uprefpart}ahead $ahead"
+				[ "$ahead" = "0" ] || [ "$behind" = "0" ] || uprefpart="$uprefpart, "
+				[ "$behind" = "0" ] || uprefpart="${uprefpart}behind $behind"
+				[ "$ahead$behind" = "00" ] || uprefpart="$uprefpart]"
+			fi
+		fi
+		echol "${pfx}HEAD -> ${symref#$abbrev/heads/} [${headrv:-unborn}]$uprefpart"
 	else
-		echol "HEAD -> ${headrv:-?}"
+		echol "${pfx}HEAD -> ${headrv:-?}"
 	fi
 	if [ -n "$tg_state" ]; then
 		extra=
@@ -1195,32 +1220,32 @@ do_status()
 			[ -z "$uname" ] ||
 			extra="; currently updating branch '$uname'"
 		fi
-		echol "tg $tg_state in progress$extra"
+		echol "${pfx}tg $tg_state in progress$extra"
 		if [ -s "$git_dir/tg-update/fullcmd" ] && [ -s "$git_dir/tg-update/names" ]; then
-			printf 'You are currently updating as a result of:\n  '
+			printf "${pfx}You are currently updating as a result of:\n${pfx}  "
 			cat "$git_dir/tg-update/fullcmd"
 			bcnt="$(( $(wc -w < "$git_dir/tg-update/names") ))"
 			if [ $bcnt -gt 1 ]; then
 				pcnt=0
 				! [ -s "$git_dir/tg-update/processed" ] ||
 				pcnt="$(( $(wc -w < "$git_dir/tg-update/processed") ))"
-				echo "$pcnt of $bcnt branches updated so far"
+				echo "${pfx}$pcnt of $bcnt branches updated so far"
 			fi
 		fi
 		if [ "$tg_state" = "update" ]; then
-			echol '  (use "tg update --continue" to continue)'
-			echol '  (use "tg update --skip" to skip this branch and continue)'
-			echol '  (use "tg update --stop" to stop and retain updates so far)'
-			echol '  (use "tg update --abort" to restore pre-update state)'
+			echol "${pfx}"'  (use "tg update --continue" to continue)'
+			echol "${pfx}"'  (use "tg update --skip" to skip this branch and continue)'
+			echol "${pfx}"'  (use "tg update --stop" to stop and retain updates so far)'
+			echol "${pfx}"'  (use "tg update --abort" to restore pre-update state)'
 		fi
 	fi
-	[ -z "$git_state" ] || echo "git $git_state in progress"
+	[ -z "$git_state" ] || echo "${pfx}git $git_state in progress"
 	if [ "$git_state" = "merge" ]; then
 		ucnt="$(( $(git ls-files --unmerged --full-name --abbrev :/ | wc -l) ))"
 		if [ $ucnt -gt 0 ]; then
-			echo 'fix conflicts and then "git commit" the result'
+			echo "${pfx}"'fix conflicts and then "git commit" the result'
 		else
-			echo 'all conflicts fixed; run "git commit" to record result'
+			echo "${pfx}"'all conflicts fixed; run "git commit" to record result'
 		fi
 	fi
 	if [ -z "$git_state" ]; then
@@ -1230,10 +1255,11 @@ do_status()
 			if git status --porcelain | grep -q '^[?]'; then
 				untr="; non-ignored, untracked files present"
 			fi
-			echo "working directory is clean$untr"
+			echo "${pfx}working directory is clean$untr"
 			[ -n "$tg_state" ] || do_status_result=0
 		else
-			echo "working directory is DIRTY"
+			echo "${pfx}working directory is DIRTY"
+			[ -z "$do_status_verbose" ] || git status --short --untracked-files=no
 		fi
 	fi
 }
