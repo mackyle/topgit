@@ -627,6 +627,7 @@ test_done() {
 			say_color error "# plan count of $test_wrote_plan_count does not match run count of $test_count"
 		fi
 
+		test -z "$HARNESS_ACTIVE" || exit 0
 		exit 1 ;;
 
 	esac
