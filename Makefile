@@ -53,9 +53,34 @@ please_set_SHELL_PATH_to_a_more_modern_shell:
 
 shell_compatibility_test: please_set_SHELL_PATH_to_a_more_modern_shell
 
+define POUND
+#
+endef
+AT = @
+Q_ = $(AT)
+Q_0 = $(Q_)
+Q = $(Q_$(V))
+QSED_ = $(AT)echo "[SED] $@" &&
+QSED_0 = $(QSED_)
+QSED = $(QSED_$(V))
+QHELP_ = $(AT)CMD="$@" CMD="$${CMD$(POUND)tg-}" && echo "[HELP] $${CMD%.txt}" &&
+QHELP_0 = $(QHELP_)
+QHELP = $(QHELP_$(V))
+QHELPTG_ = $(AT)echo "[HELP] tg" &&
+QHELPTG_0 = $(QHELPTG_)
+QHELPTG = $(QHELPTG_$(V))
+QHTML_ = $(AT)CMD="$@" CMD="$${CMD$(POUND)tg-}" && echo "[HTML] $${CMD%.html}" &&
+QHTML_0 = $(QHTML_)
+QHTML = $(QHTML_$(V))
+QHTMLTOPGIT_ = $(AT)echo "[HTML] topgit" &&
+QHTMLTOPGIT_0 = $(QHTMLTOPGIT_)
+QHTMLTOPGIT = $(QHTMLTOPGIT_$(V))
+QWRAPPER_ = $(AT)echo "[WRAPPER] $@" &&
+QWRAPPER_0 = $(QWRAPPER_)
+QWRAPPER = $(QWRAPPER_$(V))
+
 tg $(commands_out) $(utils_out) $(hooks_out): % : %.sh Makefile TG-BUILD-SETTINGS
-	@echo "[SED] $@"
-	@sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
+	$(QSED)sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
 		-e 's#@cmddir@#$(cmddir)#g;' \
 		-e 's#@hooksdir@#$(hooksdir)#g' \
 		-e 's#@bindir@#$(bindir)#g' \
@@ -69,20 +94,18 @@ tg $(commands_out) $(utils_out) $(hooks_out): % : %.sh Makefile TG-BUILD-SETTING
 	mv $@+ $@
 
 bin-wrappers/tg : $(commands_out) $(utils_out) $(hooks_out) tg
-	@echo "[WRAPPER] $@"
-	@[ -d bin-wrappers ] || mkdir bin-wrappers
-	@echo '#!$(SHELL_PATH_SQ)' >"$@"
-	@curdir="$$(pwd -P)"; \
-	 echo "TG_INST_CMDDIR='$$curdir' && export TG_INST_CMDDIR" >>"$@"; \
-	 echo "TG_INST_SHAREDIR='$$curdir' && export TG_INST_SHAREDIR" >>"$@"; \
-	 echo "TG_INST_HOOKSDIR='$$curdir' && export TG_INST_HOOKSDIR" >>"$@"; \
-	 echo "exec '$$curdir/tg' \"\$$@\"" >>"$@"
-	@chmod a+x "$@"
+	$(QWRAPPER){ [ -d bin-wrappers ] || mkdir bin-wrappers; } && \
+	echo '#!$(SHELL_PATH_SQ)' >"$@" && \
+	curdir="$$(pwd -P)" && \
+	echo "TG_INST_CMDDIR='$$curdir' && export TG_INST_CMDDIR" >>"$@" && \
+	echo "TG_INST_SHAREDIR='$$curdir' && export TG_INST_SHAREDIR" >>"$@" && \
+	echo "TG_INST_HOOKSDIR='$$curdir' && export TG_INST_HOOKSDIR" >>"$@" && \
+	echo "exec '$$curdir/tg' \"\$$@\"" >>"$@" && \
+	chmod a+x "$@"
 
 $(help_out): README create-help.sh
-	@CMD=`echo $@ | sed -e 's/tg-//' -e 's/\.txt//'` && \
-	echo '[HELP]' $$CMD && \
-	$(SHELL_PATH) ./create-help.sh $$CMD
+	$(QHELP)CMD="$@" CMD="$${CMD#tg-}" CMD="$${CMD%.txt}" && \
+	$(SHELL_PATH) ./create-help.sh "$$CMD"
 
 .PHONY: doc install-doc html
 
@@ -93,25 +116,22 @@ install-doc:: install-html
 html:: topgit.html $(html_out)
 
 tg-tg.txt: README create-html-usage.pl $(commands_in)
-	@echo '[HELP] tg'
-	@perl ./create-html-usage.pl --text < README > $@
+	$(QHELPTG)perl ./create-html-usage.pl --text < README > $@
 
 topgit.html: README create-html-usage.pl $(commands_in)
-	@echo '[HTML] topgit'
-	@perl ./create-html-usage.pl < README | rst2html.py - $@
+	$(QHTMLTOPGIT)perl ./create-html-usage.pl < README | rst2html.py - $@
 
 $(html_out): create-html.sh
-	@CMD=`echo $@ | sed -e 's/tg-//' -e 's/\.html//'` && \
-	echo '[HTML]' $$CMD && \
-	$(SHELL_PATH) ./create-html.sh $$CMD
+	$(QHTML)CMD="$@" CMD="$${CMD#tg-}" CMD="$${CMD%.html}" && \
+	$(SHELL_PATH) ./create-html.sh "$$CMD"
 
 .PHONY: precheck
 
 precheck:: tg
 ifeq ($(DESTDIR),)
-	@./$+ precheck
+	$(Q)./$+ precheck
 else
-	@echo skipping precheck because DESTDIR is set
+	$(Q)echo skipping precheck because DESTDIR is set
 endif
 
 .PHONY: install
@@ -139,7 +159,7 @@ clean::
 	rm -f tg $(commands_out) $(utils_out) $(hooks_out) $(help_out) topgit.html $(html_out)
 	rm -f TG-BUILD-SETTINGS
 	rm -rf bin-wrappers
-	+@$(MAKE) -C t clean
+	+$(Q)$(MAKE) -C t clean
 
 define BUILD_SETTINGS
 TG_INST_BINDIR='$(bindir)'
@@ -153,10 +173,10 @@ endef
 export BUILD_SETTINGS
 
 TG-BUILD-SETTINGS: FORCE
-	@if test x"$$BUILD_SETTINGS" != x"`cat $@ 2>/dev/null`"; then \
+	$(Q)if test x"$$BUILD_SETTINGS" != x"`cat $@ 2>/dev/null`"; then \
 		echo "* new build settings"; \
 		echo "$$BUILD_SETTINGS" >$@; \
 	fi
 
 test:: all
-	+@$(MAKE) -C t all
+	+$(Q)$(MAKE) -C t all
