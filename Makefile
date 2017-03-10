@@ -11,6 +11,10 @@ export MAKE
 # Update if you add any code that requires a newer version of git
 GIT_MINIMUM_VERSION ?= 1.8.5
 
+# This avoids having this in no less than three different places!
+TG_STATUS_HELP_USAGE = st[atus] [-v] [--exit-code]
+export TG_STATUS_HELP_USAGE
+
 prefix ?= $(HOME)
 bindir = $(prefix)/bin
 cmddir = $(prefix)/libexec/topgit
@@ -57,6 +61,7 @@ tg $(commands_out) $(utils_out) $(hooks_out): % : %.sh Makefile TG-BUILD-SETTING
 		-e 's#@bindir@#$(bindir)#g' \
 		-e 's#@sharedir@#$(sharedir)#g' \
 		-e 's#@mingitver@#$(GIT_MINIMUM_VERSION)#g' \
+		-e 's#@tgsthelpusage@#$(TG_STATUS_HELP_USAGE)#g' \
 		-e 's|@SHELL_PATH@|$(SHELL_PATH_SQ)|' \
 		$(version_arg) \
 		$@.sh >$@+ && \

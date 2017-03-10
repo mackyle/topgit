@@ -1069,7 +1069,7 @@ do_help()
 			cmd="${cmd##*/}"
 			cmd="${cmd#tg-}"
 			[ "$cmd" != "migrate-bases" ] || continue
-			[ "$cmd" != "summary" ] || cmd="status|$cmd"
+			[ "$cmd" != "summary" ] || cmd="st[atus]|$cmd"
 			cmds="$cmds$sep$cmd"
 			sep="|"
 		done
@@ -1107,8 +1107,8 @@ do_help()
 			elif [ "$1" = "help" ]; then
 				echo "Usage: ${tgname:-tg} help [-w] [<command>]"
 				echo
-			elif [ "$1" = "status" ]; then
-				echo "Usage: ${tgname:-tg} status [-v] [--exit-code]"
+			elif [ "$1" = "status" ] || [ "$1" = "st" ]; then
+				echo "Usage: ${tgname:-tg} @tgsthelpusage@"
 				echo
 			fi
 			if [ -r "$TG_INST_SHAREDIR/tg-$1.txt" ] ; then
@@ -1161,7 +1161,11 @@ do_status()
 {
 	do_status_result=0
 	do_status_verbose=
+	do_status_help=
 	while [ $# -gt 0 ] && case "$1" in
+		--help|-h)
+			do_status_help=1
+			break;;
 		--verbose|-v)
 			do_status_verbose=1
 			;;
@@ -1172,6 +1176,10 @@ do_status()
 			die "unknown status argument: $1"
 			;;
 	esac; do shift; done
+	if [ -n "$do_status_help" ]; then
+		echo "Usage: ${tgname:-tg} @tgsthelpusage@"
+		return
+	fi
 	check_status
 	symref="$(git symbolic-ref --quiet HEAD)" || :
 	headrv="$(git rev-parse --quiet --verify --short HEAD --)" || :
@@ -1774,7 +1782,7 @@ else
 			do_help "$@"
 			exit 0;;
 
-		status)
+		status|st)
 			unset base_remote
 			basic_setup
 			set_topbases
