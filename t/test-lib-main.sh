@@ -1043,6 +1043,7 @@ test_lib_functions_init
 
 last_verbose=t
 
+[ -d "$TEST_DIRECTORY/helper" ] && PATH="$TEST_DIRECTORY/helper:$PATH"
 if [ -n "$TG_TEST_INSTALLED" ]; then
 	[ -n "$(cmd_path tg || :)" ] ||
 		fatal 'error: TG_TEST_INSTALLED set but no tg found in $PATH!'

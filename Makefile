@@ -24,10 +24,12 @@ hooksdir = $(cmddir)/hooks
 commands_in := $(wildcard tg-[!-]*.sh)
 utils_in := $(wildcard tg--*.sh)
 hooks_in = hooks/pre-commit.sh
+helpers_in = $(wildcard t/helper/*.sh)
 
 commands_out = $(patsubst %.sh,%,$(commands_in))
 utils_out = $(patsubst %.sh,%,$(utils_in))
 hooks_out = $(patsubst %.sh,%,$(hooks_in))
+helpers_out = $(patsubst %.sh,%,$(helpers_in))
 PROGRAMS = $(commands_out) $(utils_out)
 help_out = $(patsubst %.sh,%.txt,tg-help.sh tg-status.sh $(commands_in))
 html_out = $(patsubst %.sh,%.html,tg-help.sh tg-status.sh tg-tg.sh $(commands_in))
@@ -46,7 +48,7 @@ endif
 
 .PHONY: FORCE
 
-all::	shell_compatibility_test precheck $(commands_out) $(utils_out) $(hooks_out) bin-wrappers/tg $(help_out) tg-tg.txt
+all::	shell_compatibility_test precheck $(commands_out) $(utils_out) $(hooks_out) $(helpers_out) bin-wrappers/tg $(help_out) tg-tg.txt
 
 please_set_SHELL_PATH_to_a_more_modern_shell:
 	@$$(:)
@@ -79,7 +81,7 @@ QWRAPPER_ = $(AT)echo "[WRAPPER] $@" &&
 QWRAPPER_0 = $(QWRAPPER_)
 QWRAPPER = $(QWRAPPER_$(V))
 
-tg $(commands_out) $(utils_out) $(hooks_out): % : %.sh Makefile TG-BUILD-SETTINGS
+tg $(commands_out) $(utils_out) $(hooks_out) $(helpers_out): % : %.sh Makefile TG-BUILD-SETTINGS
 	$(QSED)sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
 		-e 's#@cmddir@#$(cmddir)#g;' \
 		-e 's#@hooksdir@#$(hooksdir)#g' \
@@ -93,7 +95,7 @@ tg $(commands_out) $(utils_out) $(hooks_out): % : %.sh Makefile TG-BUILD-SETTING
 	chmod +x $@+ && \
 	mv $@+ $@
 
-bin-wrappers/tg : $(commands_out) $(utils_out) $(hooks_out) tg
+bin-wrappers/tg : $(commands_out) $(utils_out) $(hooks_out) $(helpers_out) tg
 	$(QWRAPPER){ [ -d bin-wrappers ] || mkdir bin-wrappers; } && \
 	echo '#!$(SHELL_PATH_SQ)' >"$@" && \
 	curdir="$$(pwd -P)" && \
@@ -156,7 +158,7 @@ install-html:: html
 .PHONY: clean
 
 clean::
-	rm -f tg $(commands_out) $(utils_out) $(hooks_out) $(help_out) topgit.html $(html_out)
+	rm -f tg $(commands_out) $(utils_out) $(hooks_out) $(helpers_out) $(help_out) topgit.html $(html_out)
 	rm -f TG-BUILD-SETTINGS
 	rm -rf bin-wrappers
 	+$(Q)$(MAKE) -C t clean
