@@ -7,13 +7,17 @@ Make sure tg status detects everything it should.
 
 . ./test-lib.sh
 
-test_plan 15
+test_plan 17
 
 unborn='HEAD -> master [unborn]
 working directory is clean'
 
+bareub='HEAD -> master [unborn]'
+
 born='HEAD -> master [7cfc564]
 working directory is clean'
+
+bare='HEAD -> master [7cfc564]'
 
 headborn='HEAD -> master [7cfc564]
 '
@@ -44,6 +48,9 @@ working directory is clean'
 test_expect_success 'tg status unborn' '
 	test "$unborn" = "$(tg status)"
 '
+test_expect_success 'tg status unborn (bare)' '
+	test "$bareub" = "$(tg -C .git -c core.bare=true status 2>&1)"
+'
 
 test_expect_success 'tg status unborn untracked' '
 	>not-ignored &&
@@ -56,6 +63,10 @@ test_tick || die
 test_expect_success LASTOK 'tg status born' '
 	test_commit --notick initial &&
 	test "$born" = "$(tg status)"
+'
+
+test_expect_success LASTOK 'tg status born (bare)' '
+	test "$bare" = "$(tg -C .git -c core.bare=true status 2>&1)"
 '
 
 test_expect_success 'tg status born untracked' '

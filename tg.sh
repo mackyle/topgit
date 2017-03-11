@@ -1249,12 +1249,13 @@ do_status()
 		fi
 	fi
 	if [ -z "$git_state" ]; then
-		ccnt="$(( $(git status --porcelain -uno | wc -l) ))"
+		gsp="$(git status --porcelain 2>/dev/null)" || return 0 # bare repository
+		gspcnt=0
+		[ -z "$gsp" ] ||
+		gspcnt="$(( $(printf '%s\n' "$gsp" | LC_ALL=C sed -n '/^??/!p' | wc -l) ))"
 		untr=
-		if [ "$ccnt" -eq 0 ]; then
-			if git status --porcelain | grep -q '^[?]'; then
-				untr="; non-ignored, untracked files present"
-			fi
+		if [ "$gspcnt" -eq 0 ]; then
+			[ -z "$gsp" ] || untr="; non-ignored, untracked files present"
 			echo "${pfx}working directory is clean$untr"
 			[ -n "$tg_state" ] || do_status_result=0
 		else
