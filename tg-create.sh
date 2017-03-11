@@ -392,7 +392,7 @@ if [ -n "$merge" ]; then
 		quiet_info "creating $name base with empty tree..."
 	else
 		quiet_info "creating $name base from $branch..."
-		git checkout -q "$(git rev-parse --verify "$prefix$branch^0" --)"
+		git checkout -q $iowopt "$(git rev-parse --verify "$prefix$branch^0" --)"
 	fi
 fi
 
@@ -407,10 +407,10 @@ if [ -n "$unborn" ]; then
 	git update-ref -m "tgcreate: create ${unborn#refs/heads/}" "HEAD" "$mtcommit" ""
 	[ "refs/heads/$name" = "$unborn" ] || warn "branch ${unborn#refs/heads/} created with empty commit"
 	git update-ref -m "tgcreate: set $topbases/$name" "refs/$topbases/$name" "HEAD" ""
-	[ "refs/heads/$name" = "$unborn" ] || git checkout -b "$name"
+	[ "refs/heads/$name" = "$unborn" ] || git checkout $iowopt -b "$name"
 else
 	git update-ref -m "tgcreate: set $topbases/$name" "refs/$topbases/$name" "HEAD" ""
-	git checkout -b "$name"
+	git checkout $iowopt -b "$name"
 fi
 
 if [ -n "$nodeps" ] || [ -z "$deps" ]; then

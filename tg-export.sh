@@ -286,7 +286,7 @@ linearize()
 			head="$(git rev-parse --verify "refs/heads/$_dep" --)"
 		fi
 		echol "$head" > "$playground/^BASE"
-		git checkout -q "$head"
+		git checkout -q $iowopt "$head"
 		[ -n "$_dep_is_tgish" ] || return 0
 	fi
 
@@ -417,7 +417,7 @@ elif [ "$driver" = "quilt" ]; then
 	echo "Exported topic branch$pl $name (total $depcount topics) to directory $output"
 
 elif [ "$driver" = "linearize" ]; then
-	git checkout -q $checkout_opt $output
+	git checkout -q $iowopt $checkout_opt $output
 
 	echol "$name"
 	if test $(git rev-parse --verify "$(pretty_tree "$name")^{tree}" --) != $(git rev-parse --verify "HEAD^{tree}" --); then

@@ -986,12 +986,12 @@ list_deps()
 }
 
 # checkout_symref_full [-f] FULLREF [SEED]
-# Just like git checkout -b FULLREF [SEED] except that FULLREF MUST start with
+# Just like git checkout $iowopt -b FULLREF [SEED] except that FULLREF MUST start with
 # refs/ and HEAD is ALWAYS set to a symref to it and [SEED] (default is FULLREF)
 # MUST be a committish which if present will be used instead of current FULLREF
 # (and FULLREF will be updated to it as well in that case)
-# With -f it's like git checkout -f (uses read-tree --reset instead of -m)
-# As an extension, FULLREF may also be a full hash to create a detached HEAD
+# With -f it's like git checkout $iowopt -f -b FULLREF (uses read-tree --reset instead of -m)
+# As an extension, FULLREF may also be a full hash to create a detached HEAD instead
 checkout_symref_full()
 {
 	_mode=-m
@@ -1482,6 +1482,8 @@ initial_setup()
 	export GIT_MERGE_AUTOEDIT
 
 	basic_setup $1
+	iowopt=
+	! vcmp "$git_version" '>=' "2.5" || iowopt="--ignore-other-worktrees"
 	auhopt=
 	! vcmp "$git_version" '>=' "2.9" || auhopt="--allow-unrelated-histories"
 	root_dir="$(git rev-parse --show-cdup)"; root_dir="${root_dir:-.}"

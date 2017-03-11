@@ -30,6 +30,11 @@ TopGit is a collection of POSIX shell scripts so a POSIX-compliant shell is
 required along with some standard POSIX-compliant utilities (e.g. sed, awk,
 cat, etc.).  Git version 1.8.5 or later is also required.
 
+To use TopGit with linked working trees (the ``git worktree add`` command),
+at least Git version 2.5.0 (obviously, since that's when the ``git worktree``
+command first appeared) is needed in which case linked working trees are then
+fully supported for use with TopGit.
+
 The scripts need to be preprocessed and installed and currently the Makefile
 that does this requires GNU make, but that's an install-time-only requirement.
 
@@ -951,6 +956,12 @@ tg checkout
 	If any of the above commands can find more than one possible
 	branch to switch to, you will be presented with the matches
 	and asked to select one of them.
+
+	If the ``--ignore-other-worktrees`` (or ``--iow``) option is given and
+	the current Git version is at least 2.5.0 then the full
+	``--ignore-other-worktrees`` option will be passed along to the
+	``git checkout`` command when it's run (otherwise the option will be
+	silently ignored and not passed to Git as it would cause an error).
 
 	The ``<pattern>`` of ``tg checkout goto`` is optional.  If you don't
 	supply it, all the available topic branches are listed and you

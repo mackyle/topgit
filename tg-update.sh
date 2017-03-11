@@ -144,7 +144,7 @@ if [ -n "$isactive" ] || [ $# -eq 1 -a x"$1" = x"--abort" ]; then
 		# assume user fixed it
 		# we could be left on a detached HEAD if we were resolving
 		# a conflict while merging a base in, fix it with a checkout
-		git checkout -q "$(strip_ref "$name")"
+		git checkout -q $iowopt "$(strip_ref "$name")"
 		;;
 	*)
 		do_status
@@ -628,7 +628,7 @@ update_branch() {
 				! v_attempt_index_merge "merge_with" -m "$msg" "refs/$topbases/$_update_name" "$_rname^0" &&
 				! {
 					# *DETACH* our HEAD now!
-					git checkout -q --detach "refs/$topbases/$_update_name" || die "git checkout failed" &&
+					git checkout -q --detach $iowopt "refs/$topbases/$_update_name" || die "git checkout failed" &&
 					git_merge -m "$msg" "$_rname^0" &&
 					merge_with="$(git rev-parse --verify HEAD --)"
 				}
@@ -663,7 +663,7 @@ update_branch() {
 			# Home, sweet home...
 			# (We want to always switch back, in case we were
 			# on the base from failed previous merge.)
-			git checkout -q "$_update_name" || die "git checkout failed" &&
+			git checkout -q $iowopt "$_update_name" || die "git checkout failed" &&
 			git_merge -m "$msg" "$merge_with^0"
 		}
 	then
