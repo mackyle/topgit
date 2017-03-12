@@ -562,40 +562,51 @@ has_remote()
 	[ -n "$base_remote" ] && ref_exists "refs/remotes/$base_remote/$1"
 }
 
+# Return the verified TopGit branch name for "$2" in "$1" or die with an error.
+# If -z "$1" still set return code but do not return result
+# As a convenience, if HEAD or @ is given and HEAD is a symbolic ref to
+# refs/heads/... then ... will be verified instead.
+# if "$3" = "-f" (for fail) then return an error rather than dying.
+v_verify_topgit_branch()
+{
+	if [ "$2" = "HEAD" ] || [ "$2" = "@" ]; then
+		_verifyname="$(git symbolic-ref HEAD 2>/dev/null)" || :
+		[ -n "$_verifyname" -o "$3" = "-f" ] || die "HEAD is not a symbolic ref"
+		case "$_verifyname" in refs/"$topbases"/*|refs/heads/*);;*)
+			[ "$3" != "-f" ] || return 1
+			die "HEAD is not a symbolic ref to the refs/heads namespace"
+		esac
+		set -- "$1" "$_verifyname" "$3"
+	fi
+	case "$2" in
+		refs/"$topbases"/*)
+			_verifyname="${2#refs/$topbases/}"
+			;;
+		refs/heads/*)
+			_verifyname="${2#refs/heads/}"
+			;;
+		*)
+			_verifyname="$2"
+			;;
+	esac
+	if ! ref_exists "refs/heads/$_verifyname"; then
+		[ "$3" != "-f" ] || return 1
+		die "no such branch: $_verifyname"
+	fi
+	if ! ref_exists "refs/$topbases/$_verifyname"; then
+		[ "$3" != "-f" ] || return 1
+		die "not a TopGit-controlled branch: $_verifyname"
+	fi
+	[ -z "$1" ] || eval "$1="'"$_verifyname"'
+}
+
 # Return the verified TopGit branch name or die with an error.
 # As a convenience, if HEAD or @ is given and HEAD is a symbolic ref to
 # refs/heads/... then ... will be verified instead.
 # if "$2" = "-f" (for fail) then return an error rather than dying.
 verify_topgit_branch()
 {
-	if [ "$1" = "HEAD" ] || [ "$1" = "@" ]; then
-		_verifyname="$(git symbolic-ref HEAD 2>/dev/null)" || :
-		[ -n "$_verifyname" -o "$2" = "-f" ] || die "HEAD is not a symbolic ref"
-		case "$_verifyname" in refs/"$topbases"/*|refs/heads/*);;*)
-			[ "$2" != "-f" ] || return 1
-			die "HEAD is not a symbolic ref to the refs/heads namespace"
-		esac
-		set -- "$_verifyname" "$2"
-	fi
-	case "$1" in
-		refs/"$topbases"/*)
-			_verifyname="${1#refs/$topbases/}"
-			;;
-		refs/heads/*)
-			_verifyname="${1#refs/heads/}"
-			;;
-		*)
-			_verifyname="$1"
-			;;
-	esac
-	if ! ref_exists "refs/heads/$_verifyname"; then
-		[ "$2" != "-f" ] || return 1
-		die "no such branch: $_verifyname"
-	fi
-	if ! ref_exists "refs/$topbases/$_verifyname"; then
-		[ "$2" != "-f" ] || return 1
-		die "not a TopGit-controlled branch: $_verifyname"
-	fi
+	v_verify_topgit_branch _verifyname "$@" || return
 	printf '%s' "$_verifyname"
 }
 
