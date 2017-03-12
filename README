@@ -963,6 +963,9 @@ tg checkout
 	``git checkout`` command when it's run (otherwise the option will be
 	silently ignored and not passed to Git as it would cause an error).
 
+	The ``--force`` (or ``-f``) option, when given, gets passed through to
+	the ``git checkout`` command.
+
 	The ``<pattern>`` of ``tg checkout goto`` is optional.  If you don't
 	supply it, all the available topic branches are listed and you
 	can select one of them.

@@ -7,7 +7,7 @@
 
 ## Parse options
 
-USAGE="Usage: ${tgname:-tg} [...] checkout [--iow] [ [ push | pop ] [ -a ] | [goto] [--] <pattern> ]"
+USAGE="Usage: ${tgname:-tg} [...] checkout [--iow] [-f] [ [ push | pop ] [ -a ] | [goto] [--] <pattern> ]"
 
 # Subcommands.
 push=
@@ -21,10 +21,11 @@ all=
 pattern=
 
 iowoptval=
+forceval=
 checkout() {
 	_head="$(git rev-parse --revs-only --abbrev-ref=loose HEAD --)"
 	ref_exists "refs/$topbases/$_head" && branch_annihilated "$_head" && _checkout_opts="-f"
-	git checkout $iowoptval ${_checkout_opts} "$1"
+	git checkout $iowoptval $forceval ${_checkout_opts} "$1"
 }
 
 usage() {
@@ -44,6 +45,8 @@ while [ $# -gt 0 ]; do
 			all=1;;
 		--ignore-other-worktrees|--iow)
 			iowoptval="$iowopt";;
+		--force|-f)
+			forceval=-f;;
 		child|next|push)
 			push=1;;
 		parent|prev|pop|..)
