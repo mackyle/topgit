@@ -1859,7 +1859,7 @@ else
 			[ -z "$noremote" ] || unset base_remote
 
 			nomergesetup="$showing_help"
-			case "$cmd" in base|info|log|summary|rebase|revert|tag)
+			case "$cmd" in base|contains|info|log|rebase|revert|summary|tag)
 				# avoid merge setup where not necessary
 
 				nomergesetup=1
@@ -1880,7 +1880,7 @@ else
 			_use_ref_cache=
 			tg_read_only=1
 			case "$cmd$showing_help" in
-				summary|info|export|tag)
+				contains|export|info|summary|tag)
 					_use_ref_cache=1;;
 				annihilate|create|delete|depend|import|update)
 					tg_read_only=;;

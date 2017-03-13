@@ -472,6 +472,7 @@ The ``tg`` tool has several subcommands:
 	:`tg annihilate`_:  Mark a TopGit-controlled branch as defunct
 	:`tg base`_:	    Show base commit for one or more TopGit branches
 	:`tg checkout`_:    Shortcut for git checkout with name matching
+	:`tg contains`_:    Which TopGit-controlled branch contains the commit
 	:`tg create`_:	    Create a new TopGit-controlled branch
 	:`tg delete`_:	    Delete a TopGit-controlled branch cleanly
 	:`tg depend`_:	    Add a new dependency to a TopGit-controlled branch
@@ -926,6 +927,67 @@ tg summary
 	  -i		Use TopGit metadata from the index instead of the branch
 	  -w		Use TopGit metadata from the working tree instead of the branch
 
+tg contains
+~~~~~~~~~~~
+	Search all TopGit-controlled branches (and optionally their remotes)
+	to find which TopGit-controlled branch contains the specified commit.
+
+	This is more than just basic branch containment as provided for by the
+	``git branch --contains`` command.  While the shown branch name(s)
+	will, indeed, be one (or more) of those output by the
+	``git branch --contains`` command, the result(s) will exclude any
+	TopGit-controlled branches from the result(s) that have one (or more)
+	of their TopGit dependencies (either direct or indirect) appearing in
+	the ``git branch --contains`` output.
+
+	Normally the result will be only the one, single TopGit-controlled
+	branch for which the specified committish appears in the ``tg log``
+	output for that branch (unless the committish lies outside the
+	TopGit-controlled portion of the DAG and ``--no-strict`` was used).
+
+	In other words, if a ``tg patch`` is generated for the found branch
+	(assuming one was found and a subsequent commit in the same branch
+	didn't then revert or otherwise back out the change), then that patch
+	will include the changes introduced by the specified committish
+	(unless, of course, that committish is outside the TopGit-controlled
+	portion of the DAG and ``--no-strict`` was given).
+
+	This can be very helpful when, for example, a bug is discovered and
+	then after using ``git bisect`` (or some other tool) to find the
+	offending commit it's time to commit the fix.  But because the
+	TopGit merging history can be quite complicated and maybe the one
+	doing the fix wasn't the bug's author (or the author's memory is just
+	going), it can sometimes be rather tedious to figure out which
+	TopGit branch the fix belongs in.  The ``tg contains`` command can
+	quickly tell you the answer to that question.
+
+	With the ``--remotes`` (or ``-r``) option a TopGit-controlled remote
+	branch name may be reported as the result but only if there is no
+	non-remote branch containing the committish (this can only happen
+	if at least one of the TopGit-controlled local branches are not yet
+	up-to-date with their remotes).
+
+	With the ``--verbose`` option show which TopGit DAG head(s) (one or
+	more of the TopGit-controlled branch names output by
+	``tg summary --heads``) have the result as a dependency (either direct
+	or indirect).  Using this option will noticeably increase running time.
+
+	With the default ``--strict`` option, results for which the base of the
+	TopGit-controlled branch contains the committish will be suppressed.
+	For example, if the committish was deep-down in the master branch
+	history somewhere far outside of the TopGit-controlled portion of
+	the DAG, with ``--no-strict``, whatever TopGit-controlled branch(es)
+	first picked up history containing that committish will be shown.
+	While this is a useful result it's usually not the desired result
+	which is why it's not the default.
+
+	To summarize, even with ``--remotes``, remote results are only shown
+	if there are no non-remote results.  Without ``--no-strict`` (because
+	``--strict`` is the default) results outside the TopGit-controlled
+	portion of the DAG are never shown and even with ``--no-strict`` they
+	will only be shown if there are no ``--strict`` results.  Finally,
+	the TopGit head info shown with ``--verbose`` only ever appears for
+	local (i.e. not a remote branch) results.
 
 tg checkout
 ~~~~~~~~~~~
