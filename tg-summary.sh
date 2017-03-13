@@ -15,6 +15,7 @@ head_from=
 branches=
 head=
 heads=
+headsindep=
 headsonly=
 exclude=
 tgish=
@@ -36,8 +37,12 @@ while [ -n "$1" ]; do
 		head_from="$arg";;
 	-t|--list|-l)
 		terse=1;;
-	--heads)
-		heads=1;;
+	--heads|--topgit-heads)
+		heads=1
+		headsindep=;;
+	--heads-independent)
+		heads=1
+		headsindep=1;;
 	--heads-only)
 		headsonly=1;;
 	--with-deps)
@@ -103,13 +108,17 @@ done
 get_branch_list()
 {
 	if [ -n "$branches" ]; then
-		printf '%s\n' $branches
+		if [ -n "$1" ]; then
+			printf '%s\n' $branches | LC_ALL=C sort -u
+		else
+			printf '%s\n' $branches
+		fi
 	else
 		non_annihilated_branches
 	fi
 }
 
-show_heads()
+show_heads_independent()
 {
 	topics="$(get_temp topics)"
 	get_branch_list | sed -e 's,^\(.*\)$,refs/heads/\1 \1,' |
@@ -121,6 +130,37 @@ show_heads()
 		case "$exclude" in *" $name "*) continue; esac
 		printf '%s\n' "$name"
 	done
+}
+
+show_heads_topgit()
+{
+	topics="$(get_temp topics)"
+	topics2=
+	[ -z "$branches" ] || topics2="$(get_temp topics2)"
+	deplist="$(get_temp deplist)"
+	get_branch_list 1 >"$topics"
+	while read -r onetopic; do
+		if [ -n "$branches" ]; then
+			! branch_annihilated "$onetopic" || continue
+			echol "$onetopic" >>"$topics2"
+		fi
+		cat_deps "$onetopic"
+	done <"$topics" | LC_ALL=C sort -u >"$deplist"
+	[ -z "$branches" ] || topics="$topics2"
+	join -v 1 "$topics" "$deplist" |
+	while read -r name; do
+		case "$exclude" in *" $name "*) continue; esac
+		printf '%s\n' "$name"
+	done
+}
+
+show_heads()
+{
+    if [ -n "$headsindep" ]; then
+	    show_heads_independent "$@"
+    else
+	    show_heads_topgit "$@"
+    fi
 }
 
 if [ -n "$heads" -a -z "$rdeps" ]; then

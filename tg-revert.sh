@@ -5,7 +5,7 @@
 # GPLv2
 
 USAGE="Usage: ${tgname:-tg} [...] revert (-f | -i | -n) [-q] [--tgish-only] [--no-deps] [--no-stash] [--exclude <ref>...] (<tagname> | --stash) [<ref>...]"
-USAGE="$USAGE$lf   Or: ${tgname:-tg} [...] revert [-l] [--no-short] [--hash] [--tgish-only] [(--deps | --rdeps)] [--exclude <ref>...] (<tagname> | --stash) [(--heads | <ref>...)]"
+USAGE="$USAGE$lf   Or: ${tgname:-tg} [...] revert [-l] [--no-short] [--hash] [--tgish-only] [(--deps | --rdeps)] [--exclude <ref>...] (<tagname> | --stash) [(--[topgit-]heads] | <ref>...)]"
 
 usage()
 {
@@ -32,6 +32,7 @@ exclude=
 quiet=
 short=
 hashonly=
+headstopgit=
 
 while [ $# -gt 0 ]; do case "$1" in
 	-h|--help)
@@ -107,6 +108,12 @@ esac; shift; done
 [ -n "$1" ] || { echo "Tag name required" >&2; usage 1; }
 tagname="$1"
 shift
+[ "$1" != "--heads-independent" ] || { shift; set -- --heads "$@"; }
+if [ "$1" = "--topgit-heads" ]; then
+	shift
+	headstopgit=1
+	set -- "--heads" "$@"
+fi
 [ -n "$list" -o "$1" != "--heads" ] || usage 1
 [ "$tagname" != "--stash" ] || tagname=refs/tgstash
 case "$tagname" in --stash"@{"*"}")
@@ -165,16 +172,50 @@ create_ref_dirs
 tg_ref_cache_only=1
 tg_read_only=1
 
-[ $# -ne 0 -o -z "$rdeps$deps" ] || set -- --heads
-[ $# -ne 1 -o -z "$deps" -o "$1" != "--heads" ] || { deps=; set --; }
-if [ $# -eq 1 -a "$1" = "--heads" ]; then
+get_recorded_ref()
+{
+	printf '%s\n' "$1" | join - "$trf" | cut -d ' ' -f 2 || :
+}
+
+show_topgit_heads()
+{
+	topics="$(get_temp topics)"
+	topics2="$(get_temp topics)"
+	deplist="$(get_temp deplist)"
+	<"$trf" >"$topics" \
+	LC_ALL=C sed -e '\,^refs/'"$topbasesrx"'/,!d' -e 's,^refs/'"$topbasesrx"'/,refs/heads/,' -e 's/ .*//'
+	while read -r oneref; do
+		_rev="$(get_recorded_ref "$oneref")" && [ -n "$_rev" ] || continue
+		printf '%s\n' "$oneref" >>"$topics2"
+		git cat-file blob "$_rev:.topdeps" 2>/dev/null || :
+	done <"$topics" | LC_ALL=C sed -e 's,^,refs/heads/,' | LC_ALL=C sort -u >"$deplist"
+	topics="$topics2"
+	join -v 1 "$topics" "$deplist"
+}
+
+show_indep_heads()
+{
 	srt="$(get_temp sort)"
 	LC_ALL=C sort -b -k2,2 <"$trf" >"$srt"
-	set -- $(
 	git merge-base --independent $(cut -d ' ' -f 2 <"$srt") |
 	LC_ALL=C sort -b -k1,1 |
 	join -2 2 -o 2.1 - "$srt" |
-	LC_ALL=C sort)
+	LC_ALL=C sort
+}
+
+show_heads()
+{
+	if [ -n "$headstopgit" ]; then
+		show_topgit_heads "$@"
+	else
+		show_indep_heads "$@"
+	fi
+}
+
+[ $# -ne 0 -o -z "$rdeps$deps" ] || { set -- --heads; headstopgit=1; }
+[ $# -ne 1 -o -z "$deps" -o "$1" != "--heads" ] || { deps=; set --; }
+if [ $# -eq 1 -a "$1" = "--heads" ]; then
+	set -- $(show_heads)
 fi
 
 is_tgish() {

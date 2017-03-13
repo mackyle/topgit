@@ -845,6 +845,18 @@ tg summary
 	combined with ``--rdeps`` behaves as though ``--rdeps`` were run with
 	the output of ``--heads``.
 
+	The ``--heads-independent`` option works just like ``--heads`` except
+	that it computes the heads using ``git merge-base --independent``
+	rather than examining the TopGit ``.topdeps`` relationships.  If the
+	TopGit branches are all up-to-date (as shown in ``tg summary``) then
+	both ``--heads`` and ``--heads-independent`` should compute the same
+	list of heads (unless some overlapping TopGit branches have been
+	manually created).  If not all the TopGit branches are up-to-date then
+	the ``--heads-independent`` results may have extra items in it, but
+	occasionally that's what's needed; usually it's the wrong answer.
+	(Note that ``--topgit-heads`` is accepted as an alias for ``--heads``
+	as well.)
+
 	Using ``--heads-only`` behaves as though the output of ``--heads`` was
 	passed as the list of branches along with ``--without-deps``.
 
@@ -1343,13 +1355,21 @@ tg revert
 	data are shown.  The ``--deps`` option shows the specified refs and all
 	of their dependencies in a single list with no duplicates.  The
 	``--rdeps`` option shows a display similar to ``tg summary --rdeps``
-	for each ref or all independent heads if no ref is given on the command
+	for each ref or all TopGit heads if no ref is given on the command
 	line.  The standard ``--no-short``, ``--short=n`` etc. options may be
 	used to override the default ``--short`` output.  With ``--hash`` (or
 	``--hash-only``) show only the hash in ``--list`` mode in which case
 	the default is ``--no-short``.   The ``--hash`` option can be used much
 	like the ``git rev-parse --verify`` command to extract a specific hash
 	value out of a TopGit tag.
+
+	Note that unlike `tg summary`_, here ``--heads`` actually does mean the
+	``git merge-base --independent`` heads of the stored refs from the tag
+	data.  To see only the independent TopGit topic branch heads stored in
+	the tag data use the ``--topgit-heads`` option instead.  The default
+	for the ``--rdeps`` option is ``--topgit-heads`` but ``--heads`` can
+	be given explicitly to change that.  (Note that ``--heads-independent``
+	is accepted as an alias for ``--heads`` as well.)
 
 	The revert mode has three submodes, dry-run mode (``-n`` or
 	``--dry-run``), force mode (``-f`` or ``--force``) and interactive mode
