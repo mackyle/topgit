@@ -5,7 +5,7 @@
 # GPLv2
 
 USAGE="\
-Usage: ${tgname:-tg} [...] contains [-v] [-r] [--no-strict] [--] <committish>"
+Usage: ${tgname:-tg} [...] contains [-v] [-r] [--ann] [--no-strict] [--] <committish>"
 
 usage()
 {
@@ -20,6 +20,7 @@ usage()
 verbose=
 remotes=
 strict=1
+annok=
 
 while [ $# -gt 0 ]; do case "$1" in
 	-h|--help)
@@ -27,6 +28,9 @@ while [ $# -gt 0 ]; do case "$1" in
 		;;
 	-r|--remotes)
 		remotes=1
+		;;
+	--ann|--annihilated|--annihilated-ok|--annihilated-okay)
+		annok=1
 		;;
 	--heads)
 		echo "Did you mean --verbose (-v) instead of --heads?" >&2
@@ -80,6 +84,16 @@ v_is_remote_tgbranch()
 		return 0
 	fi
 	git rev-parse --quiet --verify "refs/remotes/$2/${oldbases#heads/}/$3^0" -- >/dev/null || return 1
+	if [ -z "$annok" ]; then
+		rmb="$(git merge-base "refs/remotes/$2/${oldbases#heads/}/$3^0" "refs/remotes/$2/$3^0" 2>/dev/null)" || :
+		if [ -n "$rmb" ]; then
+			rmbtree="$(git rev-parse --quiet --verify "$rmb^{tree}" --)" || :
+			rbrtree=
+			[ -z "$rmbtree" ] ||
+			rbrtree="$(git rev-parse --quiet --verify "refs/remotes/$2/$3^{tree}" --)" || :
+			[ -z "$rmbtree" ] || [ -z "$rbrtree" ] || [ "$rmbtree" != "$rbrtree" ] || return 1
+		fi
+	fi
 	[ -z "$1" ] || eval "$1="'"$oldbases"'
 }
 
@@ -113,6 +127,7 @@ remotewide=0
 while IFS= read -r branch && [ -n "$branch" ]; do
 	branch="${branch#??}"
 	if v_verify_topgit_branch "" "$branch" -f; then
+		[ -n "$annok" ] || ! branch_annihilated "$branch" || continue
 		if contained_by "$findrev" "refs/$topbases/$branch"; then
 			[ -z "$strict" ] || continue
 			depth="$(git rev-list --count --ancestry-path "refs/$topbases/$branch" --not "$findrev")"
@@ -164,9 +179,12 @@ while read -r depth ref; do
 done | LC_ALL=C sort -u |
 while read -r oneresult; do
 	headinfo=
-	[ -z "$depslist" ] || 
+	isann=
+	[ -z "$annok" ] || [ -z "$depslist" ] || ! branch_annihilated "$oneresult" || isann=1
+	[ -z "$depslist" ] || [ -n "$isann" ] ||
 	headinfo="$(printf '%s\n' "$oneresult" | join -o 2.2 - "$depslist" |
 		LC_ALL=C sort -u | paste -d , -s - | sed -e 's/,/, /g')"
+	[ -z "$annok" ] || [ -z "$depslist" ] || [ -z "$isann" ] || headinfo=":annihilated:"
 	if [ -z "$headinfo" ]; then
 		printf '%s\n' "$oneresult"
 	else

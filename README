@@ -945,6 +945,16 @@ tg contains
 	output for that branch (unless the committish lies outside the
 	TopGit-controlled portion of the DAG and ``--no-strict`` was used).
 
+	Unless ``--annihilated-okay`` (or ``--ann`` or ``--annihilated``) is
+	used then annihilated branches will be immediately removed from the
+	``git branch --contains`` output before doing anything else.  This
+	means a committish that was originally located in a now-annihilated
+	branch will show up in whatever branch picked up the annihilated
+	branch's changes (if there is one).  This is usually the correct
+	answer, but occasionally it's not; hence this option.  If this option
+	is used together with ``--verbose`` then annihilated branches will
+	be shown as "[:annihilated:]".
+
 	In other words, if a ``tg patch`` is generated for the found branch
 	(assuming one was found and a subsequent commit in the same branch
 	didn't then revert or otherwise back out the change), then that patch
@@ -987,7 +997,8 @@ tg contains
 	portion of the DAG are never shown and even with ``--no-strict`` they
 	will only be shown if there are no ``--strict`` results.  Finally,
 	the TopGit head info shown with ``--verbose`` only ever appears for
-	local (i.e. not a remote branch) results.
+	local (i.e. not a remote branch) results.  Annihilated branches are
+	never considered possible matches without ``--annihilated-okay``.
 
 tg checkout
 ~~~~~~~~~~~
