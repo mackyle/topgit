@@ -20,6 +20,7 @@ usage()
 
 heads=
 leaves=
+verbose=
 
 while [ $# -gt 0 ]; do case "$1" in
 	-h|--help)
@@ -30,6 +31,12 @@ while [ $# -gt 0 ]; do case "$1" in
 		;;
 	--leaves)
 		leaves=1
+		;;
+	-v|--verbose)
+		verbose=$(( ${verbose:-0} + 1 ))
+		;;
+	-vv|-vvv|-vvvv|-vvvvv)
+		verbose=$(( ${verbose:-0} + ${#1} - 1 ))
 		;;
 	-?*)
 		echo "Unknown option: $1" >&2
@@ -80,12 +87,52 @@ base_rev="$(git rev-parse --short --verify "refs/$topbases/$name" -- 2>/dev/null
 measure="$(measure_branch "refs/heads/$name" "$base_rev")"
 
 echo "Topic Branch: $name ($measure)"
-if [ "$(git rev-parse --verify --short "refs/heads/$name" --)" = "$base_rev" ]; then
+
+nocommits=
+[ "$(git rev-parse --verify --short "refs/heads/$name" --)" != "$base_rev" ] || nocommits=1
+
+[ -n "$nocommits" ] || git cat-file blob "$name:.topmsg" | grep ^Subject: || :
+
+# true if $1 is contained by (or the same as) $2
+contained_by()
+{
+	[ "$(git rev-list --count --max-count=1 "$1" --not "$2" --)" = "0" ]
+}
+
+if [ "${verbose:-0}" -ge 1 ]; then
+	scratch="$(get_temp scratch)"
+	printf '%s\n' "$name" >"$scratch"
+	dependents="$(get_temp dependents_list)"
+	$tg summary --deps | sort -k2,2 | join -1 2 - "$scratch" | cut -d ' ' -f 2 | sort -u >"$dependents"
+	if ! [ -s "$dependents" ]; then
+		echo "Dependents: [none]"
+	else
+		if [ "${verbose:-0}" -le 1 ]; then
+			sed '1{ s/^/Dependents: /; n; }; s/^/            /;' <"$dependents"
+		else
+			minwidth=0
+			while read -r endent; do
+				[ ${#endent} -le $minwidth ] || minwidth=${#endent}
+			done <"$dependents"
+			prefix="Dependents:"
+			while read -r endent; do
+				ood=
+				contained_by "refs/heads/$name" "refs/$topbases/$endent" || ood=1
+				if [ -n "$ood" ]; then
+					printf '%s %-*s [needs merge]\n' "$prefix" $minwidth "$endent"
+				else
+					printf '%s %s\n' "$prefix" "$endent"
+				fi
+				prefix="           "
+			done <"$dependents"
+		fi
+	fi
+fi
+
+if [ -n "$nocommits" ]; then
 	echo "* No commits."
 	exit 0
 fi
-
-git cat-file blob "$name:.topmsg" | grep ^Subject: || :
 
 echo "Base: $base_rev"
 branch_contains "refs/heads/$name" "refs/$topbases/$name" ||
@@ -142,5 +189,3 @@ if [ -s "$depcheck2" ]; then
 else
 	echo "Up-to-date${missing_deps:+ (except for missing dependencies)}."
 fi
-
-# vim:noet

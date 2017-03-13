@@ -710,6 +710,11 @@ tg info
 	indicate how many commits on the branch (11) and how many of those
 	are non-merge commits (3).
 
+	With ``--verbose`` (or ``-v``) include a list of dependents (i.e. other
+	branches that depend on this one).  Another ``--verbose`` annotates
+	them with "[needs merge]" if the current tip of branch for which info
+	is being shown has not yet been merged into the base of the dependent.
+
 	Alternatively, if ``--heads`` is used then which of the independent
 	TopGit branch heads (as output by ``tg summary --topgit-heads``)
 	logically contains the specified commit (which may be any committish --
