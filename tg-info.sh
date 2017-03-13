@@ -44,22 +44,28 @@ esac; shift; done
 [ $# -eq 1 ] || die "name already specified ($1)"
 name="$1"
 
-# true if $1 is an ancestor of (or the same as) $2 
-is_ancestor()
+process_dep()
 {
-	[ "$(git rev-list --count --max-count=1 "$1" --not "$2" --)" = "0" ]
+	if [ -n "$_dep_is_tgish" ] && [ -z "$_dep_missing$_dep_annihilated" ]; then
+		printf '%s\n' "$_dep ${_depchain##* }"
+	fi
 }
 
 if [ -n "$heads" ]; then
+	no_remotes=1
+	base_remote=
 	verify="$name"
 	! test="$(verify_topgit_branch "${name:-HEAD}" -f)" || verify="refs/heads/$test"
 	hash="$(git rev-parse --verify --quiet "$verify" --)" || die "no such ref: $name"
-	$tg summary --tgish-only --heads |
-	while read -r head; do
-		if is_ancestor "$hash" "refs/heads/$head"; then
-			printf '%s\n' "$head"
-		fi
-	done
+	depslist="$(get_temp depslist)"
+	$tg summary --topgit-heads |
+	while read -r onetghead; do
+		printf '%s %s\n' "$onetghead" "$onetghead"
+		recurse_deps process_dep "$onetghead"
+	done | LC_ALL=C sort -u >"$depslist"
+	git branch --no-color --contains "$hash" | LC_ALL=C cut -c 3- |
+	LC_ALL=C join -o 2.2 - "$depslist" |
+	LC_ALL=C sort -u
 	exit 0
 fi
 

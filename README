@@ -710,9 +710,16 @@ tg info
 	are non-merge commits (3).
 
 	Alternatively, if ``--heads`` is used then which of the independent
-	TopGit branch heads (as output by ``tg summary --tgish-only --heads)``
-	contains the specified commit (which may be any committish -- defaults
-	to ``HEAD`` if not given).  Zero or more results will be output.
+	TopGit branch heads (as output by ``tg summary --topgit-heads``)
+	logically contains the specified commit (which may be any committish --
+	defaults to ``HEAD`` if not given).  Zero or more results will be
+	output.  Note that "logically" means with regard to the TopGit
+	dependency relationships as established by the ``.topdeps`` file(s).
+	It's the answer that would be given when all the TopGit branches are
+	up-to-date (even though they need not be to use this option) and the
+	``git branch --contains`` command is run and the output then filtered
+	to only those branches that appear in ``tg summary --topgit-heads``.
+	This computation may require several seconds on complex repositories.
 
 	If ``--leaves`` is used then the unique list of leaves of the current
 	or specified topic branch is shown as one fully-qualified ref per line.
