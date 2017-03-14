@@ -174,13 +174,13 @@ test_expect_success 'migrate new (refs & remotes) to old' '
 	test_cmp spec spec_old
 '
 
-test_expect_failure 'migrate old top-bases HEAD symref to new' '
+test_expect_success 'migrate old top-bases HEAD symref to new' '
 	tg -C r7 migrate-bases --force &&
 	show_refnames r7 >refs &&
 	test_cmp refs refs_new-HEAD
 '
 
-test_expect_failure 'migrate new top-bases HEAD symref to old' '
+test_expect_success 'migrate new top-bases HEAD symref to old' '
 	tg -C r8 migrate-bases --force --reverse &&
 	show_refnames r8 >refs &&
 	test_cmp refs refs_old-HEAD

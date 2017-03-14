@@ -115,9 +115,13 @@ v_transform_base() {
 	case "$2" in
 		"refs/top-bases"/[!/]*)
 			_newb="refs/heads/{top-bases}/${2#refs/top-bases/}"
+			_wasrevdir=
+			_wasremote=
 			;;
 		"refs/heads/{top-bases}"/[!/]*)
 			_newb="refs/top-bases/${2#refs/heads/$topbraces/}"
+			_wasremote=
+			_wasrevdir=1
 			;;
 		"refs/remotes"/[!/]*)
 			_rb="${2#refs/remotes/}"
@@ -126,9 +130,13 @@ v_transform_base() {
 			case "$_rr" in
 				"top-bases"/[!/]*)
 					_newb="refs/remotes/$_rn/{top-bases}/${_rr#top-bases/}"
+					_wasrevdir=
+					_wasremote=1
 					;;
 				"{top-bases}"/[!/]*)
 					_newb="refs/remotes/$_rn/top-bases/${_rr#$topbraces/}"
+					_wasrevdir=1
+					_wasremote=1
 					;;
 			esac
 			;;
@@ -140,6 +148,35 @@ v_transform_base() {
 	[ -z "$1" ] || eval "$1="
 	return 1
 }
+
+symrefhead="$(git symbolic-ref HEAD 2>/dev/null)" || :
+if [ "$(cd "$git_dir" && pwd -P)" != "$(cd "$git_common_dir" && pwd -P)" ]; then
+	symrefmain="$(git --git-dir="$git_common_dir" symbolic-ref HEAD 2>/dev/null)" || :
+else
+	symrefmain=
+fi
+headnote=
+mainnote=
+if [ -n "$symrefhead" ] && v_transform_base newrefhead "$symrefhead"; then
+	headnote=" [HEAD]"
+	symrefheadrmt="$_wasremote"
+	symrefheadrev="$_wasrevdir"
+fi
+if [ -n "$symrefmain" ]; then
+	if [ "$symrefhead" = "$symrefmain" ]; then
+		if [ -n "$headnote" ]; then
+			headnote=" [HEAD, main]"
+			mainnote="$headnote"
+			newrefmain="$newrefhead"
+			symrefmainrmt="$symrefheadrmt"
+			symrefmainrev="$symrefheadrev"
+		fi
+	elif v_transform_base newrefmain "$symrefmain"; then
+		mainnote=" [main]"
+		symrefmainrmt="$_wasremote"
+		symrefmainrev="$_wasrevdir"
+	fi
+fi
 
 for r in $remotes; do
 	nv="+refs/$newbases/*:refs/remotes/$r/${newbases#heads/}/*"
@@ -159,8 +196,9 @@ for r in $remotes; do
 	fi
 done
 
-git for-each-ref --format='%(refname) %(objecttype) %(objectname)' $refpats |
-while read -r rn rt rh; do
+sawhead=
+sawmain=
+while read -r rn rt rh && [ -n "$rn" ] && [ -n "$rt" ] && [ -n "$rh" ]; do
 	if [ -z "$orphans" ] && ! not_orphan_base "$rn"; then
 		echo "skipping orphan base (use --orphans): $rn" >&2
 		continue
@@ -233,12 +271,59 @@ while read -r rn rt rh; do
 			fi
 		fi
 	fi
-	printf 'update: %s\n -> %s\n' "$rn" "$newb"
+	note=
+	if [ "$rn" = "$symrefhead" ] && [ "$newb" = "$newrefhead" ]; then
+		note="$headnote"
+		sawhead=1
+	elif [ "$rn" = "$symrefmain" ] && [ "$newb" = "$newrefmain" ]; then
+		note="$mainnote"
+		sawmain=1
+	fi
+	printf 'update: %s%s\n -> %s\n' "$rn" "$note" "$newb"
 	if [ -n "$force" ]; then
 		git update-ref "$newb" "$rh"
 		if [ "$(git rev-parse --quiet --verify "$newb" --)" = "$rh" ] && [ "$newb" != "$rn" ]; then
 			git update-ref -d "$rn"
 		fi
+		if [ "$rn" = "$symrefhead" ]; then
+			git symbolic-ref HEAD "$newrefhead"
+		fi
+		if [ "$rn" = "$symrefmain" ]; then
+			git --git-dir="$git_common_dir" symbolic-ref HEAD "$newrefmain"
+		fi
 	fi
-done
-[ $? -eq 0 ] || exit 1
+done <<EOT
+$(git for-each-ref --format='%(refname) %(objecttype) %(objectname)' $refpats)
+EOT
+
+# [ -n "$1" ] => remote update
+# [ -n "$2" ] => reverse update
+doing_update_type()
+{
+	if [ -n "$1" ]; then
+		[ -z "$noremotes" ] || return 1
+	else
+		[ -z "$remotesonly" ] || return 1
+	fi
+	if [ -n "$2" ]; then
+		[ -n "$reverse" ] || return 1
+	else
+		[ -z "$reverse" ] || return 1
+	fi
+	return 0
+}
+
+# In case just the HEAD symref needs updating
+if [ -z "$sawhead" ] && [ -n "$headnote" ] && doing_update_type "$symrefheadrmt" "$symrefheadrev"; then
+	[ "$symrefhead" != "$symrefmain" ] || sawmain=1
+	printf 'update [symref only]: %s%s\n -> %s\n' "$symrefhead" "$headnote" "$newrefhead"
+	[ -z "$force" ] || git symbolic-ref HEAD "$newrefhead"
+	[ -z "$force" ] || [ "$symrefhead" != "$symrefmain" ] ||
+	git --git-dir="$git_common_dir" symbolic-ref HEAD "$newrefmain"
+fi
+if [ -z "$sawmain" ] && [ -n "$mainnote" ] && doing_update_type "$symrefmainrmt" "$symrefmainrev"; then
+	printf 'update [symref only]: %s%s\n -> %s\n' "$symrefmain" "$mainnote" "$newrefmain"
+	git --git-dir="$git_common_dir" symbolic-ref HEAD "$newrefmain"
+fi
+
+exit 0
