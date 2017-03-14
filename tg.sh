@@ -1835,7 +1835,7 @@ else
 
 		top-bases)
 			# Maintenance command
-			setup_git_dirs
+			! git rev-parse --git-dir >/dev/null 2>&1 || setup_git_dirs
 			set_topbases
 			echol "refs/$topbases";;
 

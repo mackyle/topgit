@@ -9,7 +9,19 @@ TEST_NO_CREATE_REPO=1
 
 . ./test-lib.sh
 
-test_plan 7
+test_plan 9
+
+test_expect_success 'no repo refs bases default' '
+	test_must_fail tg status >/dev/null 2>&1 &&
+	test "$(tg --top-bases)" = "refs/top-bases"
+'
+
+test_expect_success 'no repo hard-coded refs bases' '
+	test_must_fail tg status >/dev/null 2>&1 &&
+	test_must_fail tg -c topgit.top-bases=bad --top-bases &&
+	test "$(tg -c topgit.top-bases=refs --top-bases)" = "refs/top-bases" &&
+	test "$(tg -c topgit.top-bases=heads -c topgit.top-bases=refs --top-bases)" = "refs/top-bases"
+'
 
 test_expect_success 'test setup' '
 	test_create_repo noset-mt &&
