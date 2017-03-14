@@ -1845,10 +1845,34 @@ else
 				isutil="-"
 			esac
 			[ -r "$TG_INST_CMDDIR"/tg-$isutil$cmd ] || {
-				echo "Unknown subcommand: $cmd" >&2
-				do_help
-				exit 1
+				looplevel="$TG_ALIAS_DEPTH"
+				[ "${looplevel#[1-9]}" != "$looplevel" ] &&
+				[ "${looplevel%%[!0-9]*}" = "$looplevel" ] ||
+				looplevel=0
+				tgalias="$(git config "topgit.alias.$cmd" 2>/dev/null)" || :
+				[ -n "$tgalias" ] || {
+					echo "Unknown subcommand: $cmd" >&2
+					do_help
+					exit 1
+				}
+				looplevel=$(( $looplevel + 1 ))
+				[ $looplevel -le 10 ] || die "topgit.alias nesting level 10 exceeded"
+				TG_ALIAS_DEPTH="$looplevel"
+				export TG_ALIAS_DEPTH
+				if [ "!${tgalias#?}" = "$tgalias" ]; then
+					unset GIT_PREFIX
+					if pfx="$(git rev-parse --show-prefix 2>/dev/null)"; then
+						GIT_PREFIX="$pfx"
+						export GIT_PREFIX
+					fi
+					cd "./$(git rev-parse --show-cdup 2>/dev/null)"
+					exec @SHELL_PATH@ -c "${tgalias#?} \"\$@\"" @SHELL_PATH@ "$@"
+				else
+					eval 'exec "$tgbin"' "$tgalias" '"$@"'
+				fi
+				die "alias execution failed for: $tgalias"
 			}
+			unset TG_ALIAS_DEPTH
 
 			showing_help=
 			if [ "$*" = "-h" ] || [ "$*" = "--help" ]; then

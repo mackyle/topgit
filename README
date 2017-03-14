@@ -19,6 +19,8 @@ See also:
 	:USAGE_:	    Command Line details
 	:`NO UNDO`_:	    Where's the undo!!!
 	:CONVENTIONS_:	    Suggestions for organizing your TopGit branches
+	:`EXTRA SETTINGS`_: Various possible "topgit.*" config settings
+	:ALIASES_:          Git-like TopGit command aliases
 	:GLOSSARY_:	    All the TopGit vocabulary in one place
 	:TECHNICAL_:	    How it works behind the scenes
 
@@ -341,6 +343,28 @@ maintain the reflog (once it's been enabled which ``tg tag`` guarantees for
 ``refs/tgstash``), Git is unable to view an annotated/signed tag's reflog!
 Instead Git dereferences the tag and shows the wrong thing.  Use the
 ``tg tag -g`` command to view the ``refs/tgstash`` reflog instead.
+
+
+EXTRA SETTINGS
+--------------
+
+TopGit supports various config settings:
+
+	:ALIASES_:		``topgit.alias.*`` for Git-like command aliases
+	:SEQUESTRATION_:	``topgit.sequester`` for sequestration control
+	:`tg migrate-bases`_:	``topgit.top-bases`` for refs bases location
+	:`tg update`_:		``topgit.autostash`` automatic stash control
+	:`REMOTE HANDLING`_:	``topgit.remote`` TopGit's default remote
+
+
+ALIASES
+-------
+
+These work exactly like Git's aliases except they are stored under
+``topgit.alias.*`` instead.  See the ``git help config`` output under
+the ``alias.*`` section for details.  Do note that while alias nesting is
+explicitly permitted, a maximum nesting depth of 10 is enforced to help
+detect accidental aliasing loops from wedging the machine.
 
 
 SEQUESTRATION
@@ -1664,7 +1688,7 @@ All commands by default refer to the remote that ``tg remote --populate``
 was called on the last time (stored in the ``topgit.remote`` git
 configuration variable). You can manually run any command with a
 different base remote by passing ``-r REMOTE`` *before* the subcommand
-name.
+name or passing ``-u`` *before* the subcommand to run without one.
 
 
 TECHNICAL
