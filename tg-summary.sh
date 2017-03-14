@@ -238,6 +238,7 @@ fi
 if [ -n "$withdeps" ]; then
 	savetgish="$tgish"
 	tgish=1
+	origbranches="$branches"
 	branches="$(skip_ann=1; show_deps | LC_ALL=C sort -u -b -k1,1)"
 	tgish="$savetgish"
 fi
@@ -272,6 +273,29 @@ fi
 
 ## List branches
 
+aheadlist=
+processed=' '
+needslist=' '
+compute_ahead_list()
+{
+	[ -z "$branches" ] || [ -n "$withdeps" ] || return 0
+	[ -n "$withdeps" ] || origbranches="$($tg summary --topgit-heads | paste -d ' ' -s -)"
+	aheadfile="$(get_temp aheadlist)"
+	savebr="$base_remote"
+	savenr="$no_remotes"
+	base_remote=
+	no_remotes=1
+	for onehead in $origbranches; do
+		case "$exclude" in *" $onehead "*) continue; esac
+		case "$processed" in *" $onehead "*) continue; esac
+		processed="${processed}$onehead "
+		needs_update "$onehead" || needslist="${needslist}$onehead "
+	done >"$aheadfile"
+	no_remotes="$savenr"
+	base_remote="$savebr"
+	aheadlist=" $(LC_ALL=C cut -d ' ' -f 1 <"$aheadfile" | LC_ALL=C sort -u | paste -d ' ' -s -) "
+}
+
 process_branch()
 {
 	missing_deps=
@@ -295,11 +319,18 @@ process_branch()
 		branch_contains "refs/remotes/$base_remote/$name" "refs/heads/$name" 2>/dev/null
 	} || rem_update='L'
 	deps_update=' '
-	needs_update "$name" >/dev/null || deps_update='D'
+	case "$processed" in
+		*" $name "*)
+			case "$needslist" in *" $name "*) deps_update='D'; esac;;
+		*)
+			needs_update "$name" >/dev/null || deps_update='D';;
+	esac
 	deps_missing=' '
 	[ -z "$missing_deps" ] || deps_missing='!'
 	base_update=' '
 	branch_contains "refs/heads/$name" "refs/$topbases/$name" || base_update='B'
+	ahead=' '
+	case "$aheadlist" in *" $name "*) ahead='*'; esac
 
 	if [ "$(ref_exists_rev "refs/heads/$name")" != "$(ref_exists_rev "refs/$topbases/$name")" ]; then
 		subject="$(cat_file "refs/heads/$name:.topmsg" $from | sed -n 's/^Subject: //p')"
@@ -308,7 +339,7 @@ process_branch()
 		subject="(No commits)"
 	fi
 
-	printf '%s\t%-31s\t%s\n' "$current$nonempty$remote$rem_update$deps_update$deps_missing$base_update" \
+	printf '%-8s %-30s\t%s\n' "$current$nonempty$remote$rem_update$deps_update$deps_missing$base_update$ahead" \
 		"$name" "$subject"
 }
 
@@ -335,6 +366,7 @@ if [ -n "$deps" ]; then
 	exit 0
 fi
 
+[ -n "$terse$graphviz$sort" ] || compute_ahead_list
 get_branch_list |
 	while read name; do
 		case "$exclude" in *" $name "*) continue; esac
@@ -372,6 +404,3 @@ fi
 if [ -n "$sort" ]; then
 	tsort <&5
 fi
-
-
-# vim:noet

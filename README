@@ -850,6 +850,12 @@ tg summary
 			indicates that it is out-of-date with respect to
 			its base
 
+		``*``
+			indicates it is ahead of (and needs to be merged into)
+			at least one of its dependents -- only computed when
+			showing all branches or using the (possibly implied)
+			``--with-deps`` option.
+
 	This can take a longish time to accurately determine all the
 	relevant information about each branch; you can pass ``-t`` (or ``-l``
 	or ``--list``) to get just a terse list of topic branch names quickly.
