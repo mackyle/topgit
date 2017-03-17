@@ -816,6 +816,10 @@ else
 	# is valid even if the current working directory is changed
 	TEST_DIRECTORY="$(cd "$TEST_DIRECTORY" && pwd)" || exit 1
 fi
+if test -z "$TEST_HELPER_DIRECTORY" && test -d "$TEST_DIRECTORY/helper"
+then
+	TEST_HELPER_DIRECTORY="$TEST_DIRECTORY/helper"
+fi
 if test -z "$TEST_OUTPUT_DIRECTORY"
 then
 	# Similarly, override this to store the test-results subdir
@@ -829,7 +833,7 @@ fi
 	fatal "error: could not make empty directory: '$TESTLIB_DIRECTORY/empty'"
 }
 EMPTY_DIRECTORY="$TESTLIB_DIRECTORY/empty"
-export TEST_DIRECTORY TEST_OUTPUT_DIRECTORY EMPTY_DIRECTORY
+export TEST_DIRECTORY TEST_HELPER_DIRECTORY TEST_OUTPUT_DIRECTORY EMPTY_DIRECTORY
 GIT_CEILING_DIRECTORIES="$TESTLIB_DIRECTORY"
 [ "$TESTLIB_DIRECTORY" = "$TEST_DIRECTORY" ] ||
 	GIT_CEILING_DIRECTORIES="$TEST_DIRECTORY:$GIT_CEILING_DIRECTORIES"
@@ -1048,7 +1052,7 @@ test_lib_functions_tg_init
 
 last_verbose=t
 
-[ -d "$TEST_DIRECTORY/helper" ] && PATH="$TEST_DIRECTORY/helper:$PATH"
+[ -n "$TEST_HELPER_DIRECTORY" ] && [ -d "$TEST_HELPER_DIRECTORY" ] && PATH="$TEST_HELPER_DIRECTORY:$PATH" || :
 if [ -n "$TG_TEST_INSTALLED" ]; then
 	TG_FULL_PATH="$(cmd_path tg)" && [ -n "$TG_FULL_PATH" ] ||
 		fatal 'error: TG_TEST_INSTALLED set but no tg found in $PATH!'

@@ -80,6 +80,14 @@ Variables
     contain a `test-lib.sh` file even if it's only a symbolic link to the
     real `test-lib.sh` file (n.b. it _MUST NOT_ be a hard link).
 
+- TEST_HELPER_DIRECTORY
+
+    The test helpers are located in here.  It defaults to
+    "$TEST_DIRECTORY/helper" if not set and that directory exists.  Helper
+    scripts should use this to locate any auxilliary files they might need
+    to use that are checked into version control alongside them.  This
+    variable is also exported.
+
 - TEST_OUTPUT_DIRECTORY
 
     This is the directory containing output from the tests.  It defaults to
@@ -182,6 +190,25 @@ Variables
     testing library test is using the testing library to run a set of tests
     thereby preventing the recursive testing library invocation from upsetting
     the TAP output of the parent.
+
+- this_test
+
+    This variable is set automatically by the ". ./test-lib.sh" line.
+
+    The value of "$this_test" is the basename of the current test file upto
+    but excluding the first "-" in the name.  For example "t/t1000-it-works.sh"
+    has a "$this_test" value of "t1000".  Since tests are expected to be
+    located in the "$TEST_DIRECTORY" directory, any test that needs to make use
+    of auxilliary files should locate them in a "$TEST_DIRECTORY/$this_test"
+    directory that is checked in alongside the test so in the case of the
+    aforementioned "t/t1000-it-works.sh" this might be the directory structure
+    if two auxilliary files "aux1" and "aux2" were present:
+
+        t/t1000-it-works.sh
+        t/t1000/aux1
+        t/t1000/aux2
+
+    And all three of them would be checked into version control.
 
 
 ------------
