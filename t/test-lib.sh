@@ -41,7 +41,7 @@ if [ "$1" = "--cache" ]; then
 		_x05 _x40 _z40 EMPTY_TREE EMPTY_BLOB LF u200c UNAME_S \
 		TERM SHELL_PATH PERL_PATH GIT_PATH DIFF TG_TEST_INSTALLED \
 		test_prereq TESTLIB_NO_TOLERATE TESTLIB_TEST_LONG \
-		GIT_CEILING_DIRECTORIES"
+		GIT_CEILING_DIRECTORIES TG_FULL_PATH"
 
 	UNSET_VARS="VISUAL EMAIL LANGUAGE COLUMNS XDG_CONFIG_HOME GITPERLLIB \
 		CDPATH GREP_OPTIONS UNZIP TESTLIB_EXIT_OK last_verbose"
@@ -143,6 +143,7 @@ if [ "$1" = "--cache" ]; then
 		echo export $EXPORT_VARS "&&"
 		printf '%s\n' \
 			"cd $PWD_SQ &&" \
+			". $TD_SQ/test-lib-functions-tg.sh &&" \
 			". $TD_SQ/test-lib-functions.sh &&" \
 			". $TD_SQ/test-lib-main.sh &&"
 		echo "TESTLIB_CACHE_ACTIVE=1"

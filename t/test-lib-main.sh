@@ -11,7 +11,7 @@
 #    and MUST contain any lines of code to be executed.  This will ALWAYS
 #    be the LAST function defined in this file for easy locatability.
 #
-#  * Added cmd_path, fatal, whats_the_dir, vcmp, getcmd, say_tap, say_color_tap,
+#  * Added cmd_path, _?fatal, whats_the_dir, vcmp, getcmd, say_tap, say_color_tap,
 #    fail_, test_possibly_broken_ok_ and test_possibly_broken_failure_ functions
 #
 #  * Anything related to valgrind or perf has been stripped out
@@ -45,11 +45,12 @@ cmd_path() (
 	command -v "$1"
 )
 
-fatal() {
+_fatal() {
 	printf '%s\n' "$*" >&2
 	TESTLIB_EXIT_OK=1
 	exit 1
 }
+fatal() { _fatal "$@"; }
 
 # usage: cmdget <varname> <cmd> [<arg>...]
 # return code is that of <cmd> [<arg...]
@@ -154,7 +155,7 @@ say_tap() {
 	say_color_tap info "$@"
 }
 
-die() {
+_die() {
 	code=$?
 	if test -n "$TESTLIB_EXIT_OK"
 	then
@@ -164,6 +165,7 @@ die() {
 		exit 1
 	fi
 }
+die() { _die "$@"; }
 
 # You are not expected to call test_ok_ and test_failure_ directly, use
 # the test_expect_* functions instead.
@@ -788,8 +790,9 @@ test_lib_main_init_generic() {
 
 [ -n "$TESTLIB_DIRECTORY" ] || whats_the_dir -L -- "${TEST_DIRECTORY:-.}/test-lib.sh" TESTLIB_DIRECTORY
 [ -f "$TESTLIB_DIRECTORY/test-lib.sh" ] && [ -f "$TESTLIB_DIRECTORY/test-lib-main.sh" ] &&
-[ -f "$TESTLIB_DIRECTORY/test-lib-functions.sh" ] ||
-fatal "error: invalid TESTLIB_DIRECOTRY: $TESTLIB_DIRECTORY"
+[ -f "$TESTLIB_DIRECTORY/test-lib-functions.sh" ] &&
+[ -f "$TESTLIB_DIRECTORY/test-lib-functions-tg.sh" ] ||
+fatal "error: invalid TESTLIB_DIRECTORY: $TESTLIB_DIRECTORY"
 export TESTLIB_DIRECTORY
 
 ! [ -f "$TESTLIB_DIRECTORY/../TG-BUILD-SETTINGS" ] || . "$TESTLIB_DIRECTORY/../TG-BUILD-SETTINGS"
@@ -1038,21 +1041,25 @@ test_success=0
 test_external_has_tap=0
 
 # The user-facing functions are loaded from a separate file
+. "$TESTLIB_DIRECTORY/test-lib-functions-tg.sh"
 . "$TESTLIB_DIRECTORY/test-lib-functions.sh"
 test_lib_functions_init
+test_lib_functions_tg_init
 
 last_verbose=t
 
 [ -d "$TEST_DIRECTORY/helper" ] && PATH="$TEST_DIRECTORY/helper:$PATH"
 if [ -n "$TG_TEST_INSTALLED" ]; then
-	[ -n "$(cmd_path tg || :)" ] ||
+	TG_FULL_PATH="$(cmd_path tg)" && [ -n "$TG_FULL_PATH" ] ||
 		fatal 'error: TG_TEST_INSTALLED set but no tg found in $PATH!'
 else
 	tg_bin_dir="$(cd "$TESTLIB_DIRECTORY/../bin-wrappers" 2>/dev/null && pwd -P || :)"
 	[ -x "$tg_bin_dir/tg" ] ||
 		fatal 'error: no ../bin-wrappers/tg executable found!'
 	PATH="$tg_bin_dir:$PATH"
+	TG_FULL_PATH="$tg_bin_dir/tg"
 fi
+export TG_FULL_PATH
 tg_version="$(tg --version)" ||
 	fatal 'error: tg --version failed!'
 case "$tg_version" in [Tt][Oo][Pp][Gg][Ii][Tt]\ [Vv][Ee][Rr][Ss][Ii][Oo][Nn]\ [0-9]*);;*)
@@ -1253,7 +1260,7 @@ else
 fi
 
 TESTLIB_EXIT_OK=
-trap 'die' EXIT
+trap '_die' EXIT
 trap 'exit $?' HUP INT QUIT ABRT PIPE TERM
 trap 'TESTLIB_EXIT_OK=t; exit 1' USR1
 
