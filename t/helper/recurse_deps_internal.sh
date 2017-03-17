@@ -5,7 +5,7 @@
 # GPLv2
 
 USAGE="\
-Usage: ${0##*/} [-C <dir>] [-r <remote> [-u] [--no-cache] [--no-remotes] [--pre-order] [--with-top-level] [--exclude=\"list to exclude\"] [--] name [path...]"
+Usage: ${0##*/} [-C <dir>] [-r <remote>] [-u] [--no-cache] [--no-remotes] [--pre-order] [--with-top-level] [--exclude=\"list to exclude\"] [--] name [path...]"
 
 usage()
 {
@@ -45,7 +45,7 @@ while [ $# -gt 0 ]; do case "$1" in
 		cd "$1"
 		;;
 	-u)
-		noremote=
+		noremote=1
 		;;
 	-r)
 		shift
