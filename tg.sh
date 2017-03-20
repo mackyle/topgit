@@ -674,7 +674,7 @@ is_sha1()
 
 # recurse_deps_internal NAME [BRANCHPATH...]
 # get recursive list of dependencies with leading 0 if branch exists 1 if missing
-# followed by a 1 if the branch is "tgish" or a 0 if not
+# followed by a 1 if the branch is "tgish" (2 if it also has a remote); 0 if not
 # followed by a 0 for a non-leaf, 1 for a leaf or 2 for annihilated tgish
 # but missing and remotes are always "0"
 # then the branch name followed by its depedency chain (which might be empty)
@@ -699,18 +699,19 @@ recurse_deps_internal()
 	_ref_hash_base=
 	_is_leaf=0
 	! _ref_hash_base="$(ref_exists_rev "refs/$topbases/$1")" || _is_tgish=1
+	[ "$_is_tgish" = "0" ] || [ -n "$no_remotes" ] || ! has_remote "${topbases#heads/}/$1" || _is_tgish=2
 	[ "$_is_tgish" = "0" ] || ! branch_annihilated "$1" "$_ref_hash" "$_ref_hash_base" || _is_leaf=2
 	[ -z "$recurse_preorder" -o -z "${2:-$with_top_level}" ] || echo "0 $_is_tgish $_is_leaf $*"
 
 	# If no_remotes is unset also check our base against remote base.
 	# Checking our head against remote head has to be done in the helper.
-	if [ "$_is_tgish" = "1" ] && [ -z "$no_remotes" ] && has_remote "${topbases#heads/}/$1"; then
+	if [ "$_is_tgish" = "2" ]; then
 		echo "0 0 0 refs/remotes/$base_remote/${topbases#heads/}/$1 $*"
 	fi
 
 	# if the branch was annihilated, it is considered to have no dependencies
 	[ "$_is_leaf" = "2" ] || _is_leaf=1
-	if [ "$_is_tgish" = "1" ] && [ "$_is_leaf" = "1" ]; then
+	if [ "$_is_tgish" != "0" ] && [ "$_is_leaf" = "1" ]; then
 		#TODO: handle nonexisting .topdeps?
 		while read _dname && [ -n "$_dname" ]; do
 			# Avoid depedency loops
@@ -794,6 +795,23 @@ ensure_ident_available()
 # recurse_deps CMD NAME [BRANCHPATH...]
 # Recursively eval CMD on all dependencies of NAME.
 # Dependencies are visited in topological order.
+# CMD can refer to the following variables:
+#
+#   _ret              starts as 0; CMD can change; will be final return result
+#   _dep              bare branch name or "refs/remotes/..." for a remote base
+#   _name             has $_dep in its .topdeps ("" for top and $with_top_level)
+#   _depchain         0+ space-separated branch names forming a path to top
+#   _dep_missing      boolean "1" if no such $_dep ref; "" if ref present
+#   _dep_is_leaf      boolean "1" if leaf; "" if not
+#   _dep_is_tgish     boolean "1" if tgish; "" if not (which implies no remote)
+#   _dep_has_remote   boolean "1" if $_dep has_remote; "" if not
+#   _dep_annihilated  boolean "1" if $_dep annihilated; "" if not
+#
+# CMD may use a "return" statement without issue; its return value is ignored,
+# but if CMD sets _ret to a negative value, e.g. "-0" or "-1" the enumeration
+# will stop immediately and the value with the leading "-" stripped off will
+# be the final result code
+#
 # CMD can refer to $_name for queried branch name,
 # $_dep for dependency name,
 # $_depchain for space-seperated branch backtrace,
@@ -822,6 +840,8 @@ recurse_deps()
 		_depchain="$_name${_deppath:+ $_deppath}"
 		_dep_is_tgish=
 		[ "$_istgish" = "0" ] || _dep_is_tgish=1
+		_dep_has_remote=
+		[ "$_istgish" != "2" ] || _dep_has_remote=1
 		_dep_missing=
 		if [ "$_ismissing" != "0" ]; then
 			_dep_missing=1
@@ -836,10 +856,14 @@ recurse_deps()
 		elif [ "$_isleaf" = "2" ]; then
 			_dep_annihilated=1
 		fi
-		do_eval "$_cmd"
+		do_eval "$_cmd" || :
+		if [ "${_ret#-}" != "$_ret" ]; then
+			_ret="${_ret#-}"
+			break
+		fi
 	done <"$_depsfile"
 	rm -f "$_depsfile"
-	return $_ret
+	return ${_ret:-0}
 }
 
 find_leaves_internal()
