@@ -1555,11 +1555,6 @@ initial_setup()
 
 	root_dir="${root_dir%/}"
 
-	# make sure global cache directory exists inside GIT_DIR
-
-	tg_cache_dir="$git_common_dir/tg-cache"
-	[ -d "$tg_cache_dir" ] || mkdir "$tg_cache_dir"
-
 	# create global temporary directories, inside GIT_DIR
 
 	tg_tmp_dir=
@@ -1569,8 +1564,29 @@ initial_setup()
 	trap 'exit 131' QUIT
 	trap 'exit 134' ABRT
 	trap 'exit 143' TERM
-	tg_tmp_dir="$(mktemp -d "$git_dir/tg-tmp.XXXXXX")"
+	tg_tmp_dir="$(mktemp -d "$git_dir/tg-tmp.XXXXXX" 2>/dev/null)" || tg_tmp_dir=
+	[ -n "$tg_tmp_dir" ] || tg_tmp_dir="$(mktemp -d "${TMPDIR:-/tmp}/tg-tmp.XXXXXX" 2>/dev/null)" || tg_tmp_dir=
+	[ -n "$tg_tmp_dir" ] || [ -z "$TMPDIR" ] || tg_tmp_dir="$(mktemp -d "/tmp/tg-tmp.XXXXXX" 2>/dev/null)" || tg_tmp_dir=
 	tg_ref_cache="$tg_tmp_dir/tg~ref-cache"
+	[ -n "$tg_tmp_dir" ] && [ -w "$tg_tmp_dir" ] && { >"$tg_ref_cache"; } >/dev/null 2>&1 ||
+		die "could not create a writable temporary directory"
+
+	# make sure global cache directory exists inside GIT_DIR or $tg_tmp_dir
+
+	user_id_no="$(id -u)" || :
+	: "${user_id_no:=_99_}"
+	tg_cache_dir="$git_common_dir/tg-cache"
+	[ -d "$tg_cache_dir" ] || mkdir "$tg_cache_dir" >/dev/null 2>&1 || tg_cache_dir=
+	[ -z "$tg_cache_dir" ] || tg_cache_dir="$tg_cache_dir/$user_id_no"
+	[ -z "$tg_cache_dir" ] || [ -d "$tg_cache_dir" ] || mkdir "$tg_cache_dir" >/dev/null 2>&1 || tg_cache_dir=
+	[ -z "$tg_cache_dir" ] || { >"$tg_cache_dir/.tgcache"; } >/dev/null 2>&1 || tg_cache_dir=
+	if [ -z "$tg_cache_dir" ]; then
+		tg_cache_dir="$tg_tmp_dir/tg-cache"
+		[ -d "$tg_cache_dir" ] || mkdir "$tg_cache_dir" >/dev/null 2>&1 || tg_cache_dir=
+		[ -z "$tg_cache_dir" ] || { >"$tg_cache_dir/.tgcache"; } >/dev/null 2>&1 || tg_cache_dir=
+	fi
+	[ -n "$tg_cache_dir" ] ||
+		die "could not create a writable tg-cache directory (even a temporary one)"
 
 	# GIT_ALTERNATE_OBJECT_DIRECTORIES can contain double-quoted entries
 	# since Git v2.11.1; however, we really don't want to deal with that
