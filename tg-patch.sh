@@ -84,8 +84,8 @@ END    {
 }
 '
 
-b_tree=$(pretty_tree "$name" -b)
-t_tree=$(pretty_tree "$name" $head_from)
+b_tree=$(pretty_tree -t "$name" -b)
+t_tree=$(pretty_tree -t "$name" $head_from)
 
 if [ $b_tree = $t_tree ]; then
 	echo "No changes."

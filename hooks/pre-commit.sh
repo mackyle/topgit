@@ -11,6 +11,7 @@ set -e
 tg__include=1
 tg_util() {
 	. "@bindir@"/tg
+	tg_use_alt_odb=
 }
 tg_util
 

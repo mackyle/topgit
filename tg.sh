@@ -230,6 +230,28 @@ cat_file()
 	esac
 }
 
+# if use_alt_temp_odb and tg_use_alt_odb are true try to write the object(s)
+# into the temporary alt odb area instead of the usual location
+git_temp_alt_odb_cmd()
+{
+	if [ -n "$use_alt_temp_odb" ] && [ -n "$tg_use_alt_odb" ] &&
+	   [ -n "$TG_OBJECT_DIRECTORY" ] &&
+	   [ -f "$TG_OBJECT_DIRECTORY/info/alternates" ]; then
+		(
+			GIT_ALTERNATE_OBJECT_DIRECTORIES="$TG_PRESERVED_ALTERNATES"
+			GIT_OBJECT_DIRECTORY="$TG_OBJECT_DIRECTORY"
+			unset TG_OBJECT_DIRECTORY TG_PRESERVED_ALTERNATES
+			export GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_OBJECT_DIRECTORY
+			git "$@"
+		)
+	else
+		git "$@"
+	fi
+}
+
+git_write_tree() { git_temp_alt_odb_cmd write-tree "$@"; }
+git_mktree() { git_temp_alt_odb_cmd mktree "$@"; }
+
 # get tree for the committed topic
 get_tree_()
 {
@@ -245,13 +267,13 @@ get_tree_b()
 # get tree for the index
 get_tree_i()
 {
-	git write-tree
+	git_write_tree
 }
 
 # get tree for the worktree
 get_tree_w()
 {
-	i_tree=$(git write-tree)
+	i_tree=$(git_write_tree)
 	(
 		# the file for --index-output needs to sit next to the
 		# current index file
@@ -263,7 +285,7 @@ get_tree_w()
 		export GIT_INDEX_FILE &&
 		git diff --name-only -z HEAD |
 			git update-index -z --add --remove --stdin &&
-		git write-tree &&
+		git_write_tree &&
 		rm -f "$TMP_INDEX"
 	)
 }
@@ -284,16 +306,19 @@ strip_ref()
 	esac
 }
 
-# pretty_tree NAME [-b | -i | -w]
+# pretty_tree [-t] NAME [-b | -i | -w]
 # Output tree ID of a cleaned-up tree without tg's artifacts.
 # NAME will be ignored for -i and -w, but needs to be present
+# If -t is used the tree is written into the alternate temporary objects area
 pretty_tree()
 {
-	name=$1
-	source=${2#?}
+	use_alt_temp_odb=
+	[ "$1" != "-t" ] || { shift; use_alt_temp_odb=1; }
+	name="$1"
+	source="${2#?}"
 	git ls-tree --full-tree "$(get_tree_$source "$name")" |
 		LC_ALL=C sed -ne '/	\.top.*$/!p' |
-		git mktree
+		git_mktree
 }
 
 # return an empty-tree root commit -- date is either passed in or current
@@ -981,12 +1006,12 @@ branch_empty()
 		{ read -r _result _result_rev <"$tg_cache_dir/$1/.mt"; } 2>/dev/null || :
 		[ -z "$_result" -o "$_result_rev" != "$_rev" ] || return $_result
 		_result=0
-		[ "$(pretty_tree "$1" -b)" = "$(pretty_tree "$1" $2)" ] || _result=$?
+		[ "$(pretty_tree -t "$1" -b)" = "$(pretty_tree -t "$1" $2)" ] || _result=$?
 		[ -d "$tg_cache_dir/$1" ] || mkdir -p "$tg_cache_dir/$1" 2>/dev/null
 		[ ! -d "$tg_cache_dir/$1" ] || echo $_result $_rev >"$tg_cache_dir/$1/.mt"
 		return $_result
 	else
-		[ "$(pretty_tree "$1" -b)" = "$(pretty_tree "$1" $2)" ]
+		[ "$(pretty_tree -t "$1" -b)" = "$(pretty_tree -t "$1" $2)" ]
 	fi
 }
 
@@ -1546,6 +1571,45 @@ initial_setup()
 	trap 'exit 143' TERM
 	tg_tmp_dir="$(mktemp -d "$git_dir/tg-tmp.XXXXXX")"
 	tg_ref_cache="$tg_tmp_dir/tg~ref-cache"
+
+	# GIT_ALTERNATE_OBJECT_DIRECTORIES can contain double-quoted entries
+	# since Git v2.11.1; however, we really don't want to deal with that
+	# and the version checking and all the quoting mess -- at least not yet;
+	# just don't make an alternates temporary store in that case;
+	# it's okay to not have one; everything will still work; the nicety of
+	# making the temporary tree objects vanish when tg exits just won't
+	# happen in that case but nothing will break also be sure to reuse
+	# the parent's if we've been recursively invoked and it's for the
+	# same repository we were invoked on
+
+	tg_use_alt_odb=1
+	_odbdir="${GIT_OBJECT_DIRECTORY:-$git_common_dir/objects}"
+	[ -n "$_odbdir" ] && [ -d "$_odbdir" ] || tg_use_alt_odb=
+	_fulltmpdir=
+	[ -z "$tg_use_alt_odb" ] || _fulltmpdir="$(cd "$tg_tmp_dir" && pwd -P)"
+	case "$_fulltmpdir" in *[";:"]*) tg_use_alt_odb=; esac
+	_fullodbdir=
+	[ -z "$tg_use_alt_odb" ] || _fullodbdir="$(cd "$_odbdir" && pwd -P)"
+	if [ -n "$tg_use_alt_odb" ] && [ -n "$TG_OBJECT_DIRECTORY" ] && [ -d "$TG_OBJECT_DIRECTORY/info" ] &&
+	   [ -f "$TG_OBJECT_DIRECTORY/info/alternates" ] && [ -r "$TG_OBJECT_DIRECTORY/info/alternates" ]; then
+		if IFS= read -r _otherodbdir <"$TG_OBJECT_DIRECTORY/info/alternates" &&
+		   [ -n "$_otherodbdir" ] && [ "$_otherodbdir" = "$_fullodbdir" ]; then
+			tg_use_alt_odb=2
+		fi
+	fi
+	if [ "$tg_use_alt_odb" = "1" ]; then
+		# create an alternate objects database to keep the ephemeral objects in
+		mkdir -p "$tg_tmp_dir/objects/info"
+		echol "$_fullodbdir" >"$tg_tmp_dir/objects/info/alternates"
+		TG_OBJECT_DIRECTORY="$tg_tmp_dir/objects"
+		TG_PRESERVED_ALTERNATES="$GIT_ALTERNATE_OBJECT_DIRECTORIES"
+		if [ -n "$GIT_ALTERNATE_OBJECT_DIRECTORIES" ]; then
+			GIT_ALTERNATE_OBJECT_DIRECTORIES="$TG_OBJECT_DIRECTORY:$GIT_ALTERNATE_OBJECT_DIRECTORIES"
+		else
+			GIT_ALTERNATE_OBJECT_DIRECTORIES="$TG_OBJECT_DIRECTORY"
+		fi
+		export TG_PRESERVED_ALTERNATES TG_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_OBJECT_DIRECTORY
+	fi
 }
 
 set_topbases()
@@ -1931,6 +1995,7 @@ else
 				contains|export|info|summary|tag)
 					_use_ref_cache=1;;
 				annihilate|create|delete|depend|import|update)
+					tg_use_alt_odb=
 					tg_read_only=;;
 			esac
 			[ -z "$_use_ref_cache" ] || v_create_ref_cache

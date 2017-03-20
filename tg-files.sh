@@ -38,8 +38,8 @@ if [ -n "$head_from" ] && [ "$name" != "$head" ]; then
 	die "$head_from makes only sense for the current branch"
 fi
 
-b_tree=$(pretty_tree "$name" -b)
-t_tree=$(pretty_tree "$name" $head_from)
+b_tree=$(pretty_tree -t "$name" -b)
+t_tree=$(pretty_tree -t "$name" $head_from)
 
 git diff-tree --name-only -r $b_tree $t_tree
 
