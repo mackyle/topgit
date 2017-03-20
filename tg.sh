@@ -1589,9 +1589,9 @@ initial_setup()
 		die "could not create a writable tg-cache directory (even a temporary one)"
 
 	# GIT_ALTERNATE_OBJECT_DIRECTORIES can contain double-quoted entries
-	# since Git v2.11.1; however, we really don't want to deal with that
-	# and the version checking and all the quoting mess -- at least not yet;
-	# just don't make an alternates temporary store in that case;
+	# since Git v2.11.1; however, it's only necessary for : (or perhaps ;)
+	# so we avoid it if possible and require v2.11.1 to do it at all
+	# otherwise just don't make an alternates temporary store in that case;
 	# it's okay to not have one; everything will still work; the nicety of
 	# making the temporary tree objects vanish when tg exits just won't
 	# happen in that case but nothing will break also be sure to reuse
@@ -1603,7 +1603,7 @@ initial_setup()
 	[ -n "$_odbdir" ] && [ -d "$_odbdir" ] || tg_use_alt_odb=
 	_fulltmpdir=
 	[ -z "$tg_use_alt_odb" ] || _fulltmpdir="$(cd "$tg_tmp_dir" && pwd -P)"
-	case "$_fulltmpdir" in *[";:"]*) tg_use_alt_odb=; esac
+	case "$_fulltmpdir" in *[";:"]*) vcmp "$git_version" '>=' "2.11.1" || tg_use_alt_odb=; esac
 	_fullodbdir=
 	[ -z "$tg_use_alt_odb" ] || _fullodbdir="$(cd "$_odbdir" && pwd -P)"
 	if [ -n "$tg_use_alt_odb" ] && [ -n "$TG_OBJECT_DIRECTORY" ] && [ -d "$TG_OBJECT_DIRECTORY/info" ] &&
@@ -1617,12 +1617,22 @@ initial_setup()
 		# create an alternate objects database to keep the ephemeral objects in
 		mkdir -p "$tg_tmp_dir/objects/info"
 		echol "$_fullodbdir" >"$tg_tmp_dir/objects/info/alternates"
-		TG_OBJECT_DIRECTORY="$tg_tmp_dir/objects"
+		TG_OBJECT_DIRECTORY="$_fulltmpdir/objects"
+		case "$TG_OBJECT_DIRECTORY" in
+			*[";:"]*)
+				# surround in "..." and backslash-escape internal '"' and '\\'
+				_altodbdq="\"$(printf '%s\n' "$TG_OBJECT_DIRECTORY" |
+					LC_ALL=C sed 's/\([""\\]\)/\\\1/g')\""
+				;;
+			*)
+				_altodbdq="$TG_OBJECT_DIRECTORY"
+				;;
+		esac
 		TG_PRESERVED_ALTERNATES="$GIT_ALTERNATE_OBJECT_DIRECTORIES"
 		if [ -n "$GIT_ALTERNATE_OBJECT_DIRECTORIES" ]; then
-			GIT_ALTERNATE_OBJECT_DIRECTORIES="$TG_OBJECT_DIRECTORY:$GIT_ALTERNATE_OBJECT_DIRECTORIES"
+			GIT_ALTERNATE_OBJECT_DIRECTORIES="$_altodbdq:$GIT_ALTERNATE_OBJECT_DIRECTORIES"
 		else
-			GIT_ALTERNATE_OBJECT_DIRECTORIES="$TG_OBJECT_DIRECTORY"
+			GIT_ALTERNATE_OBJECT_DIRECTORIES="$_altodbdq"
 		fi
 		export TG_PRESERVED_ALTERNATES TG_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_OBJECT_DIRECTORY
 	fi
