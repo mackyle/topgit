@@ -290,6 +290,12 @@ get_tree_w()
 	)
 }
 
+# get tree for arbitrary ref
+get_tree_r()
+{
+	echo "$1"
+}
+
 # strip_ref "$(git symbolic-ref HEAD)"
 # Output will have a leading refs/heads/ or refs/$topbases/ stripped if present
 strip_ref()
@@ -306,9 +312,10 @@ strip_ref()
 	esac
 }
 
-# pretty_tree [-t] NAME [-b | -i | -w]
+# pretty_tree [-t] NAME [-b | -i | -w | -r]
 # Output tree ID of a cleaned-up tree without tg's artifacts.
 # NAME will be ignored for -i and -w, but needs to be present
+# With -r NAME must be a full ref name to a treeish (it's used as-is)
 # If -t is used the tree is written into the alternate temporary objects area
 pretty_tree()
 {
