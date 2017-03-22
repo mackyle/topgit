@@ -91,7 +91,7 @@ echo "Topic Branch: $name ($measure)"
 nocommits=
 [ "$(git rev-parse --verify --short "refs/heads/$name" --)" != "$base_rev" ] || nocommits=1
 
-[ -n "$nocommits" ] || git cat-file blob "$name:.topmsg" | grep ^Subject: || :
+[ -n "$nocommits" ] || git cat-file blob "$name:.topmsg" 2>/dev/null | grep ^Subject: || :
 
 # true if $1 is contained by (or the same as) $2
 contained_by()

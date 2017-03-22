@@ -207,7 +207,7 @@ cat_file()
 		;;
 	-i)
 		# ':file' means cat from index
-		git cat-file blob ":${path#*:}"
+		git cat-file blob ":${path#*:}" 2>/dev/null
 		;;
 	'')
 		case "$path" in
@@ -220,7 +220,7 @@ cat_file()
 			cat_msg "${_temp#refs/heads/}"
 			;;
 		*)
-			git cat-file blob "$path"
+			git cat-file blob "$path" 2>/dev/null
 			;;
 		esac
 		;;

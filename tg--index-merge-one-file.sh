@@ -62,9 +62,9 @@ if [ -z "$newhash" ]; then
 		trap 'exit 134' ABRT
 		trap 'exit 141' PIPE
 		trap 'exit 143' TERM
-		git cat-file blob "$1" >"$basef" || exit 1
-		git cat-file blob "$2" >"$oursf" || exit 1
-		git cat-file blob "$3" >"$thrsf" || exit 1
+		git cat-file blob "$1" >"$basef" 2>/dev/null || exit 1
+		git cat-file blob "$2" >"$oursf" 2>/dev/null || exit 1
+		git cat-file blob "$3" >"$thrsf" 2>/dev/null || exit 1
 		git merge-file --quiet "$oursf" "$basef" "$thrsf" >/dev/null 2>&1 || exit 1
 		printf '%s\n' "Auto-merging $4"
 		newhash="$(git hash-object -w --stdin <"$oursf" 2>/dev/null)"
