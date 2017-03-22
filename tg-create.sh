@@ -406,10 +406,18 @@ if [ -n "$unborn" ]; then
 	mtcommit="$(git commit-tree  -m "$emsg" "$mttree")" || die "git commit-tree failed"
 	git update-ref -m "tgcreate: create ${unborn#refs/heads/}" "HEAD" "$mtcommit" ""
 	[ "refs/heads/$name" = "$unborn" ] || warn "branch ${unborn#refs/heads/} created with empty commit"
-	git update-ref -m "tgcreate: set $topbases/$name" "refs/$topbases/$name" "HEAD" ""
+	git update-ref -m "tgcreate: set $topbases/$name base" "refs/$topbases/$name" "HEAD" ""
 	[ "refs/heads/$name" = "$unborn" ] || git checkout $iowopt -b "$name"
 else
-	git update-ref -m "tgcreate: set $topbases/$name" "refs/$topbases/$name" "HEAD" ""
+	basetree="$(git rev-parse --verify "HEAD^{tree}" --)" && [ -n "$basetree" ] || die "HEAD disappeared"
+	baseptree="$(pretty_tree "HEAD" -r)" || die "pretty_tree HEAD -r (via git mktree) failed"
+	if [ "$basetree" != "$baseptree" ]; then
+		bmsg="tg create $topbases/$name base"
+		basecommit="$(git commit-tree -p "HEAD" -m "$bmsg" "$baseptree")" || die "git commit-tree failed"
+	else
+		basecommit="HEAD"
+	fi
+	git update-ref -m "tgcreate: set $topbases/$name base" "refs/$topbases/$name" "$basecommit" ""
 	git checkout $iowopt -b "$name"
 fi
 
