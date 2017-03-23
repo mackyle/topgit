@@ -6,6 +6,7 @@
 # License GPLv2+
 
 # $TG_TMP_DIR => location to store temporary files
+# $tg_index_mergetop_behavior => "" (ours), "theirs", "merge"
 # $1          => stage 1 hash or empty
 # $2          => stage 2 hash or empty
 # $3          => stage 3 hash or empty
@@ -16,9 +17,14 @@
 
 if [ "$1" = "-h" ] && [ $# -eq 1 ]; then
 	echo "\
-usage: ${tgname:-tg} index-merge-one-file <s1_hash> <s2_hash> <s3_hash> <path> <s1_mode> <s2_mode> <s3_mode>"
+usage: ${tgname:-tg} index-merge-one-file [--<mergetop>] <s1_hash> <s2_hash> <s3_hash> <path> <s1_mode> <s2_mode> <s3_mode>"
 	exit 0
 fi
+if [ -z "$tg_index_mergetop_behavior" ]; then case "$1" in
+	--merge|--theirs|--remove|--ours)
+		tg_index_mergetop_behavior="${1#--}"
+		shift
+esac; fi
 
 [ $# -eq 7 ] || exit 1
 
@@ -47,9 +53,16 @@ fi
 if [ -z "$newhash" ]; then
 	# mode must match 100\o\o\o
 	case "$6" in 100[0-7][0-7][0-7]);;*) exit 1; esac
-	if [ "$4" = ".topdeps" ] || [ "$4" = ".topmsg" ]; then
-		# resolution for these two is always silently "ours" never a merge
-		newhash="$2"
+	if [ "$tg_index_mergetop_behavior" != "merge" ] &&
+	   { [ "$4" = ".topdeps" ] || [ "$4" = ".topmsg" ]; }
+	then
+		# resolution for these two is always silently
+		# "ours" or "theirs" but never a merge
+		if [ "$tg_index_mergetop_behavior" = "theirs" ]; then
+			newhash="$3"
+		else
+			newhash="$2"
+		fi
 	else
 		tg_tmp_dir="${TG_TMP_DIR:-/tmp}"
 		basef="$tg_tmp_dir/tgmerge_$$_base"

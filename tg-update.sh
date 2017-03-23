@@ -276,15 +276,166 @@ detach_symref_head_on_branch() {
 	git update-ref --no-deref -m "detaching HEAD from $_hsr to safely update it" HEAD "$_hrv"
 }
 
-# run git merge with the passed in arguments AND --no-stat
-# return the exit status of git merge
+# git_topmerge will need this even on success and since it might otherwise
+# be called many times do it just the once here and now
+repotoplvl="$(git rev-parse --show-toplevel)" && [ -n "$repotoplvl" ] && [ -d "$repotoplvl" ] ||
+die "git rev-parse --show-toplevel failed"
+
+# Run an in-tree recursive merge but make sure we get the desired version of
+# any .topdeps and .topmsg files.  The $auhopt and --no-stat options are
+# always in effect.  If successful a new commit is performed on HEAD.
+#
+# Except for --merge, the "git merge-recursive" tool (and others) must be
+# run to get the desired result.  And (except for --merge), --no-ff is always
+# implicitly in effect as well.
+#
+# [optional] '-v' varname => optional variable to return original HEAD hash in
+# [optional] '--merge', '--theirs' or '--remove' to alter .topfile handling
+# [optional] '--name' <name-for-ours [--name <name-for-theirs>]
+# $1 => '-m' MUST be '-m'
+# $2 => commit message
+# $3 => commit-ish to merge as "theirs"
+git_topmerge()
+{
+	_ours="$(git rev-parse --verify HEAD^0)" || die "git rev-parse failed"
+	_ovar=
+	[ "$1" != "-v" ] || [ $# -lt 2 ] || [ -z "$2" ] || { _ovar="$2"; shift 2; }
+	[ -z "$_ovar" ] || eval "$_ovar="'"$_ours"'
+	_mmode=
+	case "$1" in --theirs|--remove|--merge) _mmode="${1#--}"; shift; esac
+	_nameours=
+	_nametheirs=
+	if [ "$1" = "--name" ] && [ $# -ge 2 ]; then
+		_nameours="$2"
+		shift 2
+		if [ "$1" = "--name" ] && [ $# -ge 2 ]; then
+			_nametheirs="$2"
+			shift 2
+		fi
+	fi
+	: "${_nameours:=HEAD}"
+	eval "GITHEAD_$_ours="'"$_nameours"' && eval export "GITHEAD_$_ours"
+	_theirs=
+	if [ -n "$_nametheirs" ]; then
+		_theirs="$(git rev-parse --verify "$3^0")" || die "git rev-parse failed"
+		eval "GITHEAD_$_theirs="'"$_nametheirs"' && eval export "GITHEAD_$_theirs"
+	fi
+	if [ "$_mmode" = "merge" ]; then
+		TG_L1="$_nameours" && export TG_L1
+		TG_L2="merged common ancestors" && export TG_L2
+		TG_L3="${_nametheirs:-$3}" && export TG_L3
+		# in this one very uncommon case we can use the real "git merge"
+		git -c 'merge.ours.driver=git merge-file -L "$TG_L1" -L "$TG_L2" -L "$TG_L3" --marker-size=%L %A %O %B' \
+			merge $auhopt --no-stat "$@"
+	else
+		[ "$#" -eq 3 ] && [ "$1" = "-m" ] && [ -n "$2" ] && [ -n "$3" ] ||
+		die "programmer error: invalid arguments to git_topmerge: $*"
+		_msg="$2"
+		[ -n "$_theirs" ] || _theirs="$(git rev-parse --verify "$3^0")" || die "git rev-parse failed"
+		_mt=
+		_mb="$(git merge-base --all "$_ours" "$_theirs")" && [ -n "$_mb" ] ||
+		{ _mt=1; _mb="$(git hash-object -w -t tree --stdin < /dev/null)"; }
+		# any .topdeps or .topmsg output needs to be stripped from stdout
+		tmpstdout="$tg_tmp_dir/stdout.$$"
+		_ret=0
+		git -c "merge.ours.driver=touch %A" merge-recursive \
+			$_mb -- "$_ours" "$_theirs" >"$tmpstdout" || _ret=$?
+		# success or failure is not relevant until after fixing up the
+		# .topdeps and .topmsg files unless _ret >= 126
+		[ $_ret -lt 126 ] || return $_ret
+		case "$_mmode" in
+			theirs) _source="$_theirs";;
+			remove) _source="";;
+			     *) _source="$_ours";;
+		esac
+		_newinfo=
+		[ -z "$_source" ] ||
+		_newinfo="$(git cat-file --batch-check="%(objecttype) %(objectname)$tab%(rest)" <<-EOT |
+		$_source:.topdeps .topdeps
+		$_source:.topmsg .topmsg
+		EOT
+		sed -n 's/^blob /100644 /p'
+		)"
+		[ -z "$_newinfo" ] || _newinfo="$lf$_newinfo"
+		git update-index --index-info <<-EOT ||
+		0 $nullsha$tab.topdeps
+		0 $nullsha$tab.topmsg$_newinfo
+		EOT
+		die "git update-index failed"
+		if [ "$_mmode" = "remove" ] &&
+		   { [ -e "$repotoplvl/.topdeps" ] || [ -e "$repotoplvl/.topmsg" ]; }
+		then
+			rm -r -f "$repotoplvl/.topdeps" "$repotoplvl/.topmsg" >/dev/null 2>&1 || :
+		else
+			for zapbad in "$repotoplvl/.topdeps" "$repotoplvl/.topmsg"; do
+				if [ -e "$zapbad" ] && { [ -L "$zapbad" ] || [ ! -f "$zapbad" ]; }; then
+					rm -r -f "$zapbad"
+				fi
+			done
+			(cd "$repotoplvl" && git checkout-index -q -f -u -- .topdeps .topmsg) ||
+			die "git checkout-index failed"
+		fi
+		# dump output without any .topdeps or .topmsg messages
+		sed -e '/ \.topdeps/d' -e '/ \.topmsg/d' <"$tmpstdout"
+		git ls-files --unmerged --full-name --abbrev :/ >"$tmpstdout" 2>&1 ||
+		die "git ls-files failed"
+		if [ -s "$tmpstdout" ]; then
+			[ "$_ret" != "0" ] || _ret=1
+		else
+			_ret=0
+		fi
+		if [ $_ret -ne 0 ]; then
+			# merge failed, do rerere, spit out message and return
+
+			# rerere (will be a nop unless rerere.enabled is true)
+			git rerere || :
+			# enter "merge" mode before returning
+			{
+				printf '%s\n\n# Conflicts:\n' "$_msg"
+				sed -n "/$tab/s/^[^$tab]*/#/p" <"$tmpstdout" | sort -u
+			} >"$git_dir/MERGE_MSG"
+			git update-ref MERGE_HEAD "$_theirs" || :
+			echo 'Automatic merge failed; fix conflicts and then commit the result.'
+			rm -f "$tmpstdout"
+			return $_ret
+		fi
+		# commit time at last!
+		thetree="$(git write-tree)" || die "git write-tree failed"
+		# avoid an extra "already up-to-date" commit (can't happen if _mt though)
+		origtree=
+		[ -n "$_mt" ] || origtree="$(git rev-parse --quiet --verify "$_ours^{tree}" --)" &&
+			[ -n "$origtree" ] || die "git rev-parse failed"
+		if [ "$origtree" != "$thetree" ] || ! contained_by "$_theirs" "$_ours"; then
+			thecommit="$(git commit-tree -p "$_ours" -p "$_theirs" -m "$_msg" "$thetree")" &&
+			[ -n "$thecommit" ] || die "git commit-tree failed"
+			git update-ref -m "$_msg" HEAD "$thecommit" || die "git update-ref failed"
+		fi
+		# mention how the merge was made
+		echo "Merge made by the 'recursive' strategy."
+		rm -f "$tmpstdout"
+		return 0
+	fi
+}
+
+# run git_topmerge with the passed in arguments (it always does --no-stat)
+# then return the exit status of git_topmerge
 # if the returned exit status is no error show a shortstat before
-# returning assuming the merge was done into the previous HEAD
+# returning assuming the merge was done into the previous HEAD but exclude
+# .topdeps and .topmsg info from the stat unless doing a --merge
+# if the first argument is --merge or --theirs or --remove handle .topmsg/.topdeps
+# as follows:
+#   (default)   .topmsg and .topdeps always keep ours
+#   --merge     a normal merge takes place
+#   --theirs    .topmsg and .topdeps always keep theirs
+#   --remove    .topmsg and .topdeps are removed from the result and working tree
+# note this function should only be called after attempt_index_merge fails as
+# it implicity always does --no-ff (except for --merge which will --ff)
 git_merge() {
-	_oldhead="$(git rev-parse --verify HEAD^0)"
 	_ret=0
-	git merge $auhopt --no-stat "$@" || _ret=$?
-	[ "$_ret" != "0" ] || git --no-pager diff-tree --shortstat "$_oldhead" HEAD^0 --
+	git_topmerge -v _oldhead "$@" || _ret=$?
+	_exclusions=
+	[ "$1" = "--merge" ] || _exclusions=":/ :!/.topdeps :!/.topmsg"
+	[ "$_ret" != "0" ] || git --no-pager diff-tree --shortstat "$_oldhead" HEAD^0 -- $_exclusions
 	return $_ret
 }
 
@@ -292,6 +443,7 @@ git_merge() {
 # only trivial aggressive automatic (i.e. simple) merges are supported
 #
 # [optional] '--no-auto' to suppress "automatic" merging, merge fails instead
+# [optional] '--merge', '--theirs' or '--remove' to alter .topfile handling
 # $1 => '' to discard result, 'refs/?*' to update the specified ref or a varname
 # $2 => '-m' MUST be '-m'
 # $3 => commit message AND, if $1 matches refs/?* the update-ref message
@@ -314,6 +466,16 @@ v_attempt_index_merge() {
 		_noauto=1
 		shift
 	fi
+	_exclusions=
+	[ "$1" = "--merge" ] || _exclusions=":/ :!/.topdeps :!/.topmsg"
+	_mstyle=
+	if [ "$1" = "--merge" ] || [ "$1" = "--theirs" ] || [ "$1" = "--remove" ]; then
+		_mmode="${1#--}"
+		shift
+		if [ "$_mmode" = "merge" ] || [ "$_mmode" = "theirs" ]; then
+			_mstyle="-top$_mmode"
+		fi
+	fi
 	[ "$#" -ge 5 ] && [ "$2" = "-m" ] && [ -n "$3" ] && [ -n "$4" ] && [ -n "$5" ] ||
 		die "programmer error: invalid arguments to v_attempt_index_merge: $*"
 	_var="$1"
@@ -329,6 +491,9 @@ v_attempt_index_merge() {
 	_mt=
 	_octo=
 	if [ $# -gt 1 ]; then
+		if [ "$_mmode" = "merge" ] || [ "$_mmode" = "theirs" ]; then
+			die "programmer error: invalid octopus .topfile strategy to v_attempt_index_merge: --$_mode"
+		fi
 		ihl="$(git merge-base --independent "$@")" || return 1
 		set -- $ihl
 		[ $# -ge 1 ] && [ -n "$1" ] || return 1
@@ -363,11 +528,13 @@ v_attempt_index_merge() {
 				_mmsg="Fast-forward (no commit created)"
 				newc="$r1"
 				_nodt=1
+				_mstyle=
 			elif [ "$r1" = "$mb" ]; then
 				[ -n "$_mmsg" ] || _mmsg="Already up-to-date!"
 				newc="$rh"
 				_nodt=1
 				_same=1
+				_mstyle=
 			fi
 		fi
 	fi
@@ -390,7 +557,7 @@ v_attempt_index_merge() {
 			GIT_INDEX_FILE="$inew" git read-tree -m --aggressive -i "$mb" "$rh" "$1" || { rm -f "$inew" "$imrg"; return 1; }
 			GIT_INDEX_FILE="$inew" git ls-files --unmerged --full-name --abbrev :/ >"$itmp" 2>&1 || { rm -f "$inew" "$itmp" "$imrg"; return 1; }
 			! [ -s "$itmp" ] || {
-				if ! GIT_INDEX_FILE="$inew" TG_TMP_DIR="$tg_tmp_dir" git merge-index -q "$TG_INST_CMDDIR/tg--index-merge-one-file" -a >"$itmp" 2>&1; then
+				if ! GIT_INDEX_FILE="$inew" TG_TMP_DIR="$tg_tmp_dir" git merge-index -q "$TG_INST_CMDDIR/tg--index-merge-one-file$_mstyle" -a >"$itmp" 2>&1; then
 					rm -f "$inew" "$itmp" "$imrg"
 					return 1
 				fi
@@ -407,6 +574,7 @@ v_attempt_index_merge() {
 					_auto=" automatic"
 				fi
 			}
+			_mstyle=
 			rm -f "$itmp"
 			newt="$(GIT_INDEX_FILE="$inew" git write-tree)" && [ -n "$newt" ] || { rm -f "$inew" "$imrg"; return 1; }
 			_parents="${_parents:+$_parents }-p $1"
@@ -417,6 +585,13 @@ v_attempt_index_merge() {
 			fi
 			break;
 		done
+		if [ "$_mmode" = "remove" ]; then
+			GIT_INDEX_FILE="$inew" git update-index --index-info <<-EOT &&
+			0 $nullsha$tab.topdeps
+			0 $nullsha$tab.topmsg
+			EOT
+			newt="$(GIT_INDEX_FILE="$inew" git write-tree)" && [ -n "$newt" ] || { rm -f "$inew" "$imrg"; return 1; }
+		fi
 		[ -z "$_octo" ] || LC_ALL=C sort -u <"$imrg"
 		rm -f "$inew" "$imrg"
 		newc="$(git commit-tree -p "$orh" $_parents -m "$_msg" "$newt")" && [ -n "$newc" ] || return 1
@@ -441,21 +616,26 @@ v_attempt_index_merge() {
 		;;
 	esac
 	echo "$_mmsg"
-	[ -n "$_nodt" ] || git --no-pager diff-tree --shortstat "$orh" "$newc" --
+	[ -n "$_nodt" ] || git --no-pager diff-tree --shortstat "$orh" "$newc" -- $_exclusions
 	return 0
 }
 
 # shortcut that passes $3 as a preceding argument (which must match refs/?*)
 attempt_index_merge() {
 	_noauto=
+	_mmode=
 	if [ "$1" = "--no-auto" ]; then
 		_noauto="$1"
+		shift
+	fi
+	if [ "$1" = "--merge" ] || [ "$1" = "--theirs" ] || [ "$1" = "--remove" ]; then
+		_mmode="$1"
 		shift
 	fi
 	case "$3" in refs/?*);;*)
 		die "programmer error: invalid arguments to attempt_index_merge: $*"
 	esac
-	v_attempt_index_merge $_noauto "$3" "$@"
+	v_attempt_index_merge $_noauto $_mmode "$3" "$@"
 }
 
 on_base=
@@ -561,7 +741,7 @@ update_branch() {
 			info "Updating $_update_name base with deps: $deplist"
 			become_non_cacheable
 			msg="tgupdate: octopus merge $# deps into $topbases/$_update_name$lf$lf$deplines"
-			if attempt_index_merge -m "$msg" "refs/$topbases/$_update_name" "$@"; then
+			if attempt_index_merge --remove -m "$msg" "refs/$topbases/$_update_name" "$@"; then
 				set --
 			else
 				info "Octopus merge failed; falling back to multiple 3-way merges"
@@ -587,12 +767,12 @@ update_branch() {
 			become_non_cacheable
 			msg="tgupdate: merge $dep into $topbases/$_update_name"
 			if
-				! attempt_index_merge $no_auto -m "$msg" "refs/$topbases/$_update_name" "$fulldep^0" &&
+				! attempt_index_merge $no_auto --remove -m "$msg" "refs/$topbases/$_update_name" "$fulldep^0" &&
 				! {
 					# We need to switch to the base branch
 					# ...but only if we aren't there yet (from failed previous merge)
 					do_base_switch "$_update_name" || die "do_base_switch failed" &&
-					git_merge -m "$msg" "$fulldep^0"
+					git_merge --remove --name "$_update_name base" --name "$dep" -m "$msg" "$fulldep^0"
 				}
 			then
 				rm "$_depcheck"
@@ -611,6 +791,7 @@ update_branch() {
 
 	plusextra=
 	merge_with="refs/$topbases/$_update_name"
+	brmmode=
 	if has_remote "$_update_name"; then
 		_rname="refs/remotes/$base_remote/$_update_name"
 		if branch_contains "refs/heads/$_update_name" "$_rname"; then
@@ -623,6 +804,7 @@ update_branch() {
 			checkours=
 			checktheirs=
 			got_merge_with=
+			brmmode="--merge"
 			if [ -n "$mergeresult" ]; then
 				checkours="$(git rev-parse --verify --quiet "refs/$topbases/$_update_name^0" --)" || :
 				checktheirs="$(git rev-parse --verify --quiet "$_rname^0" --)" || :
@@ -632,12 +814,12 @@ update_branch() {
 			fi
 			if
 				[ -z "$got_merge_with" ] &&
-				! v_attempt_index_merge $no_auto "merge_with" -m "$msg" "refs/$topbases/$_update_name" "$_rname^0" &&
+				! v_attempt_index_merge $no_auto --theirs "merge_with" -m "$msg" "refs/$topbases/$_update_name" "$_rname^0" &&
 				! {
 					# *DETACH* our HEAD now!
 					no_auto="--no-auto"
 					git checkout -q --detach $iowopt "refs/$topbases/$_update_name" || die "git checkout failed" &&
-					git_merge -m "$msg" "$_rname^0" &&
+					git_merge --theirs --name "$_update_name base content" --name "${_rname#refs/}" -m "$msg" "$_rname^0" &&
 					merge_with="$(git rev-parse --verify HEAD --)"
 				}
 			then
@@ -650,7 +832,7 @@ update_branch() {
 			fi
 			# Go back but remember we want to merge with this, not base
 			[ -z "$got_merge_with" ] || merge_with="$got_merge_with"
-			plusextra="${_rname#refs/}+"
+			plusextra="${_rname#refs/} + "
 		fi
 	fi
 
@@ -662,17 +844,17 @@ update_branch() {
 		return 0
 	fi
 	stash_now_if_requested
-	info "Updating $_update_name against new base..."
+	info "Updating $_update_name against ${plusextra}new base..."
 	become_non_cacheable
 	msg="tgupdate: merge ${plusextra}$topbases/$_update_name into $_update_name"
 	if
-		! attempt_index_merge $no_auto -m "$msg" "refs/heads/$_update_name" "$merge_with^0" &&
+		! attempt_index_merge $no_auto $brmmode -m "$msg" "refs/heads/$_update_name" "$merge_with^0" &&
 		! {
 			# Home, sweet home...
 			# (We want to always switch back, in case we were
 			# on the base from failed previous merge.)
 			git checkout -q $iowopt "$_update_name" || die "git checkout failed" &&
-			git_merge -m "$msg" "$merge_with^0"
+			git_merge $brmmode --name "$_update_name" --name "${plusextra}$topbases/$_update_name" -m "$msg" "$merge_with^0"
 		}
 	then
 		no_auto=

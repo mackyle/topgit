@@ -435,6 +435,13 @@ measure_branch()
 	echo "$_commits/$_nmcommits $_suffix"
 }
 
+# true if $1 is contained by (or the same as) $2
+# this is never slower than merge-base --is-ancestor and is often slightly faster
+contained_by()
+{
+        [ "$(git rev-list --count --max-count=1 "$1" --not "$2" --)" = "0" ]
+}
+
 # branch_contains B1 B2
 # Whether B1 is a superset of B2.
 branch_contains()
@@ -449,7 +456,7 @@ branch_contains()
 	fi
 	[ -d "$tg_cache_dir/$1/.bc/$2" ] || mkdir -p "$tg_cache_dir/$1/.bc/$2" 2>/dev/null || :
 	_result=0
-	[ "$(git rev-list --count --max-count=1 "$_revb2" --not "$_revb1" --)" = "0" ] || _result=1
+	contained_by "$_revb2" "$_revb1" || _result=1
 	if [ -d "$tg_cache_dir/$1/.bc/$2" ]; then
 		echo "$_result" "$_revb1" "$_revb2" >"$tg_cache_dir/$1/.bc/$2/.d"
 	fi
