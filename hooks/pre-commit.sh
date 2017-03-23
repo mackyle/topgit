@@ -100,29 +100,23 @@ check_topdeps()
 {
 	# we only need to check newly added deps and for these if a path exists to the
 	# current HEAD
-	git diff --cached "$root_dir/.topdeps" |
-		awk '
-	BEGIN      { in_hunk = 0; }
-	/^@@ /     { in_hunk = 1; }
-	/^\+/      { if (in_hunk == 1) printf("%s\n", substr($0, 2)); }
-	/^[^@ +-]/ { in_hunk = 0; }
-	' |
-		while read newly_added; do
-			ref_exists "refs/heads/$newly_added" ||
-				die "invalid branch as dependent: $newly_added"
+	git diff --cached "$root_dir/.topdeps" | diff_added_lines |
+	while read newly_added; do
+		ref_exists "refs/heads/$newly_added" ||
+			die "invalid branch as dependent: $newly_added"
 
-			# check for self as dep
-			[ "$head_" != "$newly_added" ] ||
-				die "cannot have myself as dependent"
+		# check for self as dep
+		[ "$head_" != "$newly_added" ] ||
+			die "cannot have myself as dependent"
 
-			# deps can be non-tgish but we can't run recurse_deps() on them
-			ref_exists "refs/$topbases/$newly_added" ||
-				continue
+		# deps can be non-tgish but we can't run recurse_deps() on them
+		ref_exists "refs/$topbases/$newly_added" ||
+			continue
 
-			# recurse_deps uses dfs but takes the .topdeps from the tree,
-			# therefore no endless loop in the cycle-check
-			no_remotes=1 recurse_deps check_cycle_name "$newly_added"
-		done
+		# recurse_deps uses dfs but takes the .topdeps from the tree,
+		# therefore no endless loop in the cycle-check
+		no_remotes=1 recurse_deps check_cycle_name "$newly_added"
+	done
 	test $? -eq 0
 
 	# check for repetitions of deps

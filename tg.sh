@@ -361,6 +361,18 @@ make_empty_commit()
 	git hash-object -t commit -w --stdin
 )
 
+# standard input is a diff
+# standard output is the "+" lines with leading "+ " removed
+diff_added_lines()
+{
+	awk '
+BEGIN      { in_hunk = 0; }
+/^@@ /     { in_hunk = 1; }
+/^\+/      { if (in_hunk == 1) printf("%s\n", substr($0, 2)); }
+/^[^@ +-]/ { in_hunk = 0; }
+'
+}
+
 # setup_hook NAME
 setup_hook()
 {
