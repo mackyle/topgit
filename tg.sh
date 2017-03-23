@@ -1254,9 +1254,11 @@ check_status()
 
 	tg_state=
 	tg_remove=
+	tg_topmerge=
 	if [ -e "$git_dir/tg-update" ]; then
 		tg_state="update"
 		tg_remove="$git_dir/tg-update"
+		! [ -s "$git_dir/tg-update/merging_topfiles" ] || tg_topmerge=1
 	fi
 	tg_remove="${tg_remove#./}"
 }

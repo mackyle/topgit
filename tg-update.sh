@@ -39,6 +39,7 @@ mergetheirs=
 mergeresult=
 stashhash=
 next_no_auto=
+merging_topfiles=
 
 is_active() {
 	[ -d "$state_dir" ] || return 1
@@ -52,6 +53,7 @@ is_active() {
 	[ -s "$state_dir/names" ] || return 1
 	[ -f "$state_dir/processed" ] || return 1
 	[ -f "$state_dir/no_auto" ] || return 1
+	[ -f "$state_dir/merging_topfiles" ] || return 1
 	[ -f "$state_dir/mergeours" ] || return 1
 	[ -f "$state_dir/mergeours" ] || return 1
 	if [ -s "$state_dir/mergeours" ]; then
@@ -73,6 +75,7 @@ restore_state() {
 	IFS= read -r names <"$state_dir/names" && [ -n "$names" ]
 	IFS= read -r processed <"$state_dir/processed" || :
 	IFS= read -r next_no_auto <"$state_dir/no_auto" || :
+	# merging_topfiles is for outside info but not to be restored
 	IFS= read -r mergeours <"$state_dir/mergeours" || :
 	IFS= read -r mergetheirs <"$state_dir/mergetheirs" || :
 	if [ -n "$mergeours" ] && [ -n "$mergetheirs" ]; then
@@ -223,6 +226,8 @@ save_state() {
 	printf '%s\n' "$names" >"$state_dir/names"
 	printf '%s\n' "$processed" >"$state_dir/processed"
 	printf '%s\n' "$no_auto" >"$state_dir/no_auto"
+	# this one is an external flag and needs to be zero length for false
+	printf '%s' "$merging_topfiles" >"$state_dir/merging_topfiles"
 	printf '%s\n' "$1" >"$state_dir/mergeours"
 	printf '%s\n' "$2" >"$state_dir/mergetheirs"
 }
@@ -870,6 +875,7 @@ update_branch_internal() {
 		}
 	then
 		no_auto=
+		merging_topfiles="${brmmode:+1}"
 		save_state
 		info "Please commit merge resolution and call \`$tgdisplay update --continue\`"
 		info "(use \`$tgdisplay status\` to see more options)"
