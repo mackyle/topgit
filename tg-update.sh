@@ -476,6 +476,13 @@ v_attempt_index_merge() {
 			_mstyle="-top$_mmode"
 		fi
 	fi
+	if [ "$_mmode" = "remove" ] || [ "$_mmode" = "merge" ]; then
+		_agstyle="--aggressive"
+	else
+		# --aggressive still happens but in the helper in order to
+		# ensure correct handling of .topdeps and .topmsg with --ours/--theirs
+		_agstyle=
+	fi
 	[ "$#" -ge 5 ] && [ "$2" = "-m" ] && [ -n "$3" ] && [ -n "$4" ] && [ -n "$5" ] ||
 		die "programmer error: invalid arguments to v_attempt_index_merge: $*"
 	_var="$1"
@@ -554,7 +561,7 @@ v_attempt_index_merge() {
 					continue
 				fi
 			fi
-			GIT_INDEX_FILE="$inew" git read-tree -m --aggressive -i "$mb" "$rh" "$1" || { rm -f "$inew" "$imrg"; return 1; }
+			GIT_INDEX_FILE="$inew" git read-tree -m $_agstyle -i "$mb" "$rh" "$1" || { rm -f "$inew" "$imrg"; return 1; }
 			GIT_INDEX_FILE="$inew" git ls-files --unmerged --full-name --abbrev :/ >"$itmp" 2>&1 || { rm -f "$inew" "$itmp" "$imrg"; return 1; }
 			! [ -s "$itmp" ] || {
 				if ! GIT_INDEX_FILE="$inew" TG_TMP_DIR="$tg_tmp_dir" git merge-index -q "$TG_INST_CMDDIR/tg--index-merge-one-file$_mstyle" -a >"$itmp" 2>&1; then
