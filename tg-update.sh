@@ -38,6 +38,7 @@ mergeours=
 mergetheirs=
 mergeresult=
 stashhash=
+next_no_auto=
 
 is_active() {
 	[ -d "$state_dir" ] || return 1
@@ -50,6 +51,7 @@ is_active() {
 	[ -s "$state_dir/name" ] || return 1
 	[ -s "$state_dir/names" ] || return 1
 	[ -f "$state_dir/processed" ] || return 1
+	[ -f "$state_dir/no_auto" ] || return 1
 	[ -f "$state_dir/mergeours" ] || return 1
 	[ -f "$state_dir/mergeours" ] || return 1
 	if [ -s "$state_dir/mergeours" ]; then
@@ -70,6 +72,7 @@ restore_state() {
 	IFS= read -r name <"$state_dir/name" && [ -n "$name" ]
 	IFS= read -r names <"$state_dir/names" && [ -n "$names" ]
 	IFS= read -r processed <"$state_dir/processed" || :
+	IFS= read -r next_no_auto <"$state_dir/no_auto" || :
 	IFS= read -r mergeours <"$state_dir/mergeours" || :
 	IFS= read -r mergetheirs <"$state_dir/mergetheirs" || :
 	if [ -n "$mergeours" ] && [ -n "$mergetheirs" ]; then
@@ -219,6 +222,7 @@ save_state() {
 	printf '%s\n' "$name" >"$state_dir/name"
 	printf '%s\n' "$names" >"$state_dir/names"
 	printf '%s\n' "$processed" >"$state_dir/processed"
+	printf '%s\n' "$no_auto" >"$state_dir/no_auto"
 	printf '%s\n' "$1" >"$state_dir/mergeours"
 	printf '%s\n' "$2" >"$state_dir/mergetheirs"
 }
@@ -247,6 +251,8 @@ stash_now_if_requested() {
 		[ "$(git cat-file -t "$stashhash" -- 2>/dev/null)" = "tag" ] ||
 		die "anonymous --stash failed"
 	fi
+	[ -z "$next_no_auto" ] || no_auto="$next_no_auto"
+	next_no_auto=
 }
 
 recursive_update() {
@@ -485,6 +491,8 @@ update_branch() {
 			return
 		fi
 	fi
+	# allow automatic simple merges by default until a failure occurs
+	no_auto=
 	if [ -s "$_depcheck" ]; then
 		<"$_depcheck" \
 			sed 's/ [^ ]* *$//' | # last is $_update_name
@@ -549,7 +557,6 @@ update_branch() {
 
 		# Make sure we end up on the correct base branch
 		on_base=
-		no_auto=
 		if [ $# -ge 2 ]; then
 			info "Updating $_update_name base with deps: $deplist"
 			become_non_cacheable
@@ -625,9 +632,10 @@ update_branch() {
 			fi
 			if
 				[ -z "$got_merge_with" ] &&
-				! v_attempt_index_merge "merge_with" -m "$msg" "refs/$topbases/$_update_name" "$_rname^0" &&
+				! v_attempt_index_merge $no_auto "merge_with" -m "$msg" "refs/$topbases/$_update_name" "$_rname^0" &&
 				! {
 					# *DETACH* our HEAD now!
+					no_auto="--no-auto"
 					git checkout -q --detach $iowopt "refs/$topbases/$_update_name" || die "git checkout failed" &&
 					git_merge -m "$msg" "$_rname^0" &&
 					merge_with="$(git rev-parse --verify HEAD --)"
@@ -658,7 +666,7 @@ update_branch() {
 	become_non_cacheable
 	msg="tgupdate: merge ${plusextra}$topbases/$_update_name into $_update_name"
 	if
-		! attempt_index_merge -m "$msg" "refs/heads/$_update_name" "$merge_with^0" &&
+		! attempt_index_merge $no_auto -m "$msg" "refs/heads/$_update_name" "$merge_with^0" &&
 		! {
 			# Home, sweet home...
 			# (We want to always switch back, in case we were
@@ -667,6 +675,7 @@ update_branch() {
 			git_merge -m "$msg" "$merge_with^0"
 		}
 	then
+		no_auto=
 		save_state
 		info "Please commit merge resolution and call \`$tgdisplay update --continue\`"
 		info "(use \`$tgdisplay status\` to see more options)"
