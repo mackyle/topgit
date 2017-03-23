@@ -149,35 +149,6 @@ v_transform_base() {
 	return 1
 }
 
-symrefhead="$(git symbolic-ref HEAD 2>/dev/null)" || :
-if [ "$(cd "$git_dir" && pwd -P)" != "$(cd "$git_common_dir" && pwd -P)" ]; then
-	symrefmain="$(git --git-dir="$git_common_dir" symbolic-ref HEAD 2>/dev/null)" || :
-else
-	symrefmain=
-fi
-headnote=
-mainnote=
-if [ -n "$symrefhead" ] && v_transform_base newrefhead "$symrefhead"; then
-	headnote=" [HEAD]"
-	symrefheadrmt="$_wasremote"
-	symrefheadrev="$_wasrevdir"
-fi
-if [ -n "$symrefmain" ]; then
-	if [ "$symrefhead" = "$symrefmain" ]; then
-		if [ -n "$headnote" ]; then
-			headnote=" [HEAD, main]"
-			mainnote="$headnote"
-			newrefmain="$newrefhead"
-			symrefmainrmt="$symrefheadrmt"
-			symrefmainrev="$symrefheadrev"
-		fi
-	elif v_transform_base newrefmain "$symrefmain"; then
-		mainnote=" [main]"
-		symrefmainrmt="$_wasremote"
-		symrefmainrev="$_wasrevdir"
-	fi
-fi
-
 for r in $remotes; do
 	nv="+refs/$newbases/*:refs/remotes/$r/${newbases#heads/}/*"
 	if rf="$(git config --get-all "remote.$r.fetch" \
@@ -196,8 +167,6 @@ for r in $remotes; do
 	fi
 done
 
-sawhead=
-sawmain=
 while read -r rn rt rh && [ -n "$rn" ] && [ -n "$rt" ] && [ -n "$rh" ]; do
 	if [ -z "$orphans" ] && ! not_orphan_base "$rn"; then
 		echo "skipping orphan base (use --orphans): $rn" >&2
@@ -271,59 +240,73 @@ while read -r rn rt rh && [ -n "$rn" ] && [ -n "$rt" ] && [ -n "$rh" ]; do
 			fi
 		fi
 	fi
-	note=
-	if [ "$rn" = "$symrefhead" ] && [ "$newb" = "$newrefhead" ]; then
-		note="$headnote"
-		sawhead=1
-	elif [ "$rn" = "$symrefmain" ] && [ "$newb" = "$newrefmain" ]; then
-		note="$mainnote"
-		sawmain=1
-	fi
-	printf 'update: %s%s\n -> %s\n' "$rn" "$note" "$newb"
+	printf 'update: %s\n -> %s\n' "$rn" "$newb"
 	if [ -n "$force" ]; then
 		git update-ref "$newb" "$rh"
 		if [ "$(git rev-parse --quiet --verify "$newb" --)" = "$rh" ] && [ "$newb" != "$rn" ]; then
 			git update-ref -d "$rn"
-		fi
-		if [ "$rn" = "$symrefhead" ]; then
-			git symbolic-ref HEAD "$newrefhead"
-		fi
-		if [ "$rn" = "$symrefmain" ]; then
-			git --git-dir="$git_common_dir" symbolic-ref HEAD "$newrefmain"
 		fi
 	fi
 done <<EOT
 $(git for-each-ref --format='%(refname) %(objecttype) %(objectname)' $refpats)
 EOT
 
-# [ -n "$1" ] => remote update
-# [ -n "$2" ] => reverse update
-doing_update_type()
-{
-	if [ -n "$1" ]; then
-		[ -z "$noremotes" ] || return 1
-	else
-		[ -z "$remotesonly" ] || return 1
+maindir="$(cd "$git_common_dir" && pwd -P)"
+if [ "$git_dir" = "$git_common_dir" ]; then
+	headdir="$maindir"
+else
+	headdir="$(cd "$git_dir" && pwd -P)"
+fi
+
+# note that [ -n "$iowopt" ] will be true if linked worktrees are available
+maybehaslw=
+if
+	[ -n "$iowopt" ] &&
+	[ -d "$maindir/worktrees" ] &&
+	[ $(( $(find "$maindir/worktrees" -mindepth 2 -maxdepth 2 -type f -name HEAD -print 2>/dev/null | wc -l) )) -gt 0 ]
+then
+	maybehaslw=1
+fi
+
+# $1 => --git-dir to process (or try to anyway)
+processed=" "
+process_one_symref() {
+	case "$processed" in *" $1 "*) return 0; esac
+	processed="$processed$1 "
+	hsymref="$(git --git-dir="$1" symbolic-ref --quiet HEAD -- 2>/dev/null)" &&
+	[ -n "$hsymref" ] || return 0
+	v_transform_base xsymref "$hsymref" || return 0
+	[ -z "$_wasrevdir" ] || [ -n "$reverse" ] || return 0
+	[ -n "$_wasrevdir" ] || [ -z "$reverse" ] || return 0
+	[ -z "$_wasremote" ] || [ -z "$noremotes" ] || return 0
+	[ -n "$_wasremote" ] || [ -z "$remotesonly" ] || return 0
+
+	appellation="HEAD"
+	[ "$1" != "$headdir" ] || [ -z "$maybehaslw" ] || appellation="$appelation ="
+	if [ -n "$maybehaslw" ]; then
+		if [ "$1" = "$maindir" ]; then
+			workname="main"
+		else
+			workname="${1##*/}"
+		fi
+		appellation="${appellation:+$appellation }($workname)"
 	fi
-	if [ -n "$2" ]; then
-		[ -n "$reverse" ] || return 1
-	else
-		[ -z "$reverse" ] || return 1
+	[ -z "$appellation" ] || appellation=" [$appellation]"
+	printf 'symref: %s%s\n -> %s\n' "$hsymref" "$appellation" "$xsymref"
+	if [ -n "$force" ]; then
+		git --git-dir="$1" symbolic-ref HEAD "$xsymref" --
 	fi
-	return 0
 }
 
-# In case just the HEAD symref needs updating
-if [ -z "$sawhead" ] && [ -n "$headnote" ] && doing_update_type "$symrefheadrmt" "$symrefheadrev"; then
-	[ "$symrefhead" != "$symrefmain" ] || sawmain=1
-	printf 'update [symref only]: %s%s\n -> %s\n' "$symrefhead" "$headnote" "$newrefhead"
-	[ -z "$force" ] || git symbolic-ref HEAD "$newrefhead"
-	[ -z "$force" ] || [ "$symrefhead" != "$symrefmain" ] ||
-	git --git-dir="$git_common_dir" symbolic-ref HEAD "$newrefmain"
+# always do our HEAD first
+process_one_symref "$headdir"
+# then the main HEAD (it will automatically be ignored if a duplicate)
+process_one_symref "$maindir"
+# then each worktree (again duplicates will be automatically ignored)
+if [ -n "$maybehaslw" ]; then
+	while read -r wktree && [ -n "$wktree" ]; do
+		process_one_symref "${wktree%/HEAD}"
+	done <<-EOT
+	$(find "$maindir/worktrees" -mindepth 2 -maxdepth 2 -type f -name HEAD -print 2>/dev/null)
+	EOT
 fi
-if [ -z "$sawmain" ] && [ -n "$mainnote" ] && doing_update_type "$symrefmainrmt" "$symrefmainrev"; then
-	printf 'update [symref only]: %s%s\n -> %s\n' "$symrefmain" "$mainnote" "$newrefmain"
-	git --git-dir="$git_common_dir" symbolic-ref HEAD "$newrefmain"
-fi
-
-exit 0
