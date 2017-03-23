@@ -657,7 +657,7 @@ do_base_switch() {
 	fi
 }
 
-update_branch() {
+update_branch_internal() {
 	# We are cacheable until the first change
 	become_cacheable
 
@@ -675,7 +675,7 @@ update_branch() {
 			die "$msg"
 		else
 			info "$msg; skipping branch $_update_name"
-			return
+			return 0
 		fi
 	fi
 	# allow automatic simple merges by default until a failure occurs
@@ -878,16 +878,38 @@ update_branch() {
 
 	# Fourth, auto create locally any newly depended on branches we got from the remote
 
+	_result=0
 	if [ -n "$b4deps" ] &&
 	   l8rdeps="$(git rev-parse --verify --quiet "refs/heads/$_update_name:.topdeps" --)" &&
 	   [ -n "$l8rdeps" ] && [ "$b4deps" != "$l8rdeps" ]
 	then
-		git diff "$b4deps" "$l8rdeps" -- | diff_added_lines |
 		while read -r newdep; do
-			[ -z "$newdep" ] || auto_create_local_remote "$newdep" || :
-		done
+			if [ -n "$newdep" ] &&
+			   {
+				auto_create_local_remote "$newdep" ||
+				ref_exists "refs/heads/$newdep"
+			   }
+			then
+				_result=75
+			fi
+		done <<-EOT
+		$(git diff "$b4deps" "$l8rdeps" -- | diff_added_lines)
+		EOT
 	fi
+	return $_result
+}
 
+update_branch() {
+	_ubicode=0
+	_maxdeploop=3
+	update_branch_internal "$@" || _ubicode=$?
+	while [ "$_maxdeploop" -gt 0 ] && [ "$_ubicode" = "75" ]; do
+		_maxdeploop="$(( $maxdeploop - 1 ))"
+		info "Updating $1 again with newly added dependencies..."
+		_ubicode=0
+		update_branch_internal "$@" || _ubicode=$?
+	done
+	return $_ubicode
 }
 
 # We are "read-only" and cacheable until the first change
