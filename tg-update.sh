@@ -883,14 +883,65 @@ update_branch_internal() {
 	   l8rdeps="$(git rev-parse --verify --quiet "refs/heads/$_update_name:.topdeps" --)" &&
 	   [ -n "$l8rdeps" ] && [ "$b4deps" != "$l8rdeps" ]
 	then
+		_olddeps=
 		while read -r newdep; do
-			if [ -n "$newdep" ] &&
-			   {
-				auto_create_local_remote "$newdep" ||
-				ref_exists "refs/heads/$newdep"
-			   }
-			then
-				_result=75
+			if [ -n "$newdep" ]; then
+				if auto_create_local_remote "$newdep"; then
+					_result=75
+				else
+					if ref_exists "refs/heads/$newdep"; then
+						# maybe the line just moved around
+						[ -n "$_olddeps" ] && [ -f "$_olddeps" ] || {
+							_olddeps="$(get_temp b4deps)" &&
+							git cat-file blob "$b4deps" >"$_olddeps"
+						}
+						if awk -v "newdep=$newdep" '$0 == newdep {exit 1}' <"$_olddeps"; then
+							# nope, it's a new head already existing locally
+							_result=75
+						fi
+					else
+						# helpfully check to see if there's such a remote branch
+						_rntgb=
+						! ref_exists "refs/remotes/$base_remote/$newdep" || _rntgb=1
+						# maybe a locking local orphan base too
+						_blocked=
+						if [ -n "$_rntgb" ] &&
+						   ref_exists "refs/remotes/$base_remote/${topbases#heads/}$newdep" &&
+						   ref_exists "refs/$topbases/$newdep"
+						then
+							_blocked=1
+						fi
+						# spew the flexibly adjustable warning
+						warn "-------------------------------------"
+						warn "MISSING DEPENDENCY MERGED FROM REMOTE"
+						warn "-------------------------------------"
+						warn "Local Branch: $_update_name"
+						warn " Remote Name: $base_remote"
+						warn "  Dependency: $newdep"
+						if [ -n "$_blocked" ]; then
+							warn "Blocking Ref: refs/$topbases/$newdep"
+						elif [ -n "$_rntgb" ]; then
+							warn "Existing Ref: refs/remotes/$base_remote/$newdep"
+						fi
+						warn ""
+						if [ -n "$_blocked" ]; then
+							warn "There is no local branch by that name, but"
+							warn "there IS a remote TopGit branch available by"
+							warn "that name, but creation of a local version has"
+							warn "been blocked by existence of the ref shown above."
+						elif [ -n "$_rntgb" ]; then
+							warn "There is no local branch or remote TopGit"
+							warn "branch available by that name, but there is an"
+							warn "existing non-TopGit remote branch ref shown above."
+							warn "Non-TopGit branches are not set up automatically"
+							warn "by TopGit and must be maintained manually."
+						else
+							warn "There is no local branch or remote branch"
+							warn "(TopGit or otherwise) available by that name."
+						fi
+						warn "-------------------------------------"
+					fi
+				fi
 			fi
 		done <<-EOT
 		$(git diff "$b4deps" "$l8rdeps" -- | diff_added_lines)
