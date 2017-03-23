@@ -854,6 +854,11 @@ update_branch() {
 	info "Updating $_update_name against ${plusextra}new base..."
 	become_non_cacheable
 	msg="tgupdate: merge ${plusextra}$topbases/$_update_name into $_update_name"
+	b4deps=
+	if [ -n "$brmmode" ] && [ "$base_remote" ]; then
+		b4deps="$(git rev-parse --verify --quiet "refs/heads/$_update_name:.topdeps" --)" && [ -n "$b4deps" ] ||
+		b4deps="$(git hash-object -t blob -w --stdin </dev/null)"
+	fi
 	if
 		! attempt_index_merge $no_auto $brmmode -m "$msg" "refs/heads/$_update_name" "$merge_with^0" &&
 		! {
@@ -870,6 +875,19 @@ update_branch() {
 		info "(use \`$tgdisplay status\` to see more options)"
 		exit 3
 	fi
+
+	# Fourth, auto create locally any newly depended on branches we got from the remote
+
+	if [ -n "$b4deps" ] &&
+	   l8rdeps="$(git rev-parse --verify --quiet "refs/heads/$_update_name:.topdeps" --)" &&
+	   [ -n "$l8rdeps" ] && [ "$b4deps" != "$l8rdeps" ]
+	then
+		git diff "$b4deps" "$l8rdeps" -- | diff_added_lines |
+		while read -r newdep; do
+			[ -z "$newdep" ] || auto_create_local_remote "$newdep" || :
+		done
+	fi
+
 }
 
 # We are "read-only" and cacheable until the first change

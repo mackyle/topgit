@@ -100,9 +100,14 @@ check_topdeps()
 {
 	# we only need to check newly added deps and for these if a path exists to the
 	# current HEAD
+	check_status
+	base_remote=
+	[ ! -s "$git_dir/tg-update/remote" ] ||
+	IFS= read -r base_remote <"$git_dir/tg-update/remote" || :
 	git diff --cached "$root_dir/.topdeps" | diff_added_lines |
 	while read newly_added; do
 		ref_exists "refs/heads/$newly_added" ||
+		{ [ "$tg_state" = "update" ] && auto_create_local_remote "$newly_added"; } ||
 			die "invalid branch as dependent: $newly_added"
 
 		# check for self as dep

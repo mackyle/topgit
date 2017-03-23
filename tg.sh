@@ -373,6 +373,25 @@ BEGIN      { in_hunk = 0; }
 '
 }
 
+# $1 is name of new branch to create locally if all of these are true:
+#   a) exists as a remote TopGit branch for "$base_remote"
+#   b) the branch "name" does not have any invalid characters in it
+#   c) neither of the two branch refs (branch or base) exist locally
+# returns success only if a new local branch was created (and dumps message)
+auto_create_local_remote()
+{
+	case "$1" in ""|*[" $tab$lf~^:\\*?["]*|.*|*/.*|*.|*./|/*|*/|*//*) return 1; esac
+	[ -n "$base_remote" ] &&
+	git update-ref --stdin <<-EOT >/dev/null 2>&1 &&
+		verify refs/remotes/$base_remote/${topbases#heads/}/$1 refs/remotes/$base_remote/${topbases#heads/}/$1
+		verify refs/remotes/$base_remote/$1 refs/remotes/$base_remote/$1
+		create refs/$topbases/$1 refs/remotes/$base_remote/${topbases#heads/}/$1^0
+		create refs/heads/$1 refs/remotes/$base_remote/$1^0
+	EOT
+	{ init_reflog "refs/$topbases/$1" || :; } &&
+	info "topic branch '$1' automatically set up from remote '$base_remote'"
+}
+
 # setup_hook NAME
 setup_hook()
 {

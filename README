@@ -295,6 +295,13 @@ provides more explicit control over when a common base for a set of patches
 gets updated as well as providing a branch that shows in ``tg summary`` output
 and participates in ``tg remote --populate`` setup.
 
+Another advantage to using a "stage" branch is that if a new "patch" branch
+is created remotely and that new branch is added to a pre-existing "stage"
+branch on the remote then when the local version of the "stage" branch is
+updated (after fetching remote updates of course), that new dependency will
+be merged into the local "stage" branch and the local version of the new remote
+"patch" branch will be automatically set up at "tg update" time.
+
 When using the ``tg tag`` command to create tags that record the current state
 of one or more TopGit branches, the tags are often created with a name that
 starts with ``t/``.
