@@ -39,15 +39,18 @@ done
 name="$(verify_topgit_branch "${name:-HEAD}")"
 base_rev="$(git rev-parse --short --verify "refs/$topbases/$name" -- 2>/dev/null)" ||
 	die "not a TopGit-controlled branch"
+depcnt="$(( $(git cat-file blob "refs/heads/$name:.topdeps" 2>/dev/null | wc -l) ))"
+nomerges=--no-merges
+[ "$depcnt" -gt 0 ] || nomerges=
 
 hasdd=
 for a; do
 	[ "$a" != "--" ] || { hasdd=1; break; }
 done
 if [ -z "$hasdd" ]; then
-	git log --first-parent --no-merges "$@" "refs/$topbases/$name".."$name"
+	git log --first-parent $nomerges "$@" "refs/$topbases/$name".."$name"
 else
-	cmd='git log --first-parent --no-merges'
+	cmd='git log --first-parent $nomerges'
 	while [ $# -gt 0 -a "$1" != "--" ]; do
 		cmd="$cmd $(quotearg "$1")"
 		shift

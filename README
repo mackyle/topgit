@@ -1337,6 +1337,9 @@ tg log
 	where ``<name>`` is the name of the TopGit topic branch (or omitted
 	for the current branch).
 
+	However, if ``<name>`` is a ``[BASE]`` branch the ``--no-merges``
+	option is omitted.
+
 	NOTE: if you have merged changes from a different repository, this
 	command might not list all interesting commits.
 
