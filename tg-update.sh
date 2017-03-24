@@ -6,14 +6,24 @@
 # GPLv2
 
 names= # Branch(es) to update
+name1= # first name
+name2= # second name
+namecnt=0 # how many names were seen
 all= # Update all branches
 pattern= # Branch selection filter for -a
 current= # Branch we are currently on
 skipms= # skip missing dependencies
 stash= # tgstash refs before changes
+quiet= # be quieter
+basemode= # true if --base active
+editmode= # 0, 1 or empty to force none, force edit or default
+basemsg= # message for --base merge commit
+basefile= # message file for --base merge commit
+basenc= # --no-commit on merge
+basefrc= # --force non-ff update
 
 if [ "$(git config --get --bool topgit.autostash 2>/dev/null)" != "false" ]; then
-	# topgit.autostash is true
+	# topgit.autostash is true (or unset)
 	stash=1
 fi
 
@@ -21,7 +31,8 @@ fi
 
 USAGE="\
 Usage: ${tgname:-tg} [...] update [--[no-]stash] [--skip-missing] ([<name>...] | -a [<pattern>...])
-   Or: ${tgname:-tg} --continue | -skip | --stop | --abort"
+   Or: ${tgname:-tg} [...] update --base [-F <file> | -m <msg>] [--[no-]edit] [-f] <base-branch> <ref>
+   Or: ${tgname:-tg} [...] update --continue | -skip | --stop | --abort"
 
 usage()
 {
@@ -31,6 +42,100 @@ usage()
 		printf '%s\n' "$USAGE"
 	fi
 	exit ${1:-0}
+}
+
+# true if $1 is contained by (or the same as) $2
+contained_by()
+{
+        [ "$(git rev-list --count --max-count=1 "$1" --not "$2" --)" = "0" ]
+}
+
+# --base mode comes here with $1 set to <base-branch> and $2 set to <ref>
+# and all options already parsed and validated into above-listed flags
+# this function should exit after returning to "$current"
+do_base_mode()
+{
+	v_verify_topgit_branch tgbranch "$1"
+	depcnt="$(( $(git cat-file blob "refs/heads/$tgbranch:.topdeps" 2>/dev/null | wc -l) ))"
+	if [ $depcnt -gt 0 ]; then
+		grammar="dependency"
+		[ $depcnt -eq 1 ] || grammar="dependencies"
+		die "'$tgbranch' is not a TopGit [BASE] branch (it has $depcnt $grammar)"
+	fi
+	newrev="$(git rev-parse --verify "$2^0" --)" && [ -n "$newrev" ] ||
+		die "not a valid commit-ish: $2"
+	baserev="$(ref_exists_rev "refs/$topbases/$tgbranch")" && [ -n "$baserev" ] ||
+		die "unable to get current base commit for branch '$tgbranch'"
+	if [ "$baserev" = "$newrev" ]; then
+		[ -n "$quiet" ] || echo "No change"
+		exit 0
+	fi
+	alreadymerged=
+	! contained_by "$newrev" "refs/heads/$tgbranch" || alreadymerged=1
+	if [ -z "$basefrc" ] && ! contained_by "$baserev" "$newrev"; then
+		die "Refusing non-fast-forward update of base without --force"
+	fi
+
+	# check that we can checkout the branch
+
+	[ -n "$alreadymerged" ] || git read-tree -n -u -m "refs/heads/$tgbranch" ||
+		die "git checkout \"$branch\" would fail"
+
+	# and make sure everything's clean and we know who we are
+
+	[ -n "$alreadymerged" ] || ensure_clean_tree
+	ensure_ident_available
+
+	# always auto stash even if it's just to the anonymous stash TG_STASH
+
+	stashmsg="tgupdate: autostash before --base $tgbranch update"
+	if [ -n "$stash" ]; then
+		$tg tag -q -q -m "$stashmsg" --stash "$tgbranch" &&
+		stashhash="$(git rev-parse --quiet --verify refs/tgstash --)" &&
+		[ -n "$stashhash" ] &&
+		[ "$(git cat-file -t "$stashhash" -- 2>/dev/null)" = "tag" ] ||
+		die "requested --stash failed"
+	else
+		$tg tag --anonymous "$tgbranch" &&
+		stashhash="$(git rev-parse --quiet --verify TG_STASH --)" &&
+		[ -n "$stashhash" ] &&
+		[ "$(git cat-file -t "$stashhash" -- 2>/dev/null)" = "tag" ] ||
+		die "anonymous --stash failed"
+	fi
+
+	# proceed with the update
+
+	git update-ref -m "tg update --base $tgbranch $2" "refs/$topbases/$tgbranch" "$newrev" "$baserev" ||
+		die "Unable to update base ref"
+	if [ -n "$alreadymerged" ]; then
+		[ -n "$quiet" ] || echo "Already contained in branch (base updated)"
+		exit 0
+	fi
+	git checkout -q $iowopt "$tgbranch" || die "git checkout failed"
+	msgopt=
+	[ -z "$basemsg" ] || msgopt='-m "$basemsg"'
+	fileopt=
+	[ -z "$basefile" ] || fileopt='-F "$basefile"'
+	if [ -n "$editmode" ]; then
+		if [ "$editmode" = "0" ]; then
+			editopt="--no-edit"
+		else
+			editopt="--edit"
+		fi
+	else
+		if [ -z "$basemsg$basefile" ]; then
+			editopt="--edit"
+			basemsg="tg update --base $tgbranch $2"
+			msgopt='-m "$basemsg"'
+		else
+			editopt="--no-edit"
+		fi
+	fi
+	ncopt=
+	[ -z "$basenc" ] || ncopt="--no-commit"
+	eval git merge --no-ff --no-log --no-stat $auhopt $ncopt $editopt "$msgopt" "$fileopt" "refs/$topbases/$tgbranch" -- || exit
+	[ -n "$basenc" ] || checkout_symref_full "$current"
+	exit
 }
 
 state_dir="$git_dir/tg-update"
@@ -163,6 +268,8 @@ if [ -z "$restored" ]; then
 	while [ -n "$1" ]; do
 		arg="$1"; shift
 		case "$arg" in
+		-h)
+			usage;;
 		-a|--all)
 			[ -z "$names$pattern" ] || usage 1
 			all=1;;
@@ -172,12 +279,47 @@ if [ -z "$restored" ]; then
 			stash=1;;
 		--no-stash)
 			stash=;;
-		-h)
-			usage;;
-		-*)
+		--quiet|-q)
+			quiet=1;;
+		--base)
+			basemode=1;;
+		--edit|-e)
+			editmode=1;;
+		--no-edit)
+			editmode=0;;
+		--no-commit)
+			basenc=1;;
+		--force|-f)
+			basefrc=1;;
+		-m)
+			[ $# -gt 0 ] && [ -n "$1" ] || die "option -m requires an argument"
+			basemsg="$1"
+			shift;;
+		-m?*)
+			basemsg="${1#-m}";;
+		--message=*)
+			basemsg="${1#--message=}";;
+		-F)
+			[ $# -gt 0 ] && [ -n "$1" ] || die "option -F requires an argument"
+			basefile="$1"
+			shift;;
+		-F?*)
+			basefile="${1#-F}";;
+		--file=*)
+			basefile="${1#--file=}"
+			[ -n "$basefile" ] || die "option --file= requires an argument"
+			;;
+		-?*)
 			usage 1;;
+		--)
+			break;;
+		"")
+			;;
 		*)
 			if [ -z "$all" ]; then
+				namecnt=$(( $namecnt + 1 ))
+				[ "$namecnt" != "1" ] || name1="$arg"
+				[ "$namecnt" != "2" ] || name2="$arg"
 				names="${names:+$names }$arg"
 			else
 				pattern="${pattern:+$pattern }refs/$topbases/$(strip_ref "$arg")"
@@ -185,10 +327,22 @@ if [ -z "$restored" ]; then
 			;;
 		esac
 	done
-	origpattern="$pattern"
-	[ -z "$pattern" ] && pattern="refs/$topbases"
+	while [ $# -gt 0 ]; do
+		if [ -z "$all" ]; then
+			namecnt=$(( $namecnt + 1 ))
+			[ "$namecnt" != "1" ] || name1="$1"
+			[ "$namecnt" != "2" ] || name2="$1"
+			names="${names:+$names }$*"
+		else
+			pattern="${pattern:+$pattern }refs/$topbases/$(strip_ref "$1")"
+		fi
+		shift
+	done
+	[ -n "$basemode" ] || [ -z "$editmode$basemsg$basefile$basenc$basefrc" ] || usage 1
+	[ -z "$basemode" ] || [ -z "$all$skipms" ] || usage 1
+	[ -z "$basemode" ] || [ -z "$basemsg" ] || [ -z "$basefile" ] || usage 1
+	[ -z "$basemode" ] || [ "$namecnt" -eq 2 ] || usage 1
 
-	processed=
 	current="$(git symbolic-ref -q HEAD)" || :
 	if [ -n "$current" ]; then
 		[ -n "$(git rev-parse --verify --quiet HEAD --)" ] ||
@@ -197,6 +351,13 @@ if [ -z "$restored" ]; then
 		current="$(git rev-parse --verify --quiet HEAD)" ||
 			die "cannot return to invalid HEAD; switch to another branch"
 	fi
+
+	[ -z "$basemode" ] || do_base_mode "$name1" "$name2"
+
+	origpattern="$pattern"
+	[ -z "$pattern" ] && pattern="refs/$topbases"
+
+	processed=
 	[ -n "$all$names" ] || names="HEAD"
 	if [ -z "$all" ]; then
 		clean_names() {

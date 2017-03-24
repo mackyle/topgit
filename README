@@ -416,7 +416,9 @@ old top-bases/... ref value can be fast-forwarded to the new top-bases/...
 value OR the new value contains ALL of the changes in the old value through
 some other mechanism (perhaps they were cherry-picked or otherwise applied to
 the new top-bases/... ref).  The same rules apply to non-TopGit-controlled
-dependencies.
+dependencies.  Use the ``tg update --base <branch> <new-ref>`` command to
+safely make such an update while making it easy to set the merge commit
+message at the same time.
 
 Ignoring this rule and proceeding anyway with a non-fast-forward update to a
 top-bases/... ref will result in changes present in the new value being merged
@@ -625,12 +627,8 @@ tg create
 	controlled ``release`` branch based off the ``v2.1`` tag that can then
 	be used as a base for creation of other TopGit-controlled branches.
 	Then when the time comes to move the base for an entire set of changes
-	up to ``v2.2`` the command ``git update-ref top-bases/release v2.2^0``
-	can be used followed by ``tg update --all``.  Note that it's only safe
-	to update ``top-bases/release`` directly in this manner because a) it
-	has no depedencies since it was created with the ``--base`` option
-	and b) the old ``top-bases/release`` value can be fast-forwarded to the
-	new ``top-bases/release`` value.
+	up to ``v2.2`` the command ``tg update --base release v2.2`` can be
+	used followed by ``tg update --all``.
 
 	Using ``--base`` it's also possible to use ``tg create`` on an
 	unborn branch (omit the dependency name or specify ``HEAD``).  The
@@ -1287,6 +1285,17 @@ tg update
 	--populate``, or only pick out the missing ones using ``tg create
 	-r`` (``tg summary`` will point out branches with incomplete
 	dependencies by showing an ``!`` next to them).
+
+	Using the alternative ``--base`` mode, ``tg update`` will update
+	the base of a specified ``[BASE]`` branch (which is a branch created
+	by ``tg create`` using the ``--base`` option) to the specified
+	committish (the second argument) and then immediately merge that into
+	the branch itself using the specified message for the merge commit.
+	If no message is specified on the command line, an editor will open.
+	Unless ``--force`` is used the new value for the base must contain
+	the old value (i.e. be a fast-forward update).  This is for safety.
+
+	This mode makes updates to ``[BASE]`` branches quick and easy.
 
 	| TODO:	``tg update -a -c`` to autoremove (clean) up-to-date branches
 
