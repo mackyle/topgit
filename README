@@ -277,15 +277,15 @@ incorrect since an annihilated branch has no ``.topmsg`` file of its own.)
 A "patch" branch name typically starts with ``t/`` whereas "base" and "stage"
 branch names often do not.
 
-A "base" branch is created by using the ``--no-deps`` option of ``tg create``
-which will automatically suggest a "[BASE]" message prefix rather than
-"[PATCH]".  A "stage" branch is created like a normal patch branch except that
-the only changes that will ever be made to it are typically to add/remove
-dependencies.  Its subject prefix must be manually changed to "[STAGE]" to
-reflect its purpose.
+A "base" branch is created by using the ``--base`` option of ``tg create``
+(aka ``--no-deps``) which will automatically suggest a "[BASE]" message prefix
+rather than "[PATCH]".  A "stage" branch is created like a normal patch branch
+except that the only changes that will ever be made to it are typically to
+add/remove dependencies.  Its subject prefix must be manually changed to
+"[STAGE]" to reflect its purpose.
 
 Since both "base" and "stage" branches typically only have a use for the
-"Subject:" ilne from their ``.topmsg`` file, they are quite easily created
+"Subject:" line from their ``.topmsg`` file, they are quite easily created
 using the ``--topmsg`` option of ``tg create``.
 
 Use of "stage" and "base" branches is completely optional.  However, without
@@ -411,7 +411,7 @@ AMENDING AND REBASING AND UPDATE-REF'ING
 In a word, "don't".
 
 It is okay to manually update a top-bases/... ref when a) it has no depedencies
-(i.e. it was created with the ``tg create`` ``--no-deps`` option) and b) the
+(i.e. it was created with the ``tg create`` ``--base`` option) and b) the
 old top-bases/... ref value can be fast-forwarded to the new top-bases/...
 value OR the new value contains ALL of the changes in the old value through
 some other mechanism (perhaps they were cherry-picked or otherwise applied to
@@ -606,38 +606,39 @@ tg create
 	conflict resolution, you should call ``tg update --continue`` to
 	finish merging the dependencies into the new topic branch base.
 
-	With the ``--no-deps`` option at most one dependency may be listed
-	which may be any valid committish (instead of just refs/heads/...) and
-	the newly created TopGit-controlled branch will have an empty
-	``.topdeps`` file.  This may be desirable in order to create a TopGit-
-	controlled branch that has no changes of its own and serves merely to
-	mark the common dependency that all other TopGit-controlled branches
-	in some set of TopGit-controlled branches depend on.  A plain,
-	non-TopGit-controlled branch can be used for the same purpose, but the
-	advantage of a TopGit-controlled branch with no dependencies is that it
-	will be pushed with ``tg push``, it will show up in the ``tg summary``
-	and ``tg info`` output with the subject from its ``.topmsg`` file
-	thereby documenting what it's for and finally it can be set up with
-	``tg create -r`` and/or ``tg remote --populate`` to facilitate sharing.
+	With the ``--base`` (aka ``--no-deps``) option at most one dependency
+	may be listed which may be any valid committish (instead of just
+	refs/heads/...) and the newly created TopGit-controlled branch will
+	have an empty ``.topdeps`` file.  This may be desirable in order to
+	create a TopGit-controlled branch that has no changes of its own and
+	serves merely to mark the common dependency that all other
+	TopGit-controlled branches in some set of TopGit-controlled branches
+	depend on.  A plain, non-TopGit-controlled branch can be used for the
+	same purpose, but the advantage of a TopGit-controlled branch with no
+	dependencies is that it will be pushed with ``tg push``, it will show
+	up in the ``tg summary`` and ``tg info`` output with the subject from
+	its ``.topmsg`` file thereby documenting what it's for and finally it
+	can be set up with ``tg create -r`` and/or ``tg remote --populate`` to
+	facilitate sharing.
 
-	For example, ``tg create --no-deps release v2.1`` will create a TopGit-
+	For example, ``tg create --base release v2.1`` will create a TopGit-
 	controlled ``release`` branch based off the ``v2.1`` tag that can then
 	be used as a base for creation of other TopGit-controlled branches.
 	Then when the time comes to move the base for an entire set of changes
 	up to ``v2.2`` the command ``git update-ref top-bases/release v2.2^0``
 	can be used followed by ``tg update --all``.  Note that it's only safe
 	to update ``top-bases/release`` directly in this manner because a) it
-	has no depedencies since it was created with the ``--no-deps`` option
+	has no depedencies since it was created with the ``--base`` option
 	and b) the old ``top-bases/release`` value can be fast-forwarded to the
 	new ``top-bases/release`` value.
 
-	Using ``--no-deps`` it's also possible to use ``tg create`` on an
+	Using ``--base`` it's also possible to use ``tg create`` on an
 	unborn branch (omit the dependency name or specify ``HEAD``).  The
 	unborn branch itself can be made into the new TopGit branch (rather
 	than being born empty and then having the new TopGit branch based off
 	that) by specifying ``HEAD`` as the new branch's name (which is
 	probably what you normally want to do in this case anyway so you can
-	just run ``tg create --no-deps HEAD`` to accomplish that).
+	just run ``tg create --base HEAD`` to accomplish that).
 
 	In an alternative use case, if ``-r <branch>`` is given instead of a
 	dependency list, the topic branch is created based on the given

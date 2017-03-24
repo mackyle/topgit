@@ -24,7 +24,7 @@ quiet=
 branchtype=PATCH
 branchdesc=patch
 
-USAGE="Usage: ${tgname:-tg} [... -r remote] create [-q] [-m <msg> | -F <file>] [--topmsg <msg> | --topmsg-file <file>] [-n] [--no-commit] [--no-deps] [<name> [<dep>...|-r [<rname>]] ]"
+USAGE="Usage: ${tgname:-tg} [... -r remote] create [-q] [-m <msg> | -F <file>] [--topmsg <msg> | --topmsg-file <file>] [-n] [--no-commit] [--base] [<name> [<dep>...|-r [<rname>]] ]"
 
 usage()
 {
@@ -60,7 +60,7 @@ while [ $# -gt 0 ]; do case "$1" in
 		noedit=1
 		nocommit=1
 		;;
-	--no-deps)
+	--no-deps|--base)
 		nodeps=1
 		branchtype=BASE
 		branchdesc=base
@@ -158,7 +158,7 @@ fi
 [ -z "$remote" -o -n "$rname" ] || rname="$name"
 [ -z "$remote" -o -z "$msg$msgfile$topmsg$topmsgfile$nocommit$nodeps" ] || { err "-r may not be combined with other options"; usage 1; }
 [ $# -eq 0 -o -z "$remote" ] || { err "deps not allowed with -r"; usage 1; }
-[ $# -le 1 -o -z "$nodeps" ] || { err "--no-deps allows at most one <dep>"; usage 1; }
+[ $# -le 1 -o -z "$nodeps" ] || { err "--base (aka --no-deps) allows at most one <dep>"; usage 1; }
 [ -z "$msg" -o -z "$msgfile" ] || die "only one -F or -m option is allowed"
 [ "$msgfile" != "-" -o "$topmsgfile" != "-" ] || { err "--message-file and --topmsg-file may not both be '-'"; usage 1; }
 
@@ -195,7 +195,7 @@ if [ -z "$deps" ]; then
 	else
 		head="$(git symbolic-ref --quiet HEAD)" || :
 		[ -z "$head" ] || git rev-parse --verify --quiet "$head" -- ||
-			die "refusing to auto-depend on unborn branch (use --no-deps)"
+			die "refusing to auto-depend on unborn branch (use --base aka --no-deps)"
 		deps="${head#refs/heads/}"
 		[ "$deps" != "$head" ] || die "refusing to auto-depend on non-branch ref (${head:-detached HEAD})"
 		quiet_info "automatically marking dependency on $deps"
@@ -238,7 +238,7 @@ if [ -z "$nodeps" ]; then
 		if [ "$d" = "HEAD" ]; then
 			sr="$(git symbolic-ref --quiet HEAD)" || :
 			[ -z "$sr" ] || git rev-parse --verify --quiet "$sr" -- ||
-				die "refusing to depend on unborn branch (use --no-deps)"
+				die "refusing to depend on unborn branch (use --base aka --no-deps)"
 			[ -n "$sr" ] || die "cannot depend on a detached HEAD"
 			case "$sr" in refs/heads/*);;*)
 				die "HEAD is a symref to other than refs/heads/..."
@@ -359,7 +359,7 @@ if [ -z "$noedit" ]; then
 # Lines starting with '#' will be ignored, and an empty patch
 # message aborts the \`tg create\` operation entirely.
 #
-# tg create ${nodeps:+--no-deps }$name $deps
+# tg create ${nodeps:+--base }$name $deps
 EOT
 	run_editor "$git_dir/TG_EDITMSG" ||
 	die "there was a problem with the editor '$tg_editor'"
