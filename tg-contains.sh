@@ -114,7 +114,7 @@ make_deps_list()
 	while read -r onetghead; do
 		printf '%s %s\n' "$onetghead" "$onetghead"
 		recurse_deps process_dep "$onetghead"
-	done | LC_ALL=C sort -u >"$depslist"
+	done | sort -u >"$depslist"
 }
 
 localcnt=
@@ -171,19 +171,19 @@ else
 	minwide=$remotewide
 fi
 
-LC_ALL=C sort -k1,1n "$process" |
+sort -k1,1n "$process" |
 while read -r depth ref; do
 	[ -n "$mindepth" ] || mindepth="$depth"
 	[ $depth -le $mindepth ] || continue
 	printf '%s\n' "$ref"
-done | LC_ALL=C sort -u |
+done | sort -u |
 while read -r oneresult; do
 	headinfo=
 	isann=
 	[ -z "$annok" ] || [ -z "$depslist" ] || ! branch_annihilated "$oneresult" || isann=1
 	[ -z "$depslist" ] || [ -n "$isann" ] ||
 	headinfo="$(printf '%s\n' "$oneresult" | join -o 2.2 - "$depslist" |
-		LC_ALL=C sort -u | paste -d , -s - | sed -e 's/,/, /g')"
+		sort -u | paste -d , -s - | sed -e 's/,/, /g')"
 	[ -z "$annok" ] || [ -z "$depslist" ] || [ -z "$isann" ] || headinfo=":annihilated:"
 	if [ -z "$headinfo" ]; then
 		printf '%s\n' "$oneresult"

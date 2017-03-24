@@ -109,7 +109,7 @@ get_branch_list()
 {
 	if [ -n "$branches" ]; then
 		if [ -n "$1" ]; then
-			printf '%s\n' $branches | LC_ALL=C sort -u
+			printf '%s\n' $branches | sort -u
 		else
 			printf '%s\n' $branches
 		fi
@@ -145,7 +145,7 @@ show_heads_topgit()
 			echol "$onetopic" >>"$topics2"
 		fi
 		cat_deps "$onetopic"
-	done <"$topics" | LC_ALL=C sort -u >"$deplist"
+	done <"$topics" | sort -u >"$deplist"
 	[ -z "$branches" ] || topics="$topics2"
 	join -v 1 "$topics" "$deplist" |
 	while read -r name; do
@@ -194,7 +194,7 @@ show_deps()
 }
 
 if [ -n "$depsonly" ]; then
-	show_deps | LC_ALL=C sort -u -b -k1,1
+	show_deps | sort -u -b -k1,1
 	exit 0
 fi
 
@@ -239,7 +239,7 @@ if [ -n "$withdeps" ]; then
 	savetgish="$tgish"
 	tgish=1
 	origbranches="$branches"
-	branches="$(skip_ann=1; show_deps | LC_ALL=C sort -u -b -k1,1)"
+	branches="$(skip_ann=1; show_deps | sort -u -b -k1,1)"
 	tgish="$savetgish"
 fi
 
@@ -293,7 +293,7 @@ compute_ahead_list()
 	done >"$aheadfile"
 	no_remotes="$savenr"
 	base_remote="$savebr"
-	aheadlist=" $(LC_ALL=C cut -d ' ' -f 1 <"$aheadfile" | LC_ALL=C sort -u | paste -d ' ' -s -) "
+	aheadlist=" $(cut -d ' ' -f 1 <"$aheadfile" | sort -u | paste -d ' ' -s -) "
 }
 
 process_branch()

@@ -765,7 +765,7 @@ v_attempt_index_merge() {
 			EOT
 			newt="$(GIT_INDEX_FILE="$inew" git write-tree)" && [ -n "$newt" ] || { rm -f "$inew" "$imrg"; return 1; }
 		fi
-		[ -z "$_octo" ] || LC_ALL=C sort -u <"$imrg"
+		[ -z "$_octo" ] || sort -u <"$imrg"
 		rm -f "$inew" "$imrg"
 		newc="$(git commit-tree -p "$orh" $_parents -m "$_msg" "$newt")" && [ -n "$newc" ] || return 1
 		_mmsg="Merge made by the 'trivial aggressive$_auto${_octo:+ octopus}' strategy."

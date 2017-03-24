@@ -38,6 +38,31 @@ cmd_path()
 	command -v "$1"
 )
 
+# helper for wrappers
+# note deliberate use of '(' ... ')' rather than '{' ... '}'
+exec_lc_all_c()
+(
+	LC_ALL="C" &&
+	export LC_ALL &&
+	exec "$@"
+)
+
+# These tools work better for us with LC_ALL=C and by using these little
+# convenience functions LC_ALL=C does not have to appear in the code but
+# any Git translations will still appear for Git commands
+awk()	{ exec_lc_all_c @AWK_PATH@	"$@"; }
+cat()	{ exec_lc_all_c cat		"$@"; }
+cut()	{ exec_lc_all_c cut		"$@"; }
+find()	{ exec_lc_all_c find		"$@"; }
+grep()	{ exec_lc_all_c grep		"$@"; }
+join()	{ exec_lc_all_c join		"$@"; }
+paste()	{ exec_lc_all_c paste		"$@"; }
+sed()	{ exec_lc_all_c sed		"$@"; }
+sort()	{ exec_lc_all_c sort		"$@"; }
+tr()	{ exec_lc_all_c tr		"$@"; }
+wc()	{ exec_lc_all_c wc		"$@"; }
+xargs()	{ exec_lc_all_c xargs		"$@"; }
+
 # Output arguments without any possible interpretation
 # (Avoid misinterpretation of '\' characters or leading "-n", "-E" or "-e")
 echol()
@@ -324,7 +349,7 @@ pretty_tree()
 	name="$1"
 	source="${2#?}"
 	git ls-tree --full-tree "$(get_tree_$source "$name")" |
-		LC_ALL=C sed -ne '/	\.top.*$/!p' |
+		sed -ne '/	\.top.*$/!p' |
 		git_mktree
 }
 
@@ -397,7 +422,7 @@ setup_hook()
 {
 	tgname="${0##*/}"
 	hook_call="\"\$(\"$tgname\" --hooks-path)\"/$1 \"\$@\""
-	if [ -f "$git_hooks_dir/$1" ] && LC_ALL=C grep -Fq "$hook_call" "$git_hooks_dir/$1"; then
+	if [ -f "$git_hooks_dir/$1" ] && grep -Fq "$hook_call" "$git_hooks_dir/$1"; then
 		# Another job well done!
 		return
 	fi
@@ -405,7 +430,7 @@ setup_hook()
 	hook_chain=
 	if [ -s "$git_hooks_dir/$1" -a -x "$git_hooks_dir/$1" ]; then
 		hook_call="$hook_call"' || exit $?'
-		if [ -L "$git_hooks_dir/$1" ] || ! LC_ALL=C sed -n 1p <"$git_hooks_dir/$1" | LC_ALL=C grep -Fqx "#!@SHELL_PATH@"; then
+		if [ -L "$git_hooks_dir/$1" ] || ! sed -n 1p <"$git_hooks_dir/$1" | grep -Fqx "#!@SHELL_PATH@"; then
 			chain_num=
 			while [ -e "$git_hooks_dir/$1-chain$chain_num" ]; do
 				chain_num=$(( $chain_num + 1 ))
@@ -497,7 +522,7 @@ branch_contains()
 create_ref_dirs()
 {
 	[ ! -s "$tg_tmp_dir/tg~ref-dirs-created" -a -s "$tg_ref_cache" ] || return 0
-	LC_ALL=C awk -v p="$tg_tmp_dir/cached/" '{print p $1}' <"$tg_ref_cache" | LC_ALL=C tr '\n' '\0' | xargs -0 mkdir -p
+	awk -v p="$tg_tmp_dir/cached/" '{print p $1}' <"$tg_ref_cache" | tr '\n' '\0' | xargs -0 mkdir -p
 	echo 1 >"$tg_tmp_dir/tg~ref-dirs-created"
 }
 
@@ -523,7 +548,7 @@ remove_ref_cache()
 rev_parse()
 {
 	if [ -n "$tg_ref_cache" -a -s "$tg_ref_cache" ]; then
-		LC_ALL=C awk -v r="$1" 'BEGIN {e=1}; $1 == r {print $2; e=0; exit}; END {exit e}' <"$tg_ref_cache"
+		awk -v r="$1" 'BEGIN {e=1}; $1 == r {print $2; e=0; exit}; END {exit e}' <"$tg_ref_cache"
 	else
 		[ -z "$tg_ref_cache_only" ] || return 1
 		git rev-parse --quiet --verify "$1^0" -- 2>/dev/null
@@ -1359,7 +1384,7 @@ do_status()
 		gsp="$(git status --porcelain 2>/dev/null)" || return 0 # bare repository
 		gspcnt=0
 		[ -z "$gsp" ] ||
-		gspcnt="$(( $(printf '%s\n' "$gsp" | LC_ALL=C sed -n '/^??/!p' | wc -l) ))"
+		gspcnt="$(( $(printf '%s\n' "$gsp" | sed -n '/^??/!p' | wc -l) ))"
 		untr=
 		if [ "$gspcnt" -eq 0 ]; then
 			[ -z "$gsp" ] || untr="; non-ignored, untracked files present"
@@ -1669,7 +1694,7 @@ initial_setup()
 			*[";:"]*)
 				# surround in "..." and backslash-escape internal '"' and '\\'
 				_altodbdq="\"$(printf '%s\n' "$TG_OBJECT_DIRECTORY" |
-					LC_ALL=C sed 's/\([""\\]\)/\\\1/g')\""
+					sed 's/\([""\\]\)/\\\1/g')\""
 				;;
 			*)
 				_altodbdq="$TG_OBJECT_DIRECTORY"

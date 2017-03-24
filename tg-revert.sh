@@ -148,7 +148,7 @@ while
 	sed -ne '/^-----BEGIN TOPGIT REFS-----$/,/^-----END TOPGIT REFS-----$/p' <"$tgf" |
 	sed -ne "/^\\($octet20\\) \\(refs\/[^ $tab][^ $tab]*\\)\$/{s//\\2 \\1/;p;}" |
 	sed -e "s,^refs/$oldbases/,refs/$topbases/,g" |
-	LC_ALL=C sort -u -b -k1,1 >"$trf"
+	sort -u -b -k1,1 >"$trf"
 	! [ -s "$trf" ]
 do
 	# If it's a tag of a tag, dereference it and try again
@@ -183,12 +183,12 @@ show_topgit_heads()
 	topics2="$(get_temp topics)"
 	deplist="$(get_temp deplist)"
 	<"$trf" >"$topics" \
-	LC_ALL=C sed -e '\,^refs/'"$topbasesrx"'/,!d' -e 's,^refs/'"$topbasesrx"'/,refs/heads/,' -e 's/ .*//'
+	sed -e '\,^refs/'"$topbasesrx"'/,!d' -e 's,^refs/'"$topbasesrx"'/,refs/heads/,' -e 's/ .*//'
 	while read -r oneref; do
 		_rev="$(get_recorded_ref "$oneref")" && [ -n "$_rev" ] || continue
 		printf '%s\n' "$oneref" >>"$topics2"
 		git cat-file blob "$_rev:.topdeps" 2>/dev/null || :
-	done <"$topics" | LC_ALL=C sed -e 's,^,refs/heads/,' | LC_ALL=C sort -u >"$deplist"
+	done <"$topics" | sed -e 's,^,refs/heads/,' | sort -u >"$deplist"
 	topics="$topics2"
 	join -v 1 "$topics" "$deplist"
 }
@@ -196,11 +196,11 @@ show_topgit_heads()
 show_indep_heads()
 {
 	srt="$(get_temp sort)"
-	LC_ALL=C sort -b -k2,2 <"$trf" >"$srt"
+	sort -b -k2,2 <"$trf" >"$srt"
 	git merge-base --independent $(cut -d ' ' -f 2 <"$srt") |
-	LC_ALL=C sort -b -k1,1 |
+	sort -b -k1,1 |
 	join -2 2 -o 2.1 - "$srt" |
-	LC_ALL=C sort
+	sort
 }
 
 show_heads()
@@ -351,7 +351,7 @@ if [ -n "$list" ]; then
 		exit 0
 	fi
 	if [ -n "$deps" ]; then
-		refslist | show_deps | LC_ALL=C sort -u -b -k1,1 |
+		refslist | show_deps | sort -u -b -k1,1 |
 		join - "$trf" |
 		while read -r name rev; do
 			if [ -n "$hashonly" ]; then
@@ -378,9 +378,9 @@ if [ -n "$nodeps" -o -z "$refs" ]; then
 		[ -z "$refs" ] || case " $refs " in *" $name "*);;*) continue; esac
 		[ -z "$tgish" ] || is_tgish "$name" || continue
 		printf 'revert %s %s\n' "$(get_short "$rev")" "$name"
-	done <"$trf" | LC_ALL=C sort -u -b -k3,3 >"$insn"
+	done <"$trf" | sort -u -b -k3,3 >"$insn"
 else
-	refslist | show_deps | LC_ALL=C sort -u -b -k1,1 |
+	refslist | show_deps | sort -u -b -k1,1 |
 	join - "$trf" |
 	while read -r name rev; do
 		printf 'revert %s %s\n' "$(get_short "$rev")" "$name"
@@ -425,7 +425,7 @@ nullref="$(printf '%.*s' $refwidth "$nullsha")"
 notewidth=$(( $refwidth + 4 + $refwidth ))
 srh=
 [ -n "$dryrun" ] || srh="$(git symbolic-ref --quiet HEAD)" || :
-cut -d ' ' -f 3 <"$insn" | LC_ALL=C sort -u -b -k1,1 | join - "$trf" |
+cut -d ' ' -f 3 <"$insn" | sort -u -b -k1,1 | join - "$trf" |
 while read -r name rev; do
 	orig="$(git rev-parse --verify --quiet "$name" --)" || :
 	init_reflog "$name"

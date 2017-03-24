@@ -553,7 +553,7 @@ get_deps_internal()
 
 get_deps()
 {
-	get_deps_internal "$@" | LC_ALL=C sort -u
+	get_deps_internal "$@" | sort -u
 }
 
 out_of_date=
@@ -584,7 +584,7 @@ get_refs()
 	{
 		printf '%s\n' $allrefs
 		[ -n "$outofdateok" ] || get_deps $tgbranches
-	} | LC_ALL=C sort -u | sed 's/^\(.*\)$/\1^0 \1/' |
+	} | sort -u | sed 's/^\(.*\)$/\1^0 \1/' |
 	git cat-file --batch-check='%(objectname) %(rest)' 2>/dev/null |
 	grep -v ' missing$' || :
 	printf '%s\n' '-----END TOPGIT REFS-----'

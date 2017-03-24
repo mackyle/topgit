@@ -69,10 +69,10 @@ if [ -n "$heads" ]; then
 	while read -r onetghead; do
 		printf '%s %s\n' "$onetghead" "$onetghead"
 		recurse_deps process_dep "$onetghead"
-	done | LC_ALL=C sort -u >"$depslist"
-	git branch --no-color --contains "$hash" | LC_ALL=C cut -c 3- |
-	LC_ALL=C join -o 2.2 - "$depslist" |
-	LC_ALL=C sort -u
+	done | sort -u >"$depslist"
+	git branch --no-color --contains "$hash" | cut -c 3- |
+	join -o 2.2 - "$depslist" |
+	sort -u
 	exit 0
 fi
 
