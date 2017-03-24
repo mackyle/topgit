@@ -37,10 +37,18 @@ html_out = $(patsubst %.sh,%.html,tg-help.sh tg-status.sh tg-tg.sh $(commands_in
 SHELL_PATH ?= /bin/sh
 SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
 
+AWK_PATH ?= awk
+AWK_PATH_SQ = $(subst ','\'',$(AWK_PATH))
+
 version := $(shell test -d .git && git describe --match "topgit-[0-9]*" --abbrev=4 --dirty 2>/dev/null | sed -e 's/^topgit-//' )
 
 -include config.mak
 SHELL = $(SHELL_PATH)
+ifeq ($(subst /,,$(AWK_PATH)),$(AWK_PATH))
+AWK_PREFIX = /usr/bin/
+else
+AWK_PREFIX =
+endif
 
 ifneq ($(strip $(version)),)
 	version_arg = -e s/TG_VERSION=.*/TG_VERSION=$(version)/
@@ -82,14 +90,17 @@ QWRAPPER_0 = $(QWRAPPER_)
 QWRAPPER = $(QWRAPPER_$(V))
 
 tg $(commands_out) $(utils_out) $(hooks_out) $(helpers_out): % : %.sh Makefile TG-BUILD-SETTINGS
-	$(QSED)sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
+	$(QSED)sed \
+		-e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
+		-e '1s|#!.*/awk|#!$(AWK_PREFIX)$(AWK_PATH_SQ)|' \
 		-e 's#@cmddir@#$(cmddir)#g;' \
 		-e 's#@hooksdir@#$(hooksdir)#g' \
 		-e 's#@bindir@#$(bindir)#g' \
 		-e 's#@sharedir@#$(sharedir)#g' \
 		-e 's#@mingitver@#$(GIT_MINIMUM_VERSION)#g' \
 		-e 's#@tgsthelpusage@#$(TG_STATUS_HELP_USAGE)#g' \
-		-e 's|@SHELL_PATH@|$(SHELL_PATH_SQ)|' \
+		-e 's#@SHELL_PATH@#$(SHELL_PATH_SQ)#g' \
+		-e 's#@AWK_PATH@#$(AWK_PATH_SQ)#g' \
 		$(version_arg) \
 		$@.sh >$@+ && \
 	chmod +x $@+ && \
