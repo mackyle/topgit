@@ -1340,6 +1340,17 @@ tg log
 	However, if ``<name>`` is a ``[BASE]`` branch the ``--no-merges``
 	option is omitted.
 
+	If ``--compact`` is used then ``git log-compact`` will be used instead
+	of ``git log``.  The ``--command=<git-alias>`` option can be used to
+	replace "log" with any non-whitespace-containing command alias name,
+	``--compact`` is just a shortcut for ``--command=log-compact``.  The
+	``git-log-compact`` tool may be found on its project page located at:
+
+	    https://mackyle.github.io/git-log-compact
+
+	Note that the ``--compact`` or ``--command=`` option must be used
+	before any ``--`` or ``git log`` options to be recognized.
+
 	NOTE: if you have merged changes from a different repository, this
 	command might not list all interesting commits.
 

@@ -9,6 +9,8 @@ name=
 
 ## Parse options
 
+logcmd="log"
+
 while [ -n "$1" ]; do
 	arg="$1"
 	case "$arg" in
@@ -20,8 +22,12 @@ while [ -n "$1" ]; do
 			break;;
 		esac;;
 	-|-h|--help)
-		echo "Usage: ${tgname:-tg} [...] log [<name>] [--] [<git-log-option>...]" >&2
+		echo "Usage: ${tgname:-tg} [...] log [--compact] [<name>] [--] [<git-log-option>...]" >&2
 		exit 1;;
+	--compact)
+		logcmd="log-compact";;
+	--command=?*)
+		logcmd="${arg#--command=}";;
 	-?*)
 		if test="$(verify_topgit_branch "$arg" -f)"; then
 			[ -z "$name" ] || die "name already specified ($name)"
@@ -48,9 +54,9 @@ for a; do
 	[ "$a" != "--" ] || { hasdd=1; break; }
 done
 if [ -z "$hasdd" ]; then
-	git log --first-parent $nomerges "$@" "refs/$topbases/$name".."$name"
+	git $logcmd --first-parent $nomerges "$@" "refs/$topbases/$name".."$name"
 else
-	cmd='git log --first-parent $nomerges'
+	cmd='git $logcmd --first-parent $nomerges'
 	while [ $# -gt 0 -a "$1" != "--" ]; do
 		cmd="$cmd $(quotearg "$1")"
 		shift
