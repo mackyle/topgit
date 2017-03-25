@@ -1925,6 +1925,11 @@ else
 			shift
 			break;;
 
+		--exec-path)
+			cmd=exec-path
+			shift
+			break;;
+
 		--top-bases)
 			cmd=top-bases
 			shift
@@ -2022,6 +2027,10 @@ else
 		hooks-path)
 			# Internal command
 			echol "$TG_INST_HOOKSDIR";;
+
+		exec-path)
+			# Internal command
+			echol "$TG_INST_CMDDIR";;
 
 		top-bases)
 			# Maintenance command
