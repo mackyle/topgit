@@ -44,12 +44,6 @@ usage()
 	exit ${1:-0}
 }
 
-# true if $1 is contained by (or the same as) $2
-contained_by()
-{
-        [ "$(git rev-list --count --max-count=1 "$1" --not "$2" --)" = "0" ]
-}
-
 # --base mode comes here with $1 set to <base-branch> and $2 set to <ref>
 # and all options already parsed and validated into above-listed flags
 # this function should exit after returning to "$current"
@@ -722,7 +716,7 @@ v_attempt_index_merge() {
 		_newrh="$rh"
 		while :; do
 			if [ -n "$_parents" ]; then
-				if [ "$(git rev-list --count --max-count=1 "$1" --not "$_newrh" --)" = "0" ]; then
+				if contained_by "$1" "$_newrh"; then
 					shift
 					continue
 				fi

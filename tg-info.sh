@@ -93,12 +93,6 @@ nocommits=
 
 [ -n "$nocommits" ] || git cat-file blob "$name:.topmsg" 2>/dev/null | grep ^Subject: || :
 
-# true if $1 is contained by (or the same as) $2
-contained_by()
-{
-	[ "$(git rev-list --count --max-count=1 "$1" --not "$2" --)" = "0" ]
-}
-
 if [ "${verbose:-0}" -ge 1 ]; then
 	scratch="$(get_temp scratch)"
 	printf '%s\n' "$name" >"$scratch"

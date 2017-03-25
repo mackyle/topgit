@@ -66,12 +66,6 @@ esac; shift; done
 set -e
 findrev="$(git rev-parse --verify "$1"^0 --)" || exit 1
 
-# true if $1 is contained by (or the same as) $2
-contained_by()
-{
-	[ "$(git rev-list --count --max-count=1 "$1" --not "$2" --)" = "0" ]
-}
-
 # $1 => return correct $topbases value in here on success
 # $2 => remote name
 # $3 => remote branch name
