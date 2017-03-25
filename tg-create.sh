@@ -185,6 +185,7 @@ fi
 
 ## Auto-guess dependencies
 
+[ "$name" != "@" ] || name="HEAD"
 deps="$*"
 [ "$deps" != "@" ] || deps="HEAD"
 if [ -z "$deps" ]; then
