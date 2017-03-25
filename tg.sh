@@ -1120,13 +1120,15 @@ list_deps()
 # refs/ and HEAD is ALWAYS set to a symref to it and [SEED] (default is FULLREF)
 # MUST be a committish which if present will be used instead of current FULLREF
 # (and FULLREF will be updated to it as well in that case)
-# With -f it's like git checkout $iowopt -f -b FULLREF (uses read-tree --reset instead of -m)
+# Any merge state is always cleared by this function
+# With -f it's like git checkout $iowopt -f -b FULLREF (uses read-tree --reset
+# instead of -m) but it will clear out any unmerged entries
 # As an extension, FULLREF may also be a full hash to create a detached HEAD instead
 checkout_symref_full()
 {
 	_mode=-m
 	if [ "$1" = "-f" ]; then
-		mode="--reset"
+		_mode="--reset"
 		shift
 	fi
 	_ishash=
@@ -1145,6 +1147,8 @@ checkout_symref_full()
 	esac
 	_seedrev="$(git rev-parse --quiet --verify "${2:-$1}^0" --)" ||
 		die "invalid committish: \"${2:-$1}\""
+	# Clear out any MERGE_HEAD kruft
+	rm -f "$git_dir/MERGE_HEAD" || :
 	# We have to do all the hard work ourselves :/
 	# This is like git checkout -b "$1" "$2"
 	# (or just git checkout "$1"),
@@ -1367,7 +1371,7 @@ do_status()
 		if [ "$tg_state" = "update" ]; then
 			echol "${pfx}"'  (use "tg update --continue" to continue)'
 			echol "${pfx}"'  (use "tg update --skip" to skip this branch and continue)'
-			echol "${pfx}"'  (use "tg update --stop" to stop and retain updates so far)'
+			echol "${pfx}"'  (use "tg update --stop" to stop and retain changes so far)'
 			echol "${pfx}"'  (use "tg update --abort" to restore pre-update state)'
 		fi
 	fi

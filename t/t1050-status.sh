@@ -38,7 +38,7 @@ lf='
 updatecmds='
   (use "tg update --continue" to continue)
   (use "tg update --skip" to skip this branch and continue)
-  (use "tg update --stop" to stop and retain updates so far)
+  (use "tg update --stop" to stop and retain changes so far)
   (use "tg update --abort" to restore pre-update state)'
 
 workclean='
