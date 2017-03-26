@@ -1369,10 +1369,10 @@ do_status()
 			fi
 		fi
 		if [ "$tg_state" = "update" ]; then
-			echol "${pfx}"'  (use "tg update --continue" to continue)'
-			echol "${pfx}"'  (use "tg update --skip" to skip this branch and continue)'
-			echol "${pfx}"'  (use "tg update --stop" to stop and retain changes so far)'
-			echol "${pfx}"'  (use "tg update --abort" to restore pre-update state)'
+			echol "${pfx}  (use \"$tgdisplayac update --continue\" to continue)"
+			echol "${pfx}  (use \"$tgdisplayac update --skip\" to skip this branch and continue)"
+			echol "${pfx}  (use \"$tgdisplayac update --stop\" to stop and retain changes so far)"
+			echol "${pfx}  (use \"$tgdisplayac update --abort\" to restore pre-update state)"
 		fi
 	fi
 	[ -z "$git_state" ] || echo "${pfx}git $git_state in progress"
@@ -1888,10 +1888,12 @@ else
 	esac
 
 	# If the tg in the PATH is the same as "$tg" just display the basename
-	# tgdisplay will include any explicit -C <dir> option whereas tg will not
+	# tgdisplay will include any explicit -C <dir> etc. options whereas tg will not
+	# tgdisplayac is the same as tgdisplay but without any -r or -u options (ac => abort/continue)
 
 	tgdisplaydir="$tgdir"
 	tgdisplay="$tg"
+	tgdisplayac="$tgdisplay"
 	if
 	    v_get_abs_path _tgabs "$tg" &&
 	    v_get_abs_path _tgnameabs "$(cmd_path "$tgname")" &&
@@ -1899,6 +1901,7 @@ else
 	then
 		tgdisplaydir=""
 		tgdisplay="$tgname"
+		tgdisplayac="$tgdisplay"
 	fi
 	unset _tgabs _tgnameabs
 
@@ -1946,18 +1949,14 @@ else
 			base_remote="$1"
 			explicit_remote="$base_remote"
 			tg="$tgdir$tgname -r $explicit_remote"
-			tgdisplay="$tgdisplaydir$tgname"
-			[ -z "$explicit_dir" ] || tgdisplay="$tgdisplay -C \"$explicit_dir\""
-			tgdisplay="$tgdisplay -r $explicit_remote"
+			tgdisplay="$tgdisplaydir$tgname$gitcdopt -r $explicit_remote"
 			shift;;
 
 		-u)
 			unset base_remote explicit_remote
 			noremote=1
 			tg="$tgdir$tgname -u"
-			tgdisplay="$tgdisplaydir$tgname"
-			[ -z "$explicit_dir" ] || tgdisplay="$tgdisplay -C \"$explicit_dir\""
-			tgdisplay="$tgdisplay -u"
+			tgdisplay="$tgdisplaydir$tgname$gitcdopt -u"
 			shift;;
 
 		-C)
@@ -1969,14 +1968,20 @@ else
 			fi
 			cd "$1"
 			unset GIT_DIR GIT_COMMON_DIR
-			explicit_dir="$1"
+			if [ -z "$explicit_dir" ]; then
+				explicit_dir="$1"
+			else
+				explicit_dir="$PWD"
+			fi
 			gitcdopt=" -C \"$explicit_dir\""
+			[ "$explicit_dir" != "." ] || explicit_dir="." gitcdopt=" -C ."
 			tg="$tgdir$tgname"
-			tgdisplay="$tgdisplaydir$tgname -C \"$explicit_dir\""
+			tgdisplay="$tgdisplaydir$tgname$gitcdopt"
+			tgdisplayac="$tgdisplay"
 			[ -z "$explicit_remote" ] || tg="$tg -r $explicit_remote"
 			[ -z "$explicit_remote" ] || tgdisplay="$tgdisplay -r $explicit_remote"
 			[ -z "$noremote" ] || tg="$tg -u"
-			[ -z "$noremote" ] || tg="$tgdisplay -u"
+			[ -z "$noremote" ] || tgdisplay="$tgdisplay -u"
 			shift;;
 
 		-c)

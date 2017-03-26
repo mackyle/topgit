@@ -113,7 +113,7 @@ bin-wrappers/tg : $(commands_out) $(utils_out) $(hooks_out) $(helpers_out) tg
 	echo "TG_INST_CMDDIR='$$curdir' && export TG_INST_CMDDIR" >>"$@" && \
 	echo "TG_INST_SHAREDIR='$$curdir' && export TG_INST_SHAREDIR" >>"$@" && \
 	echo "TG_INST_HOOKSDIR='$$curdir' && export TG_INST_HOOKSDIR" >>"$@" && \
-	echo "[ -n \"\$$tg__include\" ] || exec '$$curdir/tg' \"\$$@\" || exit" >>"$@" && \
+	echo '[ -n "$$tg__include" ] || exec $(SHELL_PATH_SQ) -c '\''. "$$TG_INST_CMDDIR/tg"'\'' tg "$$@" || exit' >>"$@" && \
 	echo ". '$$curdir/tg'" >>"$@" && \
 	chmod a+x "$@"
 

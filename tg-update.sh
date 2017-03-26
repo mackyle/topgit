@@ -944,8 +944,8 @@ update_branch_internal() {
 			then
 				rm "$_depcheck"
 				save_state
-				info "Please commit merge resolution and call \`$tgdisplay update --continue\`"
-				info "(use \`$tgdisplay status\` to see more options)"
+				info "Please commit merge resolution and call \`$tgdisplayac update --continue\`"
+				info "(use \`$tgdisplayac status\` to see more options)"
 				exit 3
 			fi
 		done
@@ -993,8 +993,8 @@ update_branch_internal() {
 				save_state \
 					"$(git rev-parse --verify --quiet "refs/$topbases/$_update_name^0" --)" \
 					"$(git rev-parse --verify --quiet "$_rname^0" --)"
-				info "Please commit merge resolution and call \`$tgdisplay update --continue\`"
-				info "(use \`$tgdisplay status\` to see more options)"
+				info "Please commit merge resolution and call \`$tgdisplayac update --continue\`"
+				info "(use \`$tgdisplayac status\` to see more options)"
 				exit 3
 			fi
 			# Go back but remember we want to merge with this, not base
@@ -1032,8 +1032,8 @@ update_branch_internal() {
 		no_auto=
 		merging_topfiles="${brmmode:+1}"
 		save_state
-		info "Please commit merge resolution and call \`$tgdisplay update --continue\`"
-		info "(use \`$tgdisplay status\` to see more options)"
+		info "Please commit merge resolution and call \`$tgdisplayac update --continue\`"
+		info "(use \`$tgdisplayac status\` to see more options)"
 		exit 3
 	fi
 
