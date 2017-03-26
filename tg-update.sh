@@ -200,33 +200,36 @@ clear_state() {
 restarted=
 isactive=
 ! is_active || isactive=1
-if [ -n "$isactive" ] || [ $# -eq 1 -a x"$1" = x"--abort" ]; then
+isactiveopt=
+if [ -z "$isactive" ] && [ $# -eq 1 ]; then
+	case "$1" in --abort|--stop|--continue|--skip) isactiveopt=1; esac
+fi
+if [ -n "$isactive" ] || [ -n "$isactiveopt" ]; then
 	[ $# -eq 1 ] && [ x"$1" != x"--status" ] || { do_status; exit 0; }
+	if [ -z "$isactive" ]; then
+		clear_state
+		info "No update is currently active"
+		exit 0
+	fi
 	case "$1" in
 	--abort)
 		current=
 		stashhash=
-		if [ -n "$isactive" ]; then
-			IFS= read -r current <"$state_dir/current" || :
-			IFS= read -r stashhash <"$state_dir/stashhash" || :
-		fi
+		IFS= read -r current <"$state_dir/current" || :
+		IFS= read -r stashhash <"$state_dir/stashhash" || :
 		clear_state
-		if [ -n "$isactive" ]; then
-			if [ -n "$stashhash" ]; then
-				tg revert -f -q -q --no-stash "$stashhash" >/dev/null 2>&1 || :
-			fi
-			if [ -n "$current" ]; then
-				info "Ok, update aborted, returning to ${current#refs/heads/}"
-				checkout_symref_full -f "$current"
-			else
-				info "Ok, update aborted.  Now, you just need to"
-				info "switch back to some sane branch using \`git$gitcdopt checkout\`."
-			fi
-			! [ -f "$git_dir/TGMERGE_MSG" ] || [ -e "$git_dir/MERGE_MSG" ] ||
-				mv -f "$git_dir/TGMERGE_MSG" "$git_dir/MERGE_MSG" || :
-		else
-			info "No update was active"
+		if [ -n "$stashhash" ]; then
+			tg revert -f -q -q --no-stash "$stashhash" >/dev/null 2>&1 || :
 		fi
+		if [ -n "$current" ]; then
+			info "Ok, update aborted, returning to ${current#refs/heads/}"
+			checkout_symref_full -f "$current"
+		else
+			info "Ok, update aborted.  Now, you just need to"
+			info "switch back to some sane branch using \`git$gitcdopt checkout\`."
+		fi
+		! [ -f "$git_dir/TGMERGE_MSG" ] || [ -e "$git_dir/MERGE_MSG" ] ||
+			mv -f "$git_dir/TGMERGE_MSG" "$git_dir/MERGE_MSG" || :
 		exit 0
 		;;
 	--stop)
