@@ -94,12 +94,12 @@ fi
 
 [ "$push$pop$goto" = "1" ] || { err "incompatible options"; usage; }
 
-[ -n "$tg_tmp_dir" ] || die "tg-checkout must be run via '$tg checkout'"
+[ -n "$tg_tmp_dir" ] || die "tg-checkout must be run via '$tgdisplay checkout'"
 _depfile="$(mktemp "$tg_tmp_dir/tg-co-deps.XXXXXX")"
 _altfile="$(mktemp "$tg_tmp_dir/tg-co-alt.XXXXXX")"
 
 if [ -n "$goto" ]; then
-	$tg summary -t | grep -e "$pattern" >"$_altfile" || :
+	tg summary -t | grep -e "$pattern" >"$_altfile" || :
 	no_branch_found="No topic branch matches grep pattern '$pattern'"
 else
 	branch="$(git symbolic-ref -q HEAD)" || die "Working on a detached head"
@@ -113,12 +113,12 @@ else
 
 	if [ -z "$all" ]; then
 		if [ -n "$pop" ]; then
-			$tg prev -w >"$_altfile"
+			tg prev -w >"$_altfile"
 		else
-			$tg next >"$_altfile"
+			tg next >"$_altfile"
 		fi
 	else
-		$tg summary --deps >$_depfile || die "${tgname:-tg} summary failed"
+		tg summary --deps >$_depfile || die "$tgdisplay summary failed"
 
 		if [ -n "$pop" ]; then
 			dir=pop

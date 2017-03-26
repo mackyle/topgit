@@ -41,7 +41,7 @@ fi
 patchfile="$(get_temp tg-mail)"
 
 # let tg patch sort out whether $head_from makes sense for $name
-$tg patch "$name" $head_from >"$patchfile"
+tg patch "$name" $head_from >"$patchfile"
 
 header="$(sed -e '/^$/,$d' -e "s,','\\\\'',g" "$patchfile")"
 

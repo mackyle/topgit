@@ -52,13 +52,13 @@ while read dependent && [ -n "$dependent" ]; do
 	git reset -q --hard
 	needupdate=
 	while read dependency && [ -n "$dependency" ]; do
-		! $tg depend add --no-update "$dependency" >/dev/null 2>&1 || needupdate=1
+		! tg depend add --no-update "$dependency" >/dev/null 2>&1 || needupdate=1
 	done <<-EOT
 	$dependencies
 	EOT
 	[ -z "$needupdate" ] || updatelist="${updatelist:+$updatelist }$dependent"
 done <<EOT
-$($tg next)
+$(tg next)
 EOT
 
 info "branch successfully annihilated: $name"

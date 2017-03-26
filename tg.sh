@@ -1597,7 +1597,13 @@ setup_git_dirs()
 basic_setup()
 {
 	setup_git_dirs $1
-	[ -n "$base_remote" ] || base_remote="$(git config topgit.remote 2>/dev/null)" || :
+	if [ -z "$base_remote" ]; then
+		if [ "${TG_EXPLICIT_REMOTE+set}" = "set" ]; then
+			base_remote="$TG_EXPLICIT_REMOTE"
+		else
+			base_remote="$(git config topgit.remote 2>/dev/null)" || :
+		fi
+	fi
 	tgsequester="$(git config --bool topgit.sequester 2>/dev/null)" || :
 	tgnosequester=
 	[ "$tgsequester" != "false" ] || tgnosequester=1
@@ -1845,8 +1851,11 @@ v_get_abs_path()
 		*/*) set -- "$1" "$2" "${3%/*}";;
 		*  ) set -- "$1" "$2" ".";;
 	esac
+	case "$2" in */)
+		set -- "$1" "${2%/}" "$3" "/"
+	esac
 	[ -d "$3" ] || return 1
-	eval "$1="'"$(cd "$3" && pwd -P)/${2##*/}"'
+	eval "$1="'"$(cd "$3" && pwd -P)/${2##*/}$4"'
 }
 
 ## Startup
@@ -1873,37 +1882,40 @@ else
 
 	set -e
 
-	tg="$0"
-	tgdir="${tg%/}"
+	tgbin="$0"
+	tgdir="${tgbin%/}"
 	case "$tgdir" in */*);;*) tgdir="./$tgdir"; esac
 	tgdir="${tgdir%/*}/"
-	tgname="${tg##*/}"
+	tgname="${tgbin##*/}"
 	[ "$0" != "$tgname" ] || tgdir=""
 
 	# If tg contains a '/' but does not start with one then replace it with an absolute path
 
 	case "$0" in /*) ;; */*)
 		tgdir="$(cd "${0%/*}" && pwd -P)/"
-		tg="$tgdir$tgname"
+		tgbin="$tgdir$tgname"
 	esac
 
-	# If the tg in the PATH is the same as "$tg" just display the basename
-	# tgdisplay will include any explicit -C <dir> etc. options whereas tg will not
+	# tgdisplay will include any explicit -C <dir> etc. options whereas tgname will not
 	# tgdisplayac is the same as tgdisplay but without any -r or -u options (ac => abort/continue)
 
 	tgdisplaydir="$tgdir"
-	tgdisplay="$tg"
+	tgdisplay="$tgbin"
 	tgdisplayac="$tgdisplay"
 	if
-	    v_get_abs_path _tgabs "$tg" &&
 	    v_get_abs_path _tgnameabs "$(cmd_path "$tgname")" &&
+	    _tgabs="$_tgnameabs" &&
+	    { [ "$tgbin" = "$tgname" ] || v_get_abs_path _tgabs "$tgbin"; } &&
 	    [ "$_tgabs" = "$_tgnameabs" ]
 	then
 		tgdisplaydir=""
 		tgdisplay="$tgname"
 		tgdisplayac="$tgdisplay"
 	fi
+	[ -z "$_tgabs" ] || tgbin="$_tgabs"
 	unset _tgabs _tgnameabs
+
+	tg() { command "$tgbin" "$@"; }
 
 	explicit_remote=
 	explicit_dir=
@@ -1948,15 +1960,15 @@ else
 			unset noremote
 			base_remote="$1"
 			explicit_remote="$base_remote"
-			tg="$tgdir$tgname -r $explicit_remote"
 			tgdisplay="$tgdisplaydir$tgname$gitcdopt -r $explicit_remote"
+			TG_EXPLICIT_REMOTE="$base_remote" && export TG_EXPLICIT_REMOTE
 			shift;;
 
 		-u)
 			unset base_remote explicit_remote
 			noremote=1
-			tg="$tgdir$tgname -u"
 			tgdisplay="$tgdisplaydir$tgname$gitcdopt -u"
+			TG_EXPLICIT_REMOTE= && export TG_EXPLICIT_REMOTE
 			shift;;
 
 		-C)
@@ -1975,12 +1987,9 @@ else
 			fi
 			gitcdopt=" -C \"$explicit_dir\""
 			[ "$explicit_dir" != "." ] || explicit_dir="." gitcdopt=" -C ."
-			tg="$tgdir$tgname"
 			tgdisplay="$tgdisplaydir$tgname$gitcdopt"
 			tgdisplayac="$tgdisplay"
-			[ -z "$explicit_remote" ] || tg="$tg -r $explicit_remote"
 			[ -z "$explicit_remote" ] || tgdisplay="$tgdisplay -r $explicit_remote"
-			[ -z "$noremote" ] || tg="$tg -u"
 			[ -z "$noremote" ] || tgdisplay="$tgdisplay -u"
 			shift;;
 

@@ -84,13 +84,13 @@ do_base_mode()
 
 	stashmsg="tgupdate: autostash before --base $tgbranch update"
 	if [ -n "$stash" ]; then
-		$tg tag -q -q -m "$stashmsg" --stash "$tgbranch" &&
+		tg tag -q -q -m "$stashmsg" --stash "$tgbranch" &&
 		stashhash="$(git rev-parse --quiet --verify refs/tgstash --)" &&
 		[ -n "$stashhash" ] &&
 		[ "$(git cat-file -t "$stashhash" -- 2>/dev/null)" = "tag" ] ||
 		die "requested --stash failed"
 	else
-		$tg tag --anonymous "$tgbranch" &&
+		tg tag --anonymous "$tgbranch" &&
 		stashhash="$(git rev-parse --quiet --verify TG_STASH --)" &&
 		[ -n "$stashhash" ] &&
 		[ "$(git cat-file -t "$stashhash" -- 2>/dev/null)" = "tag" ] ||
@@ -213,7 +213,7 @@ if [ -n "$isactive" ] || [ $# -eq 1 -a x"$1" = x"--abort" ]; then
 		clear_state
 		if [ -n "$isactive" ]; then
 			if [ -n "$stashhash" ]; then
-				$tg revert -f -q -q --no-stash "$stashhash" >/dev/null 2>&1 || :
+				tg revert -f -q -q --no-stash "$stashhash" >/dev/null 2>&1 || :
 			fi
 			if [ -n "$current" ]; then
 				info "Ok, update aborted, returning to ${current#refs/heads/}"
@@ -399,13 +399,13 @@ stash_now_if_requested() {
 	fi
 	set -- $names
 	if [ -n "$stash" ]; then
-		$tg tag -q -q -m "$msg" --stash "$@"  &&
+		tg tag -q -q -m "$msg" --stash "$@"  &&
 		stashhash="$(git rev-parse --quiet --verify refs/tgstash --)" &&
 		[ -n "$stashhash" ] &&
 		[ "$(git cat-file -t "$stashhash" -- 2>/dev/null)" = "tag" ] ||
 		die "requested --stash failed"
 	else
-		$tg tag --anonymous "$@" &&
+		tg tag --anonymous "$@" &&
 		stashhash="$(git rev-parse --quiet --verify TG_STASH --)" &&
 		[ -n "$stashhash" ] &&
 		[ "$(git cat-file -t "$stashhash" -- 2>/dev/null)" = "tag" ] ||

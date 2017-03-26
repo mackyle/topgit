@@ -279,7 +279,7 @@ needslist=' '
 compute_ahead_list()
 {
 	[ -z "$branches" ] || [ -n "$withdeps" ] || return 0
-	[ -n "$withdeps" ] || origbranches="$($tg summary --topgit-heads | paste -d ' ' -s -)"
+	[ -n "$withdeps" ] || origbranches="$(tg summary --topgit-heads | paste -d ' ' -s -)"
 	aheadfile="$(get_temp aheadlist)"
 	savebr="$base_remote"
 	savenr="$no_remotes"

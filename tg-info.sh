@@ -65,7 +65,7 @@ if [ -n "$heads" ]; then
 	! test="$(verify_topgit_branch "${name:-HEAD}" -f)" || verify="refs/heads/$test"
 	hash="$(git rev-parse --verify --quiet "$verify" --)" || die "no such ref: $name"
 	depslist="$(get_temp depslist)"
-	$tg summary --topgit-heads |
+	tg summary --topgit-heads |
 	while read -r onetghead; do
 		printf '%s %s\n' "$onetghead" "$onetghead"
 		recurse_deps process_dep "$onetghead"
@@ -97,7 +97,7 @@ if [ "${verbose:-0}" -ge 1 ]; then
 	scratch="$(get_temp scratch)"
 	printf '%s\n' "$name" >"$scratch"
 	dependents="$(get_temp dependents_list)"
-	$tg summary --deps | sort -k2,2 | join -1 2 - "$scratch" | cut -d ' ' -f 2 | sort -u >"$dependents"
+	tg summary --deps | sort -k2,2 | join -1 2 - "$scratch" | cut -d ' ' -f 2 | sort -u >"$dependents"
 	if ! [ -s "$dependents" ]; then
 		echo "Dependents: [none]"
 	else

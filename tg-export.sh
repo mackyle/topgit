@@ -273,7 +273,7 @@ quilt()
 
 		echo "Exporting $_dep"
 		mkdir -p "$output/$dn"
-		$tg patch ${binary:+--binary} "$_dep" >"$output/$dn$bn"
+		tg patch ${binary:+--binary} "$_dep" >"$output/$dn$bn"
 		echol "$dn$bn -p1" >>"$output/series"
 	fi
 }

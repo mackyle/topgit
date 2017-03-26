@@ -104,7 +104,7 @@ make_deps_list()
 	no_remotes=1
 	base_remote=
 	depslist="$(get_temp depslist)"
-	$tg summary --topgit-heads |
+	tg summary --topgit-heads |
 	while read -r onetghead; do
 		printf '%s %s\n' "$onetghead" "$onetghead"
 		recurse_deps process_dep "$onetghead"
