@@ -422,9 +422,11 @@ recursive_update() {
 	_ret=0
 	on_base=
 	(
-		TG_RECURSIVE="[$1] $TG_RECURSIVE"
-		PS1="[$1] $PS1"
-		export PS1
+		if [ -n "$TG_RECURSIVE" ]; then
+			TG_RECURSIVE="==> [$1]${TG_RECURSIVE#==>}"
+		else
+			TG_RECURSIVE="==> [$1]$lf"
+		fi
 		update_branch "$1"
 	) || _ret=$?
 	[ $_ret -eq 3 ] && exit 3
@@ -947,6 +949,7 @@ update_branch_internal() {
 			then
 				rm "$_depcheck"
 				save_state
+				unset TG_RECURSIVE
 				info "Please commit merge resolution and call \`$tgdisplayac update --continue\`"
 				info "(use \`$tgdisplayac status\` to see more options)"
 				exit 3
@@ -996,6 +999,7 @@ update_branch_internal() {
 				save_state \
 					"$(git rev-parse --verify --quiet "refs/$topbases/$_update_name^0" --)" \
 					"$(git rev-parse --verify --quiet "$_rname^0" --)"
+				unset TG_RECURSIVE
 				info "Please commit merge resolution and call \`$tgdisplayac update --continue\`"
 				info "(use \`$tgdisplayac status\` to see more options)"
 				exit 3
@@ -1035,6 +1039,7 @@ update_branch_internal() {
 		no_auto=
 		merging_topfiles="${brmmode:+1}"
 		save_state
+		unset TG_RECURSIVE
 		info "Please commit merge resolution and call \`$tgdisplayac update --continue\`"
 		info "(use \`$tgdisplayac status\` to see more options)"
 		exit 3
