@@ -1562,6 +1562,17 @@ strftime()
 	fi
 }
 
+got_cdup_result=
+git_cdup_result=
+v_get_show_cdup()
+{
+	if [ -z "$got_cdup_result" ]; then
+		git_cdup_result="$(git rev-parse --show-cdup)"
+		got_cdup_result=1
+	fi
+	[ -z "$1" ] || eval "$1="'"$git_cdup_result"'
+}
+
 setup_git_dirs()
 {
 	[ -n "$git_dir" ] || git_dir="$(git rev-parse --git-dir)"
@@ -1573,7 +1584,8 @@ setup_git_dirs()
 			# rev-parse --git-common-dir is broken and may give
 			# an incorrect result unless the current directory is
 			# already set to the top level directory
-			git_common_dir="$(cd "./$(git rev-parse --show-cdup)" && cd "$(git rev-parse --git-common-dir)" && pwd)"
+			v_get_show_cdup
+			git_common_dir="$(cd "./$git_cdup_result" && cd "$(git rev-parse --git-common-dir)" && pwd)"
 		else
 			git_common_dir="$git_dir"
 		fi
@@ -1629,7 +1641,8 @@ initial_setup()
 	! vcmp "$git_version" '>=' "2.5" || iowopt="--ignore-other-worktrees"
 	auhopt=
 	! vcmp "$git_version" '>=' "2.9" || auhopt="--allow-unrelated-histories"
-	root_dir="$(git rev-parse --show-cdup)"; root_dir="${root_dir:-.}"
+	v_get_show_cdup root_dir
+	root_dir="${root_dir:-.}"
 	logrefupdates="$(git config --bool core.logallrefupdates 2>/dev/null)" || :
 	[ "$logrefupdates" = "true" ] || logrefupdates=
 
