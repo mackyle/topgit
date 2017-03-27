@@ -1127,8 +1127,10 @@ list_deps()
 checkout_symref_full()
 {
 	_mode=-m
+	_head="HEAD"
 	if [ "$1" = "-f" ]; then
 		_mode="--reset"
+		_head=
 		shift
 	fi
 	_ishash=
@@ -1153,7 +1155,7 @@ checkout_symref_full()
 	# This is like git checkout -b "$1" "$2"
 	# (or just git checkout "$1"),
 	# but never creates a detached HEAD (unless $1 is a hash)
-	git read-tree -u $_mode HEAD "$_seedrev" &&
+	git read-tree -u $_mode $_head "$_seedrev" &&
 	{
 		[ -z "$2" ] && [ "$(git cat-file -t "$1")" = "commit" ] ||
 		git update-ref ${_ishash:+--no-deref} "$1" "$_seedrev"
