@@ -190,7 +190,7 @@ deps="$*"
 [ "$deps" != "@" ] || deps="HEAD"
 if [ -z "$deps" ]; then
 	# The common case
-	[ -z "$name" ] && die "no branch name given"
+	[ -n "$name" ] || die "no branch name given"
 	if [ -n "$nodeps" ]; then
 		deps="HEAD"
 	else
@@ -217,16 +217,21 @@ if [ -n "$nodeps" ]; then
 	fi
 fi
 
-# Non-remote branch set up requires a clean tree unless the single dep is the same tree as HEAD
+# Non-remote branch set up requires a clean tree unless the single dep is the same tree as a not unborn HEAD
+# Also the .topdeps and .topmsg files, if they exist, may not be overwriten unless they are "clean"
 
-[ "$deps" = "HEAD" ] || {
-	prefix=refs/heads/
-	[ -z "$nodeps" ] || prefix=
-	[ $# -eq 1 -a "$(git rev-parse --quiet --verify "$prefix$deps^{tree}" --)" = "$(git rev-parse --quiet --verify HEAD^{tree} --)" ] ||
-		(ensure_clean_tree) || {
-			[ $# -ne 1 ] || info "use \`git checkout $deps\` first and then try again"
-			exit 1
-		}
+prefix=refs/heads/
+[ -z "$nodeps" ] || prefix=
+ensure_cmd=ensure_clean_tree
+if [ -n "$unborn" ]; then
+	ensure_cmd=:
+elif [ $# -eq 1 ] && { [ "$deps" = "HEAD" ] ||
+	[ "$(git rev-parse --quiet --verify "$prefix$deps^{tree}" --)" = "$(git rev-parse --quiet --verify HEAD^{tree} --)" ]; }; then
+	ensure_cmd=:
+fi
+($ensure_cmd && ensure_clean_topfiles ${unborn:+-u}) || {
+	[ $# -ne 1 ] || [ "$deps" = "HEAD" ] || info "use \`git checkout $deps\` first and then try again"
+	exit 1
 }
 
 [ -n "$merge" ] || merge="$deps "
