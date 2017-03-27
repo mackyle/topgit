@@ -639,13 +639,6 @@ v_attempt_index_merge() {
 			_mstyle="-top$_mmode"
 		fi
 	fi
-	if [ "$_mmode" = "remove" ] || [ "$_mmode" = "merge" ]; then
-		_agstyle="--aggressive"
-	else
-		# --aggressive still happens but in the helper in order to
-		# ensure correct handling of .topdeps and .topmsg with --ours/--theirs
-		_agstyle=
-	fi
 	[ "$#" -ge 5 ] && [ "$2" = "-m" ] && [ -n "$3" ] && [ -n "$4" ] && [ -n "$5" ] ||
 		die "programmer error: invalid arguments to v_attempt_index_merge: $*"
 	_var="$1"
@@ -654,6 +647,7 @@ v_attempt_index_merge() {
 	shift 4
 	rh="$(git rev-parse --quiet --verify "$_head^0" --)" && [ -n "$rh" ] || return 1
 	orh="$rh"
+	oth=
 	_mmsg=
 	newc=
 	_nodt=
@@ -693,6 +687,7 @@ v_attempt_index_merge() {
 		fi
 		if [ -z "$_octo" ]; then
 			r1="$(git rev-parse --quiet --verify "$1^0" --)" && [ -n "$r1" ] || return 1
+			oth="$r1"
 			set -- "$r1"
 			if [ "$rh" = "$mb" ]; then
 				_mmsg="Fast-forward (no commit created)"
@@ -709,6 +704,10 @@ v_attempt_index_merge() {
 		fi
 	fi
 	if [ -z "$newc" ]; then
+		if [ "$_mmode" = "theirs" ] && [ -z "$oth" ]; then
+			oth="$(git rev-parse --quiet --verify "$1^0" --)" && [ -n "$oth" ] || return 1
+			set -- "$oth"
+		fi
 		inew="$tg_tmp_dir/index.$$"
 		! [ -e "$inew" ] || rm -f "$inew"
 		itmp="$tg_tmp_dir/output.$$"
@@ -724,7 +723,7 @@ v_attempt_index_merge() {
 					continue
 				fi
 			fi
-			GIT_INDEX_FILE="$inew" git read-tree -m $_agstyle -i "$mb" "$rh" "$1" || { rm -f "$inew" "$imrg"; return 1; }
+			GIT_INDEX_FILE="$inew" git read-tree -m --aggressive -i "$mb" "$rh" "$1" || { rm -f "$inew" "$imrg"; return 1; }
 			GIT_INDEX_FILE="$inew" git ls-files --unmerged --full-name --abbrev :/ >"$itmp" 2>&1 || { rm -f "$inew" "$itmp" "$imrg"; return 1; }
 			! [ -s "$itmp" ] || {
 				if ! GIT_INDEX_FILE="$inew" TG_TMP_DIR="$tg_tmp_dir" git merge-index -q "$TG_INST_CMDDIR/tg--index-merge-one-file$_mstyle" -a >"$itmp" 2>&1; then
@@ -746,22 +745,36 @@ v_attempt_index_merge() {
 			}
 			_mstyle=
 			rm -f "$itmp"
-			newt="$(GIT_INDEX_FILE="$inew" git write-tree)" && [ -n "$newt" ] || { rm -f "$inew" "$imrg"; return 1; }
 			_parents="${_parents:+$_parents }-p $1"
 			if [ $# -gt 1 ]; then
+				newt="$(GIT_INDEX_FILE="$inew" git write-tree)" && [ -n "$newt" ] || { rm -f "$inew" "$imrg"; return 1; }
 				rh="$newt"
 				shift
 				continue
 			fi
 			break;
 		done
-		if [ "$_mmode" = "remove" ]; then
-			GIT_INDEX_FILE="$inew" git update-index --index-info <<-EOT &&
-			0 $nullsha$tab.topdeps
-			0 $nullsha$tab.topmsg
+		if [ "$_mmode" != "merge" ]; then
+			case "$_mmode" in
+				theirs) _source="$oth";;
+				remove) _source="";;
+				     *) _source="$orh";;
+			esac
+			_newinfo=
+			[ -z "$_source" ] ||
+			_newinfo="$(git cat-file --batch-check="%(objecttype) %(objectname)$tab%(rest)" <<-EOT |
+			$_source:.topdeps .topdeps
+			$_source:.topmsg .topmsg
 			EOT
-			newt="$(GIT_INDEX_FILE="$inew" git write-tree)" && [ -n "$newt" ] || { rm -f "$inew" "$imrg"; return 1; }
+			sed -n 's/^blob /100644 /p'
+			)"
+			[ -z "$_newinfo" ] || _newinfo="$lf$_newinfo"
+			GIT_INDEX_FILE="$inew" git update-index --index-info <<-EOT || { rm -f "$inew" "$imrg"; return 1; }
+			0 $nullsha$tab.topdeps
+			0 $nullsha$tab.topmsg$_newinfo
+			EOT
 		fi
+		newt="$(GIT_INDEX_FILE="$inew" git write-tree)" && [ -n "$newt" ] || { rm -f "$inew" "$imrg"; return 1; }
 		[ -z "$_octo" ] || sort -u <"$imrg"
 		rm -f "$inew" "$imrg"
 		newc="$(git commit-tree -p "$orh" $_parents -m "$_msg" "$newt")" && [ -n "$newc" ] || return 1
