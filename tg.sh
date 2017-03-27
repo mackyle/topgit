@@ -182,24 +182,24 @@ precheck
 cat_depsmsg_internal()
 {
 	_rev="$(ref_exists_rev "refs/heads/$1")" || return 0
-	if [ -s "$tg_cache_dir/$1/.$2" ]; then
+	if [ -s "$tg_cache_dir/refs/heads/$1/.$2" ]; then
 		if read _rev_match && [ "$_rev" = "$_rev_match" ]; then
 			_line=
 			while IFS= read -r _line || [ -n "$_line" ]; do
 				printf '%s\n' "$_line"
 			done
 			return 0
-		fi <"$tg_cache_dir/$1/.$2"
+		fi <"$tg_cache_dir/refs/heads/$1/.$2"
 	fi
-	[ -d "$tg_cache_dir/$1" ] || mkdir -p "$tg_cache_dir/$1" 2>/dev/null || :
-	if [ -d "$tg_cache_dir/$1" ]; then
-		printf '%s\n' "$_rev" >"$tg_cache_dir/$1/.$2"
+	[ -d "$tg_cache_dir/refs/heads/$1" ] || mkdir -p "$tg_cache_dir/refs/heads/$1" 2>/dev/null || :
+	if [ -d "$tg_cache_dir/refs/heads/$1" ]; then
+		printf '%s\n' "$_rev" >"$tg_cache_dir/refs/heads/$1/.$2"
 		_line=
 		git cat-file blob "$_rev:.$2" 2>/dev/null |
 		while IFS= read -r _line || [ -n "$_line" ]; do
 			printf '%s\n' "$_line" >&3
 			printf '%s\n' "$_line"
-		done 3>>"$tg_cache_dir/$1/.$2"
+		done 3>>"$tg_cache_dir/refs/heads/$1/.$2"
 	else
 		git cat-file blob "$_rev:.$2" 2>/dev/null
 	fi
@@ -718,7 +718,7 @@ branch_annihilated()
 	_result=
 	_result_rev=
 	_result_rev_base=
-	{ read -r _result _result_rev _result_rev_base <"$tg_cache_dir/$_branch_name/.ann"; } 2>/dev/null || :
+	{ read -r _result _result_rev _result_rev_base <"$tg_cache_dir/refs/heads/$_branch_name/.ann"; } 2>/dev/null || :
 	[ -z "$_result" -o "$_result_rev" != "$_rev" -o "$_result_rev_base" != "$_rev_base" ] || return $_result
 
 	# use the merge base in case the base is ahead.
@@ -726,9 +726,9 @@ branch_annihilated()
 
 	test -z "$mb" || test "$(rev_parse_tree "$mb")" = "$(rev_parse_tree "$_rev")"
 	_result=$?
-	[ -d "$tg_cache_dir/$_branch_name" ] || mkdir -p "$tg_cache_dir/$_branch_name" 2>/dev/null
-	[ ! -d "$tg_cache_dir/$_branch_name" ] ||
-	echo $_result $_rev $_rev_base >"$tg_cache_dir/$_branch_name/.ann" 2>/dev/null || :
+	[ -d "$tg_cache_dir/refs/heads/$_branch_name" ] || mkdir -p "$tg_cache_dir/refs/heads/$_branch_name" 2>/dev/null
+	[ ! -d "$tg_cache_dir/refs/heads/$_branch_name" ] ||
+	echo $_result $_rev $_rev_base >"$tg_cache_dir/refs/heads/$_branch_name/.ann" 2>/dev/null || :
 	return $_result
 }
 
@@ -1073,12 +1073,12 @@ branch_empty()
 		_rev="$(ref_exists_rev "refs/heads/$1")" || return 0
 		_result=
 		_result_rev=
-		{ read -r _result _result_rev <"$tg_cache_dir/$1/.mt"; } 2>/dev/null || :
+		{ read -r _result _result_rev <"$tg_cache_dir/refs/heads/$1/.mt"; } 2>/dev/null || :
 		[ -z "$_result" -o "$_result_rev" != "$_rev" ] || return $_result
 		_result=0
 		[ "$(pretty_tree -t "$1" -b)" = "$(pretty_tree -t "$1" $2)" ] || _result=$?
-		[ -d "$tg_cache_dir/$1" ] || mkdir -p "$tg_cache_dir/$1" 2>/dev/null
-		[ ! -d "$tg_cache_dir/$1" ] || echo $_result $_rev >"$tg_cache_dir/$1/.mt"
+		[ -d "$tg_cache_dir/refs/heads/$1" ] || mkdir -p "$tg_cache_dir/refs/heads/$1" 2>/dev/null
+		[ ! -d "$tg_cache_dir/refs/heads/$1" ] || echo $_result $_rev >"$tg_cache_dir/refs/heads/$1/.mt"
 		return $_result
 	else
 		[ "$(pretty_tree -t "$1" -b)" = "$(pretty_tree -t "$1" $2)" ]
