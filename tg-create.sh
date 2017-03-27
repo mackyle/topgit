@@ -404,6 +404,11 @@ fi
 
 ## Set up the topic branch
 
+git update-index --index-info <<EOT || die "git update-index failed"
+0 $nullsha$tab.topdeps
+0 $nullsha$tab.topmsg
+EOT
+rm -rf "$root_dir/.topdeps" "$root_dir/.topmsg"
 init_reflog "refs/$topbases/$name"
 if [ -n "$unborn" ]; then
 	mttree="$(git mktree </dev/null)"
@@ -424,6 +429,7 @@ else
 		basecommit="HEAD"
 	fi
 	git update-ref -m "tgcreate: set $topbases/$name base" "refs/$topbases/$name" "$basecommit" ""
+	[ "$basecommit" = "HEAD" ] || git update-ref -m "tgcreate: set $topbases/$name base" "HEAD" "$basecommit"
 	git checkout $iowopt -b "$name"
 fi
 
