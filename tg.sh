@@ -1156,7 +1156,7 @@ checkout_symref_full()
 	git read-tree -u $_mode HEAD "$_seedrev" &&
 	{
 		[ -z "$2" ] && [ "$(git cat-file -t "$1")" = "commit" ] ||
-		git update-ref "$1" "$_seedrev"
+		git update-ref ${_ishash:+--no-deref} "$1" "$_seedrev"
 	} && {
 		[ -n "$_ishash" ] || git symbolic-ref HEAD "$1"
 	}
