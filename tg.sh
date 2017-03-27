@@ -759,6 +759,41 @@ ensure_clean_tree()
 		die "git checkout \"$1\" would fail"
 }
 
+# Make sure .topdeps and .topmsg are "clean"
+# They are considered "clean" if each is identical in worktree, index and HEAD
+# With "-u" as the argument skip the HEAD check (-u => unborn)
+# untracked .topdeps and/or .topmsg files are always considered "dirty" as well
+# with -u them just existing constitutes "dirty"
+ensure_clean_topfiles()
+{
+	_dirtw=0
+	_dirti=0
+	_dirtu=0
+	_check="$(git diff-files --ignore-submodules --name-only -- :/.topdeps :/.topmsg)" &&
+	[ -z "$_check" ] || _dirtw=1
+	if [ "$1" != "-u" ]; then
+		_check="$(git diff-index --cached --ignore-submodules --name-only HEAD -- :/.topdeps :/.topmsg)" &&
+		[ -z "$_check" ] || _dirti=1
+	fi
+	if [ "$_dirti$_dirtw" = "00" ]; then
+		v_get_show_cdup
+		if [ -e "${git_cdup_result}.topdeps" ] || [ -e "${git_cdup_result}.topmsg" ]; then
+			[ "$1" != "-u" ] &&
+			_check="$(git status --porcelain --ignored --untracked-files --ignore-submodules -- :/.topdeps :/.topmsg)" &&
+			[ -z "$_check" ] || _dirtu=1
+		fi
+	fi
+	if [ "$_dirtu$_dirti$_dirtw" != "000" ]; then
+		git status --ignored --untracked-files --ignore-submodules -- :/.topdeps :/.topmsg || :
+		case "$_dirtu$_dirti$_dirtw" in
+		001) die "the working directory has uncommitted changes (see above) - first commit or reset them";;
+		010) die "the index has uncommited changes (see above)";;
+		011) die "the working directory and index have uncommitted changes (see above) - first commit or reset them";;
+		100) die "the working directory has untracked files that would be overwritten (see above)";;
+		esac
+	fi
+}
+
 # is_sha1 REF
 # Whether REF is a SHA1 (compared to a symbolic name).
 is_sha1()
