@@ -569,7 +569,7 @@ ref_exists_rev()
 			printf '%s' "$1"
 			return;;
 		*)
-			die "ref_exists_rev requires fully-qualified ref name"
+			die "ref_exists_rev requires fully-qualified ref name (given: $1)"
 	esac
 	[ -n "$tg_read_only" ] || { git rev-parse --quiet --verify "$1^0" -- 2>/dev/null; return; }
 	_result=
