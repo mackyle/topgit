@@ -438,7 +438,7 @@ while read -r name rev; do
 				detachat="$orig"
 				[ -n "$detachat" ] || detachat="$(make_empty_commit)"
 				git update-ref -m "tgrevert: detach HEAD to revert $name" --no-deref HEAD "$detachat"
-				[ -n "$quiet" ] || git log -n 1 --format=format:'HEAD is now at %h... %s' HEAD
+				[ -n "$quiet" ] || git --no-pager log -n 1 --format=format:'HEAD is now at %h... %s' HEAD
 			fi
 			git update-ref -m "$msg" "$name" "$rev"
 		fi

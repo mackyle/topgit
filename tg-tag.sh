@@ -364,7 +364,7 @@ if [ -n "$reflog" ]; then
 						objmsg="$(git cat-file tag "$obj" |
 							sed '1,/^$/d' | sed '/^$/,$d')"
 					elif [ "$type" = "commit" ]; then
-						objmsg="$(git log -n 1 --format='format:%s' "$obj" --)"
+						objmsg="$(git --no-pager log -n 1 --format='format:%s' "$obj" --)"
 					fi
 					[ -z "$objmsg" ] || msg="$objmsg"
 				fi
