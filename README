@@ -1256,6 +1256,11 @@ tg update
 
 	You have enabled ``git rerere`` haven't you?
 
+	If you also enable the ``rerere.autoUpdate`` mode then ``tg update``
+	will be able to automatically continue an update when ``git rerere``
+	resolves all the conflicts and then stages the results in the index.
+	This can be a big time saver.
+
 	When ``-a`` (or ``--all``) is specifed, updates all topic branches
 	matched by ``<pattern>``'s (see ``git-for-each-ref(1)`` for details),
 	or all if no ``<pattern>`` is given.  Any topic branches with missing
@@ -1284,7 +1289,9 @@ tg update
 	all the new branches from the remote using ``tg remote
 	--populate``, or only pick out the missing ones using ``tg create
 	-r`` (``tg summary`` will point out branches with incomplete
-	dependencies by showing an ``!`` next to them).
+	dependencies by showing an ``!`` next to them).  TopGit will attempt to
+	instantiate just the missing ones automatically for you, if possible,
+	when ``tg update`` merges in the new dependencies from the remote.
 
 	Using the alternative ``--base`` mode, ``tg update`` will update
 	the base of a specified ``[BASE]`` branch (which is a branch created

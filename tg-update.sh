@@ -448,12 +448,12 @@ die "git rev-parse --show-toplevel failed"
 
 # Run an in-tree recursive merge but make sure we get the desired version of
 # any .topdeps and .topmsg files.  The $auhopt and --no-stat options are
-# always in effect.  If successful a new commit is performed on HEAD.
+# always implicitly in effect.  If successful, a new commit is performed on HEAD.
 #
-# Except for --merge, the "git merge-recursive" tool (and others) must be
-# run to get the desired result.  And (except for --merge), --no-ff is always
-# implicitly in effect as well.
+# The "git merge-recursive" tool (and others) must be run to get the desired
+# result.  And --no-ff is always implicitly in effect as well.
 #
+# NOTE: [optional] arguments MUST appear in the order shown
 # [optional] '-v' varname => optional variable to return original HEAD hash in
 # [optional] '--merge', '--theirs' or '--remove' to alter .topfile handling
 # [optional] '--name' <name-for-ours [--name <name-for-theirs>]
@@ -462,10 +462,8 @@ die "git rev-parse --show-toplevel failed"
 # $3 => commit-ish to merge as "theirs"
 git_topmerge()
 {
-	_ours="$(git rev-parse --verify HEAD^0)" || die "git rev-parse failed"
 	_ovar=
 	[ "$1" != "-v" ] || [ $# -lt 2 ] || [ -z "$2" ] || { _ovar="$2"; shift 2; }
-	[ -z "$_ovar" ] || eval "$_ovar="'"$_ours"'
 	_mmode=
 	case "$1" in --theirs|--remove|--merge) _mmode="${1#--}"; shift; esac
 	_nameours=
@@ -479,35 +477,37 @@ git_topmerge()
 		fi
 	fi
 	: "${_nameours:=HEAD}"
+	[ "$#" -eq 3 ] && [ "$1" = "-m" ] && [ -n "$2" ] && [ -n "$3" ] ||
+		die "programmer error: invalid arguments to git_topmerge: $*"
+	_ours="$(git rev-parse --verify HEAD^0)" || die "git rev-parse failed"
+	_theirs="$(git rev-parse --verify "$3^0")" || die "git rev-parse failed"
+	[ -z "$_ovar" ] || eval "$_ovar="'"$_ours"'
 	eval "GITHEAD_$_ours="'"$_nameours"' && eval export "GITHEAD_$_ours"
-	_theirs=
 	if [ -n "$_nametheirs" ]; then
-		_theirs="$(git rev-parse --verify "$3^0")" || die "git rev-parse failed"
 		eval "GITHEAD_$_theirs="'"$_nametheirs"' && eval export "GITHEAD_$_theirs"
 	fi
+	_mdriver='touch %A'
 	if [ "$_mmode" = "merge" ]; then
 		TG_L1="$_nameours" && export TG_L1
 		TG_L2="merged common ancestors" && export TG_L2
 		TG_L3="${_nametheirs:-$3}" && export TG_L3
-		# in this one very uncommon case we can use the real "git merge"
-		git -c 'merge.ours.driver=git merge-file -L "$TG_L1" -L "$TG_L2" -L "$TG_L3" --marker-size=%L %A %O %B' \
-			merge $auhopt --no-stat "$@"
+		_mdriver='git merge-file -L "$TG_L1" -L "$TG_L2" -L "$TG_L3" --marker-size=%L %A %O %B'
+	fi
+	_msg="$2"
+	_mt=
+	_mb="$(git merge-base --all "$_ours" "$_theirs")" && [ -n "$_mb" ] ||
+	{ _mt=1; _mb="$(git hash-object -w -t tree --stdin < /dev/null)"; }
+	# any .topdeps or .topmsg output needs to be stripped from stdout
+	tmpstdout="$tg_tmp_dir/stdout.$$"
+	_ret=0
+	git -c "merge.ours.driver=$_mdriver" merge-recursive \
+		$_mb -- "$_ours" "$_theirs" >"$tmpstdout" || _ret=$?
+	# success or failure is not relevant until after fixing up the
+	# .topdeps and .topmsg files and running rerere unless _ret >= 126
+	[ $_ret -lt 126 ] || return $_ret
+	if [ "$_mmode" = "merge" ]; then
+		cat "$tmpstdout"
 	else
-		[ "$#" -eq 3 ] && [ "$1" = "-m" ] && [ -n "$2" ] && [ -n "$3" ] ||
-		die "programmer error: invalid arguments to git_topmerge: $*"
-		_msg="$2"
-		[ -n "$_theirs" ] || _theirs="$(git rev-parse --verify "$3^0")" || die "git rev-parse failed"
-		_mt=
-		_mb="$(git merge-base --all "$_ours" "$_theirs")" && [ -n "$_mb" ] ||
-		{ _mt=1; _mb="$(git hash-object -w -t tree --stdin < /dev/null)"; }
-		# any .topdeps or .topmsg output needs to be stripped from stdout
-		tmpstdout="$tg_tmp_dir/stdout.$$"
-		_ret=0
-		git -c "merge.ours.driver=touch %A" merge-recursive \
-			$_mb -- "$_ours" "$_theirs" >"$tmpstdout" || _ret=$?
-		# success or failure is not relevant until after fixing up the
-		# .topdeps and .topmsg files unless _ret >= 126
-		[ $_ret -lt 126 ] || return $_ret
 		case "$_mmode" in
 			theirs) _source="$_theirs";;
 			remove) _source="";;
@@ -542,44 +542,42 @@ git_topmerge()
 		fi
 		# dump output without any .topdeps or .topmsg messages
 		sed -e '/ \.topdeps/d' -e '/ \.topmsg/d' <"$tmpstdout"
-		git ls-files --unmerged --full-name --abbrev :/ >"$tmpstdout" 2>&1 ||
-		die "git ls-files failed"
-		if [ -s "$tmpstdout" ]; then
-			[ "$_ret" != "0" ] || _ret=1
-		else
-			_ret=0
-		fi
-		if [ $_ret -ne 0 ]; then
-			# merge failed, do rerere, spit out message and return
-
-			# rerere (will be a nop unless rerere.enabled is true)
-			git rerere || :
-			# enter "merge" mode before returning
-			{
-				printf '%s\n\n# Conflicts:\n' "$_msg"
-				sed -n "/$tab/s/^[^$tab]*/#/p" <"$tmpstdout" | sort -u
-			} >"$git_dir/MERGE_MSG"
-			git update-ref MERGE_HEAD "$_theirs" || :
-			echo 'Automatic merge failed; fix conflicts and then commit the result.'
-			rm -f "$tmpstdout"
-			return $_ret
-		fi
-		# commit time at last!
-		thetree="$(git write-tree)" || die "git write-tree failed"
-		# avoid an extra "already up-to-date" commit (can't happen if _mt though)
-		origtree=
-		[ -n "$_mt" ] || origtree="$(git rev-parse --quiet --verify "$_ours^{tree}" --)" &&
-			[ -n "$origtree" ] || die "git rev-parse failed"
-		if [ "$origtree" != "$thetree" ] || ! contained_by "$_theirs" "$_ours"; then
-			thecommit="$(git commit-tree -p "$_ours" -p "$_theirs" -m "$_msg" "$thetree")" &&
-			[ -n "$thecommit" ] || die "git commit-tree failed"
-			git update-ref -m "$_msg" HEAD "$thecommit" || die "git update-ref failed"
-		fi
-		# mention how the merge was made
-		echo "Merge made by the 'recursive' strategy."
-		rm -f "$tmpstdout"
-		return 0
 	fi
+	# rerere will be a nop unless rerere.enabled is true, but might complete the merge!
+	git rerere || :
+	git ls-files --unmerged --full-name --abbrev :/ >"$tmpstdout" 2>&1 ||
+	die "git ls-files failed"
+	if [ -s "$tmpstdout" ]; then
+		[ "$_ret" != "0" ] || _ret=1
+	else
+		_ret=0
+	fi
+	if [ $_ret -ne 0 ]; then
+		# merge failed, spit out message, enter "merge" mode and return
+		{
+			printf '%s\n\n# Conflicts:\n' "$_msg"
+			sed -n "/$tab/s/^[^$tab]*/#/p" <"$tmpstdout" | sort -u
+		} >"$git_dir/MERGE_MSG"
+		git update-ref MERGE_HEAD "$_theirs" || :
+		echo 'Automatic merge failed; fix conflicts and then commit the result.'
+		rm -f "$tmpstdout"
+		return $_ret
+	fi
+	# commit time at last!
+	thetree="$(git write-tree)" || die "git write-tree failed"
+	# avoid an extra "already up-to-date" commit (can't happen if _mt though)
+	origtree=
+	[ -n "$_mt" ] || origtree="$(git rev-parse --quiet --verify "$_ours^{tree}" --)" &&
+		[ -n "$origtree" ] || die "git rev-parse failed"
+	if [ "$origtree" != "$thetree" ] || ! contained_by "$_theirs" "$_ours"; then
+		thecommit="$(git commit-tree -p "$_ours" -p "$_theirs" -m "$_msg" "$thetree")" &&
+		[ -n "$thecommit" ] || die "git commit-tree failed"
+		git update-ref -m "$_msg" HEAD "$thecommit" || die "git update-ref failed"
+	fi
+	# mention how the merge was made
+	echo "Merge made by the 'recursive' strategy."
+	rm -f "$tmpstdout"
+	return 0
 }
 
 # run git_topmerge with the passed in arguments (it always does --no-stat)
