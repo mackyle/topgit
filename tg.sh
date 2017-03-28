@@ -1055,9 +1055,9 @@ branch_needs_update()
 	fi
 
 	if [ -n "$_dep_is_tgish" ]; then
-		branch_annihilated "$_dep" && return 0
+		[ -z "$_dep_annihilated" ] || return 0
 
-		if has_remote "$_dep"; then
+		if [ -n "$_dep_has_remote" ]; then
 			branch_contains "refs/heads/$_dep" "refs/remotes/$base_remote/$_dep" ||
 				echo "refs/remotes/$base_remote/$_dep $_dep $_depchain"
 		fi
