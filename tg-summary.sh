@@ -48,7 +48,7 @@ while [ -n "$1" ]; do
 	--with-deps)
 		head=HEAD
 		withdeps=1;;
-	--without-deps)
+	--without-deps|--no-with-deps)
 		head=HEAD
 		withdeps=0;;
 	--graphviz)
@@ -83,12 +83,14 @@ while [ -n "$1" ]; do
 done
 [ $# -eq 0 ] || defwithdeps=1
 [ -z "$exclude" ] || exclude="$exclude "
+doingall=
 if [ "$1" = "--all" ]; then
 	[ -z "$withdeps" ] || die "mutually exclusive options given"
 	[ $# -eq 1 ] || usage
 	shift
 	head=
 	defwithdeps=
+	doingall=1
 fi
 [ "$heads$rdeps" != "11" ] || head=
 [ $# -ne 0 -o -z "$head" ] || set -- "$head"
@@ -165,7 +167,7 @@ show_dep() {
 	case " $seen_deps " in *" $_dep "*) return 0; esac
 	seen_deps="${seen_deps:+$seen_deps }$_dep"
 	[ -z "$tgish" -o -n "$_dep_is_tgish" ] || return 0
-	[ -z "$skip_ann" ] || ! branch_annihilated "$_dep" && printf '%s\n' "$_dep"
+	[ -z "$skip_ann" ] || [ -z "$_dep_annihilated" ] && printf '%s\n' "$_dep"
 	return 0
 }
 
@@ -225,6 +227,10 @@ if [ -n "$headsonly" ]; then
 fi
 
 [ -n "$withdeps" ] || withdeps="$defwithdeps"
+if [ -z "$doingall$terse$graphviz$sort$deps$withdeps$branches" ]; then
+	branches="$(tg info --heads 2>/dev/null | paste -d " " -s -)" || :
+	[ -z "$branches" ] || withdeps=1
+fi
 [ "$withdeps" != "0" ] || withdeps=
 if [ -n "$withdeps" ]; then
 	savetgish="$tgish"
