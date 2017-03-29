@@ -134,20 +134,11 @@ show_heads_independent()
 
 show_heads_topgit()
 {
-	topics="$(get_temp topics)"
-	topics2=
-	[ -z "$branches" ] || topics2="$(get_temp topics2)"
-	deplist="$(get_temp deplist)"
-	get_branch_list 1 >"$topics"
-	while read -r onetopic; do
-		if [ -n "$branches" ]; then
-			! branch_annihilated "$onetopic" || continue
-			echol "$onetopic" >>"$topics2"
-		fi
-		cat_deps "$onetopic"
-	done <"$topics" | sort -u >"$deplist"
-	[ -z "$branches" ] || topics="$topics2"
-	join -v 1 "$topics" "$deplist" |
+	if [ -n "$branches" ]; then
+		navigate_deps -s=-1 -1 -- "$branches" | sort
+	else
+		navigate_deps -s=-1
+	fi |
 	while read -r name; do
 		case "$exclude" in *" $name "*) continue; esac
 		printf '%s\n' "$name"
