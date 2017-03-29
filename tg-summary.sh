@@ -11,6 +11,7 @@ sort=
 deps=
 depsonly=
 rdeps=
+rdepsonce=1
 head_from=
 branches=
 head=
@@ -68,6 +69,12 @@ while [ -n "$1" ]; do
 	--rdeps)
 		head=HEAD
 		rdeps=1;;
+	--rdeps-full)
+		head=HEAD
+		rdeps=1 rdepsonce=;;
+	--rdeps-once)
+		head=HEAD
+		rdeps=1 rdepsonce=1;;
 	--all)
 		break;;
 	--exclude=*)
@@ -218,7 +225,7 @@ if [ -n "$rdeps" ]; then
 		{
 			echol "$b"
 			recurse_preorder=1
-			recurse_deps show_rdeps "$b"
+			recurse_deps ${rdepsonce:+-o=-o=-1} show_rdeps "$b"
 		} | sed -e 's/[^ ][^ ]*[ ]/  /g'
 	done
 	exit 0

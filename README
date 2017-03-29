@@ -950,6 +950,17 @@ tg summary
 	seeing all the TopGit-controlled branches in the repository and	their
 	relationships to one another.
 
+	Note that ``--rdeps`` has two flavors.  The first (and default) is
+	``--rdeps-once`` which only shows the dependencies of a branch when
+	it's first visited.  For example, if D depends on several other
+	branches perhaps recursively and both branch A and B depend on D, then
+	whichever of A or B is shown first will show the entire dependency
+	chain for D underneath it and the other one will just show a line for
+	D itself.  This can make the output a bit more compact without actually
+	losing any information which is why it's the default.  However, using
+	the ``--rdeps-full`` variant will repeat the full dependency chain
+	every time it's encountered.
+
 	Adding ``--with-deps`` replaces the given list of branches (which will
 	default to ``HEAD`` if none are given) with the result of running
 	``tg summary --deps-only --tgish`` on the list of branches.  This can
