@@ -62,7 +62,13 @@ if [ -n "$heads" ]; then
 	no_remotes=1
 	base_remote=
 	verify="$name"
-	! test="$(verify_topgit_branch "${name:-HEAD}" -f)" || verify="refs/heads/$test"
+	v_verify_topgit_branch tgbranch "${name:-HEAD}" -f || tgbranch=
+	[ -n "$tgbranch" ] || tgbranch="$(git cat-file blob HEAD:.topdeps 2>/dev/null | paste -d ' ' -s -)" || :
+	if [ -n "$tgbranch" ]; then
+		# faster version with known TopGit branch name(s)
+		navigate_deps -s=-1 -1 -- "$tgbranch" | sort
+		exit 0
+	fi
 	hash="$(git rev-parse --verify --quiet "$verify" --)" || die "no such ref: $name"
 	depslist="$(get_temp depslist)"
 	tg summary --topgit-heads |
