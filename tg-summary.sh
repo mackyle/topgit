@@ -20,6 +20,7 @@ headsonly=
 exclude=
 tgish=
 withdeps=
+verbose=0
 
 ## Parse options
 
@@ -35,8 +36,10 @@ while [ -n "$1" ]; do
 	-i|-w)
 		[ -z "$head_from" ] || die "-i and -w are mutually exclusive"
 		head_from="$arg";;
-	-t|--list|-l)
+	-t|--list|-l|--terse)
 		terse=1;;
+	-v|--verbose)
+		verbose=1;;
 	--heads|--topgit-heads)
 		heads=1
 		headsindep=;;
@@ -236,7 +239,7 @@ if [ -n "$withdeps" ]; then
 	savetgish="$tgish"
 	tgish=1
 	origbranches="$branches"
-	branches="$(skip_ann=1; show_deps | sort -u -b -k1,1)"
+	branches="$(skip_ann=1; show_deps | sort -u -b -k1,1 | paste -d " " -s -)"
 	tgish="$savetgish"
 fi
 
@@ -363,13 +366,21 @@ if [ -n "$deps" ]; then
 	exit 0
 fi
 
-[ -n "$terse$graphviz$sort" ] || compute_ahead_list
+if [ -n "$terse" ]; then
+	refslist=
+	[ -z "$tg_read_only" ] || [ -z "$tg_ref_cache" ] || ! [ -s "$tg_ref_cache" ] ||
+	refslist="-r=\"$tg_ref_cache\""
+	cmd="run_awk_topgit_msg --list"
+	[ "${verbose:-0}" != "0" ] || cmd="run_awk_topgit_branches -n"
+	eval "$cmd" "$refslist" '-i="$branches" -x="$exclude" "refs/$topbases"'
+	exit 0
+fi
+
+[ -n "$graphviz$sort" ] || compute_ahead_list
 get_branch_list |
 	while read name; do
 		case "$exclude" in *" $name "*) continue; esac
-		if [ -n "$terse" ]; then
-			echol "$name"
-		elif [ -n "$graphviz$sort" ]; then
+		if [ -n "$graphviz$sort" ]; then
 			from=$head_from
 			[ "$name" = "$curname" ] ||
 				from=

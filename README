@@ -890,6 +890,7 @@ tg summary
 	This can take a longish time to accurately determine all the
 	relevant information about each branch; you can pass ``-t`` (or ``-l``
 	or ``--list``) to get just a terse list of topic branch names quickly.
+	Also adding ``--verbose`` (or ``-v``) includes the subjects too.
 
 	If no options or arguments are passed, the default is not actually to
 	show ``--all`` branches (that was the default once upon a time).
