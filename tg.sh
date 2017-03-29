@@ -543,6 +543,10 @@ remove_ref_cache()
 {
 	[ -n "$tg_ref_cache" -a -s "$tg_ref_cache" ] || return 0
 	>"$tg_ref_cache"
+	>"$tg_ref_cache_br"
+	>"$tg_ref_cache_rbr"
+	>"$tg_ref_cache_ann"
+	>"$tg_ref_cache_dep"
 }
 
 # setting tg_ref_cache_only to non-empty will force non-$tg_ref_cache lookups to fail
@@ -813,55 +817,63 @@ is_sha1()
 #   0 1 1 t/foo/leaf t/foo/int t/stage
 # If no_remotes is non-empty, exclude remotes
 # If recurse_preorder is non-empty, do a preorder rather than postorder traversal
-# but the leaf info will always be 0 or 2 in that case
 # If with_top_level is non-empty, include the top-level that's normally omitted
 # any branch names in the space-separated recurse_deps_exclude variable
 # are skipped (along with their dependencies)
 recurse_deps_internal()
 {
 	case " $recurse_deps_exclude " in *" $1 "*) return 0; esac
-	_ref_hash=
-	if ! _ref_hash="$(ref_exists_rev "refs/heads/$1")"; then
-		[ -z "$2" ] || echo "1 0 0 $*"
-		return 0
+	ratr_opts="${recurse_preorder:+-f} ${with_top_level:+-s}"
+	dogfer=
+	dorad=1
+	userc=
+	tmpdep=
+	if [ -n "$tg_read_only" ] && [ -n "$tg_ref_cache" ]; then
+		userc=1
+		tmprfs="$tg_ref_cache"
+		tmptgbr="$tg_ref_cache_br"
+		tmpann="$tg_ref_cache_ann"
+		tmpdep="$tg_ref_cache_dep"
+		[ -s "$tg_ref_cache" ] || dogfer=1
+		[ -n "$dogfer" ] || ! [ -s "$tmptgbr" ] || ! [ -f "$tmpann" ] || ! [ -s "$tmpdep" ] || dorad=
+	else
+		ratr_opts="$ratr_opts -rmh -rma -rmb"
+		tmprfs="$tg_tmp_dir/refs.$$"
+		tmpann="$tg_tmp_dir/ann.$$"
+		tmptgbr="$tg_tmp_dir/tgbr.$$"
+		dogfer=1
 	fi
-
-	_is_tgish=0
-	_ref_hash_base=
-	_is_leaf=0
-	! _ref_hash_base="$(ref_exists_rev "refs/$topbases/$1")" || _is_tgish=1
-	[ "$_is_tgish" = "0" ] || [ -n "$no_remotes" ] || ! has_remote "${topbases#heads/}/$1" || _is_tgish=2
-	[ "$_is_tgish" = "0" ] || ! branch_annihilated "$1" "$_ref_hash" "$_ref_hash_base" || _is_leaf=2
-	[ -z "$recurse_preorder" -o -z "${2:-$with_top_level}" ] || echo "0 $_is_tgish $_is_leaf $*"
-
-	# If no_remotes is unset also check our base against remote base.
-	# Checking our head against remote head has to be done in the helper.
-	if [ "$_is_tgish" = "2" ]; then
-		echo "0 0 0 refs/remotes/$base_remote/${topbases#heads/}/$1 $*"
+	refpats="\"refs/heads\" \"refs/\$topbases\""
+	[ -z "$base_remote" ] || refpats="$refpats \"refs/remotes/\$base_remote\""
+	tmptgrmtbr=
+	dorab=1
+	if [ -z "$no_remotes" ] && [ -n "$base_remote" ]; then
+		if [ -n "$userc" ]; then
+			tmptgrmtbr="$tg_ref_cache_rbr"
+			[ -n "$dogfer" ] || ! [ -s "$tmptgrmtbr" ] || dorab=
+		else
+			tmptgrmtbr="$tg_tmp_dir/tgrmtbr.$$"
+			ratr_opts="$ratr_opts -rmr"
+		fi
+		ratr_opts="$ratr_opts -r=\"\$tmptgbr\" -u=\"refs/remotes/\$base_remote/\${topbases#heads/}\""
 	fi
-
-	# if the branch was annihilated, it is considered to have no dependencies
-	[ "$_is_leaf" = "2" ] || _is_leaf=1
-	if [ "$_is_tgish" != "0" ] && [ "$_is_leaf" = "1" ]; then
-		#TODO: handle nonexisting .topdeps?
-		while read _dname && [ -n "$_dname" ]; do
-			# Avoid depedency loops
-			case " $* " in *" $_dname "*)
-				warn "dependency loop detected in branch $_dname"
-				_is_leaf=0
-				continue
-			esac
-			# Shoo shoo, leave our environment alone!
-			_dep_is_leaf=0
-			(recurse_deps_internal "$_dname" "$@") || _dep_is_leaf=$?
-			[ "$_dep_is_leaf" = "2" ] || _is_leaf=0
-		done <<-EOT
-			$(cat_deps "$1")
-		EOT
+	[ -z "$dogfer" ] ||
+	eval git for-each-ref '--format="%(refname) %(objectname)"' "$refpats" >"$tmprfs"
+	if [ -n "$tmptgrmtbr" ] && [ -n "$dorab" ]; then
+		run_awk_topgit_branches -n -h="refs/remotes/$base_remote" -r="$tmprfs" \
+			"refs/remotes/$base_remote/${topbases#heads/}" >"$tmptgrmtbr"
 	fi
-
-	[ -n "$recurse_preorder" -o -z "${2:-$with_top_level}" ] || echo "0 $_is_tgish $_is_leaf $*"
-	return ${_is_leaf:-0}
+	depscmd='run_awk_topgit_deps -a="$tmpann" -b="$tmptgbr" -r="$tmprfs" -m="$mtblob" "refs/$topbases"'
+	if [ -n "$userc" ]; then
+		if [ -n "$dorad" ]; then
+			eval "$depscmd" >"$tmpdep"
+		fi
+		depscmd='<"$tmpdep" '
+	else
+		depscmd="$depscmd |"
+	fi
+	eval "$depscmd" run_awk_topgit_recurse '-a="$tmpann" -b="$tmptgbr"' \
+		'-c=1 -h="$tmprfs"' "$ratr_opts" '-x="$recurse_deps_exclude"' '"$@"'
 }
 
 # do_eval CMD
@@ -957,14 +969,18 @@ ensure_ident_available()
 # remote dependencies are processed if no_remotes is unset.
 # any branch names in the space-separated recurse_deps_exclude variable
 # are skipped (along with their dependencies)
+#
+# If no_remotes is non-empty, exclude remotes
+# If recurse_preorder is non-empty, do a preorder rather than postorder traversal
+# If with_top_level is non-empty, include the top-level that's normally omitted
+# any branch names in the space-separated recurse_deps_exclude variable
+# are skipped (along with their dependencies)
 recurse_deps()
 {
 	_cmd="$1"; shift
 
-	become_cacheable
 	_depsfile="$(get_temp tg-depsfile)"
-	recurse_deps_internal "$@" >>"$_depsfile" || :
-	undo_become_cacheable
+	recurse_deps_internal -- "$@" >"$_depsfile" || :
 
 	_ret=0
 	while read _ismissing _istgish _isleaf _dep _name _deppath; do
@@ -1703,6 +1719,10 @@ initial_setup()
 	[ -n "$tg_tmp_dir" ] || tg_tmp_dir="$(mktemp -d "${TMPDIR:-/tmp}/tg-tmp.XXXXXX" 2>/dev/null)" || tg_tmp_dir=
 	[ -n "$tg_tmp_dir" ] || [ -z "$TMPDIR" ] || tg_tmp_dir="$(mktemp -d "/tmp/tg-tmp.XXXXXX" 2>/dev/null)" || tg_tmp_dir=
 	tg_ref_cache="$tg_tmp_dir/tg~ref-cache"
+	tg_ref_cache_br="$tg_ref_cache.br"
+	tg_ref_cache_rbr="$tg_ref_cache.rbr"
+	tg_ref_cache_ann="$tg_ref_cache.ann"
+	tg_ref_cache_dep="$tg_ref_cache.dep"
 	[ -n "$tg_tmp_dir" ] && [ -w "$tg_tmp_dir" ] && { >"$tg_ref_cache"; } >/dev/null 2>&1 ||
 		die "could not create a writable temporary directory"
 
