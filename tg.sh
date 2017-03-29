@@ -988,9 +988,11 @@ ensure_ident_available()
 	return 0
 }
 
-# recurse_deps CMD NAME [BRANCHPATH...]
+# recurse_deps [-o=<options string>] CMD NAME [BRANCHPATH...]
 # Recursively eval CMD on all dependencies of NAME.
 # Dependencies are visited in topological order.
+# If <options string> is given, it's eval'd into the recurse_deps_internal
+# call just before the "--" that's passed just before NAME
 # CMD can refer to the following variables:
 #
 #   _ret              starts as 0; CMD can change; will be final return result
@@ -1030,10 +1032,12 @@ ensure_ident_available()
 # are skipped (along with their dependencies)
 recurse_deps()
 {
+	_opts=
+	case "$1" in -o=*) _opts="${1#-o=}"; shift; esac
 	_cmd="$1"; shift
 
 	_depsfile="$(get_temp tg-depsfile)"
-	recurse_deps_internal -- "$@" >"$_depsfile" || :
+	eval recurse_deps_internal "$_opts" -- '"$@"' >"$_depsfile" || :
 
 	_ret=0
 	while read _ismissing _istgish _isleaf _dep _name _deppath; do
