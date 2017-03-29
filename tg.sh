@@ -803,6 +803,56 @@ is_sha1()
 	return 1
 }
 
+# navigate_deps <run_awk_topgit_navigate options and arguments>
+# all options and arguments are passed through to run_awk_topgit_navigate
+# except for a leading -td= option, if any, which is picked off for deps
+# after arranging to feed it a suitable deps list
+navigate_deps()
+{
+	dogfer=
+	dorad=1
+	userc=
+	tmpdep=
+	ratd_opts=
+	ratn_opts=
+	if [ -n "$tg_read_only" ] && [ -n "$tg_ref_cache" ]; then
+		userc=1
+		tmprfs="$tg_ref_cache"
+		tmptgbr="$tg_ref_cache_br"
+		tmpann="$tg_ref_cache_ann"
+		tmpdep="$tg_ref_cache_dep"
+		[ -s "$tg_ref_cache" ] || dogfer=1
+		[ -n "$dogfer" ] || ! [ -s "$tmptgbr" ] || ! [ -f "$tmpann" ] || ! [ -s "$tmpdep" ] || dorad=
+	else
+		ratd_opts="-rmr"
+		ratn_opts="-rma -rmb"
+		tmprfs="$tg_tmp_dir/refs.$$"
+		tmpann="$tg_tmp_dir/ann.$$"
+		tmptgbr="$tg_tmp_dir/tgbr.$$"
+		dogfer=1
+	fi
+	refpats="\"refs/heads\" \"refs/\$topbases\""
+	[ -z "$base_remote" ] || refpats="$refpats \"refs/remotes/\$base_remote\""
+	[ -z "$dogfer" ] ||
+	eval git for-each-ref '--format="%(refname) %(objectname)"' "$refpats" >"$tmprfs"
+	depscmd="run_awk_topgit_deps $ratd_opts"
+	case "$1" in -td=*)
+		userc=
+		depscmd="$depscmd $1"
+		shift
+	esac
+	depscmd="$depscmd"' -a="$tmpann" -b="$tmptgbr" -r="$tmprfs" -m="$mtblob" -s "refs/$topbases"'
+	if [ -n "$userc" ]; then
+		if [ -n "$dorad" ]; then
+			eval "$depscmd" >"$tmpdep"
+		fi
+		depscmd='<"$tmpdep" '
+	else
+		depscmd="$depscmd |"
+	fi
+	eval "$depscmd" run_awk_topgit_navigate '-a="$tmpann" -b="$tmptgbr"' "$ratn_opts" '"$@"'
+}
+
 # recurse_deps_internal NAME [BRANCHPATH...]
 # get recursive list of dependencies with leading 0 if branch exists 1 if missing
 # followed by a 1 if the branch is "tgish" (2 if it also has a remote); 0 if not
