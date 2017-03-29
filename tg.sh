@@ -17,6 +17,7 @@ octet4="$octet$octet$octet$octet"
 octet19="$octet4$octet4$octet4$octet4$octet$octet$octet"
 octet20="$octet4$octet4$octet4$octet4$octet4"
 nullsha="0000000000000000000000000000000000000000"
+mtblob="e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
 tab='	'
 lf='
 '
@@ -1676,6 +1677,8 @@ initial_setup()
 	basic_setup $1
 	iowopt=
 	! vcmp "$git_version" '>=' "2.5" || iowopt="--ignore-other-worktrees"
+	gcfbopt=
+	! vcmp "$git_version" '>=' "2.6" || gcfbopt="--buffer"
 	auhopt=
 	! vcmp "$git_version" '>=' "2.9" || auhopt="--allow-unrelated-histories"
 	v_get_show_cdup root_dir
@@ -1916,6 +1919,12 @@ v_get_abs_path()
 
 [ -d "$TG_INST_CMDDIR" ] ||
 	die "No command directory: '$TG_INST_CMDDIR'"
+
+## Include awk scripts and their utility functions (separated for easier debugging)
+
+[ -f "$TG_INST_CMDDIR/tg--awksome" ] && [ -r "$TG_INST_CMDDIR/tg--awksome" ] ||
+	die "Missing awk scripts: '$TG_INST_CMDDIR/tg--awksome'"
+. "$TG_INST_CMDDIR/tg--awksome"
 
 if [ -n "$tg__include" ]; then
 

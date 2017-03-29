@@ -23,11 +23,13 @@ hooksdir = $(cmddir)/hooks
 
 commands_in := $(wildcard tg-[!-]*.sh)
 utils_in := $(wildcard tg--*.sh)
+awk_in := $(wildcard awk/*.awk)
 hooks_in = hooks/pre-commit.sh
 helpers_in = $(wildcard t/helper/*.sh)
 
 commands_out = $(patsubst %.sh,%,$(commands_in))
 utils_out = $(patsubst %.sh,%,$(utils_in))
+awk_out = $(patsubst %.awk,%,$(awk_in))
 hooks_out = $(patsubst %.sh,%,$(hooks_in))
 helpers_out = $(patsubst %.sh,%,$(helpers_in))
 PROGRAMS = $(commands_out) $(utils_out)
@@ -56,7 +58,7 @@ endif
 
 .PHONY: FORCE
 
-all::	shell_compatibility_test precheck $(commands_out) $(utils_out) $(hooks_out) $(helpers_out) bin-wrappers/tg $(help_out) tg-tg.txt
+all::	shell_compatibility_test precheck $(commands_out) $(utils_out) $(awk_out) $(hooks_out) $(helpers_out) bin-wrappers/tg $(help_out) tg-tg.txt
 
 please_set_SHELL_PATH_to_a_more_modern_shell:
 	@$$(:)
@@ -106,7 +108,15 @@ tg $(commands_out) $(utils_out) $(hooks_out) $(helpers_out): % : %.sh Makefile T
 	chmod +x $@+ && \
 	mv $@+ $@
 
-bin-wrappers/tg : $(commands_out) $(utils_out) $(hooks_out) $(helpers_out) tg
+tg--awksome : $(awk_out)
+$(awk_out): % : %.awk Makefile TG-BUILD-SETTINGS
+	$(QSED)sed \
+		-e '1s|#!.*/awk|#!$(AWK_PREFIX)$(AWK_PATH_SQ)|' \
+		$@.awk >$@+ && \
+	chmod +x $@+ && \
+	mv $@+ $@
+
+bin-wrappers/tg : $(commands_out) $(utils_out) $(awk_out) $(hooks_out) $(helpers_out) tg
 	$(QWRAPPER){ [ -d bin-wrappers ] || mkdir bin-wrappers; } && \
 	echo '#!$(SHELL_PATH_SQ)' >"$@" && \
 	curdir="$$(pwd -P)" && \
@@ -155,6 +165,8 @@ install:: all
 	install tg "$(DESTDIR)$(bindir)"
 	install -d -m 755 "$(DESTDIR)$(cmddir)"
 	install $(commands_out) $(utils_out) "$(DESTDIR)$(cmddir)"
+	install -d -m 755 "$(DESTDIR)$(cmddir)/awk"
+	install $(awk_out) "$(DESTDIR)$(cmddir)/awk"
 	install -d -m 755 "$(DESTDIR)$(hooksdir)"
 	install $(hooks_out) "$(DESTDIR)$(hooksdir)"
 	install -d -m 755 "$(DESTDIR)$(sharedir)"
@@ -170,7 +182,7 @@ install-html:: html
 .PHONY: clean
 
 clean::
-	rm -f tg $(commands_out) $(utils_out) $(hooks_out) $(helpers_out) $(help_out) topgit.html $(html_out)
+	rm -f tg $(commands_out) $(utils_out) $(awk_out) $(hooks_out) $(helpers_out) $(help_out) tg-tg.txt topgit.html $(html_out)
 	rm -f TG-BUILD-SETTINGS
 	rm -rf bin-wrappers
 	+$(Q)$(MAKE) -C t clean

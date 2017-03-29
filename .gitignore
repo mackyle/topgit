@@ -18,6 +18,7 @@
 /config.mak
 /hooks/pre-commit
 /tg
+/tg--awksome
 /tg--index-merge-one-file
 /tg--index-merge-one-file-topmerge
 /tg--index-merge-one-file-toptheirs
