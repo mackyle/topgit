@@ -1066,10 +1066,24 @@ recurse_deps()
 	return ${_ret:-0}
 }
 
-find_leaves_internal()
+# find_leaves NAME
+# output (one per line) the unique leaves of NAME
+# a leaf is either
+#   1) a non-tgish dependency
+#   2) the base of a tgish dependency with no non-annihilated dependencies
+# duplicates are suppressed (by commit rev) and remotes are always ignored
+# if a leaf has an exact tag match that will be output
+# note that recurse_deps_exclude IS honored for this operation
+find_leaves()
 {
-	if [ -n "$_dep_is_leaf" ] && [ -z "$_dep_annihilated" ] && [ -z "$_dep_missing" ]; then
-		if [ -n "$_dep_is_tgish" ]; then
+	no_remotes=1
+	with_top_level=1
+	recurse_preorder=
+	seen_leaf_refs=
+	seen_leaf_revs=
+	while read _ismissing _istgish _isleaf _dep _name _deppath; do
+		[ "$_isleaf" = "1" ] && [ "$_ismissing" = "0" ] || continue
+		if [ "$_istgish" != "0" ]; then
 			fulldep="refs/$topbases/$_dep"
 		else
 			fulldep="refs/heads/$_dep"
@@ -1088,25 +1102,9 @@ find_leaves_internal()
 				esac
 			fi
 		esac
-	fi
-}
-
-# find_leaves NAME
-# output (one per line) the unique leaves of NAME
-# a leaf is either
-#   1) a non-tgish dependency
-#   2) the base of a tgish dependency with no non-annihilated dependencies
-# duplicates are suppressed (by commit rev) and remotes are always ignored
-# if a leaf has an exact tag match that will be output
-# note that recurse_deps_exclude IS honored for this operation
-find_leaves()
-{
-	no_remotes=1
-	with_top_level=1
-	recurse_preorder=
-	seen_leaf_refs=
-	seen_leaf_revs=
-	recurse_deps find_leaves_internal "$1"
+	done <<-EOT
+	$(recurse_deps_internal -l -o=1 -- "$1")
+	EOT
 	with_top_level=
 }
 
