@@ -739,15 +739,11 @@ branch_annihilated()
 
 non_annihilated_branches()
 {
-	[ $# -gt 0 ] || set -- "refs/$topbases"
-	git for-each-ref --format='%(objectname) %(refname)' "$@" |
-		while read rev ref; do
-			name="${ref#refs/$topbases/}"
-			if branch_annihilated "$name" "" "$rev"; then
-				continue
-			fi
-			echol "$name"
-		done
+	refscacheopt=
+	if [ -n "$tg_read_only" ] && [ -n "$tg_ref_cache" ] && [ -s "$tg_ref_cache" ]; then
+		refscacheopt='-r="$tg_ref_cache" "refs/$topbases"'
+	fi
+	eval run_awk_topgit_branches -n "$refscacheopt" '"refs/$topbases" "$@"'
 }
 
 # Make sure our tree is clean
