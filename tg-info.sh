@@ -4,7 +4,7 @@
 # Copyright (C) Kyle J. McKay <mackyle@gmail.com>  2015, 2016, 2017
 # GPLv2
 
-USAGE="Usage: ${tgname:-tg} [...] info [--heads | --leaves] [<name>]"
+USAGE="Usage: ${tgname:-tg} [...] info [--heads | --leaves | --series[=<head>]] [<name>]"
 
 usage()
 {
@@ -20,6 +20,8 @@ usage()
 
 heads=
 leaves=
+series=
+serieshead=
 verbose=
 
 while [ $# -gt 0 ]; do case "$1" in
@@ -31,6 +33,13 @@ while [ $# -gt 0 ]; do case "$1" in
 		;;
 	--leaves)
 		leaves=1
+		;;
+	--series)
+		series=1
+		;;
+	--series=*)
+		series=1
+		serieshead="${1#--series=}"
 		;;
 	-v|--verbose)
 		verbose=$(( ${verbose:-0} + 1 ))
@@ -46,7 +55,8 @@ while [ $# -gt 0 ]; do case "$1" in
 		break
 		;;
 esac; shift; done
-[ "$heads$leaves" != "11" ] || die "mutually exclusive options --heads and --leaves"
+[ "$heads$leaves$series" = "" ] || [ "$heads$leaves$series" = "1" ] ||
+	die "mutually exclusive options --series, --heads and --leaves"
 [ $# -gt 0 ] || set -- HEAD
 [ $# -eq 1 ] || die "name already specified ($1)"
 name="$1"
@@ -83,10 +93,54 @@ if [ -n "$heads" ]; then
 fi
 
 name="$(verify_topgit_branch "${name:-HEAD}")"
+
 if [ -n "$leaves" ]; then
 	find_leaves "$name"
 	exit 0
 fi
+
+v_cntargs() { eval "$1=$(( $# - 1 ))"; }
+if [ -n "$series" ]; then
+	if [ -z "$serieshead" ]; then
+		heads="$(navigate_deps -s=-1 -1 -- "$name" | sort | paste -d ' ' -s -)" || heads="$name"
+		v_cntargs headcnt $heads
+		if [ "$headcnt" -gt 1 ]; then
+			err "multiple heads found"
+			info "use the --series=<head> option on one of them:" >&2
+			for ahead in $heads; do
+				info "$tab$ahead" >&2
+			done
+			die "--series requires exactly one head"
+		fi
+		[ "$headcnt" = 1 ] || die "programmer bug"
+		serieshead="$heads"
+	else
+		v_verify_topgit_branch serieshead "$serieshead"
+	fi
+	seriesf="$(get_temp series)"
+	recurse_deps_internal --series -- "$serieshead" | awk '{print $0 " " NR}' | sort >"$seriesf"
+	refslist=
+	[ -z "$tg_read_only" ] || [ -z "$tg_ref_cache" ] || ! [ -s "$tg_ref_cache" ] ||
+	refslist="-r=\"$tg_ref_cache\""
+	flagname=
+	[ "$serieshead" = "$name" ] || flagname="$name"
+	output() {
+	eval run_awk_topgit_msg -n -nokind "$refslist" '"refs/$topbases"' |
+	join "$seriesf" - | sort -k2,2n | awk -v "flag=$flagname" '
+	{
+		bn = $1
+		mark = ""
+		if (flag != "") mark = (bn == flag) ? "* " : "  "
+		bn = mark bn
+		desc = $0
+		sub(/^[^ ]+ [^ ]+ /, "", desc)
+		printf "%-39s\t%s\n", bn, desc
+	}
+	'
+	} && page output
+	exit 0
+fi
+
 base_rev="$(git rev-parse --short --verify "refs/$topbases/$name" -- 2>/dev/null)" ||
 	die "not a TopGit-controlled branch"
 

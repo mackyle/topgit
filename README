@@ -769,6 +769,20 @@ tg info
 	TopGit topic branch (including its recursive dependencies) when exactly
 	one line is output by ``tg info --leaves <topic-branch>``.
 
+	With ``--series`` the list of TopGit branches in the order they would
+	be linearized into a patch series is shown along with the description
+	of each branch.  If branch name passed to ``tg info`` is not the last
+	branch in the series a marker column will be provided to quickly
+	locate it in the list.
+
+	Some patches shown in the list may not actually end up introducing any
+	changes if exported and be therefore end up being omitted.  The ``0``
+	indicator in ``tg summary`` output can help to identify some of these.
+
+	The patches shown in the series in the order they are shown form the
+	basis for the ``tg next`` and ``tg prev`` operations with the first
+	patch shown being considered the first and so on up to the last.
+
 tg patch
 ~~~~~~~~
 	Generate a patch from the current or specified topic branch.
