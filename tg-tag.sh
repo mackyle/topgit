@@ -412,6 +412,14 @@ tgcount=0
 othercount=0
 ignore=
 newlist=
+firstprnt=
+for arg in "$@"; do
+	case "$arg" in "~"?*)
+		[ -z "$firstprnt" ] || die "only one first parent may be specified with ~"
+		firstprnt="$(git rev-parse --verify --quiet "${arg#?}^0" -- 2>/dev/null)" && [ -n "$firstprnt" ] ||
+			die "not a commit-ish: ${arg#?}"
+	esac
+done
 while read -r obj typ ref && [ -n "$obj" -a -n "$typ" ]; do
 	[ -n "$ref" -o "$typ" != "missing" ] || die "no such ref: ${obj%???}"
 	case " $ignore " in *" $ref "*) continue; esac
@@ -430,8 +438,8 @@ while read -r obj typ ref && [ -n "$obj" -a -n "$typ" ]; do
 	fi
 done <<-EOT
 	$({
-		printf '%s\n' "$@" | sed 's/^\(.*\)$/\1^{} \1/'
-		printf '%s\n' "$@" | sed 's/^\(.*\)$/\1 \1/'
+		printf '%s\n' "$@" | sed 's/^~//; s/^\(.*\)$/\1^{} \1/'
+		printf '%s\n' "$@" | sed 's/^~//; s/^\(.*\)$/\1 \1/'
 	} |
 	git cat-file --batch-check='%(objectname) %(objecttype) %(rest)' 2>/dev/null ||
 	:)
@@ -657,9 +665,22 @@ case "$allrefs${extrarefs:+ $extrarefs}" in
 			die "failed: git merge-base --independent"
 		;;
 	*)
-		parents="$allrefs^0"
+		if [ -n "$firstprnt" ]; then
+			parents="$(git rev-parse --quiet --verify "$allrefs^0" --)" ||
+				die "failed: git rev-parse $allrefs^0"
+		else
+			parents="$allrefs^0"
+		fi
 		;;
 esac
+if [ -n "$firstprnt" ]; then
+	oldparents="$parents"
+	parents="$firstprnt"
+	for acmt in $oldparents; do
+		[ "$acmt" = "$firstprnt" ] || parents="$parents $acmt"
+	done
+	unset oldparents
+fi
 v_count_args pcnt $parents
 if [ $pcnt -eq 1 ]; then
 	tagtarget="$parents"
@@ -668,10 +689,10 @@ if [ $pcnt -eq 1 ]; then
 	tagtarget=
 fi
 if [ -z "$tagtarget" ]; then
-	tagtree="$treeish"
+	tagtree="${treeish:-$firstprnt}"
 	[ -n "$tagtree" ] || tagtree="$(git hash-object -t tree -w --stdin </dev/null)"
 	tagtarget="$(printf '%s\n' "tg tag branch consolidation" "" $branches |
-		git commit-tree $tagtree $(printf -- '-p %s ' $parents))"
+		git commit-tree $tagtree^{tree} $(printf -- '-p %s ' $parents))"
 fi
 
 init_reflog "$refname"

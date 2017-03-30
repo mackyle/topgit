@@ -1452,6 +1452,16 @@ tg tag
 	what's in the commit the newly created tag refers to).  The argument to
 	the ``--tree`` option may be any valid treeish.
 
+	If exactly one of the branches to be tagged is prefixed with a tilde
+	(``~``) it will be made the first parent of a consolidation commit if
+	it is not already the sole commit needing to be tagged.  If ``--tree``
+	is NOT used, its tree will also be used instead of the empty tree for
+	any new consolidation commit if one is created.  Note that if
+	``--tree`` is given explicitly it's tree is always used but that does
+	not in any way affect the choice of first parent.  Beware that the
+	``~`` may need to be quoted to prevent the shell from misinterpreting
+	it into something else.
+
 	All the options for creating a tag serve the same purpose as their Git
 	equivalents except for two.  The ``--refs`` option suppresses tag
 	creation entirely and emits the "TOPGIT REFS" section that would have
