@@ -1617,7 +1617,7 @@ page()
 	if [ -n "$emptypager" ]; then
 		eval "$_evalarg" '"$@"'
 	else
-		eval "$_evalarg" '"$@"' | eval "$TG_PAGER"
+		{ eval "$_evalarg" '"$@"';} | eval "$TG_PAGER"
 	fi
 }
 
