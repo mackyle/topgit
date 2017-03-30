@@ -361,6 +361,7 @@ TopGit supports various config settings:
 	:SEQUESTRATION_:	``topgit.sequester`` for sequestration control
 	:`tg migrate-bases`_:	``topgit.top-bases`` for refs bases location
 	:`tg update`_:		``topgit.autostash`` automatic stash control
+	:`tg patch`_:		``topgit.from`` From: fixups by ``tg patch``
 	:`REMOTE HANDLING`_:	``topgit.remote`` TopGit's default remote
 
 
@@ -784,6 +785,12 @@ tg patch
 	  -w		base patch generation on working tree instead of branch
 	  --binary	pass --binary to ``git diff-tree`` to enable generation
 	  		of binary patches
+	  --quiet	be quiet (aka ``-q``) about missing and unfixed From:
+	  --from	make sure patch has a From: line, if not add one using
+	  --from=<a>	<a> or Signed-off-by value or ident value; ``git am``
+	  		really gets unhappy with patches missing From: lines;
+	  		will NOT replace an existing non-empty From: header
+	  --no-from	leave all From: lines alone, missing or not (default)
 	  --diff-opt	options after the branch name (and an optional ``--``)
 	  		are passed directly to ``git diff-tree``
 
@@ -791,6 +798,13 @@ tg patch
 	must be separated from the ``tg`` options by an explicit ``--``.
 	Or it can be spelled as ``--ignore-all-space`` to distinguuish it from
 	``tg``'s ``-w`` option.
+
+	If the config variable ``topgit.from`` is set to a boolean it can be
+	used to enable or disable the ``--from`` option by default.  If it's
+	set to the speical value ``quiet`` the ``--quiet`` option is enabled
+	and From: lines are left alone by default.  Any other non-empty value
+	is taken as a default ``--from=<value>`` option.  The ``--no-from``
+	option will temporarily disable use of the config value.
 
 	If additional non-``tg`` options are passed through to
 	``git diff-tree`` (other than ``--binary`` which is fully supported)
