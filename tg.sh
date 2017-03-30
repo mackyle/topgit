@@ -1887,68 +1887,36 @@ set_topbases()
 	# check heads and top-bases and see what state the current
 	# repository is in.  remotes are ignored.
 
-	hblist=" "
-	topbases=
-	both=
-	newtb="heads/{top-bases}"
-	while read -r rn && [ -n "$rn" ]; do case "$rn" in
-		"refs/heads/{top-bases}"/*)
-			case "$hblist" in *" ${rn#refs/$newtb/} "*)
-				if [ "$topbases" != "heads/{top-bases}" ] && [ -n "$topbases" ]; then
-					both=1
-					break;
-				else
-					topbases="heads/{top-bases}"
-					topbasesrx="heads/[{]top-bases[}]"
-					oldbases="top-bases"
-				fi
-			esac;;
-		"refs/top-bases"/*)
-			case "$hblist" in *" ${rn#refs/top-bases/} "*)
-				if [ "$topbases" != "top-bases" ] && [ -n "$topbases" ]; then
-					both=1
-					break;
-				else
-					topbases="top-bases"
-					topbasesrx="top-bases"
-					oldbases="heads/{top-bases}"
-				fi
-			esac;;
-		"refs/heads"/*)
-			hblist="$hblist${rn#refs/heads/} ";;
-	esac; done <<-EOT
-		$(git for-each-ref --format='%(refname)' "refs/heads" "refs/top-bases" 2>/dev/null)
-	EOT
-	if [ -n "$both" ]; then
-		if [ -n "$1" ]; then
-			# hook script always prefers newer without complaint
-			topbases="heads/{top-bases}"
-			topbasesrx="heads/[{]top-bases[}]"
-			oldbases="top-bases"
-		else
-			# Complain and die
-			err "repository contains existing TopGit branches"
-			err "but some use refs/top-bases/... for the base"
-			err "and some use refs/heads/{top-bases}/... for the base"
-			err "with the latter being the new, preferred location"
-			err "set \"topgit.top-bases\" to either \"heads\" to use"
-			err "the new heads/{top-bases} location or \"refs\" to use"
-			err "the old top-bases location."
-			err "(the tg migrate-bases command can also resolve this issue)"
-			die "schizophrenic repository requires topgit.top-bases setting"
-		fi
-	elif [ -n "$topbases" ]; then
-		unset topbases_implicit_default
+	rc=0 activebases=
+	activebases="$(
+		git for-each-ref --format='%(refname)' "refs/heads" "refs/top-bases" 2>/dev/null |
+		run_awk_ref_prefixes ${1:+-e} -n -- "refs/heads/{top-bases}" "refs/top-bases" "refs/heads")" ||
+		rc=$?
+	if [ "$rc" = "65" ]; then
+		# Complain and die
+		err "repository contains existing TopGit branches"
+		err "but some use refs/top-bases/... for the base"
+		err "and some use refs/heads/{top-bases}/... for the base"
+		err "with the latter being the new, preferred location"
+		err "set \"topgit.top-bases\" to either \"heads\" to use"
+		err "the new heads/{top-bases} location or \"refs\" to use"
+		err "the old top-bases location."
+		err "(the tg migrate-bases command can also resolve this issue)"
+		die "schizophrenic repository requires topgit.top-bases setting"
 	fi
-
-	[ -n "$topbases" ] || {
+	[ -z "$activebases" ] || unset topbases_implicit_default
+	if [ "$activebases" = "refs/heads/{top-bases}" ]; then
+		topbases="heads/{top-bases}"
+		topbasesrx="heads/[{]top-bases[}]"
+		oldbases="top-bases"
+	else
 		# default is still top-bases for now
 		topbases="top-bases"
 		topbasesrx="top-bases"
 		oldbases="heads/{top-bases}"
-	}
+	fi
 	# MUST NOT be exported
-	unset hblist both newtb rn tg_topases_set
+	unset rc activebases tg_topases_set
 	tg_topbases_set=1
 	return 0
 }

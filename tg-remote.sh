@@ -41,20 +41,12 @@ if [ -n "$topbases_implicit_default" ]; then
 			"+refs/heads/*:refs/remotes/$name/*"
 	fi
 	# see if we have any remote bases
-	sawnew=
-	sawold=
-	while read -r rn && [ -n "$rn" ]; do
-		case "$rn" in
-			"refs/remotes/$name/{top-bases}"/?*)
-				sawnew=1;;
-			"refs/remotes/$name/top-bases"/?*)
-				sawold=1;;
-		esac
-		[ "$sawnew$sawold" != "11" ] || break
-	done <<-EOT
-		$(git for-each-ref --format='%(refname)' "refs/remotes/$name/{top-bases}" "refs/remotes/$name/top-bases")
-	EOT
-	if [ "$sawold$sawnew" = "11" ]; then
+	rc=0 remotebases=
+	remotebases="$(
+		git for-each-ref --format='%(refname)' "refs/remotes/$name" 2>/dev/null |
+		run_awk_ref_prefixes -n -- "refs/remotes/$name/{top-bases}" "refs/remotes/$name/top-bases" "refs/remotes/$name")" ||
+		rc=$?
+	if [ "$rc" = "65" ]; then
 		err "remote \"$name\" has top-bases in both locations:"
 		err "  refs/remotes/$name/{top-bases}/..."
 		err "  refs/remotes/$name/top-bases/..."
@@ -65,9 +57,9 @@ if [ -n "$topbases_implicit_default" ]; then
 		err "(the tg migrate-bases command can also help with this problem)"
 		die "schizophrenic remote \"$name\" requires topgit.top-bases setting"
 	fi
-	if [ -n "$sawold$sawnew" ]; then
+	if [ -n "$remotebases" ]; then
 		val="heads"
-		[ -z "$sawold" ] || val="refs"
+		[ "$remotebases" = "refs/remotes/$name/{top-bases}" ] || val="refs"
 		GIT_CONFIG_PARAMETERS="${GIT_CONFIG_PARAMETERS:+$GIT_CONFIG_PARAMETERS }'topgit.top-bases=$val'"
 		export GIT_CONFIG_PARAMETERS
 		unset tg_topbases_set
