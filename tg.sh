@@ -1318,7 +1318,8 @@ do_help()
 		done
 
 		echo "TopGit version $TG_VERSION - A different patch queue manager"
-		echo "Usage: $tgname [-C <dir>] [-r <remote> | -u] [-c <name>=<val>] ($cmds) ..."
+		echo "Usage: $tgname [-C <dir>] [-r <remote> | -u]" \
+			"[-c <name>=<val>] [--no-pager] ($cmds) ..."
 		echo "   Or: $tgname help [-w] [<command>]"
 		echo "Use \"$tgdisplaydir$tgname help tg\" for overview of TopGit"
 	elif [ -r "$TG_INST_CMDDIR"/tg-$1 -o -r "$TG_INST_SHAREDIR/tg-$1.txt" ] ; then
@@ -2083,6 +2084,11 @@ else
 			cmd=top-bases
 			shift
 			break;;
+
+		--no-pager)
+			GIT_PAGER_IN_USE=1 TG_PAGER_IN_USE=1 &&
+			export GIT_PAGER_IN_USE TG_PAGER_IN_USE
+			shift;;
 
 		-r)
 			shift
