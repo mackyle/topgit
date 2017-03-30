@@ -1,20 +1,20 @@
 #!/bin/sh
 # TopGit - A different patch queue manager
 # Copyright (C) 2013 Per Cederqvist <ceder@lysator.liu.se>
-# Copyright (C) 2015 Kyle J. McKay <mackyle@gmail.com>
+# Copyright (C) 2015,2017 Kyle J. McKay <mackyle@gmail.com>
 # All rights reserved.
 # GPLv2
 
 ## Parse options
 
-USAGE="Usage: ${tgname:-tg} [...] checkout [--iow] [-f] [ [ push | pop ] [ -a ] | [goto] [--] <pattern> ]"
+USAGE="Usage: ${tgname:-tg} [...] checkout [--iow] [-f] [ [ next | prev ] [ -a ] | [goto] [--] <pattern> ]"
 
 # Subcommands.
-push=
-pop=
+next=
+prev=
 goto=
 
-# Options of "push" and "pop".
+# Options of "next" and "prev".
 all=
 
 # Arguments of "goto".
@@ -47,10 +47,10 @@ while [ $# -gt 0 ]; do
 			iowoptval="$iowopt";;
 		--force|-f)
 			forceval=-f;;
-		child|next|push)
-			push=1;;
-		parent|prev|pop|..)
-			pop=1;;
+		n|next|push|child)
+			next=1;;
+		p|prev|previous|pop|parent|..)
+			prev=1;;
 		goto|--)
 			if [ -n "$goto" ]; then
 				if [ -n "$pattern" ]; then
@@ -72,7 +72,7 @@ while [ $# -gt 0 ]; do
 			fi
 			pattern="$arg";;
 		*)
-			if [ -z "$all$push$pop$goto" -a -n "$arg" ]; then
+			if [ -z "$all$next$prev$goto" -a -n "$arg" ]; then
 				goto=1
 				pattern="$arg"
 			else
@@ -85,14 +85,14 @@ if [ "$goto$all" = 11 ]; then
 	die "goto -a does not make sense."
 fi
 
-if [ -z "$push$pop$goto" ]; then
-	# Default subcommand is "push".  This was the most reasonable
+if [ -z "$next$prev$goto" ]; then
+	# Default subcommand is "next".  This was the most reasonable
 	# opposite of ".." that I could figure out.  "goto" would also
 	# make sense as the default command, I suppose.
-	push=1
+	next=1
 fi
 
-[ "$push$pop$goto" = "1" ] || { err "incompatible options"; usage; }
+[ "$next$prev$goto" = "1" ] || { err "incompatible options"; usage; }
 
 [ -n "$tg_tmp_dir" ] || die "tg-checkout must be run via '$tgdisplay checkout'"
 _depfile="$(mktemp "$tg_tmp_dir/tg-co-deps.XXXXXX")"
@@ -105,14 +105,14 @@ else
 	branch="$(git symbolic-ref -q HEAD)" || die "Working on a detached head"
 	branch="$(git rev-parse --revs-only --abbrev-ref "$branch" --)"
 
-	if [ -n "$pop" ]; then
+	if [ -n "$prev" ]; then
 		no_branch_found="$branch does not depend on any topic"
 	else
 		no_branch_found="No topic depends on $branch"
 	fi
 
 	if [ -z "$all" ]; then
-		if [ -n "$pop" ]; then
+		if [ -n "$prev" ]; then
 			tg prev -w >"$_altfile"
 		else
 			tg next >"$_altfile"
@@ -120,7 +120,7 @@ else
 	else
 		tg summary --deps >$_depfile || die "$tgdisplay summary failed"
 
-		if [ -n "$pop" ]; then
+		if [ -n "$prev" ]; then
 			dir=pop
 		else
 			dir=push

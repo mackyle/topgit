@@ -16,11 +16,13 @@ patch and providing some tools to maintain the branches.
 See also:
 
 	:REQUIREMENTS_:	    Installation requirements
-	:USAGE_:	    Command Line details
+	:SYNOPSIS_:	    Command line example session
+	:USAGE_:	    Command line details
 	:`NO UNDO`_:	    Where's the undo!!!
 	:CONVENTIONS_:	    Suggestions for organizing your TopGit branches
 	:`EXTRA SETTINGS`_: Various possible "topgit.*" config settings
-	:ALIASES_:          Git-like TopGit command aliases
+	:ALIASES_:	    Git-like TopGit command aliases
+	:NAVIGATION_:	    Getting around with "next" and "prev"
 	:GLOSSARY_:	    All the TopGit vocabulary in one place
 	:TECHNICAL_:	    How it works behind the scenes
 
@@ -383,6 +385,171 @@ this command may be used:
 
 To make it specific to a particular repository just omit the ``--global``
 option from the command.
+
+
+NAVIGATION
+----------
+From Previous to Next
+~~~~~~~~~~~~~~~~~~~~~
+
+For this section, consider the following patch series, to be applied
+in numerical order as shown:
+
+::
+
+	0001-F_first-patch.diff
+	0002-G_second-builds-on-F.diff
+	0003-H_third-builds-on-G.diff
+	0004-I_fourth-builds-on-H.diff
+	0005-J_fifth-builds-on-I.diff
+	0006-K_sixth-builds-on-J.diff
+	0007-L_last-patch-needs-K.diff
+
+If these were applied to some commit in a Git repository, say commit "A"
+then a history that looks like this would be created:
+
+::
+
+	A---F---G---H---I---J---K---L
+
+Where the parent of commit "F" is "A" and so on to where the parent of
+commit "L" is commit "K".
+
+If that commit history, from A through L, was then imported into TopGit, one
+TopGit branch would be created corresponding to each of the commits F
+through L.  This way, for example, if the fourth patch in the series
+(``0004-I_...diff``) needs work, the TopGit branch corresponding to its patch
+can be checked out and changes made and then a new version of its patch
+created (using ``tg patch``) without disturbing the other patches in the series
+and when ``tg update`` is run, the patches that "follow" the fourth patch
+(i.e. 5, 6 and 7) will have their corresponding TopGit branches automatically
+updated to take into account the changes made to the fourth patch.
+
+Okay, enough with the review of TopGit systemology
+``````````````````````````````````````````````````
+
+Imagine then that you are working on the fourth patch (i.e. you have its
+branch checked out into the working tree) and you want to move to the following
+patch in the series because you have a nit to pick with it too.
+
+If you can't remember the exact name you might have to fumble around or, you
+can display the name of the following or "next" patch's branch with the, you
+guessed it, ``tg next`` command.  Think of "next" as the "next" logical patch
+in the series or the next following patch.  If the patches are numbered as in
+the list above, "next" corresponds to the "+1" (plus one) patch.
+
+You might have already guessed there's a corresponding ``tg prev`` command
+which displays the "-1" (minus one) patch.  If these commands (``tg next``
+and ``tg prev``) are not given a branch name to start at they start at the
+patch corresponding to the current ``HEAD``.
+
+Displaying, however, is not so helpful as actually going there.  That's where
+the ``tg checkout`` command comes in.  ``tg checkout next`` does a
+``git checkout`` of the ``tg next`` branch and, not surprisingly,
+``tg checkout prev`` does a ``git checkout`` of the ``tg prev`` branch.  For
+the lazy a single ``n`` or ``p`` can be used with ``tg checkout`` instead of
+typing out the entire ``next`` or ``prev``.  Or, for the anal, ``previous``
+will also be accepted for ``prev``.
+
+Referring to the A...L commit graph shown above, I is the parent of J and,
+conversely, J is the child of I.  (Git only explicitly records the child to
+parent links, in other words a "child" points to zero or more "parents", but
+parents are completely clueless about their own children.)
+
+For historical reasons, the ``tg checkout`` command accepts ``child`` as a
+synonym for ``next`` and ``parent`` as a synonym for ``prev``.  However, this
+terminology can be confusing since Git has "parent" links but ``tg checkout``
+is referring to the TopGit DAG, not Git's.  Best to just avoid using ``child``
+or ``parent`` to talk about navigating the TopGit DAG and reserve them
+strictly for discussing the Git DAG.
+
+There may be more than one
+``````````````````````````
+
+In a simple linear history as shown above there's always only one "next" or
+"prev" patch.  However, TopGit does not restrict one to only a linear
+history (although that can make patch exports just a bushel of fun).
+
+Suffice it to say that there is always a single linearized ordering for any
+TopGit patch series since it's always a DAG (Directed Acyclic Graph), but it
+may not be immediately obvious to the casual observer what that is.
+
+The ``tg checkout`` command will display a list to choose from if ``next``
+or ``prev`` would be ambiguous.
+
+Use the ``tg info --series`` command
+````````````````````````````````````
+
+To see the full, linearized, list of patches with their summary displayed in
+order from first to last patch in the series, just run the ``tg info --series``
+command.  It takes the name of any patch in the series automatically using
+``HEAD`` if none is given.  It even provides a nice "YOU ARE HERE" mark in
+the output list helpful to those who have been absent for a time engaging in
+otherwise distracting activities and need to be reminded where they are.
+
+Don't get pushy, there's just one more thing
+````````````````````````````````````````````
+
+For historical reasons, ``tg checkout`` with no arguments whatsoever behaves
+like ``tg checkout next``.  For the same historical reasons, ``tg checkout ..``
+behaves like ``tg checkout prev`` (think of ``..`` as the "parent" directory
+and since "parent" means "prev" in this context it will then make sense).
+
+Now, for that one more thing.  Consider that you have a pristine "upstream"
+tarball, repository, source dump or otherwise obtained set of unmodified
+source files that need to be patched.  View them like so:
+
+::
+
+	+-------------------------------+
+	| Unmodified "upstream" source  |
+	| files represented with "A"    |
+	+-------------------------------+
+
+Now, add the first patch, 0001, to them and view the result like so:
+
+::
+
+	+--------------------------+----+
+	| Patch 0001 represented by "F" |
+	+-------------------------------+
+	| Unmodified "upstream" source  |
+	| files represented with "A"    |
+	+-------------------------------+
+
+Not stopping there, "push" patches 2, 3 and 4 onto the stack as well like so:
+
+::
+
+	+--------------------------+----+
+	| Patch 0004 represented by "I" |
+	+--------------------------+----+
+	| Patch 0003 represented by "H" |
+	+--------------------------+----+
+	| Patch 0002 represented by "G" |
+	+--------------------------+----+
+	| Patch 0001 represented by "F" |
+	+-------------------------------+
+	| Unmodified "upstream" source  |
+	| files represented with "A"    |
+	+-------------------------------+
+
+In other words, to go to the "next" patch in the series it needs to be "push"ed
+onto the stack.  ``tg checkout`` accepts ``push`` as an alias for ``next``.
+
+Similarly to go to the "previous" patch in the series the current one needs
+to be "pop"ped off the stack.  ``tg checkout`` accepts ``pop`` as an alias
+for ``prev``.
+
+Unfortunately for these aliases, in Git terminology a "push" has quite a
+different meaning and the ``tg push`` command does something quite different
+from ``tg checkout push``.  Then there's the matter of using a single letter
+abbreviation for the lazy -- ``p`` would mean what exactly?
+
+``tg checkout`` continues to accept the ``push`` and ``pop`` aliases for
+``next`` and ``prev`` respectively,  but it's best to avoid them since
+``push`` has an alternate meaning everywhere else in TopGit and Git and that
+leaves ``pop`` all alone in the dark.
 
 
 SEQUESTRATION
@@ -1108,41 +1275,44 @@ tg checkout
 
 	There following subcommands are available:
 
-	    ``tg checkout push``
+	    ``tg checkout next``
 				Check out a branch that directly
 				depends on your current branch.
+				(AKA ``n``)
 
-	    ``tg checkout pop``
+	    ``tg checkout prev``
 				Check out a branch that this branch
 				directly depends on.
+				(AKA ``p`` or ``previous``)
 
 	    ``tg checkout [goto] [--] <pattern>``
 				Check out a topic branch that
 				matches ``<pattern>``.  ``<pattern>``
-				is used as a sed pattern to filter
+				is used as a sed BRE pattern to filter
 				all the topic branches.  Both ``goto`` and
 				``--`` may be omitted provided ``<pattern>``
-				is not ``push``, ``pop``, ``-a``, ``--all``,
-				``goto``, ``..``, ``--``, ``next``, ``child``,
-				``prev``, ``parent``, ``-h`` or ``--help``.
+				is not ``-a``, ``--all``, ``-h``, --help``,
+				``goto``, ``--``, ``n``, ``next``, ``push``,
+				``child``, ``p``, ``prev``, ``previous``,
+				``pop``, ``parent`` or ``..``.
 
-	    ``tg checkout next``
-				An alias for ``push``.
+	    ``tg checkout push``
+				An alias for ``next``.
 
 	    ``tg checkout child``
-				An alias for ``push``.
+				Deprecated alias for ``next``.
 
 	    ``tg checkout``
-				An alias for ``push``.
+				Semi-deprecated alias for ``next``.
 
-	    ``tg checkout prev``
-				An alias for ``pop``.
+	    ``tg checkout pop``
+				An alias for ``prev``.
 
 	    ``tg checkout parent``
-				An alias for ``pop``.
+				Deprecated alias for ``prev``.
 
 	    ``tg checkout ..``
-				An alias for ``pop``.
+				Semi-deprecated alias for ``prev``.
 
 	If any of the above commands can find more than one possible
 	branch to switch to, you will be presented with the matches
@@ -1170,6 +1340,8 @@ tg checkout
 	moves to a regular branch that the current topic branch
 	depends on (directly or indirectly).  If there is more than
 	one possibility, you will be prompted for your selection.
+
+	See also NAVIGATION_.
 
 tg export
 ~~~~~~~~~
@@ -1658,6 +1830,8 @@ tg prev
 	  -i		show dependencies based on index instead of branch
 	  -w		show dependencies based on working tree instead of branch
 
+	See also NAVIGATION_.
+
 tg next
 ~~~~~~~
 	Outputs all branches which directly depend on the current or
@@ -1666,6 +1840,8 @@ tg next
 	Options:
 	  -i		show dependencies based on index instead of branch
 	  -w		show dependencies based on working tree instead of branch
+
+	See also NAVIGATION_.
 
 tg migrate-bases
 ~~~~~~~~~~~~~~~~
@@ -1927,6 +2103,14 @@ GLOSSARY
 		a branch containment test.  An easy mnemonic for this is
 		"children contain the genes of their parents."
 
+	BRE pattern
+		A Basic Regular Expression (BRE) pattern.  These are older
+		style regular expressions but have the advantage that all
+		characters other than ``\``, ``.``, ``*`` and ``[``
+		automatically match themselves without need for backslash
+		quoting (well actually, ``^`` and ``$`` are special at the
+		beginning and end respectively but otherwise match themselves).
+
 	contains
 		See branch containment.
 
@@ -2003,6 +2187,12 @@ GLOSSARY
 		possibily assisted by the ``git merge-index`` and the
 		``git merge-file`` commands.
 
+	next branch
+		In TopGit context the "next" branch refers to the branch that
+		corresponds to the next (aka following) patch in an ordered
+		(aka linearized) list of patches created by exporting the
+		TopGit branches in patch application order.
+
 	octopus merge
 		A merge involving more than two heads.  Note that if there are
 		less than three independent heads the resulting merge that
@@ -2033,6 +2223,12 @@ GLOSSARY
 
 		Note that if a remote branch is present and is NOT out-of-date
 		then it will contain its own base and (c) is mostly redundant.
+
+	previous branch
+		In TopGit context the "previous" (or "prev") branch refers to
+		the branch that corresponds to the previous (aka preceding)
+		patch in an ordered (aka linearized) list of patches created by
+		exporting the TopGit branches in patch application order.
 
 	remote TopGit branch
 		A Git branch with the same branch name as a TopGit branch
