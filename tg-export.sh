@@ -367,7 +367,7 @@ driver()
 	# FIXME should we abort on missing dependency?
 	[ -z "$_dep_missing" ] || return 0
 
-	[ -z "$_dep_is_tgish" ] || ! branch_annihilated "$_dep" || return 0
+	[ -z "$_dep_is_tgish" ] || [ -z "$_dep_annihilated" ] || return 0
 
 	case $_dep in refs/remotes/*) return;; esac
 	branch_needs_update >/dev/null
