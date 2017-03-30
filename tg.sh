@@ -1192,35 +1192,31 @@ branch_empty()
 	fi
 }
 
-# list_deps [-i | -w] [BRANCH]
-# -i/-w apply only to HEAD
-list_deps()
+v_get_tdmopt_internal()
 {
-	head_from=
-	[ "$1" != "-i" -a "$1" != "-w" ] || { head_from="$1"; shift; }
-	head="$(git symbolic-ref -q HEAD)" ||
-		head="..detached.."
-
-	git for-each-ref --format='%(objectname) %(refname)' "refs/$topbases${1:+/$1}" |
-		while read rev ref; do
-			name="${ref#refs/$topbases/}"
-			if branch_annihilated "$name" "" "$rev"; then
-				continue
+	[ -n "$1" ] && [ -n "$3" ] || return 0
+	[ "$2" = "-i" ] || [ "$2" = "-w" ] || return 0
+	_optval=
+	if v_verify_topgit_branch _tghead "HEAD" -f; then
+		if [ "$2" = "-w" ] && [ -f "$root_dir/$3" ] && [ -r "$root_dir/$3" ]; then
+			_opthash=
+			if _opthash="$(git hash-object -w -t blob --stdin <"$root_dir/$3")" && [ -n "$_opthash" ]; then
+				_optval="$4\"$_tghead:$_opthash\""
 			fi
-
-			from=$head_from
-			[ "refs/heads/$name" = "$head" ] ||
-				from=
-			cat_file "refs/heads/$name:.topdeps" $from | while read dep; do
-				dep_is_tgish=true
-				ref_exists "refs/$topbases/$dep" ||
-					dep_is_tgish=false
-				if ! "$dep_is_tgish" || ! branch_annihilated $dep; then
-					echo "$name $dep"
-				fi
-			done
-		done
+		elif [ "$2" = "-i" ]; then
+			if _opthash="$(git rev-parse --quiet --verify ":0:$3" --)" && [ -n "$_opthash" ]; then
+				_optval="$4\"$_tghead:$_opthash\""
+			fi
+		fi
+	fi
+	eval "$1="'"$_optval"'
 }
+
+# set var $1 to the correct -td= option for use in an eval for $2 -i or -w mode
+v_get_tdopt() { v_get_tdmopt_internal "$1" "$2" ".topdeps" "-td="; }
+
+# set var $1 to the correct -tm= option for use in an eval for $2 -i or -w mode
+v_get_tmopt() { v_get_tdmopt_internal "$1" "$2" ".topmsg" "-tm="; }
 
 # checkout_symref_full [-f] FULLREF [SEED]
 # Just like git checkout $iowopt -b FULLREF [SEED] except that FULLREF MUST start with

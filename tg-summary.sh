@@ -231,13 +231,29 @@ if [ -n "$rdeps" ]; then
 	exit 0
 fi
 
+if [ -n "$deps" ]; then
+	if [ -n "$branches" ]; then
+		no_remotes=1
+		recurse_deps_exclude="$exclude"
+		recurse_deps_internal -n -t -m -e=2 -- $branches | sort -u
+	else
+		refslist=
+		[ -z "$tg_read_only" ] || [ -z "$tg_ref_cache" ] || ! [ -s "$tg_ref_cache" ] ||
+		refslist="-r=\"$tg_ref_cache\""
+		tdopt=
+		v_get_tdopt tdopt "$head_from"
+		eval run_awk_topgit_deps "$refslist" "$tdopt" '-n -t -m="$mtblob" -x="$exclude" "refs/$topbases"'
+	fi
+	exit 0
+fi
+
 if [ -n "$headsonly" ]; then
 	defwithdeps=
 	branches="$(show_heads)"
 fi
 
 [ -n "$withdeps" ] || withdeps="$defwithdeps"
-if [ -z "$doingall$terse$graphviz$sort$deps$withdeps$branches" ]; then
+if [ -z "$doingall$terse$graphviz$sort$withdeps$branches" ]; then
 	branches="$(tg info --heads 2>/dev/null | paste -d " " -s -)" || :
 	[ -z "$branches" ] || withdeps=1
 fi
@@ -349,29 +365,6 @@ process_branch()
 	printf '%-8s %-30s\t%s\n' "$current$nonempty$remote$rem_update$deps_update$deps_missing$base_update$ahead" \
 		"$name" "$subject"
 }
-
-if [ -n "$deps" ]; then
-	if [ -n "$branches" ]; then
-		get_branch_list |
-			while read b; do
-				case "$exclude" in *" $b "*) continue; esac
-				list_deps $head_from $b |
-					while read name dep; do
-						case "$exclude" in *" $dep "*) continue; esac
-						[ -z "$tgish" ] || ref_exists "refs/$topbases/$dep" || continue
-						echo "$name $dep"
-					done
-			done
-	else
-		list_deps $head_from |
-			while read name dep; do
-				case "$exclude" in *" $dep "*) continue; esac
-				[ -z "$tgish" ] || ref_exists "refs/$topbases/$dep" || continue
-				echo "$name $dep"
-			done
-	fi
-	exit 0
-fi
 
 if [ -n "$terse" ]; then
 	refslist=
