@@ -30,13 +30,17 @@ done
 
 ## Sanity checks
 
-name="$(verify_topgit_branch HEAD)"
+v_verify_topgit_branch name HEAD
+! branch_annihilated "$name" || die "TopGit branch $name is already annihilated."
 
 [ -z "$force" ] && { branch_empty "$name" || die "branch is non-empty: $name"; }
 
 ## Annihilate
 ensure_clean_tree
+ensure_clean_topfiles
 ensure_ident_available
+alldeps="$(get_temp alldeps)"
+tg --no-pager summary --deps >"$alldeps" || die "tg summary --deps failed"
 mb="$(git merge-base "refs/$topbases/$name" "refs/heads/$name")"
 git read-tree "$mb^{tree}"
 # Need to pass --no-verify in order to inhibit TopGit's pre-commit hook to run,
@@ -44,7 +48,7 @@ git read-tree "$mb^{tree}"
 git commit --no-verify -m"TopGit branch $name annihilated."
 
 # Propagate the dependencies through to dependents (if any), if they don't already have them
-dependencies="$(tg prev -w)"
+dependencies="$(awk -v annb="$name" 'NF == 2 && $2 != "" && $1 == annb { print $2 }' <"$alldeps")"
 updatelist=
 while read dependent && [ -n "$dependent" ]; do
 	# to avoid ambiguity with checkout -f we must use symbolic-ref + reset
@@ -58,7 +62,7 @@ while read dependent && [ -n "$dependent" ]; do
 	EOT
 	[ -z "$needupdate" ] || updatelist="${updatelist:+$updatelist }$dependent"
 done <<EOT
-$(tg next)
+$(awk -v annb="$name" 'NF == 2 && $1 != "" && $2 == annb { print $1 }' <"$alldeps")
 EOT
 
 info "branch successfully annihilated: $name"
