@@ -4,7 +4,9 @@
 # Copyright (C) Kyle J. McKay <mackyle@gmail.com>  2015, 2016, 2017
 # GPLv2
 
-USAGE="Usage: ${tgname:-tg} [...] info [--heads | --leaves | --series[=<head>]] [<name>]"
+USAGE="\
+Usage: ${tgname:-tg} [...] info [--heads | --leaves | --series[=<head>]] [<name>]
+   Or: ${tgname:-tg} [...] info [--deps | --dependents] [<name>]"
 
 usage()
 {
@@ -18,8 +20,11 @@ usage()
 
 ## Parse options
 
+datamode=
 heads=
 leaves=
+deps=
+dependents=
 series=
 serieshead=
 verbose=
@@ -29,16 +34,22 @@ while [ $# -gt 0 ]; do case "$1" in
 		usage
 		;;
 	--heads)
-		heads=1
+		heads=1 datamode=1
 		;;
 	--leaves)
-		leaves=1
+		leaves=1 datamode=1
+		;;
+	--deps)
+		deps=1 datamode=1
+		;;
+	--dependents)
+		dependents=1 datamode=1
 		;;
 	--series)
-		series=1
+		series=1 datamode=1
 		;;
 	--series=*)
-		series=1
+		series=1 datamode=1
 		serieshead="${1#--series=}"
 		;;
 	-v|--verbose)
@@ -55,8 +66,8 @@ while [ $# -gt 0 ]; do case "$1" in
 		break
 		;;
 esac; shift; done
-[ "$heads$leaves$series" = "" ] || [ "$heads$leaves$series" = "1" ] ||
-	die "mutually exclusive options --series, --heads and --leaves"
+[ -z "$datamode" ] || [ "$heads$leaves$deps$dependents$series" = "1" ] ||
+	die "mutually exclusive options: --series --deps --heads --leaves --dependents"
 [ $# -gt 0 ] || set -- HEAD
 [ $# -eq 1 ] || die "name already specified ($1)"
 name="$1"
@@ -96,6 +107,17 @@ name="$(verify_topgit_branch "${name:-HEAD}")"
 
 if [ -n "$leaves" ]; then
 	find_leaves "$name"
+	exit 0
+fi
+
+if [ -n "$deps$dependents" ]; then
+	alldeps="$(get_temp alldeps)"
+	tg --no-pager summary --deps >"$alldeps" || die "tg summary --deps failed"
+	if [ -n "$deps" ]; then
+		awk -v annb="$name" 'NF == 2 && $2 != "" && $1 == annb { print $2 }' <"$alldeps"
+	else
+		awk -v annb="$name" 'NF == 2 && $1 != "" && $2 == annb { print $1 }' <"$alldeps"
+	fi
 	exit 0
 fi
 

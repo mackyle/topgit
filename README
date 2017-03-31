@@ -953,6 +953,13 @@ tg info
 	the base of a non-annihilated TopGit branch with no non-annihilated
 	dependencies.
 
+	The ``--deps`` option shows non-annihilated TopGit dependencies of the
+	specified branch (default is ``HEAD``).
+
+	The ``--dependents`` option shows non-annihilated TopGit dependents
+	(i.e. branches that depend on the specified branch).  The default
+	branch to operate on is again ``HEAD``.
+
 	A linearized patch series can only be automatically created for a
 	TopGit topic branch (including its recursive dependencies) when exactly
 	one line is output by ``tg info --leaves <topic-branch>``.
