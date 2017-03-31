@@ -171,7 +171,6 @@ install:: all
 	install $(hooks_out) "$(DESTDIR)$(hooksdir)"
 	install -d -m 755 "$(DESTDIR)$(sharedir)"
 	install -m 644 $(help_out) tg-tg.txt "$(DESTDIR)$(sharedir)"
-	install -m 644 leaves.awk "$(DESTDIR)$(sharedir)"
 
 .PHONY: install-html
 

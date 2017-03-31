@@ -477,8 +477,8 @@ may not be immediately obvious to the casual observer what that is.
 The ``tg checkout`` command will display a list to choose from if ``next``
 or ``prev`` would be ambiguous.
 
-Use the ``tg info --series`` command
-````````````````````````````````````
+Use the ``tg info/checkout --series`` command
+`````````````````````````````````````````````
 
 To see the full, linearized, list of patches with their summary displayed in
 order from first to last patch in the series, just run the ``tg info --series``
@@ -486,6 +486,9 @@ command.  It takes the name of any patch in the series automatically using
 ``HEAD`` if none is given.  It even provides a nice "YOU ARE HERE" mark in
 the output list helpful to those who have been absent for a time engaging in
 otherwise distracting activities and need to be reminded where they are.
+
+Using ``tg checkout --series`` can take you there (picking from a list) if
+you've forgotten the way back to wherever you're supposed to be.
 
 Don't get pushy, there's just one more thing
 ````````````````````````````````````````````
@@ -958,7 +961,7 @@ tg info
 	be linearized into a patch series is shown along with the description
 	of each branch.  If branch name passed to ``tg info`` is not the last
 	branch in the series a marker column will be provided to quickly
-	locate it in the list.
+	locate it in the list.  This same option can be used with `tg checkout`_.
 
 	Some patches shown in the list may not actually end up introducing any
 	changes if exported and be therefore end up being omitted.  The ``0``
@@ -1281,45 +1284,61 @@ tg checkout
 	the dependency graph, or allows you to match the topic branch
 	name using a regular expression, so it can be more convenient.
 
-	There following subcommands are available:
+	The ``--branch`` (or ``-b`` or ``--branch=<name>``) option changes
+	the default starting point from ``HEAD`` to the specified branch.
 
-	    ``tg checkout next``
+	For the "next" and "previous" commands, the ``<steps>`` value may
+	be ``--all`` (or ``-a``) to take "As nany steps As possible" or
+	"step ALL the way" or "ALL steps at once" (or make something better
+	up yourself).
+
+	The following subcommands are available:
+
+	    ``tg checkout next [<steps>]``
 				Check out a branch that directly
 				depends on your current branch.
-				(AKA ``n``)
+				Move ``<steps>`` (default 1) step(s) in
+				the "next" direction (AKA ``n``).
 
-	    ``tg checkout prev``
+	    ``tg checkout prev [<steps>]``
 				Check out a branch that this branch
-				directly depends on.
-				(AKA ``p`` or ``previous``)
+				directly depends on.  Move ``<steps>``
+				(default 1) step(s) in the "previous"
+				direction (AKA ``p`` or ``previous``).
 
 	    ``tg checkout [goto] [--] <pattern>``
 				Check out a topic branch that
 				matches ``<pattern>``.  ``<pattern>``
-				is used as a sed BRE pattern to filter
+				is used as a grep ERE pattern to filter
 				all the topic branches.  Both ``goto`` and
 				``--`` may be omitted provided ``<pattern>``
-				is not ``-a``, ``--all``, ``-h``, --help``,
+				is not ``-a``, ``--all``, ``-h``, ``--help``,
 				``goto``, ``--``, ``n``, ``next``, ``push``,
 				``child``, ``p``, ``prev``, ``previous``,
 				``pop``, ``parent`` or ``..``.
 
-	    ``tg checkout push``
+	    ``tg checkout [goto] [--] --series[=<head>]``
+				Check out a topic branch that belongs to
+				the current (or ``<head>``) patch series.
+				A list with descriptions (``tg info --series``)
+				will be shown to choose from if more than one.
+
+	    ``tg checkout push [<steps>]``
 				An alias for ``next``.
 
-	    ``tg checkout child``
+	    ``tg checkout child [<steps>]``
 				Deprecated alias for ``next``.
 
 	    ``tg checkout``
 				Semi-deprecated alias for ``next``.
 
-	    ``tg checkout pop``
+	    ``tg checkout pop [<steps>]``
 				An alias for ``prev``.
 
-	    ``tg checkout parent``
+	    ``tg checkout parent [<steps>]``
 				Deprecated alias for ``prev``.
 
-	    ``tg checkout ..``
+	    ``tg checkout .. [<steps>]``
 				Semi-deprecated alias for ``prev``.
 
 	If any of the above commands can find more than one possible
@@ -2121,6 +2140,14 @@ GLOSSARY
 
 	contains
 		See branch containment.
+
+	ERE pattern
+		An Extended Regular Expression (ERE) pattern.  These are newer
+		style regular expressions where all the regular expression
+		"operator" characters "operate" when NOT preceded by a
+		backslash and are turned into normal characters with a ``\``.
+		The backreference atom, however, may not work, but ``?``, ``+``
+		and ``|`` "operators" do; unlike BREs.
 
 	TopGit
 		Excellent system for managing a history of changes to one
