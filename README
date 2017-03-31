@@ -1858,24 +1858,42 @@ tg revert
 
 tg prev
 ~~~~~~~
-	Outputs the direct dependencies for the current or named branch.
+	Output the "previous" branch(es) in the patch series containing the
+	current or named branch.  The "previous" branch(es) being one step
+	away by default.
 
 	Options:
 	  -i		show dependencies based on index instead of branch
 	  -w		show dependencies based on working tree instead of branch
+	  -n <steps>	take ``<steps>`` "previous" steps (default 1)
+	  --all		take as many "previous" steps as possible (aka ``-a``)
+	  --verbose	show containing series name(s) (aka ``-v``)
 
-	See also NAVIGATION_.
+	The ``-n`` option may also be given as ``--count`` or ``--count=<n>``.
+
+	To list all dependencies of a branch see the ``--deps`` option of
+	the `tg info`_ command.
+
+	See also NAVIGATION_ for full details on "previous" steps.
 
 tg next
 ~~~~~~~
-	Outputs all branches which directly depend on the current or
-	named branch.
+	Output tne "next" branch(es) in the patch series containing the current
+	or named branch.  The "next" branch(es) being one step away by default.
 
 	Options:
 	  -i		show dependencies based on index instead of branch
 	  -w		show dependencies based on working tree instead of branch
+	  -n <steps>	take ``<steps>`` "next" steps (default 1)
+	  --all		take as many "next" steps as possible (aka ``-a``)
+	  --verbose	show containing series name(s) (aka ``-v``)
 
-	See also NAVIGATION_.
+	The ``-n`` option may also be given as ``--count`` or ``--count=<n>``.
+
+	To list all dependents of a branch see the ``--dependents`` option of
+	the `tg info`_ command.
+
+	See also NAVIGATION_ for full details on "next" steps.
 
 tg migrate-bases
 ~~~~~~~~~~~~~~~~
