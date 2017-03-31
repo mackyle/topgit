@@ -21,6 +21,7 @@ basemsg= # message for --base merge commit
 basefile= # message file for --base merge commit
 basenc= # --no-commit on merge
 basefrc= # --force non-ff update
+setautoupdate=1 # temporarily set rerere.autoUpdate to true
 
 if [ "$(git config --get --bool topgit.autostash 2>/dev/null)" != "false" ]; then
 	# topgit.autostash is true (or unset)
@@ -152,6 +153,7 @@ is_active() {
 	[ -s "$state_dir/names" ] || return 1
 	[ -f "$state_dir/processed" ] || return 1
 	[ -f "$state_dir/no_auto" ] || return 1
+	[ -f "$state_dir/setautoupdate" ] || return 1
 	[ -f "$state_dir/merging_topfiles" ] || return 1
 	[ -f "$state_dir/mergeours" ] || return 1
 	[ -f "$state_dir/mergeours" ] || return 1
@@ -174,6 +176,7 @@ restore_state() {
 	IFS= read -r names <"$state_dir/names" && [ -n "$names" ]
 	IFS= read -r processed <"$state_dir/processed" || :
 	IFS= read -r next_no_auto <"$state_dir/no_auto" || :
+	IFS= read -r setautoupdate <"$state_dir/setautoupdate" || :
 	# merging_topfiles is for outside info but not to be restored
 	IFS= read -r mergeours <"$state_dir/mergeours" || :
 	IFS= read -r mergetheirs <"$state_dir/mergetheirs" || :
@@ -262,6 +265,10 @@ fi
 clear_state
 
 if [ -z "$restored" ]; then
+	setautoupdate=1
+	[ "$(git config --get --bool topgit.setAutoUpdate 2>/dev/null)" != "false" ] ||
+	setautoupdate=
+
 	while [ -n "$1" ]; do
 		arg="$1"; shift
 		case "$arg" in
@@ -276,6 +283,10 @@ if [ -z "$restored" ]; then
 			stash=1;;
 		--no-stash)
 			stash=;;
+		--auto|--auto-update|--set-auto|--set-auto-update)
+			setautoupdate=1;;
+		--no-auto|--no-auto-update|--no-set-auto|--no-set-auto-update)
+			setautoupdate=;;
 		--quiet|-q)
 			quiet=1;;
 		--base)
@@ -384,6 +395,7 @@ save_state() {
 	printf '%s\n' "$names" >"$state_dir/names"
 	printf '%s\n' "$processed" >"$state_dir/processed"
 	printf '%s\n' "$no_auto" >"$state_dir/no_auto"
+	printf '%s\n' "$setautoupdate" >"$state_dir/setautoupdate"
 	# this one is an external flag and needs to be zero length for false
 	printf '%s' "$merging_topfiles" >"$state_dir/merging_topfiles"
 	printf '%s\n' "$1" >"$state_dir/mergeours"
@@ -544,7 +556,7 @@ git_topmerge()
 		sed -e '/ \.topdeps/d' -e '/ \.topmsg/d' <"$tmpstdout"
 	fi
 	# rerere will be a nop unless rerere.enabled is true, but might complete the merge!
-	git rerere || :
+	eval git "${setautoupdate:+-c rerere.autoupdate=1}" rerere || :
 	git ls-files --unmerged --full-name --abbrev :/ >"$tmpstdout" 2>&1 ||
 	die "git ls-files failed"
 	if [ -s "$tmpstdout" ]; then

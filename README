@@ -360,11 +360,12 @@ EXTRA SETTINGS
 TopGit supports various config settings:
 
 	:ALIASES_:		``topgit.alias.*`` for Git-like command aliases
-	:SEQUESTRATION_:	``topgit.sequester`` for sequestration control
-	:`tg migrate-bases`_:	``topgit.top-bases`` for refs bases location
 	:`tg update`_:		``topgit.autostash`` automatic stash control
-	:`tg patch`_:		``topgit.from`` From: fixups by ``tg patch``
+	:`tg patch`_:		``topgit.from`` "From:" fixups by ``tg patch``
 	:`REMOTE HANDLING`_:	``topgit.remote`` TopGit's default remote
+	:SEQUESTRATION_:	``topgit.sequester`` for sequestration control
+	:`tg update`_:		``topgit.setAutoUpdate`` => ``rerere.autoUpdate``
+	:`tg migrate-bases`_:	``topgit.top-bases`` for refs bases location
 
 
 ALIASES
@@ -1520,10 +1521,32 @@ tg update
 
 	You have enabled ``git rerere`` haven't you?
 
-	If you also enable the ``rerere.autoUpdate`` mode then ``tg update``
-	will be able to automatically continue an update when ``git rerere``
-	resolves all the conflicts and then stages the results in the index.
-	This can be a big time saver.
+	The ``--[no-]auto[-update]`` options together with the
+	``topgit.setAutoUpdate`` config item control whether or not TopGit
+	will automatically temporarily set ``rerere.autoUpdate`` to true while
+	running ``tg update``.  The default is true.  Note that this does not
+	enable Git's ``rerere`` feature, it merely makes it automatically stage
+	any previously resolved conflicts.  The ``rerere.enabled`` setting must
+	still be separately enabled (i.e. set to ``true``) for the ``rerere``
+	feature to do anything at all.
+
+	Using ``--auto[-update]`` makes ``tg update`` always temporarily set
+	``rerere.autoUpdate`` to ``true`` while running ``tg update``.  The
+	``--no-auto[-update]`` option prevents ``tg update`` from changing the
+	``rerere.autoUpdate`` setting, but if ``rerere.autoUpdate`` has already
+	been enabled in a config file, ``tg update`` never disables it even
+	with ``--no-auto``.  If ``topgit.setAutoUpdate`` is unset or set to
+	``true`` then ``tg update`` implicitly does ``--auto``, otherwise it
+	does ``--no-auto``.  An explicit command line ``--[no-]auto[-update]``
+	option causes the ``topgit.setAutoUpdate`` setting to be ignored.
+
+	When both ``rerere.enabled`` and ``rerere.autoUpdate`` are set to true
+	then ``tg update`` will be able to automatically continue an update
+	whenever ``git rerere`` resolves all the conflicts during a merge.
+	This can be such a huge time saver.  That's why the default is to have
+	TopGit automatically set ``rerere.autoUpdate`` to true while
+	``tg update`` is running (but remember, unless ``rerere.enabled`` has
+	been set to ``true`` it won't make any difference).
 
 	When ``-a`` (or ``--all``) is specifed, updates all topic branches
 	matched by ``<pattern>``'s (see ``git-for-each-ref(1)`` for details),
