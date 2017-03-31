@@ -103,27 +103,10 @@ if [ -n "$heads" ]; then
 	exit 0
 fi
 
-name="$(verify_topgit_branch "${name:-HEAD}")"
-
-if [ -n "$leaves" ]; then
-	find_leaves "$name"
-	exit 0
-fi
-
-if [ -n "$deps$dependents" ]; then
-	alldeps="$(get_temp alldeps)"
-	tg --no-pager summary --deps >"$alldeps" || die "tg summary --deps failed"
-	if [ -n "$deps" ]; then
-		awk -v annb="$name" 'NF == 2 && $2 != "" && $1 == annb { print $2 }' <"$alldeps"
-	else
-		awk -v annb="$name" 'NF == 2 && $1 != "" && $2 == annb { print $1 }' <"$alldeps"
-	fi
-	exit 0
-fi
-
 v_cntargs() { eval "$1=$(( $# - 1 ))"; }
 if [ -n "$series" ]; then
 	if [ -z "$serieshead" ]; then
+		v_verify_topgit_branch name "${name:-HEAD}"
 		heads="$(navigate_deps -s=-1 -1 -- "$name" | sort | paste -d ' ' -s -)" || heads="$name"
 		v_cntargs headcnt $heads
 		if [ "$headcnt" -gt 1 ]; then
@@ -138,6 +121,7 @@ if [ -n "$series" ]; then
 		serieshead="$heads"
 	else
 		v_verify_topgit_branch serieshead "$serieshead"
+		v_verify_topgit_branch name "${name:-HEAD}" -f || name=
 	fi
 	seriesf="$(get_temp series)"
 	recurse_deps_internal --series -- "$serieshead" | awk '{print $0 " " NR}' | sort >"$seriesf"
@@ -145,7 +129,7 @@ if [ -n "$series" ]; then
 	[ -z "$tg_read_only" ] || [ -z "$tg_ref_cache" ] || ! [ -s "$tg_ref_cache" ] ||
 	refslist="-r=\"$tg_ref_cache\""
 	flagname=
-	[ "$serieshead" = "$name" ] || flagname="$name"
+	[ -z "$name" ] || [ "$serieshead" = "$name" ] || flagname="$name"
 	output() {
 	eval run_awk_topgit_msg -n -nokind "$refslist" '"refs/$topbases"' |
 	join "$seriesf" - | sort -k2,2n | awk -v "flag=$flagname" '
@@ -160,6 +144,24 @@ if [ -n "$series" ]; then
 	}
 	'
 	} && page output
+	exit 0
+fi
+
+v_verify_topgit_branch name "${name:-HEAD}"
+
+if [ -n "$leaves" ]; then
+	find_leaves "$name"
+	exit 0
+fi
+
+if [ -n "$deps$dependents" ]; then
+	alldeps="$(get_temp alldeps)"
+	tg --no-pager summary --deps >"$alldeps" || die "tg summary --deps failed"
+	if [ -n "$deps" ]; then
+		awk -v annb="$name" 'NF == 2 && $2 != "" && $1 == annb { print $2 }' <"$alldeps"
+	else
+		awk -v annb="$name" 'NF == 2 && $1 != "" && $2 == annb { print $1 }' <"$alldeps"
+	fi
 	exit 0
 fi
 
