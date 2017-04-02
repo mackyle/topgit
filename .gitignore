@@ -15,7 +15,9 @@
 
 /README.html
 /TG-BUILD-SETTINGS
+/Makefile.var
 /config.mak
+/config.sh
 /hooks/pre-commit
 /tg
 /tg--awksome
