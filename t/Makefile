@@ -131,7 +131,7 @@ test: pre-clean TG-TEST-SETTINGS $(TEST_LINT)
 prove: pre-clean TG-TEST-SETTINGS $(TEST_LINT)
 	@echo "*** prove ***"; $(CACHE_SETUP) $(PROVE) --exec '$(SHELL_PATH_SQ)' $(TESTLIB_PROVE_OPTS) $(T) :: $(TESTLIB_TEST_OPTS)
 ifndef TESTLIB_NO_CLEAN
-	@$(MAKE) -s clean-except-prove-cache
+	@$(MAKE) -s post-clean-except-prove-cache
 endif
 
 $(T):
@@ -142,12 +142,15 @@ $(T):
 pre-clean:
 	@rm -r -f '$(TEST_RESULTS_DIRECTORY_SQ)'
 
-clean-except-prove-cache:
+post-clean-except-prove-cache:
 	rm -r -f empty 'trash directory'.* '$(TEST_RESULTS_DIRECTORY_SQ)'
 	rm -f TG-TEST-CACHE
 
-clean: clean-except-prove-cache
+post-clean: post-clean-except-prove-cache
 	rm -f .prove
+
+clean: post-clean
+	rm -f TG-TEST-SETTINGS
 
 # Pick off the lint
 
@@ -183,7 +186,7 @@ aggregate-results-and-cleanup:
 	@ec=0; TESTLIB_TEST_PARENT_INT_ON_ERROR=1 $(MAKE) -k run-individual-tests || ec=$$?; \
 	[ $$ec -eq 130 ] || $(MAKE) aggregate-results || exit && exit $$ec
 ifndef TESTLIB_NO_CLEAN
-	@$(MAKE) -s clean
+	@$(MAKE) -s post-clean
 endif
 
 aggregate-results:
@@ -191,7 +194,8 @@ aggregate-results:
 		echo "$$f"; \
 	done | '$(SHELL_PATH_SQ)' ./aggregate-results.sh
 
-.PHONY: pre-clean $(T) run-individual-tests aggregate-results clean valgrind perf
+.PHONY: clean pre-clean post-clean post-clean-except-settings
+.PHONY: $(T) run-individual-tests aggregate-results valgrind perf
 
 # Provide Makefile-determined settings in a test-available format
 
