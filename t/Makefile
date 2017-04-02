@@ -199,21 +199,22 @@ aggregate-results:
 
 # Provide Makefile-determined settings in a test-available format
 
-define TEST_SETTINGS
-: "$${SHELL_PATH:=$(SHELL_PATH)}"
-: "$${PERL_PATH:=$(PERL_PATH)}" "$${PERL_PATH:=perl}"
-: "$${GIT_PATH:=$(GIT_PATH)}" "$${GIT_PATH:=git}"
-: "$${DIFF:=$(DIFF)}"
-: "$${TESTLIB_NO_TOLERATE=$(TESTLIB_NO_TOLERATE)}"
-: "$${GIT_MINIMUM_VERSION:=$(GIT_MINIMUM_VERSION)}" "$${GIT_MINIMUM_VERSION:=$$TG_GIT_MINIMUM_VERSION}"
-: "$${TG_TEST_INSTALLED=$(TG_TEST_INSTALLED)}"
-endef
-export TEST_SETTINGS
+TEST_SETTINGS = : \
+	"$${SHELL_PATH:=$(SHELL_PATH)}" \
+	"$${PERL_PATH:=$(PERL_PATH)}" \
+	"$${PERL_PATH:=perl}" \
+	"$${GIT_PATH:=$(GIT_PATH)}" \
+	"$${GIT_PATH:=git}" \
+	"$${DIFF:=$(DIFF)}" \
+	"$${TESTLIB_NO_TOLERATE=$(TESTLIB_NO_TOLERATE)}" \
+	"$${GIT_MINIMUM_VERSION:=$(GIT_MINIMUM_VERSION)}" \
+	"$${GIT_MINIMUM_VERSION:=$$TG_GIT_MINIMUM_VERSION}" \
+#TEST_SETTINGS"
 
 TG-TEST-SETTINGS: FORCE
-	@if test x"$$TEST_SETTINGS" != x"`cat $@ 2>/dev/null`"; then \
+	@if test x'$(TEST_SETTINGS)' != x"`cat \"$@\" 2>/dev/null`"; then \
 		echo "* new test settings"; \
-		echo "$$TEST_SETTINGS" >$@; \
+		printf '%s\n' '$(TEST_SETTINGS)' >"$@"; \
 	fi
 
 .PHONY: FORCE
