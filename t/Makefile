@@ -191,7 +191,7 @@ endif
 
 aggregate-results:
 	@for f in '$(TEST_RESULTS_DIRECTORY_SQ)'/t*-*.counts; do \
-		echo "$$f"; \
+		[ "$$f" = '$(TEST_RESULTS_DIRECTORY_SQ)/t*-*.counts' ] || echo "$$f"; \
 	done | '$(SHELL_PATH_SQ)' ./aggregate-results.sh
 
 .PHONY: clean pre-clean post-clean post-clean-except-settings
