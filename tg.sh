@@ -746,9 +746,9 @@ branch_annihilated()
 
 non_annihilated_branches()
 {
-	refscacheopt=
+	refscacheopt="${TG_DEBUG:+-p=\"\$tg_ref_cache.pre\" }"
 	if [ -n "$tg_read_only" ] && [ -n "$tg_ref_cache" ] && [ -s "$tg_ref_cache" ]; then
-		refscacheopt='-r="$tg_ref_cache" "refs/$topbases"'
+		refscacheopt="$refscacheopt"'-r="$tg_ref_cache" "refs/$topbases"'
 	fi
 	eval run_awk_topgit_branches -n "$refscacheopt" '"refs/$topbases" "$@"'
 }
@@ -820,7 +820,7 @@ navigate_deps()
 	dorad=1
 	userc=
 	tmpdep=
-	ratd_opts=
+	ratd_opts="${TG_DEBUG:+-p=\"\$tg_ref_cache.pre\" }"
 	ratn_opts=
 	if [ -n "$tg_read_only" ] && [ -n "$tg_ref_cache" ]; then
 		userc=1
@@ -831,7 +831,7 @@ navigate_deps()
 		[ -s "$tg_ref_cache" ] || dogfer=1
 		[ -n "$dogfer" ] || ! [ -s "$tmptgbr" ] || ! [ -f "$tmpann" ] || ! [ -s "$tmpdep" ] || dorad=
 	else
-		ratd_opts="-rmr"
+		ratd_opts="${ratd_opts}-rmr"
 		ratn_opts="-rma -rmb"
 		tmprfs="$tg_tmp_dir/refs.$$"
 		tmpann="$tg_tmp_dir/ann.$$"
@@ -916,7 +916,8 @@ recurse_deps_internal()
 		run_awk_topgit_branches -n -h="refs/remotes/$base_remote" -r="$tmprfs" \
 			"refs/remotes/$base_remote/${topbases#heads/}" >"$tmptgrmtbr"
 	fi
-	depscmd='run_awk_topgit_deps -a="$tmpann" -b="$tmptgbr" -r="$tmprfs" -m="$mtblob" "refs/$topbases"'
+	depscmd="run_awk_topgit_deps${TG_DEBUG:+ -p=\"\$tg_ref_cache.pre\"}"
+	depscmd="$depscmd"' -a="$tmpann" -b="$tmptgbr" -r="$tmprfs" -m="$mtblob" "refs/$topbases"'
 	if [ -n "$userc" ]; then
 		if [ -n "$dorad" ]; then
 			eval "$depscmd" >"$tmpdep"
@@ -1761,7 +1762,7 @@ initial_setup()
 	# create global temporary directories, inside GIT_DIR
 
 	tg_tmp_dir=
-	trap 'rm -rf "$tg_tmp_dir"' EXIT
+	trap '${TG_DEBUG:+echo} rm -rf "$tg_tmp_dir" >&2' EXIT
 	trap 'exit 129' HUP
 	trap 'exit 130' INT
 	trap 'exit 131' QUIT
