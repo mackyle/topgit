@@ -893,6 +893,9 @@ tg annihilate
 	is run on any modified dependents.  Use the ``--no-update`` option
 	to suppress running ``tg update``.
 
+	The same ``--stash`` and ``--no-stash`` options are accepted with
+	the same exact semantics as for `tg update`_.
+
 tg depend
 ~~~~~~~~~
 	Change the dependencies of a TopGit-controlled topic branch.

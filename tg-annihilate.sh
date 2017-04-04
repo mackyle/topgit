@@ -8,7 +8,12 @@
 
 force= # Whether to annihilate non-empty branch, or branch where only the base is left.
 update=1 # Whether to run tg update on affected branches
+stash= # tgstash refs before changes
 
+if [ "$(git config --get --bool topgit.autostash 2>/dev/null)" != "false" ]; then
+	# topgit.autostash is true (or unset)
+	stash=1
+fi
 
 ## Parse options
 
@@ -17,6 +22,10 @@ while [ -n "$1" ]; do
 	case "$arg" in
 	-f|--force)
 		force=1;;
+	--stash)
+		stash=1;;
+	--no-stash)
+		stash=;;
 	--no-update)
 		update=;;
 	--update)
@@ -41,6 +50,30 @@ ensure_clean_topfiles
 ensure_ident_available
 alldeps="$(get_temp alldeps)"
 tg --no-pager summary --deps >"$alldeps" || die "tg summary --deps failed"
+
+# always auto stash even if it's just to the anonymous stash TG_STASH
+
+stashbr="$(awk -v annb="$name" '
+	NF == 2 {
+		if ($1 == annb && $2 != "" && $2 != annb) print $2
+		if ($2 == annb && $1 != "" && $1 != annb) print $1
+	}
+' <"$alldeps" | sort -u)"
+stashmsg="tgannihilate: autostash before annihilate branch $name"
+if [ -n "$stash" ]; then
+	tg tag -q -q -m "$stashmsg" --stash $name $stashbr &&
+	stashhash="$(git rev-parse --quiet --verify refs/tgstash --)" &&
+	[ -n "$stashhash" ] &&
+	[ "$(git cat-file -t "$stashhash" -- 2>/dev/null)" = "tag" ] ||
+	die "requested --stash failed"
+else
+	tg tag --anonymous $name $stashbr &&
+	stashhash="$(git rev-parse --quiet --verify TG_STASH --)" &&
+	[ -n "$stashhash" ] &&
+	[ "$(git cat-file -t "$stashhash" -- 2>/dev/null)" = "tag" ] ||
+	die "anonymous --stash failed"
+fi
+
 mb="$(git merge-base "refs/$topbases/$name" "refs/heads/$name")"
 git read-tree "$mb^{tree}"
 # Need to pass --no-verify in order to inhibit TopGit's pre-commit hook to run,
