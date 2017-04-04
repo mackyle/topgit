@@ -88,9 +88,20 @@ tg__include=1
 . "$tgbin"
 [ -z "$noremote" ] || base_remote=
 
-branch="$(verify_topgit_branch "${1:-HEAD}" -f)" || fatal "no such TopGit branch: ${1:-HEAD}"
-shift
-set -- "$branch" "$@"
+sawbranch=
+i=1
+while [ $i -le $# ]; do
+	i=$(( $i + 1 ))
+	[ -n "$sawbranch" ] ||
+	if v_verify_topgit_branch _branch "$1" "-f"; then
+		sawbranch=1
+		shift
+		set -- "$_branch" "$@"
+	fi
+	set -- "$@" "$1"
+	shift
+done
+[ -n "$sawbranch" ] || fatal "valid TopGit branch name required"
 
 [ -n "$nocache" ] || become_cacheable
 recurse_deps_internal "$@"
