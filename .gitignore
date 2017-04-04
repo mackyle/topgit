@@ -15,6 +15,7 @@
 
 /README.html
 /TG-BUILD-SETTINGS
+/Makefile.dep
 /Makefile.var
 /config.mak
 /config.sh

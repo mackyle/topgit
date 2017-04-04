@@ -53,6 +53,11 @@ v_strip_sfx helpers_out  .sh  $helpers_in
 v_stripadd_sfx help_out .sh .txt  tg-help.sh tg-status.sh $commands_in
 v_stripadd_sfx html_out .sh .html tg-help.sh tg-status.sh tg-tg.sh $commands_in
 
+DEPFILE="Makefile.dep"
+{
+	write_auto_deps '' '.sh' tg $commands_out $utils_out $hooks_out $helpers_out
+} >"$DEPFILE"
+
 : "${SHELL_PATH:=/bin/sh}" "${AWK_PATH:=awk}"
 version="$(
 	test -d .git && git describe --match "topgit-[0-9]*" --abbrev=4 --dirty 2>/dev/null |
@@ -201,6 +206,23 @@ v_wildcard() {
 	done
 	eval "$_var="'"${_result# }"'
 	unset _var _result _item _exp
+}
+
+# Write the third and following target arguments out as target with a dependency
+# line(s) to standard output where each line is created by stripping the target
+# argument suffix specified by the first argument ('' to strip nothing) and
+# adding the suffix specified by the second argument ('' to add nothing).
+# Does nothing if "$1" = "$2".  (Set $1 = " " and $2 = "" to write out
+# dependency lines with no prerequisites.)
+write_auto_deps() {
+	[ "$1" != "$2" ] || return 0
+	_strip="$1"
+	_add="$2"
+	shift 2
+	for _targ in "$@"; do
+		printf '%s: %s\n' "$_targ" "${_targ%$_strip}$_add"
+	done
+	unset _strip _add _targ
 }
 
 ##

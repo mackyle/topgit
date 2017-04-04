@@ -68,6 +68,9 @@ Makefile:
 # The fatal flaw with .SUFFIXES is that while it's possible to add dependencies
 # without listing rule commands, doing so prevents use of an inference rule
 # because the dependency-adding-rule-with-no-commands is still considered a rule.
+# Of course that means the free automatic dependency crated by an inference rule
+# also can't be picked up but fortunately we have DEPFILE instead.
+include $(DEPFILE)
 
 tg $(commands_out) $(utils_out) $(hooks_out) $(helpers_out): Makefile Makefile.mak Makefile.sh TG-BUILD-SETTINGS
 	$(QSED)sed \
@@ -150,7 +153,7 @@ install-html: html FORCE
 
 clean: FORCE
 	rm -f tg $(commands_out) $(utils_out) $(awk_out) $(hooks_out) $(helpers_out) $(help_out) tg-tg.txt topgit.html $(html_out)
-	rm -f TG-BUILD-SETTINGS Makefile.var
+	rm -f TG-BUILD-SETTINGS Makefile.dep Makefile.var
 	rm -rf bin-wrappers
 	+-$(Q)$(GMAKE) -C t clean
 
