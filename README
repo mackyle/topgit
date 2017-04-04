@@ -865,6 +865,9 @@ tg delete
 	unmerge the removed branch's changes from the branches depending
 	on it.
 
+	The same ``--stash`` and ``--no-stash`` options are accepted with
+	the same exact semantics as for `tg update`_.
+
 	See also ``tg annihilate``.
 
 	| TODO: ``-a`` to delete all empty branches, depfix, revert

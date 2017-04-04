@@ -1,11 +1,18 @@
 #!/bin/sh
 # TopGit - A different patch queue manager
-# (c) Petr Baudis <pasky@suse.cz>  2008
-# GPLv2
+# Copyright (C) 2008 Petr Baudis <pasky@suse.cz>
+# Copyright (C) 2017 Kyle J. McKay <mackyle@gmail.com>
+# All rights reserved
+# License GPLv2
 
 force= # Whether to delete non-empty branch, or branch where only the base is left.
+stash= # tgstash refs before changes
 name=
 
+if [ "$(git config --get --bool topgit.autostash 2>/dev/null)" != "false" ]; then
+	# topgit.autostash is true (or unset)
+	stash=1
+fi
 
 ## Parse options
 
@@ -14,6 +21,10 @@ while [ -n "$1" ]; do
 	case "$arg" in
 	-f|--force)
 		force=$(( $force +1 ));;
+	--stash)
+		stash=1;;
+	--no-stash)
+		stash=;;
 	-*)
 		echo "Usage: ${tgname:-tg} [...] delete [-f] <name>" >&2
 		exit 1;;
@@ -47,9 +58,26 @@ baserev="$(git rev-parse --verify "refs/$topbases/$name^0" -- 2>/dev/null)" ||
 # Quick'n'dirty check whether branch is required
 [ -z "$force" ] && { tg summary --deps | cut -d' ' -f2- | tr ' ' '\n' | grep -Fxq -- "$name" && die "some branch depends on $name"; }
 
+ensure_ident_available
+
+# always auto stash even if it's just to the anonymous stash TG_STASH
+
+stashmsg="tgdelete: autostash before delete branch $name"
+if [ -n "$stash" ]; then
+	tg tag -q -q -m "$stashmsg" --stash $name &&
+	stashhash="$(git rev-parse --quiet --verify refs/tgstash --)" &&
+	[ -n "$stashhash" ] &&
+	[ "$(git cat-file -t "$stashhash" -- 2>/dev/null)" = "tag" ] ||
+	die "requested --stash failed"
+else
+	tg tag --anonymous $name &&
+	stashhash="$(git rev-parse --quiet --verify TG_STASH --)" &&
+	[ -n "$stashhash" ] &&
+	[ "$(git cat-file -t "$stashhash" -- 2>/dev/null)" = "tag" ] ||
+	die "anonymous --stash failed"
+fi
+
 ## Wipe out
 
 git update-ref -d "refs/$topbases/$name" "$baserev"
 [ -z "$branchrev" ] || git update-ref -d "refs/heads/$name" "$branchrev"
-
-# vim:noet
