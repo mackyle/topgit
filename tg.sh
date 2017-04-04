@@ -1277,11 +1277,15 @@ switch_to_base()
 # run editor with arguments
 # the editor setting will be cached in $tg_editor (which is eval'd)
 # result non-zero if editor fails or GIT_EDITOR cannot be determined
+# just in case, noalt_setup will be in effect while the editor is running
 run_editor()
 {
 	tg_editor="$GIT_EDITOR"
 	[ -n "$tg_editor" ] || tg_editor="$(git var GIT_EDITOR)" || return $?
-	eval "$tg_editor" '"$@"'
+	(
+		noalt_setup
+		eval "$tg_editor" '"$@"'
+	)
 }
 
 # Show the help messages.
@@ -1846,6 +1850,19 @@ initial_setup()
 	fi
 }
 
+noalt_setup()
+{
+	if [ "${TG_PRESERVED_ALTERNATES+set}" = "set" ]; then
+		GIT_ALTERNATE_OBJECT_DIRECTORIES="$TG_PRESERVED_ALTERNATES"
+		if [ -n "$GIT_ALTERNATE_OBJECT_DIRECTORIES" ]; then
+			export GIT_ALTERNATE_OBJECT_DIRECTORIES
+		else
+			unset GIT_ALTERNATE_OBJECT_DIRECTORIES
+		fi
+	fi
+	unset TG_OBJECT_DIRECTORY TG_PRESERVED_ALTERNATES tg_use_alt_odb
+}
+
 set_topbases()
 {
 	# refer to "top-bases" in a refname with $topbases
@@ -1977,6 +1994,7 @@ if [ -n "$tg__include" ]; then
 
 	initial_setup 1
 	set_topbases 1
+	noalt_setup
 
 else
 
@@ -2221,13 +2239,18 @@ else
 
 			_use_ref_cache=
 			tg_read_only=1
+			_suppress_alt=
 			case "$cmd$showing_help" in
-				contains|export|info|summary|tag)
+				contains|info|summary|tag)
 					_use_ref_cache=1;;
+				"export")
+					_use_ref_cache=1
+					suppress_alt=1;;
 				annihilate|create|delete|depend|import|update)
-					tg_use_alt_odb=
-					tg_read_only=;;
+					tg_read_only=
+					suppress_alt=1;;
 			esac
+			[ -z "$_suppress_alt" ] || noalt_setup
 			[ -z "$_use_ref_cache" ] || v_create_ref_cache
 
 			fullcmd="${tgname:-tg} $cmd $*"
