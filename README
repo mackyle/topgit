@@ -1364,6 +1364,12 @@ tg checkout
 	The ``--force`` (or ``-f``) option, when given, gets passed through to
 	the ``git checkout`` command.
 
+	The ``--merge`` (or ``-m``) option, when given, gets passed through to
+	the ``git checkout`` command.
+
+	The ``--quiet`` (or ``-q``) option, when given, gets passed through to
+	the ``git checkout`` command.
+
 	The ``<pattern>`` of ``tg checkout goto`` is optional.  If you don't
 	supply it, all the available topic branches are listed and you
 	can select one of them.

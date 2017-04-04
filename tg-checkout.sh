@@ -28,6 +28,8 @@ usage()
 branch=		# -b value
 iowoptval=	# "" or "$iowopt"
 forceval=	# "" or "-f"
+mergeval=	# "" or "-m"
+quietval=	# "" or "-q"
 dashdash=	# "" or "1" if [goto] "--" [--series[=<head>]] seen
 
 while [ $# -gt 0 ]; do case "$1" in
@@ -36,6 +38,12 @@ while [ $# -gt 0 ]; do case "$1" in
 		;;
 	-f|--force)
 		forceval="-f"
+		;;
+	-m|--merge)
+		mergeval="-m"
+		;;
+	-q|--quiet)
+		quietval="-q"
 		;;
 	--ignore-other-worktrees|--iow)
 		iowoptval="$iowopt"
@@ -182,4 +190,4 @@ else
 	choice="${choice%%[ $tab]*}"
 	[ -n "$choice" ] || die "Bad input"
 fi
-git checkout $iowoptval $forceval "$choice" --
+git checkout $quietval $iowoptval $mergeval $forceval "$choice" --
