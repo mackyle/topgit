@@ -163,7 +163,7 @@ collapsed_commit()
 	>"$playground/^body"
 
 	# Determine parent
-	[ -s "$playground/$name^parents" ] || git rev-parse --verify "refs/$topbases/$name" -- >> "$playground/$name^parents"
+	[ -s "$playground/$name^parents" ] || git rev-parse --verify "refs/$topbases/$name^0" -- >> "$playground/$name^parents"
 	parent="$(cut -f 1 "$playground/$name^parents" 2> /dev/null |
 		while read p; do [ "$(git cat-file -t "$p" 2> /dev/null)" = tag ] && git cat-file tag "$p" | head -1 | cut -d' ' -f2 || echol "$p"; done)"
 	if [ $(( $(cat "$playground/$name^parents" 2>/dev/null | wc -l) )) -gt 1 ]; then
@@ -198,7 +198,7 @@ collapse()
 
 	elif [ -z "$_dep_is_tgish" ]; then
 		# This dep is not for rewrite
-		commit="$(git rev-parse --verify "refs/heads/$_dep" --)"
+		commit="$(git rev-parse --verify "refs/heads/$_dep^0" --)"
 
 	else
 		# First time hitting this dep; the common case
@@ -282,9 +282,9 @@ linearize()
 {
 	if test ! -f "$playground/^BASE"; then
 		if [ -n "$_dep_is_tgish" ]; then
-			head="$(git rev-parse --verify "refs/$topbases/$_dep" --)"
+			head="$(git rev-parse --verify "refs/$topbases/$_dep^0" --)"
 		else
-			head="$(git rev-parse --verify "refs/heads/$_dep" --)"
+			head="$(git rev-parse --verify "refs/heads/$_dep^0" --)"
 		fi
 		echol "$head" > "$playground/^BASE"
 		git checkout -q $iowopt "$head"
@@ -295,15 +295,15 @@ linearize()
 
 	if [ -z "$_dep_is_tgish" ]; then
 		# merge in $_dep unless already included
-		rev="$(git rev-parse --verify "$_dep" --)"
-		common="$(git merge-base --all HEAD "$_dep")" || :
+		rev="$(git rev-parse --verify "refs/heads/$_dep^0" --)"
+		common="$(git merge-base --all HEAD "$rev")" || :
 		if test "$rev" = "$common"; then
 			# already included, just skip
 			:
 		else
 			retmerge=0
 
-			git merge $auhopt -m "tgexport: merge $_dep into base" -s recursive "$_dep^0" || retmerge="$?"
+			git merge $auhopt -m "tgexport: merge $_dep into base" -s recursive "refs/heads/$_dep^0" || retmerge="$?"
 			if test "x$retmerge" != "x0"; then
 				echo "fix up the merge, commit and then exit."
 				#todo error handling

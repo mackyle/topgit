@@ -103,22 +103,22 @@ info "Populating local topic branches from remote '$name'..."
 git for-each-ref --format='%(objectname) %(refname)' "refs/remotes/$name/${topbases#heads/}" |
 	while read rev ref; do
 		branch="${ref#refs/remotes/$name/${topbases#heads/}/}"
-		if ! git rev-parse --verify "refs/remotes/$name/$branch" -- >/dev/null 2>&1; then
+		if ! git rev-parse --verify "refs/remotes/$name/$branch^0" -- >/dev/null 2>&1; then
 			info "Skipping remote $name/${topbases#heads/}/$branch that's missing its branch"
 			continue
 		fi
-		if git rev-parse --verify "refs/heads/$branch" -- >/dev/null 2>&1; then
-			git rev-parse --verify "refs/$topbases/$branch" -- >/dev/null 2>&1 || {
+		if git rev-parse --verify "refs/heads/$branch^0" -- >/dev/null 2>&1; then
+			git rev-parse --verify "refs/$topbases/$branch^0" -- >/dev/null 2>&1 || {
 				init_reflog "refs/$topbases/$branch"
-				git update-ref "refs/$topbases/$branch" "$rev"
+				git update-ref "refs/$topbases/$branch" "$rev^0"
 			}
 			info "Skipping branch $branch: Already exists"
 			continue
 		fi
 		info "Adding branch $branch..."
 		init_reflog "refs/$topbases/$branch"
-		git update-ref "refs/$topbases/$branch" "$rev"
-		git update-ref "refs/heads/$branch" "$(git rev-parse --verify "$name/$branch" --)"
+		git update-ref "refs/$topbases/$branch" "$rev^0"
+		git update-ref "refs/heads/$branch" "$(git rev-parse --verify "refs/remotes/$name/$branch^0" --)"
 	done
 
 git config "topgit.remote" "$name"

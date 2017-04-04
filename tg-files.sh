@@ -31,7 +31,7 @@ head="${head#refs/heads/}"
 [ -n "$name" ] ||
 	name="${head:-HEAD}"
 name="$(verify_topgit_branch "$name")"
-base_rev="$(git rev-parse --short --verify "refs/$topbases/$name" -- 2>/dev/null)" ||
+base_rev="$(git rev-parse --short --verify "refs/$topbases/$name^0" -- 2>/dev/null)" ||
 	die "not a TopGit-controlled branch"
 
 if [ -n "$head_from" ] && [ "$name" != "$head" ]; then

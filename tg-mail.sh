@@ -30,7 +30,7 @@ while [ -n "$1" ]; do
 done
 
 name="$(verify_topgit_branch "${name:-HEAD}")"
-base_rev="$(git rev-parse --short --verify "refs/$topbases/$name" -- 2>/dev/null)" ||
+base_rev="$(git rev-parse --short --verify "refs/$topbases/$name^0" -- 2>/dev/null)" ||
 	die "not a TopGit-controlled branch"
 
 if [ -n "$in_reply_to" ]; then

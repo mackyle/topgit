@@ -107,7 +107,7 @@ not_orphan_base() {
 			;;
 	esac
 	[ -n "$_check" ] || return 1
-	git rev-parse --verify --quiet "$_check" -- >/dev/null
+	git rev-parse --verify --quiet "$_check^0" -- >/dev/null
 }
 
 v_transform_base() {
@@ -186,7 +186,7 @@ while read -r rn rt rh && [ -n "$rn" ] && [ -n "$rt" ] && [ -n "$rh" ]; do
 		rh="$rnc"
 	fi
 	v_transform_base newb "$rn" || die "unexpected non-bases ref: $rn"
-	newbrev="$(git rev-parse --verify --quiet "$newb" --)" || :
+	newbrev="$(git rev-parse --verify --quiet "$newb^0" --)" || :
 	newbtype=
 	[ -z "$newbrev" ] || newbtype="$(git cat-file -t "$newbrev")"
 	if [ "$newbtype" = "tree" ] || [ "$newbtype" = "blob" ]; then
@@ -243,7 +243,7 @@ while read -r rn rt rh && [ -n "$rn" ] && [ -n "$rt" ] && [ -n "$rh" ]; do
 	printf 'update: %s\n -> %s\n' "$rn" "$newb"
 	if [ -n "$force" ]; then
 		git update-ref "$newb" "$rh"
-		if [ "$(git rev-parse --quiet --verify "$newb" --)" = "$rh" ] && [ "$newb" != "$rn" ]; then
+		if [ "$(git rev-parse --quiet --verify "$newb^0" --)" = "$rh" ] && [ "$newb" != "$rn" ]; then
 			git update-ref -d "$rn"
 		fi
 	fi

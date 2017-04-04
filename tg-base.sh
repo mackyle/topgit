@@ -44,7 +44,7 @@ rv=0
 for rev in "$@"; do
 	[ "$rev" != "@" ] || rev="HEAD"
 	name="$(strip_ref "$(git symbolic-ref -q "$rev" 2>/dev/null || echol "$rev")")"
-	git rev-parse --verify $short "refs/$topbases/$name" -- 2>/dev/null || {
+	git rev-parse --verify $short "refs/$topbases/$name^0" -- 2>/dev/null || {
 		rv=1
 		echo "$rev is not a TopGit branch" >&2
 	}

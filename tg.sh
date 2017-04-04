@@ -617,7 +617,7 @@ ref_exists_rev_short()
 	_result_rev="$(rev_parse "$1")"
 	_result=$?
 	if [ $_result -eq 0 ]; then
-		_result_rev="$(git rev-parse --verify ${2:---short} --quiet "$_result_rev" --)"
+		_result_rev="$(git rev-parse --verify ${2:---short} --quiet "$_result_rev^0" --)"
 		_result=$?
 	fi
 	[ -d "$tg_tmp_dir/cached/$1" ] || mkdir -p "$tg_tmp_dir/cached/$1" 2>/dev/null

@@ -90,7 +90,7 @@ if [ -n "$heads" ]; then
 		navigate_deps -s=-1 -1 -- "$tgbranch" | sort
 		exit 0
 	fi
-	hash="$(git rev-parse --verify --quiet "$verify" --)" || die "no such ref: $name"
+	hash="$(git rev-parse --verify --quiet "$verify^0" --)" || die "no such commit-ish: $name"
 	depslist="$(get_temp depslist)"
 	tg summary --topgit-heads |
 	while read -r onetghead; do
@@ -165,7 +165,7 @@ if [ -n "$deps$dependents" ]; then
 	exit 0
 fi
 
-base_rev="$(git rev-parse --short --verify "refs/$topbases/$name" -- 2>/dev/null)" ||
+base_rev="$(git rev-parse --short --verify "refs/$topbases/$name^0" -- 2>/dev/null)" ||
 	die "not a TopGit-controlled branch"
 
 measure="$(measure_branch "refs/heads/$name" "$base_rev")"
@@ -195,7 +195,7 @@ if [ "${verbose:-0}" -ge 1 ]; then
 			prefix="Dependents:"
 			while read -r endent; do
 				ood=
-				contained_by "refs/heads/$name" "refs/$topbases/$endent" || ood=1
+				contained_by "refs/heads/$name" "refs/$topbases/$endent^0" || ood=1
 				if [ -n "$ood" ]; then
 					printf '%s %-*s [needs merge]\n' "$prefix" $minwidth "$endent"
 				else
