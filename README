@@ -874,8 +874,8 @@ tg delete
 
 tg annihilate
 ~~~~~~~~~~~~~
-	Make a commit on the current TopGit-controlled topic branch
-	that makes it equal to its base, including the presence or
+	Make a commit on the current or given TopGit-controlled topic
+	branch that makes it equal to its base, including the presence or
 	absence of .topmsg and .topdeps.  Annihilated branches are not
 	displayed by ``tg summary``, so they effectively get out of your
 	way.  However, the branch still exists, and ``tg push`` will

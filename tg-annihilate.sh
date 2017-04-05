@@ -9,6 +9,7 @@
 force= # Whether to annihilate non-empty branch, or branch where only the base is left.
 update=1 # Whether to run tg update on affected branches
 stash= # tgstash refs before changes
+name=
 
 if [ "$(git config --get --bool topgit.autostash 2>/dev/null)" != "false" ]; then
 	# topgit.autostash is true (or unset)
@@ -30,19 +31,28 @@ while [ -n "$1" ]; do
 		update=;;
 	--update)
 		update=1;;
-	*)
-		echo "Usage: ${tgname:-tg} [...] annihilate [-f] [--no-update]" >&2
+	-*)
+		echo "Usage: ${tgname:-tg} [...] annihilate [-f] [--no-update] [<name>]" >&2
 		exit 1;;
+	*)
+		[ -z "$name" ] || die "name already specified ($name)"
+		name="$arg";;
 	esac
 done
 
 
 ## Sanity checks
 
-v_verify_topgit_branch name HEAD
+v_verify_topgit_branch name ${name:-HEAD}
 ! branch_annihilated "$name" || die "TopGit branch $name is already annihilated."
 
 [ -z "$force" ] && { branch_empty "$name" || die "branch is non-empty: $name"; }
+
+if [ -z "$(git symbolic-ref -q HEAD)" ] ||
+   [ "$(git rev-parse --verify --quiet HEAD --)" != "$(git rev-parse --verify --quiet "refs/heads/$name^0" --)" ]; then
+	info "switching to branch $name"
+	git checkout "$name" || exit 1
+fi
 
 ## Annihilate
 ensure_clean_tree
