@@ -614,6 +614,48 @@ git_merge() {
 	return $_ret
 }
 
+# $1 => .topfile handling ([--]merge, [--]theirs, [--]remove or else do ours)
+# $2 => current "HEAD"
+# $3 => proposed fast-forward-to "HEAD"
+# result is success if fast-forward satisfies $1
+topff_ok() {
+	case "${1#--}" in
+		merge|theirs)
+			# merge and theirs will always be correct
+			;;
+		remove)
+			# okay if both blobs are "missing" in $3
+			printf '%s\n' "$3:.topdeps" "$3:.topmsg" |
+			git cat-file --batch-check="%(objectname) %(objecttype)" |
+			{
+				read _tdo _tdt &&
+				read _tmo _tmt &&
+				[ "$_tdt" = "missing" ] &&
+				[ "$_tmt" = "missing" ]
+			} || return 1
+			;;
+		*)
+			# "ours"
+			# okay if both blobs are the same (same hash or missing)
+			printf '%s\n' "$2:.topdeps" "$2:.topmsg" "$3:.topdeps" "$3:.topmsg" |
+			git cat-file --batch-check="%(objectname) %(objecttype)" |
+			{
+				read _td1o _td1t &&
+				read _tm1o _tm1t &&
+				read _td2o _td2t &&
+				read _tm2o _tm2t &&
+				{ [ "$_td1t" = "$_td2t" ] &&
+				  { [ "$_td1o" = "$_td2o" ] ||
+				    [ "$_td1t" = "missing" ]; }; } &&
+				{ [ "$_tm1t" = "$_tm2t" ] &&
+				  { [ "$_tm1o" = "$_tm2o" ] ||
+				    [ "$_tm1t" = "missing" ]; }; }
+			} || return 1
+			;;
+	esac
+	return 0
+}
+
 # similar to git_merge but operates exclusively using a separate index and temp dir
 # only trivial aggressive automatic (i.e. simple) merges are supported
 #
@@ -683,9 +725,13 @@ v_attempt_index_merge() {
 		if [ -n "$_octo" ]; then
 			while [ $# -gt 1 ] && mbh="$(git merge-base "$rh" "$1")" && [ -n "$mbh" ]; do
 				if [ "$rh" = "$mbh" ]; then
-					_mmsg="Fast-forward (no commit created)"
-					rh="$1"
-					shift
+					if topff_ok "$_mmode" "$rh" "$1"; then
+						_mmsg="Fast-forward (no commit created)"
+						rh="$1"
+						shift
+					else
+						break
+					fi
 				elif [ "$1" = "$mbh" ]; then
 					shift
 				else
@@ -702,10 +748,12 @@ v_attempt_index_merge() {
 			oth="$r1"
 			set -- "$r1"
 			if [ "$rh" = "$mb" ]; then
-				_mmsg="Fast-forward (no commit created)"
-				newc="$r1"
-				_nodt=1
-				_mstyle=
+				if topff_ok "$_mmode" "$rh" "$r1"; then
+					_mmsg="Fast-forward (no commit created)"
+					newc="$r1"
+					_nodt=1
+					_mstyle=
+				fi
 			elif [ "$r1" = "$mb" ]; then
 				[ -n "$_mmsg" ] || _mmsg="Already up-to-date!"
 				newc="$rh"
