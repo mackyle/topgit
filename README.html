@@ -389,11 +389,19 @@ patch and providing some tools to maintain the branches.</p>
 <tbody valign="top">
 <tr class="field"><th class="field-name"><a class="reference internal" href="#requirements">REQUIREMENTS</a>:</th><td class="field-body">Installation requirements</td>
 </tr>
-<tr class="field"><th class="field-name"><a class="reference internal" href="#usage">USAGE</a>:</th><td class="field-body">Command Line details</td>
+<tr class="field"><th class="field-name"><a class="reference internal" href="#synopsis">SYNOPSIS</a>:</th><td class="field-body">Command line example session</td>
+</tr>
+<tr class="field"><th class="field-name"><a class="reference internal" href="#usage">USAGE</a>:</th><td class="field-body">Command line details</td>
 </tr>
 <tr class="field"><th class="field-name"><a class="reference internal" href="#no-undo">NO UNDO</a>:</th><td class="field-body">Where's the undo!!!</td>
 </tr>
 <tr class="field"><th class="field-name"><a class="reference internal" href="#conventions">CONVENTIONS</a>:</th><td class="field-body">Suggestions for organizing your TopGit branches</td>
+</tr>
+<tr class="field"><th class="field-name"><a class="reference internal" href="#extra-settings">EXTRA SETTINGS</a>:</th><td class="field-body">Various possible &quot;topgit.*&quot; config settings</td>
+</tr>
+<tr class="field"><th class="field-name"><a class="reference internal" href="#aliases">ALIASES</a>:</th><td class="field-body">Git-like TopGit command aliases</td>
+</tr>
+<tr class="field"><th class="field-name"><a class="reference internal" href="#navigation">NAVIGATION</a>:</th><td class="field-body">Getting around with &quot;next&quot; and &quot;prev&quot;</td>
 </tr>
 <tr class="field"><th class="field-name"><a class="reference internal" href="#glossary">GLOSSARY</a>:</th><td class="field-body">All the TopGit vocabulary in one place</td>
 </tr>
@@ -408,10 +416,16 @@ patch and providing some tools to maintain the branches.</p>
 <p>TopGit is a collection of POSIX shell scripts so a POSIX-compliant shell is
 required along with some standard POSIX-compliant utilities (e.g. sed, awk,
 cat, etc.).  Git version 1.8.5 or later is also required.</p>
-<p>The scripts need to be preprocessed and installed and currently the Makefile
-that does this requires GNU make, but that's an install-time-only requirement.</p>
-<p>It is possible, however, to use the DESTDIR functionality to install TopGit to
-a staging area on one machine, archive that and then unarchive it on another
+<p>To use TopGit with linked working trees (the <tt class="docutils literal">git worktree add</tt> command),
+at least Git version 2.5.0 (obviously, since that's when the <tt class="docutils literal">git worktree</tt>
+command first appeared) is needed in which case linked working trees are then
+fully supported for use with TopGit.</p>
+<p>The scripts need to be preprocessed and installed.  The Makefile that does
+this only requires a POSIX make utility.  However, running the tests (using
+&quot;<cite>make test</cite>&quot;) still does require GNU make at this point, but the tests do
+not need to be run in order to install (using &quot;<cite>make install</cite>&quot;).</p>
+<p>It is possible to use the DESTDIR functionality to install TopGit to a
+staging area on one machine, archive that and then unarchive it on another
 machine to perform an install (provided the build prefix and other options are
 compatible with the final installed location).</p>
 </div>
@@ -631,14 +645,14 @@ an argument to the <tt class="docutils literal">tg summary</tt> command.  Howeve
 incorrect since an annihilated branch has no <tt class="docutils literal">.topmsg</tt> file of its own.)</p>
 <p>A &quot;patch&quot; branch name typically starts with <tt class="docutils literal">t/</tt> whereas &quot;base&quot; and &quot;stage&quot;
 branch names often do not.</p>
-<p>A &quot;base&quot; branch is created by using the <tt class="docutils literal"><span class="pre">--no-deps</span></tt> option of <tt class="docutils literal">tg create</tt>
-which will automatically suggest a &quot;[BASE]&quot; message prefix rather than
-&quot;[PATCH]&quot;.  A &quot;stage&quot; branch is created like a normal patch branch except that
-the only changes that will ever be made to it are typically to add/remove
-dependencies.  Its subject prefix must be manually changed to &quot;[STAGE]&quot; to
-reflect its purpose.</p>
+<p>A &quot;base&quot; branch is created by using the <tt class="docutils literal"><span class="pre">--base</span></tt> option of <tt class="docutils literal">tg create</tt>
+(aka <tt class="docutils literal"><span class="pre">--no-deps</span></tt>) which will automatically suggest a &quot;[BASE]&quot; message prefix
+rather than &quot;[PATCH]&quot;.  A &quot;stage&quot; branch is created like a normal patch branch
+except that the only changes that will ever be made to it are typically to
+add/remove dependencies.  Its subject prefix must be manually changed to
+&quot;[STAGE]&quot; to reflect its purpose.</p>
 <p>Since both &quot;base&quot; and &quot;stage&quot; branches typically only have a use for the
-&quot;Subject:&quot; ilne from their <tt class="docutils literal">.topmsg</tt> file, they are quite easily created
+&quot;Subject:&quot; line from their <tt class="docutils literal">.topmsg</tt> file, they are quite easily created
 using the <tt class="docutils literal"><span class="pre">--topmsg</span></tt> option of <tt class="docutils literal">tg create</tt>.</p>
 <p>Use of &quot;stage&quot; and &quot;base&quot; branches is completely optional.  However, without
 use of a &quot;stage&quot; branch it will be difficult to test multiple independent
@@ -646,6 +660,12 @@ patches together all at once.  A &quot;base&quot; branch is merely a convenience
 provides more explicit control over when a common base for a set of patches
 gets updated as well as providing a branch that shows in <tt class="docutils literal">tg summary</tt> output
 and participates in <tt class="docutils literal">tg remote <span class="pre">--populate</span></tt> setup.</p>
+<p>Another advantage to using a &quot;stage&quot; branch is that if a new &quot;patch&quot; branch
+is created remotely and that new branch is added to a pre-existing &quot;stage&quot;
+branch on the remote then when the local version of the &quot;stage&quot; branch is
+updated (after fetching remote updates of course), that new dependency will
+be merged into the local &quot;stage&quot; branch and the local version of the new remote
+&quot;patch&quot; branch will be automatically set up at &quot;tg update&quot; time.</p>
 <p>When using the <tt class="docutils literal">tg tag</tt> command to create tags that record the current state
 of one or more TopGit branches, the tags are often created with a name that
 starts with <tt class="docutils literal">t/</tt>.</p>
@@ -684,6 +704,189 @@ maintain the reflog (once it's been enabled which <tt class="docutils literal">t
 Instead Git dereferences the tag and shows the wrong thing.  Use the
 <tt class="docutils literal">tg tag <span class="pre">-g</span></tt> command to view the <tt class="docutils literal">refs/tgstash</tt> reflog instead.</p>
 </div>
+<div class="section" id="extra-settings">
+<h1>EXTRA SETTINGS</h1>
+<p>TopGit supports various config settings:</p>
+<blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name"><a class="reference internal" href="#aliases">ALIASES</a>:</th><td class="field-body"><tt class="docutils literal">topgit.alias.*</tt> for Git-like command aliases</td>
+</tr>
+<tr class="field"><th class="field-name"><a class="reference internal" href="#tg-update">tg update</a>:</th><td class="field-body"><tt class="docutils literal">topgit.autostash</tt> automatic stash control</td>
+</tr>
+<tr class="field"><th class="field-name"><a class="reference internal" href="#tg-patch">tg patch</a>:</th><td class="field-body"><tt class="docutils literal">topgit.from</tt> &quot;From:&quot; fixups by <tt class="docutils literal">tg patch</tt></td>
+</tr>
+<tr class="field"><th class="field-name" colspan="2"><a class="reference internal" href="#remote-handling">REMOTE HANDLING</a>:</th></tr>
+<tr class="field"><td>&nbsp;</td><td class="field-body"><tt class="docutils literal">topgit.remote</tt> TopGit's default remote</td>
+</tr>
+<tr class="field"><th class="field-name"><a class="reference internal" href="#sequestration">SEQUESTRATION</a>:</th><td class="field-body"><tt class="docutils literal">topgit.sequester</tt> for sequestration control</td>
+</tr>
+<tr class="field"><th class="field-name"><a class="reference internal" href="#tg-update">tg update</a>:</th><td class="field-body"><tt class="docutils literal">topgit.setAutoUpdate</tt> =&gt; <tt class="docutils literal">rerere.autoUpdate</tt></td>
+</tr>
+<tr class="field"><th class="field-name" colspan="2"><a class="reference internal" href="#tg-migrate-bases">tg migrate-bases</a>:</th></tr>
+<tr class="field"><td>&nbsp;</td><td class="field-body"><tt class="docutils literal"><span class="pre">topgit.top-bases</span></tt> for refs bases location</td>
+</tr>
+</tbody>
+</table>
+</blockquote>
+</div>
+<div class="section" id="aliases">
+<h1>ALIASES</h1>
+<p>These work exactly like Git's aliases except they are stored under
+<tt class="docutils literal">topgit.alias.*</tt> instead.  See the <tt class="docutils literal">git help config</tt> output under
+the <tt class="docutils literal">alias.*</tt> section for details.  Do note that while alias nesting is
+explicitly permitted, a maximum nesting depth of 10 is enforced to help
+detect accidental aliasing loops from wedging the machine.</p>
+<p>For example, to create an <tt class="docutils literal">lc</tt> alias for the <tt class="docutils literal">tg log <span class="pre">--compact</span></tt> command
+this command may be used:</p>
+<pre class="literal-block">
+git config --global topgit.alias.lc &quot;log --compact&quot;
+</pre>
+<p>To make it specific to a particular repository just omit the <tt class="docutils literal"><span class="pre">--global</span></tt>
+option from the command.</p>
+</div>
+<div class="section" id="navigation">
+<h1>NAVIGATION</h1>
+<div class="section" id="from-previous-to-next">
+<h2>From Previous to Next</h2>
+<p>For this section, consider the following patch series, to be applied
+in numerical order as shown:</p>
+<pre class="literal-block">
+0001-F_first-patch.diff
+0002-G_second-builds-on-F.diff
+0003-H_third-builds-on-G.diff
+0004-I_fourth-builds-on-H.diff
+0005-J_fifth-builds-on-I.diff
+0006-K_sixth-builds-on-J.diff
+0007-L_last-patch-needs-K.diff
+</pre>
+<p>If these were applied to some commit in a Git repository, say commit &quot;A&quot;
+then a history that looks like this would be created:</p>
+<pre class="literal-block">
+A---F---G---H---I---J---K---L
+</pre>
+<p>Where the parent of commit &quot;F&quot; is &quot;A&quot; and so on to where the parent of
+commit &quot;L&quot; is commit &quot;K&quot;.</p>
+<p>If that commit history, from A through L, was then imported into TopGit, one
+TopGit branch would be created corresponding to each of the commits F
+through L.  This way, for example, if the fourth patch in the series
+(<tt class="docutils literal"><span class="pre">0004-I_...diff</span></tt>) needs work, the TopGit branch corresponding to its patch
+can be checked out and changes made and then a new version of its patch
+created (using <tt class="docutils literal">tg patch</tt>) without disturbing the other patches in the series
+and when <tt class="docutils literal">tg update</tt> is run, the patches that &quot;follow&quot; the fourth patch
+(i.e. 5, 6 and 7) will have their corresponding TopGit branches automatically
+updated to take into account the changes made to the fourth patch.</p>
+<div class="section" id="okay-enough-with-the-review-of-topgit-systemology">
+<h3>Okay, enough with the review of TopGit systemology</h3>
+<p>Imagine then that you are working on the fourth patch (i.e. you have its
+branch checked out into the working tree) and you want to move to the following
+patch in the series because you have a nit to pick with it too.</p>
+<p>If you can't remember the exact name you might have to fumble around or, you
+can display the name of the following or &quot;next&quot; patch's branch with the, you
+guessed it, <tt class="docutils literal">tg next</tt> command.  Think of &quot;next&quot; as the &quot;next&quot; logical patch
+in the series or the next following patch.  If the patches are numbered as in
+the list above, &quot;next&quot; corresponds to the &quot;+1&quot; (plus one) patch.</p>
+<p>You might have already guessed there's a corresponding <tt class="docutils literal">tg prev</tt> command
+which displays the &quot;-1&quot; (minus one) patch.  If these commands (<tt class="docutils literal">tg next</tt>
+and <tt class="docutils literal">tg prev</tt>) are not given a branch name to start at they start at the
+patch corresponding to the current <tt class="docutils literal">HEAD</tt>.</p>
+<p>Displaying, however, is not so helpful as actually going there.  That's where
+the <tt class="docutils literal">tg checkout</tt> command comes in.  <tt class="docutils literal">tg checkout next</tt> does a
+<tt class="docutils literal">git checkout</tt> of the <tt class="docutils literal">tg next</tt> branch and, not surprisingly,
+<tt class="docutils literal">tg checkout prev</tt> does a <tt class="docutils literal">git checkout</tt> of the <tt class="docutils literal">tg prev</tt> branch.  For
+the lazy a single <tt class="docutils literal">n</tt> or <tt class="docutils literal">p</tt> can be used with <tt class="docutils literal">tg checkout</tt> instead of
+typing out the entire <tt class="docutils literal">next</tt> or <tt class="docutils literal">prev</tt>.  Or, for the anal, <tt class="docutils literal">previous</tt>
+will also be accepted for <tt class="docutils literal">prev</tt>.</p>
+<p>Referring to the A...L commit graph shown above, I is the parent of J and,
+conversely, J is the child of I.  (Git only explicitly records the child to
+parent links, in other words a &quot;child&quot; points to zero or more &quot;parents&quot;, but
+parents are completely clueless about their own children.)</p>
+<p>For historical reasons, the <tt class="docutils literal">tg checkout</tt> command accepts <tt class="docutils literal">child</tt> as a
+synonym for <tt class="docutils literal">next</tt> and <tt class="docutils literal">parent</tt> as a synonym for <tt class="docutils literal">prev</tt>.  However, this
+terminology can be confusing since Git has &quot;parent&quot; links but <tt class="docutils literal">tg checkout</tt>
+is referring to the TopGit DAG, not Git's.  Best to just avoid using <tt class="docutils literal">child</tt>
+or <tt class="docutils literal">parent</tt> to talk about navigating the TopGit DAG and reserve them
+strictly for discussing the Git DAG.</p>
+</div>
+<div class="section" id="there-may-be-more-than-one">
+<h3>There may be more than one</h3>
+<p>In a simple linear history as shown above there's always only one &quot;next&quot; or
+&quot;prev&quot; patch.  However, TopGit does not restrict one to only a linear
+history (although that can make patch exports just a bushel of fun).</p>
+<p>Suffice it to say that there is always a single linearized ordering for any
+TopGit patch series since it's always a DAG (Directed Acyclic Graph), but it
+may not be immediately obvious to the casual observer what that is.</p>
+<p>The <tt class="docutils literal">tg checkout</tt> command will display a list to choose from if <tt class="docutils literal">next</tt>
+or <tt class="docutils literal">prev</tt> would be ambiguous.</p>
+</div>
+<div class="section" id="use-the-tg-info-checkout-series-command">
+<h3>Use the <tt class="docutils literal">tg info/checkout <span class="pre">--series</span></tt> command</h3>
+<p>To see the full, linearized, list of patches with their summary displayed in
+order from first to last patch in the series, just run the <tt class="docutils literal">tg info <span class="pre">--series</span></tt>
+command.  It takes the name of any patch in the series automatically using
+<tt class="docutils literal">HEAD</tt> if none is given.  It even provides a nice &quot;YOU ARE HERE&quot; mark in
+the output list helpful to those who have been absent for a time engaging in
+otherwise distracting activities and need to be reminded where they are.</p>
+<p>Using <tt class="docutils literal">tg checkout <span class="pre">--series</span></tt> can take you there (picking from a list) if
+you've forgotten the way back to wherever you're supposed to be.</p>
+</div>
+<div class="section" id="don-t-get-pushy-there-s-just-one-more-thing">
+<h3>Don't get pushy, there's just one more thing</h3>
+<p>For historical reasons, <tt class="docutils literal">tg checkout</tt> with no arguments whatsoever behaves
+like <tt class="docutils literal">tg checkout next</tt>.  For the same historical reasons, <tt class="docutils literal">tg checkout ..</tt>
+behaves like <tt class="docutils literal">tg checkout prev</tt> (think of <tt class="docutils literal">..</tt> as the &quot;parent&quot; directory
+and since &quot;parent&quot; means &quot;prev&quot; in this context it will then make sense).</p>
+<p>Now, for that one more thing.  Consider that you have a pristine &quot;upstream&quot;
+tarball, repository, source dump or otherwise obtained set of unmodified
+source files that need to be patched.  View them like so:</p>
+<pre class="literal-block">
++-------------------------------+
+| Unmodified &quot;upstream&quot; source  |
+| files represented with &quot;A&quot;    |
++-------------------------------+
+</pre>
+<p>Now, add the first patch, 0001, to them and view the result like so:</p>
+<pre class="literal-block">
++--------------------------+----+
+| Patch 0001 represented by &quot;F&quot; |
++-------------------------------+
+| Unmodified &quot;upstream&quot; source  |
+| files represented with &quot;A&quot;    |
++-------------------------------+
+</pre>
+<p>Not stopping there, &quot;push&quot; patches 2, 3 and 4 onto the stack as well like so:</p>
+<pre class="literal-block">
++--------------------------+----+
+| Patch 0004 represented by &quot;I&quot; |
++--------------------------+----+
+| Patch 0003 represented by &quot;H&quot; |
++--------------------------+----+
+| Patch 0002 represented by &quot;G&quot; |
++--------------------------+----+
+| Patch 0001 represented by &quot;F&quot; |
++-------------------------------+
+| Unmodified &quot;upstream&quot; source  |
+| files represented with &quot;A&quot;    |
++-------------------------------+
+</pre>
+<p>In other words, to go to the &quot;next&quot; patch in the series it needs to be &quot;push&quot;ed
+onto the stack.  <tt class="docutils literal">tg checkout</tt> accepts <tt class="docutils literal">push</tt> as an alias for <tt class="docutils literal">next</tt>.</p>
+<p>Similarly to go to the &quot;previous&quot; patch in the series the current one needs
+to be &quot;pop&quot;ped off the stack.  <tt class="docutils literal">tg checkout</tt> accepts <tt class="docutils literal">pop</tt> as an alias
+for <tt class="docutils literal">prev</tt>.</p>
+<p>Unfortunately for these aliases, in Git terminology a &quot;push&quot; has quite a
+different meaning and the <tt class="docutils literal">tg push</tt> command does something quite different
+from <tt class="docutils literal">tg checkout push</tt>.  Then there's the matter of using a single letter
+abbreviation for the lazy -- <tt class="docutils literal">p</tt> would mean what exactly?</p>
+<p><tt class="docutils literal">tg checkout</tt> continues to accept the <tt class="docutils literal">push</tt> and <tt class="docutils literal">pop</tt> aliases for
+<tt class="docutils literal">next</tt> and <tt class="docutils literal">prev</tt> respectively,  but it's best to avoid them since
+<tt class="docutils literal">push</tt> has an alternate meaning everywhere else in TopGit and Git and that
+leaves <tt class="docutils literal">pop</tt> all alone in the dark.</p>
+</div>
+</div>
+</div>
 <div class="section" id="sequestration">
 <h1>SEQUESTRATION</h1>
 <p>No, this is not a section about budget nonsense.  ;)</p>
@@ -711,12 +914,14 @@ value <tt class="docutils literal">false</tt>.  But this is not recommended.</p>
 <h1>AMENDING AND REBASING AND UPDATE-REF'ING</h1>
 <p>In a word, &quot;don't&quot;.</p>
 <p>It is okay to manually update a top-bases/... ref when a) it has no depedencies
-(i.e. it was created with the <tt class="docutils literal">tg create</tt> <tt class="docutils literal"><span class="pre">--no-deps</span></tt> option) and b) the
+(i.e. it was created with the <tt class="docutils literal">tg create</tt> <tt class="docutils literal"><span class="pre">--base</span></tt> option) and b) the
 old top-bases/... ref value can be fast-forwarded to the new top-bases/...
 value OR the new value contains ALL of the changes in the old value through
 some other mechanism (perhaps they were cherry-picked or otherwise applied to
 the new top-bases/... ref).  The same rules apply to non-TopGit-controlled
-dependencies.</p>
+dependencies.  Use the <tt class="docutils literal">tg update <span class="pre">--base</span> &lt;branch&gt; <span class="pre">&lt;new-ref&gt;</span></tt> command to
+safely make such an update while making it easy to set the merge commit
+message at the same time.</p>
 <p>Ignoring this rule and proceeding anyway with a non-fast-forward update to a
 top-bases/... ref will result in changes present in the new value being merged
 into the branch (at <tt class="docutils literal">tg update</tt> time) as expected (possibly with conflicts),
@@ -776,15 +981,17 @@ same repository).</p>
 </div>
 <div class="section" id="usage">
 <h1>USAGE</h1>
-<p><tt class="docutils literal">tg <span class="pre">[-C</span> &lt;dir&gt;] <span class="pre">[-r</span> &lt;remote&gt; | <span class="pre">-u]</span> <span class="pre">[-c</span> <span class="pre">&lt;name&gt;=&lt;val&gt;]</span> &lt;subcommand&gt; [&lt;subcommand <span class="pre">option/argument&gt;...]</span></tt></p>
+<p><tt class="docutils literal">tg [global options] &lt;subcommand&gt; [&lt;subcommand <span class="pre">option/argument&gt;...]</span></tt></p>
+<p>Global options:</p>
 <blockquote>
+<p><tt class="docutils literal"><span class="pre">[-C</span> <span class="pre">&lt;dir&gt;]...</span> <span class="pre">[-r</span> &lt;remote&gt; | <span class="pre">-u]</span> <span class="pre">[-c</span> <span class="pre">&lt;name&gt;=&lt;val&gt;]...</span> <span class="pre">[--no-pager]</span></tt></p>
 <table class="docutils option-list" frame="void" rules="none">
 <col class="option" />
 <col class="description" />
 <tbody valign="top">
 <tr><td class="option-group">
 <kbd><span class="option">-C <var>&lt;dir&gt;</var></span></kbd></td>
-<td>Change directory to &lt;dir&gt; before doing anything</td></tr>
+<td>Change directory to &lt;dir&gt; before doing anything more</td></tr>
 <tr><td class="option-group">
 <kbd><span class="option">-r <var>&lt;remote&gt;</var></span></kbd></td>
 <td>Pretend <tt class="docutils literal">topgit.remote</tt> is set to &lt;remote&gt;</td></tr>
@@ -794,6 +1001,18 @@ same repository).</p>
 <tr><td class="option-group">
 <kbd><span class="option">-c <var>&lt;name=val&gt;</var></span></kbd></td>
 <td>Pass config option to git, may be repeated</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--no-pager</span></kbd></td>
+<td>Disable use of any pager (by both TopGit and Git)</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--top-bases</span></kbd></td>
+<td>Show full <tt class="docutils literal"><span class="pre">top-bases</span></tt> ref prefix and exit</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--exec-path</span></kbd></td>
+<td>Show path to subcommand scripts location and exit</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--help</span></kbd></td>
+<td>Show brief usage help and exit (aka <tt class="docutils literal"><span class="pre">-h</span></tt>)</td></tr>
 </tbody>
 </table>
 </blockquote>
@@ -808,6 +1027,8 @@ same repository).</p>
 <tr class="field"><th class="field-name"><a class="reference internal" href="#tg-base">tg base</a>:</th><td class="field-body">Show base commit for one or more TopGit branches</td>
 </tr>
 <tr class="field"><th class="field-name"><a class="reference internal" href="#tg-checkout">tg checkout</a>:</th><td class="field-body">Shortcut for git checkout with name matching</td>
+</tr>
+<tr class="field"><th class="field-name"><a class="reference internal" href="#tg-contains">tg contains</a>:</th><td class="field-body">Which TopGit-controlled branch contains the commit</td>
 </tr>
 <tr class="field"><th class="field-name"><a class="reference internal" href="#tg-create">tg create</a>:</th><td class="field-body">Create a new TopGit-controlled branch</td>
 </tr>
@@ -883,11 +1104,16 @@ $ tg help -w tg
 <h2>tg status</h2>
 <blockquote>
 <div class="line-block">
-<div class="line"><tt class="docutils literal">tg status <span class="pre">[-v]</span> <span class="pre">[--exit-code]</span></tt></div>
+<div class="line"><tt class="docutils literal">tg status</tt></div>
 </div>
 <p>Our sophisticated status facility.  Similar to Git's status command
 but shows any in-progress update that's awaiting a merge resolution
 or any other on-going TopGit activity (such as a branch creation).</p>
+<p>With a single <tt class="docutils literal"><span class="pre">--verbose</span></tt> (or <tt class="docutils literal"><span class="pre">-v</span></tt>) option include a short status
+display for any dirty (but not untracked) files.  This also causes all
+non file status lines to be prefixed with &quot;## &quot;.</p>
+<p>With two (or more) <tt class="docutils literal"><span class="pre">--verbose</span></tt> (or <tt class="docutils literal"><span class="pre">-v</span></tt>) options, additionally
+show full symbolic ref names and unabbreviated hash values.</p>
 <p>With the <tt class="docutils literal"><span class="pre">--exit-code</span></tt> option the exit code will be non-zero if any
 TopGit or Git operation is currently in progress or the working
 tree is unclean.</p>
@@ -897,7 +1123,7 @@ tree is unclean.</p>
 <h2>tg create</h2>
 <blockquote>
 <div class="line-block">
-<div class="line"><tt class="docutils literal">tg <span class="pre">[...</span> <span class="pre">-r</span> remote] create <span class="pre">[-q]</span> <span class="pre">[-m</span> &lt;msg&gt; | <span class="pre">-F</span> &lt;file&gt;] <span class="pre">[--topmsg</span> &lt;msg&gt; | <span class="pre">--topmsg-file</span> &lt;file&gt;] <span class="pre">[-n]</span> <span class="pre">[--no-commit]</span> <span class="pre">[--no-deps]</span> [&lt;name&gt; <span class="pre">[&lt;dep&gt;...|-r</span> <span class="pre">[&lt;rname&gt;]]</span> ]</tt></div>
+<div class="line"><tt class="docutils literal">tg <span class="pre">[...</span> <span class="pre">-r</span> remote] create <span class="pre">[-q]</span> <span class="pre">[-m</span> &lt;msg&gt; | <span class="pre">-F</span> &lt;file&gt;] <span class="pre">[--topmsg</span> &lt;msg&gt; | <span class="pre">--topmsg-file</span> &lt;file&gt;] <span class="pre">[-n]</span> <span class="pre">[--no-commit]</span> <span class="pre">[--base]</span> [&lt;name&gt; <span class="pre">[&lt;dep&gt;...|-r</span> <span class="pre">[&lt;rname&gt;]]</span> ]</tt></div>
 </div>
 <p>Create a new TopGit-controlled topic branch of the given name
 (required argument) and switch to it.  If no dependencies are
@@ -914,10 +1140,11 @@ by using the <tt class="docutils literal"><span class="pre">--no-ccmmit</span></
 explicit value for the new <tt class="docutils literal">.topmsg</tt> file using the <tt class="docutils literal"><span class="pre">--topmsg</span></tt> or
 <tt class="docutils literal"><span class="pre">--topmsg-file</span></tt> option.  In any case the <tt class="docutils literal">.topmsg</tt> content will be
 automatically reformated to have a <tt class="docutils literal">Subject:</tt> header line if needed.</p>
-<p>If more than one dependency is listed, the automatic commit will not
-take place until AFTER all the listed dependencies have been merged
-into a base commit which will require some manual merge resolutions if
-conflicts occur during the merge operations.</p>
+<p>If more than one dependency is listed an automatic <tt class="docutils literal">tg update</tt> runs
+after the branch has been created to merge in the additional
+dependencies and bring the branch up-to-date.  This can be suppressed
+with the <tt class="docutils literal"><span class="pre">--no-commit</span></tt> option (which also suppresses the initial
+commit).</p>
 <p>Previous versions of TopGit behaved as though the <tt class="docutils literal"><span class="pre">--no-edit</span></tt> option
 was always given on the command line.</p>
 <p>The default behavior has been changed to promote a separation between
@@ -935,36 +1162,33 @@ from the dependencies.  This may fail due to merge conflicts if more
 than one dependency is given.   In that case, after you commit the
 conflict resolution, you should call <tt class="docutils literal">tg update <span class="pre">--continue</span></tt> to
 finish merging the dependencies into the new topic branch base.</p>
-<p>With the <tt class="docutils literal"><span class="pre">--no-deps</span></tt> option at most one dependency may be listed
-which may be any valid committish (instead of just refs/heads/...) and
-the newly created TopGit-controlled branch will have an empty
-<tt class="docutils literal">.topdeps</tt> file.  This may be desirable in order to create a TopGit-
-controlled branch that has no changes of its own and serves merely to
-mark the common dependency that all other TopGit-controlled branches
-in some set of TopGit-controlled branches depend on.  A plain,
-non-TopGit-controlled branch can be used for the same purpose, but the
-advantage of a TopGit-controlled branch with no dependencies is that it
-will be pushed with <tt class="docutils literal">tg push</tt>, it will show up in the <tt class="docutils literal">tg summary</tt>
-and <tt class="docutils literal">tg info</tt> output with the subject from its <tt class="docutils literal">.topmsg</tt> file
-thereby documenting what it's for and finally it can be set up with
-<tt class="docutils literal">tg create <span class="pre">-r</span></tt> and/or <tt class="docutils literal">tg remote <span class="pre">--populate</span></tt> to facilitate sharing.</p>
-<p>For example, <tt class="docutils literal">tg create <span class="pre">--no-deps</span> release v2.1</tt> will create a TopGit-
+<p>With the <tt class="docutils literal"><span class="pre">--base</span></tt> (aka <tt class="docutils literal"><span class="pre">--no-deps</span></tt>) option at most one dependency
+may be listed which may be any valid committish (instead of just
+refs/heads/...) and the newly created TopGit-controlled branch will
+have an empty <tt class="docutils literal">.topdeps</tt> file.  This may be desirable in order to
+create a TopGit-controlled branch that has no changes of its own and
+serves merely to mark the common dependency that all other
+TopGit-controlled branches in some set of TopGit-controlled branches
+depend on.  A plain, non-TopGit-controlled branch can be used for the
+same purpose, but the advantage of a TopGit-controlled branch with no
+dependencies is that it will be pushed with <tt class="docutils literal">tg push</tt>, it will show
+up in the <tt class="docutils literal">tg summary</tt> and <tt class="docutils literal">tg info</tt> output with the subject from
+its <tt class="docutils literal">.topmsg</tt> file thereby documenting what it's for and finally it
+can be set up with <tt class="docutils literal">tg create <span class="pre">-r</span></tt> and/or <tt class="docutils literal">tg remote <span class="pre">--populate</span></tt> to
+facilitate sharing.</p>
+<p>For example, <tt class="docutils literal">tg create <span class="pre">--base</span> release v2.1</tt> will create a TopGit-
 controlled <tt class="docutils literal">release</tt> branch based off the <tt class="docutils literal">v2.1</tt> tag that can then
 be used as a base for creation of other TopGit-controlled branches.
 Then when the time comes to move the base for an entire set of changes
-up to <tt class="docutils literal">v2.2</tt> the command <tt class="docutils literal">git <span class="pre">update-ref</span> <span class="pre">top-bases/release</span> v2.2^0</tt>
-can be used followed by <tt class="docutils literal">tg update <span class="pre">--all</span></tt>.  Note that it's only safe
-to update <tt class="docutils literal"><span class="pre">top-bases/release</span></tt> directly in this manner because a) it
-has no depedencies since it was created with the <tt class="docutils literal"><span class="pre">--no-deps</span></tt> option
-and b) the old <tt class="docutils literal"><span class="pre">top-bases/release</span></tt> value can be fast-forwarded to the
-new <tt class="docutils literal"><span class="pre">top-bases/release</span></tt> value.</p>
-<p>Using <tt class="docutils literal"><span class="pre">--no-deps</span></tt> it's also possible to use <tt class="docutils literal">tg create</tt> on an
+up to <tt class="docutils literal">v2.2</tt> the command <tt class="docutils literal">tg update <span class="pre">--base</span> release v2.2</tt> can be
+used followed by <tt class="docutils literal">tg update <span class="pre">--all</span></tt>.</p>
+<p>Using <tt class="docutils literal"><span class="pre">--base</span></tt> it's also possible to use <tt class="docutils literal">tg create</tt> on an
 unborn branch (omit the dependency name or specify <tt class="docutils literal">HEAD</tt>).  The
 unborn branch itself can be made into the new TopGit branch (rather
 than being born empty and then having the new TopGit branch based off
 that) by specifying <tt class="docutils literal">HEAD</tt> as the new branch's name (which is
 probably what you normally want to do in this case anyway so you can
-just run <tt class="docutils literal">tg create <span class="pre">--no-deps</span> HEAD</tt> to accomplish that).</p>
+just run <tt class="docutils literal">tg create <span class="pre">--base</span> HEAD</tt> to accomplish that).</p>
 <p>In an alternative use case, if <tt class="docutils literal"><span class="pre">-r</span> &lt;branch&gt;</tt> is given instead of a
 dependency list, the topic branch is created based on the given
 remote branch.  With just <tt class="docutils literal"><span class="pre">-r</span></tt> the remote branch name is assumed
@@ -1000,6 +1224,8 @@ care of this <em>manually</em>.  This is even more complicated in
 combination with <tt class="docutils literal"><span class="pre">-f</span></tt> -- in that case, you need to manually
 unmerge the removed branch's changes from the branches depending
 on it.</p>
+<p>The same <tt class="docutils literal"><span class="pre">--stash</span></tt> and <tt class="docutils literal"><span class="pre">--no-stash</span></tt> options are accepted with
+the same exact semantics as for <a class="reference internal" href="#tg-update">tg update</a>.</p>
 <p>See also <tt class="docutils literal">tg annihilate</tt>.</p>
 <div class="line-block">
 <div class="line">TODO: <tt class="docutils literal"><span class="pre">-a</span></tt> to delete all empty branches, depfix, revert</div>
@@ -1010,10 +1236,10 @@ on it.</p>
 <h2>tg annihilate</h2>
 <blockquote>
 <div class="line-block">
-<div class="line"><tt class="docutils literal">tg <span class="pre">[...]</span> annihilate <span class="pre">[-f]</span> <span class="pre">[--no-update]</span></tt></div>
+<div class="line"><tt class="docutils literal">tg <span class="pre">[...]</span> annihilate <span class="pre">[-f]</span> <span class="pre">[--no-update]</span> [&lt;name&gt;]</tt></div>
 </div>
-<p>Make a commit on the current TopGit-controlled topic branch
-that makes it equal to its base, including the presence or
+<p>Make a commit on the current or given TopGit-controlled topic
+branch that makes it equal to its base, including the presence or
 absence of .topmsg and .topdeps.  Annihilated branches are not
 displayed by <tt class="docutils literal">tg summary</tt>, so they effectively get out of your
 way.  However, the branch still exists, and <tt class="docutils literal">tg push</tt> will
@@ -1030,6 +1256,8 @@ skip over the annihilated branch.</p>
 <p>After completing the annihilation itself, normally <tt class="docutils literal">tg update</tt>
 is run on any modified dependents.  Use the <tt class="docutils literal"><span class="pre">--no-update</span></tt> option
 to suppress running <tt class="docutils literal">tg update</tt>.</p>
+<p>The same <tt class="docutils literal"><span class="pre">--stash</span></tt> and <tt class="docutils literal"><span class="pre">--no-stash</span></tt> options are accepted with
+the same exact semantics as for <a class="reference internal" href="#tg-update">tg update</a>.</p>
 </blockquote>
 </div>
 <div class="section" id="tg-depend">
@@ -1086,33 +1314,61 @@ normally performed <tt class="docutils literal">tg update</tt> will be suppresse
 <h2>tg info</h2>
 <blockquote>
 <div class="line-block">
-<div class="line"><tt class="docutils literal">tg <span class="pre">[...]</span> info <span class="pre">[--heads</span> | <span class="pre">--leaves]</span> [&lt;name&gt;]</tt></div>
+<div class="line"><tt class="docutils literal">tg <span class="pre">[...]</span> info <span class="pre">[--heads</span> | <span class="pre">--leaves</span> | <span class="pre">--series[=&lt;head&gt;]]</span> [&lt;name&gt;]</tt></div>
+<div class="line"><tt class="docutils literal">tg <span class="pre">[...]</span> info <span class="pre">[--deps</span> | <span class="pre">--dependents]</span> [&lt;name&gt;]</tt></div>
 </div>
 <p>Show summary information about the current or specified topic
 branch.</p>
 <p>Numbers in parenthesis after a branch name such as &quot;(11/3 commits)&quot;
 indicate how many commits on the branch (11) and how many of those
 are non-merge commits (3).</p>
+<p>With <tt class="docutils literal"><span class="pre">--verbose</span></tt> (or <tt class="docutils literal"><span class="pre">-v</span></tt>) include a list of dependents (i.e. other
+branches that depend on this one).  Another <tt class="docutils literal"><span class="pre">--verbose</span></tt> annotates
+them with &quot;[needs merge]&quot; if the current tip of branch for which info
+is being shown has not yet been merged into the base of the dependent.</p>
 <p>Alternatively, if <tt class="docutils literal"><span class="pre">--heads</span></tt> is used then which of the independent
-TopGit branch heads (as output by <tt class="docutils literal">tg summary <span class="pre">--tgish-only</span> <span class="pre">--heads)</span></tt>
-contains the specified commit (which may be any committish -- defaults
-to <tt class="docutils literal">HEAD</tt> if not given).  Zero or more results will be output.</p>
+TopGit branch heads (as output by <tt class="docutils literal">tg summary <span class="pre">--topgit-heads</span></tt>)
+logically contains the specified commit (which may be any committish --
+defaults to <tt class="docutils literal">HEAD</tt> if not given).  Zero or more results will be
+output.  Note that &quot;logically&quot; means with regard to the TopGit
+dependency relationships as established by the <tt class="docutils literal">.topdeps</tt> file(s).
+It's the answer that would be given when all the TopGit branches are
+up-to-date (even though they need not be to use this option) and the
+<tt class="docutils literal">git branch <span class="pre">--contains</span></tt> command is run and the output then filtered
+to only those branches that appear in <tt class="docutils literal">tg summary <span class="pre">--topgit-heads</span></tt>.
+This computation may require several seconds on complex repositories.</p>
 <p>If <tt class="docutils literal"><span class="pre">--leaves</span></tt> is used then the unique list of leaves of the current
 or specified topic branch is shown as one fully-qualified ref per line.
 Duplicates are suppressed and a tag name will be used when appropriate.
 A &quot;leaf&quot; is any dependency that is either not a TopGit branch or is
 the base of a non-annihilated TopGit branch with no non-annihilated
 dependencies.</p>
+<p>The <tt class="docutils literal"><span class="pre">--deps</span></tt> option shows non-annihilated TopGit dependencies of the
+specified branch (default is <tt class="docutils literal">HEAD</tt>).</p>
+<p>The <tt class="docutils literal"><span class="pre">--dependents</span></tt> option shows non-annihilated TopGit dependents
+(i.e. branches that depend on the specified branch).  The default
+branch to operate on is again <tt class="docutils literal">HEAD</tt>.</p>
 <p>A linearized patch series can only be automatically created for a
 TopGit topic branch (including its recursive dependencies) when exactly
 one line is output by <tt class="docutils literal">tg info <span class="pre">--leaves</span> <span class="pre">&lt;topic-branch&gt;</span></tt>.</p>
+<p>With <tt class="docutils literal"><span class="pre">--series</span></tt> the list of TopGit branches in the order they would
+be linearized into a patch series is shown along with the description
+of each branch.  If branch name passed to <tt class="docutils literal">tg info</tt> is not the last
+branch in the series a marker column will be provided to quickly
+locate it in the list.  This same option can be used with <a class="reference internal" href="#tg-checkout">tg checkout</a>.</p>
+<p>Some patches shown in the list may not actually end up introducing any
+changes if exported and be therefore end up being omitted.  The <tt class="docutils literal">0</tt>
+indicator in <tt class="docutils literal">tg summary</tt> output can help to identify some of these.</p>
+<p>The patches shown in the series in the order they are shown form the
+basis for the <tt class="docutils literal">tg next</tt> and <tt class="docutils literal">tg prev</tt> operations with the first
+patch shown being considered the first and so on up to the last.</p>
 </blockquote>
 </div>
 <div class="section" id="tg-patch">
 <h2>tg patch</h2>
 <blockquote>
 <div class="line-block">
-<div class="line"><tt class="docutils literal">tg <span class="pre">[...]</span> patch <span class="pre">[-i</span> | <span class="pre">-w]</span> <span class="pre">[--binary]</span> [&lt;name&gt;] <span class="pre">[--]</span> <span class="pre">[&lt;git-diff-tree-option&gt;...]</span></tt></div>
+<div class="line"><tt class="docutils literal">tg <span class="pre">[...]</span> patch <span class="pre">[-q]</span> <span class="pre">[-i</span> | <span class="pre">-w]</span> <span class="pre">[--binary]</span> [&lt;name&gt;] <span class="pre">[--]</span> <span class="pre">[&lt;git-diff-tree-option&gt;...]</span></tt></div>
 </div>
 <p>Generate a patch from the current or specified topic branch.
 This means that the diff between the topic branch base and head
@@ -1138,6 +1394,20 @@ them to files. (TODO)</p>
 <td>pass --binary to <tt class="docutils literal">git <span class="pre">diff-tree</span></tt> to enable generation
 of binary patches</td></tr>
 <tr><td class="option-group">
+<kbd><span class="option">--quiet</span></kbd></td>
+<td>be quiet (aka <tt class="docutils literal"><span class="pre">-q</span></tt>) about missing and unfixed From:</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--from</span></kbd></td>
+<td>make sure patch has a From: line, if not add one using</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--from=<var>&lt;a&gt;</var></span></kbd></td>
+<td>&lt;a&gt; or Signed-off-by value or ident value; <tt class="docutils literal">git am</tt>
+really gets unhappy with patches missing From: lines;
+will NOT replace an existing non-empty From: header</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--no-from</span></kbd></td>
+<td>leave all From: lines alone, missing or not (default)</td></tr>
+<tr><td class="option-group">
 <kbd><span class="option">--diff-opt</span></kbd></td>
 <td>options after the branch name (and an optional <tt class="docutils literal"><span class="pre">--</span></tt>)
 are passed directly to <tt class="docutils literal">git <span class="pre">diff-tree</span></tt></td></tr>
@@ -1149,6 +1419,12 @@ are passed directly to <tt class="docutils literal">git <span class="pre">diff-t
 must be separated from the <tt class="docutils literal">tg</tt> options by an explicit <tt class="docutils literal"><span class="pre">--</span></tt>.
 Or it can be spelled as <tt class="docutils literal"><span class="pre">--ignore-all-space</span></tt> to distinguuish it from
 <tt class="docutils literal">tg</tt>'s <tt class="docutils literal"><span class="pre">-w</span></tt> option.</p>
+<p>If the config variable <tt class="docutils literal">topgit.from</tt> is set to a boolean it can be
+used to enable or disable the <tt class="docutils literal"><span class="pre">--from</span></tt> option by default.  If it's
+set to the speical value <tt class="docutils literal">quiet</tt> the <tt class="docutils literal"><span class="pre">--quiet</span></tt> option is enabled
+and From: lines are left alone by default.  Any other non-empty value
+is taken as a default <tt class="docutils literal"><span class="pre">--from=&lt;value&gt;</span></tt> option.  The <tt class="docutils literal"><span class="pre">--no-from</span></tt>
+option will temporarily disable use of the config value.</p>
 <p>If additional non-<tt class="docutils literal">tg</tt> options are passed through to
 <tt class="docutils literal">git <span class="pre">diff-tree</span></tt> (other than <tt class="docutils literal"><span class="pre">--binary</span></tt> which is fully supported)
 the resulting <tt class="docutils literal">tg patch</tt> output may not be appliable.</p>
@@ -1231,8 +1507,9 @@ git configuration variable to be set to the given remote name.</p>
 <p>Show overview of all TopGit-tracked topic branches and their
 up-to-date status.  With a branch name limit output to that branch.
 Using <tt class="docutils literal"><span class="pre">--deps-only</span></tt> or <tt class="docutils literal"><span class="pre">--rdeps</span></tt> changes the default from all
-branches to just the current <tt class="docutils literal">HEAD</tt> branch but using <tt class="docutils literal"><span class="pre">--all</span></tt> as
-the branch name will show results for all branches instead of <tt class="docutils literal">HEAD</tt>.</p>
+related branches to just the current <tt class="docutils literal">HEAD</tt> branch but using
+<tt class="docutils literal"><span class="pre">--all</span></tt> as the branch name will show results for all branches
+instead of <tt class="docutils literal">HEAD</tt>.</p>
 <blockquote>
 <dl class="docutils">
 <dt><tt class="docutils literal">&gt;</tt></dt>
@@ -1254,14 +1531,37 @@ they are recursive ones]</dd>
 <dt><tt class="docutils literal">B</tt></dt>
 <dd>indicates that it is out-of-date with respect to
 its base</dd>
+<dt><tt class="docutils literal">*</tt></dt>
+<dd>indicates it is ahead of (and needs to be merged into)
+at least one of its dependents -- only computed when
+showing all branches or using the (possibly implied)
+<tt class="docutils literal"><span class="pre">--with-deps</span></tt> option.</dd>
 </dl>
 </blockquote>
 <p>This can take a longish time to accurately determine all the
 relevant information about each branch; you can pass <tt class="docutils literal"><span class="pre">-t</span></tt> (or <tt class="docutils literal"><span class="pre">-l</span></tt>
-or <tt class="docutils literal"><span class="pre">--list</span></tt>) to get just a terse list of topic branch names quickly.</p>
+or <tt class="docutils literal"><span class="pre">--list</span></tt>) to get just a terse list of topic branch names quickly.
+Also adding <tt class="docutils literal"><span class="pre">--verbose</span></tt> (or <tt class="docutils literal"><span class="pre">-v</span></tt>) includes the subjects too.</p>
+<p>If no options or arguments are passed, the default is not actually to
+show <tt class="docutils literal"><span class="pre">--all</span></tt> branches (that was the default once upon a time).
+Instead, the default is essentially <tt class="docutils literal"><span class="pre">--with-deps</span> $(tg info <span class="pre">--heads)</span></tt>
+with a fallback to <tt class="docutils literal"><span class="pre">--all</span></tt> if <tt class="docutils literal">tg info</tt> doesn't give up any heads.
+This usually provides a more intuitive result.  Explicitly using
+<tt class="docutils literal"><span class="pre">--all</span></tt> will always show all branches (related or not to <tt class="docutils literal">HEAD</tt>).</p>
 <p>Passing <tt class="docutils literal"><span class="pre">--heads</span></tt> shows independent topic branch names and when
 combined with <tt class="docutils literal"><span class="pre">--rdeps</span></tt> behaves as though <tt class="docutils literal"><span class="pre">--rdeps</span></tt> were run with
 the output of <tt class="docutils literal"><span class="pre">--heads</span></tt>.</p>
+<p>The <tt class="docutils literal"><span class="pre">--heads-independent</span></tt> option works just like <tt class="docutils literal"><span class="pre">--heads</span></tt> except
+that it computes the heads using <tt class="docutils literal">git <span class="pre">merge-base</span> <span class="pre">--independent</span></tt>
+rather than examining the TopGit <tt class="docutils literal">.topdeps</tt> relationships.  If the
+TopGit branches are all up-to-date (as shown in <tt class="docutils literal">tg summary</tt>) then
+both <tt class="docutils literal"><span class="pre">--heads</span></tt> and <tt class="docutils literal"><span class="pre">--heads-independent</span></tt> should compute the same
+list of heads (unless some overlapping TopGit branches have been
+manually created).  If not all the TopGit branches are up-to-date then
+the <tt class="docutils literal"><span class="pre">--heads-independent</span></tt> results may have extra items in it, but
+occasionally that's what's needed; usually it's the wrong answer.
+(Note that <tt class="docutils literal"><span class="pre">--topgit-heads</span></tt> is accepted as an alias for <tt class="docutils literal"><span class="pre">--heads</span></tt>
+as well.)</p>
 <p>Using <tt class="docutils literal"><span class="pre">--heads-only</span></tt> behaves as though the output of <tt class="docutils literal"><span class="pre">--heads</span></tt> was
 passed as the list of branches along with <tt class="docutils literal"><span class="pre">--without-deps</span></tt>.</p>
 <p>Alternatively, you can pass <tt class="docutils literal"><span class="pre">--graphviz</span></tt> to get a dot-suitable output
@@ -1291,6 +1591,16 @@ using <tt class="docutils literal"><span class="pre">--all</span></tt> as the br
 Note that <tt class="docutils literal">tg summary <span class="pre">--rdeps</span> <span class="pre">--heads</span></tt> can be particularly helpful in
 seeing all the TopGit-controlled branches in the repository and their
 relationships to one another.</p>
+<p>Note that <tt class="docutils literal"><span class="pre">--rdeps</span></tt> has two flavors.  The first (and default) is
+<tt class="docutils literal"><span class="pre">--rdeps-once</span></tt> which only shows the dependencies of a branch when
+it's first visited.  For example, if D depends on several other
+branches perhaps recursively and both branch A and B depend on D, then
+whichever of A or B is shown first will show the entire dependency
+chain for D underneath it and the other one will just show a line for
+D itself.  This can make the output a bit more compact without actually
+losing any information which is why it's the default.  However, using
+the <tt class="docutils literal"><span class="pre">--rdeps-full</span></tt> variant will repeat the full dependency chain
+every time it's encountered.</p>
 <p>Adding <tt class="docutils literal"><span class="pre">--with-deps</span></tt> replaces the given list of branches (which will
 default to <tt class="docutils literal">HEAD</tt> if none are given) with the result of running
 <tt class="docutils literal">tg summary <span class="pre">--deps-only</span> <span class="pre">--tgish</span></tt> on the list of branches.  This can
@@ -1328,51 +1638,149 @@ symbolic ref to.  The <tt class="docutils literal">tg summary &#64;</tt> command
 </dl>
 </blockquote>
 </div>
+<div class="section" id="tg-contains">
+<h2>tg contains</h2>
+<blockquote>
+<div class="line-block">
+<div class="line"><tt class="docutils literal">tg <span class="pre">[...]</span> contains <span class="pre">[-v]</span> <span class="pre">[-r]</span> <span class="pre">[--ann]</span> <span class="pre">[--no-strict]</span> <span class="pre">[--]</span> &lt;committish&gt;</tt></div>
+</div>
+<p>Search all TopGit-controlled branches (and optionally their remotes)
+to find which TopGit-controlled branch contains the specified commit.</p>
+<p>This is more than just basic branch containment as provided for by the
+<tt class="docutils literal">git branch <span class="pre">--contains</span></tt> command.  While the shown branch name(s)
+will, indeed, be one (or more) of those output by the
+<tt class="docutils literal">git branch <span class="pre">--contains</span></tt> command, the result(s) will exclude any
+TopGit-controlled branches from the result(s) that have one (or more)
+of their TopGit dependencies (either direct or indirect) appearing in
+the <tt class="docutils literal">git branch <span class="pre">--contains</span></tt> output.</p>
+<p>Normally the result will be only the one, single TopGit-controlled
+branch for which the specified committish appears in the <tt class="docutils literal">tg log</tt>
+output for that branch (unless the committish lies outside the
+TopGit-controlled portion of the DAG and <tt class="docutils literal"><span class="pre">--no-strict</span></tt> was used).</p>
+<p>Unless <tt class="docutils literal"><span class="pre">--annihilated-okay</span></tt> (or <tt class="docutils literal"><span class="pre">--ann</span></tt> or <tt class="docutils literal"><span class="pre">--annihilated</span></tt>) is
+used then annihilated branches will be immediately removed from the
+<tt class="docutils literal">git branch <span class="pre">--contains</span></tt> output before doing anything else.  This
+means a committish that was originally located in a now-annihilated
+branch will show up in whatever branch picked up the annihilated
+branch's changes (if there is one).  This is usually the correct
+answer, but occasionally it's not; hence this option.  If this option
+is used together with <tt class="docutils literal"><span class="pre">--verbose</span></tt> then annihilated branches will
+be shown as &quot;[:annihilated:]&quot;.</p>
+<p>In other words, if a <tt class="docutils literal">tg patch</tt> is generated for the found branch
+(assuming one was found and a subsequent commit in the same branch
+didn't then revert or otherwise back out the change), then that patch
+will include the changes introduced by the specified committish
+(unless, of course, that committish is outside the TopGit-controlled
+portion of the DAG and <tt class="docutils literal"><span class="pre">--no-strict</span></tt> was given).</p>
+<p>This can be very helpful when, for example, a bug is discovered and
+then after using <tt class="docutils literal">git bisect</tt> (or some other tool) to find the
+offending commit it's time to commit the fix.  But because the
+TopGit merging history can be quite complicated and maybe the one
+doing the fix wasn't the bug's author (or the author's memory is just
+going), it can sometimes be rather tedious to figure out which
+TopGit branch the fix belongs in.  The <tt class="docutils literal">tg contains</tt> command can
+quickly tell you the answer to that question.</p>
+<p>With the <tt class="docutils literal"><span class="pre">--remotes</span></tt> (or <tt class="docutils literal"><span class="pre">-r</span></tt>) option a TopGit-controlled remote
+branch name may be reported as the result but only if there is no
+non-remote branch containing the committish (this can only happen
+if at least one of the TopGit-controlled local branches are not yet
+up-to-date with their remotes).</p>
+<p>With the <tt class="docutils literal"><span class="pre">--verbose</span></tt> option show which TopGit DAG head(s) (one or
+more of the TopGit-controlled branch names output by
+<tt class="docutils literal">tg summary <span class="pre">--heads</span></tt>) have the result as a dependency (either direct
+or indirect).  Using this option will noticeably increase running time.</p>
+<p>With the default <tt class="docutils literal"><span class="pre">--strict</span></tt> option, results for which the base of the
+TopGit-controlled branch contains the committish will be suppressed.
+For example, if the committish was deep-down in the master branch
+history somewhere far outside of the TopGit-controlled portion of
+the DAG, with <tt class="docutils literal"><span class="pre">--no-strict</span></tt>, whatever TopGit-controlled branch(es)
+first picked up history containing that committish will be shown.
+While this is a useful result it's usually not the desired result
+which is why it's not the default.</p>
+<p>To summarize, even with <tt class="docutils literal"><span class="pre">--remotes</span></tt>, remote results are only shown
+if there are no non-remote results.  Without <tt class="docutils literal"><span class="pre">--no-strict</span></tt> (because
+<tt class="docutils literal"><span class="pre">--strict</span></tt> is the default) results outside the TopGit-controlled
+portion of the DAG are never shown and even with <tt class="docutils literal"><span class="pre">--no-strict</span></tt> they
+will only be shown if there are no <tt class="docutils literal"><span class="pre">--strict</span></tt> results.  Finally,
+the TopGit head info shown with <tt class="docutils literal"><span class="pre">--verbose</span></tt> only ever appears for
+local (i.e. not a remote branch) results.  Annihilated branches are
+never considered possible matches without <tt class="docutils literal"><span class="pre">--annihilated-okay</span></tt>.</p>
+</blockquote>
+</div>
 <div class="section" id="tg-checkout">
 <h2>tg checkout</h2>
 <blockquote>
 <div class="line-block">
-<div class="line"><tt class="docutils literal">tg <span class="pre">[...]</span> checkout [ [ push | pop ] [ <span class="pre">-a</span> ] | [goto] <span class="pre">[--]</span> &lt;pattern&gt; ]</tt></div>
+<div class="line"><tt class="docutils literal">tg <span class="pre">[...]</span> checkout <span class="pre">[--iow]</span> <span class="pre">[-f]</span> <span class="pre">[-b</span> &lt;branch&gt;] (next | prev) [&lt;steps&gt;]</tt></div>
+<div class="line"><tt class="docutils literal">tg <span class="pre">[...]</span> checkout <span class="pre">[--iow]</span> <span class="pre">[-f]</span> (next | prev) <span class="pre">-a</span></tt></div>
+<div class="line"><tt class="docutils literal">tg <span class="pre">[...]</span> checkout <span class="pre">[--iow]</span> <span class="pre">[-f]</span> [goto] <span class="pre">[--]</span> &lt;pattern&gt; | <span class="pre">--series[=&lt;head&gt;]</span></tt></div>
 </div>
 <p>Switch to a topic branch.  You can use <tt class="docutils literal">git checkout &lt;branch&gt;</tt>
 to get the same effect, but this command helps you navigate
 the dependency graph, or allows you to match the topic branch
 name using a regular expression, so it can be more convenient.</p>
-<p>There following subcommands are available:</p>
+<p>The <tt class="docutils literal"><span class="pre">--branch</span></tt> (or <tt class="docutils literal"><span class="pre">-b</span></tt> or <tt class="docutils literal"><span class="pre">--branch=&lt;name&gt;</span></tt>) option changes
+the default starting point from <tt class="docutils literal">HEAD</tt> to the specified branch.</p>
+<p>For the &quot;next&quot; and &quot;previous&quot; commands, the <tt class="docutils literal">&lt;steps&gt;</tt> value may
+be <tt class="docutils literal"><span class="pre">--all</span></tt> (or <tt class="docutils literal"><span class="pre">-a</span></tt>) to take &quot;As nany steps As possible&quot; or
+&quot;step ALL the way&quot; or &quot;ALL steps at once&quot; (or make something better
+up yourself).</p>
+<p>The following subcommands are available:</p>
 <blockquote>
 <dl class="docutils">
-<dt><tt class="docutils literal">tg checkout push</tt></dt>
+<dt><tt class="docutils literal">tg checkout next [&lt;steps&gt;]</tt></dt>
 <dd>Check out a branch that directly
-depends on your current branch.</dd>
-<dt><tt class="docutils literal">tg checkout pop</tt></dt>
+depends on your current branch.
+Move <tt class="docutils literal">&lt;steps&gt;</tt> (default 1) step(s) in
+the &quot;next&quot; direction (AKA <tt class="docutils literal">n</tt>).</dd>
+<dt><tt class="docutils literal">tg checkout prev [&lt;steps&gt;]</tt></dt>
 <dd>Check out a branch that this branch
-directly depends on.</dd>
+directly depends on.  Move <tt class="docutils literal">&lt;steps&gt;</tt>
+(default 1) step(s) in the &quot;previous&quot;
+direction (AKA <tt class="docutils literal">p</tt> or <tt class="docutils literal">previous</tt>).</dd>
 <dt><tt class="docutils literal">tg checkout [goto] <span class="pre">[--]</span> &lt;pattern&gt;</tt></dt>
 <dd>Check out a topic branch that
 matches <tt class="docutils literal">&lt;pattern&gt;</tt>.  <tt class="docutils literal">&lt;pattern&gt;</tt>
-is used as a sed pattern to filter
+is used as a grep ERE pattern to filter
 all the topic branches.  Both <tt class="docutils literal">goto</tt> and
 <tt class="docutils literal"><span class="pre">--</span></tt> may be omitted provided <tt class="docutils literal">&lt;pattern&gt;</tt>
-is not <tt class="docutils literal">push</tt>, <tt class="docutils literal">pop</tt>, <tt class="docutils literal"><span class="pre">-a</span></tt>, <tt class="docutils literal"><span class="pre">--all</span></tt>,
-<tt class="docutils literal">goto</tt>, <tt class="docutils literal">..</tt>, <tt class="docutils literal"><span class="pre">--</span></tt>, <tt class="docutils literal">next</tt>, <tt class="docutils literal">child</tt>,
-<tt class="docutils literal">prev</tt>, <tt class="docutils literal">parent</tt>, <tt class="docutils literal"><span class="pre">-h</span></tt> or <tt class="docutils literal"><span class="pre">--help</span></tt>.</dd>
-<dt><tt class="docutils literal">tg checkout next</tt></dt>
-<dd>An alias for <tt class="docutils literal">push</tt>.</dd>
-<dt><tt class="docutils literal">tg checkout child</tt></dt>
-<dd>An alias for <tt class="docutils literal">push</tt>.</dd>
+is not <tt class="docutils literal"><span class="pre">-a</span></tt>, <tt class="docutils literal"><span class="pre">--all</span></tt>, <tt class="docutils literal"><span class="pre">-h</span></tt>, <tt class="docutils literal"><span class="pre">--help</span></tt>,
+<tt class="docutils literal">goto</tt>, <tt class="docutils literal"><span class="pre">--</span></tt>, <tt class="docutils literal">n</tt>, <tt class="docutils literal">next</tt>, <tt class="docutils literal">push</tt>,
+<tt class="docutils literal">child</tt>, <tt class="docutils literal">p</tt>, <tt class="docutils literal">prev</tt>, <tt class="docutils literal">previous</tt>,
+<tt class="docutils literal">pop</tt>, <tt class="docutils literal">parent</tt> or <tt class="docutils literal">..</tt>.</dd>
+<dt><tt class="docutils literal">tg checkout [goto] <span class="pre">[--]</span> <span class="pre">--series[=&lt;head&gt;]</span></tt></dt>
+<dd>Check out a topic branch that belongs to
+the current (or <tt class="docutils literal">&lt;head&gt;</tt>) patch series.
+A list with descriptions (<tt class="docutils literal">tg info <span class="pre">--series</span></tt>)
+will be shown to choose from if more than one.</dd>
+<dt><tt class="docutils literal">tg checkout push [&lt;steps&gt;]</tt></dt>
+<dd>An alias for <tt class="docutils literal">next</tt>.</dd>
+<dt><tt class="docutils literal">tg checkout child [&lt;steps&gt;]</tt></dt>
+<dd>Deprecated alias for <tt class="docutils literal">next</tt>.</dd>
 <dt><tt class="docutils literal">tg checkout</tt></dt>
-<dd>An alias for <tt class="docutils literal">push</tt>.</dd>
-<dt><tt class="docutils literal">tg checkout prev</tt></dt>
-<dd>An alias for <tt class="docutils literal">pop</tt>.</dd>
-<dt><tt class="docutils literal">tg checkout parent</tt></dt>
-<dd>An alias for <tt class="docutils literal">pop</tt>.</dd>
-<dt><tt class="docutils literal">tg checkout ..</tt></dt>
-<dd>An alias for <tt class="docutils literal">pop</tt>.</dd>
+<dd>Semi-deprecated alias for <tt class="docutils literal">next</tt>.</dd>
+<dt><tt class="docutils literal">tg checkout pop [&lt;steps&gt;]</tt></dt>
+<dd>An alias for <tt class="docutils literal">prev</tt>.</dd>
+<dt><tt class="docutils literal">tg checkout parent [&lt;steps&gt;]</tt></dt>
+<dd>Deprecated alias for <tt class="docutils literal">prev</tt>.</dd>
+<dt><tt class="docutils literal">tg checkout .. [&lt;steps&gt;]</tt></dt>
+<dd>Semi-deprecated alias for <tt class="docutils literal">prev</tt>.</dd>
 </dl>
 </blockquote>
 <p>If any of the above commands can find more than one possible
 branch to switch to, you will be presented with the matches
 and asked to select one of them.</p>
+<p>If the <tt class="docutils literal"><span class="pre">--ignore-other-worktrees</span></tt> (or <tt class="docutils literal"><span class="pre">--iow</span></tt>) option is given and
+the current Git version is at least 2.5.0 then the full
+<tt class="docutils literal"><span class="pre">--ignore-other-worktrees</span></tt> option will be passed along to the
+<tt class="docutils literal">git checkout</tt> command when it's run (otherwise the option will be
+silently ignored and not passed to Git as it would cause an error).</p>
+<p>The <tt class="docutils literal"><span class="pre">--force</span></tt> (or <tt class="docutils literal"><span class="pre">-f</span></tt>) option, when given, gets passed through to
+the <tt class="docutils literal">git checkout</tt> command.</p>
+<p>The <tt class="docutils literal"><span class="pre">--merge</span></tt> (or <tt class="docutils literal"><span class="pre">-m</span></tt>) option, when given, gets passed through to
+the <tt class="docutils literal">git checkout</tt> command.</p>
+<p>The <tt class="docutils literal"><span class="pre">--quiet</span></tt> (or <tt class="docutils literal"><span class="pre">-q</span></tt>) option, when given, gets passed through to
+the <tt class="docutils literal">git checkout</tt> command.</p>
 <p>The <tt class="docutils literal">&lt;pattern&gt;</tt> of <tt class="docutils literal">tg checkout goto</tt> is optional.  If you don't
 supply it, all the available topic branches are listed and you
 can select one of them.</p>
@@ -1385,6 +1793,7 @@ that no other branch depends on.  <tt class="docutils literal">tg checkout pop <
 moves to a regular branch that the current topic branch
 depends on (directly or indirectly).  If there is more than
 one possibility, you will be prompted for your selection.</p>
+<p>See also <a class="reference internal" href="#navigation">NAVIGATION</a>.</p>
 </blockquote>
 </div>
 <div class="section" id="tg-export">
@@ -1525,7 +1934,8 @@ more argument describing a <em>single</em> commit to import.</p>
 <blockquote>
 <div class="line-block">
 <div class="line"><tt class="docutils literal">tg <span class="pre">[...]</span> update <span class="pre">[--[no-]stash]</span> <span class="pre">[--skip-missing]</span> <span class="pre">([&lt;name&gt;...]</span> | <span class="pre">-a</span> <span class="pre">[&lt;pattern&gt;...])</span></tt></div>
-<div class="line"><tt class="docutils literal">tg <span class="pre">--continue</span> | <span class="pre">-skip</span> | <span class="pre">--stop</span> | <span class="pre">--abort</span></tt></div>
+<div class="line"><tt class="docutils literal">tg <span class="pre">[...]</span> update <span class="pre">--base</span> <span class="pre">[-F</span> &lt;file&gt; | <span class="pre">-m</span> &lt;msg&gt;] <span class="pre">[--[no-]edit]</span> <span class="pre">[-f]</span> <span class="pre">&lt;base-branch&gt;</span> &lt;ref&gt;</tt></div>
+<div class="line"><tt class="docutils literal">tg <span class="pre">[...]</span> update <span class="pre">--continue</span> | <span class="pre">-skip</span> | <span class="pre">--stop</span> | <span class="pre">--abort</span></tt></div>
 </div>
 <p>Update the current, specified or all topic branches with respect
 to changes in the branches they depend on and remote branches.
@@ -1534,6 +1944,30 @@ dependencies are merged to the base, then the base is merged
 into the topic branch.  The output will guide you on what to do
 next in case of conflicts.</p>
 <p>You have enabled <tt class="docutils literal">git rerere</tt> haven't you?</p>
+<p>The <tt class="docutils literal"><span class="pre">--[no-]auto[-update]</span></tt> options together with the
+<tt class="docutils literal">topgit.setAutoUpdate</tt> config item control whether or not TopGit
+will automatically temporarily set <tt class="docutils literal">rerere.autoUpdate</tt> to true while
+running <tt class="docutils literal">tg update</tt>.  The default is true.  Note that this does not
+enable Git's <tt class="docutils literal">rerere</tt> feature, it merely makes it automatically stage
+any previously resolved conflicts.  The <tt class="docutils literal">rerere.enabled</tt> setting must
+still be separately enabled (i.e. set to <tt class="docutils literal">true</tt>) for the <tt class="docutils literal">rerere</tt>
+feature to do anything at all.</p>
+<p>Using <tt class="docutils literal"><span class="pre">--auto[-update]</span></tt> makes <tt class="docutils literal">tg update</tt> always temporarily set
+<tt class="docutils literal">rerere.autoUpdate</tt> to <tt class="docutils literal">true</tt> while running <tt class="docutils literal">tg update</tt>.  The
+<tt class="docutils literal"><span class="pre">--no-auto[-update]</span></tt> option prevents <tt class="docutils literal">tg update</tt> from changing the
+<tt class="docutils literal">rerere.autoUpdate</tt> setting, but if <tt class="docutils literal">rerere.autoUpdate</tt> has already
+been enabled in a config file, <tt class="docutils literal">tg update</tt> never disables it even
+with <tt class="docutils literal"><span class="pre">--no-auto</span></tt>.  If <tt class="docutils literal">topgit.setAutoUpdate</tt> is unset or set to
+<tt class="docutils literal">true</tt> then <tt class="docutils literal">tg update</tt> implicitly does <tt class="docutils literal"><span class="pre">--auto</span></tt>, otherwise it
+does <tt class="docutils literal"><span class="pre">--no-auto</span></tt>.  An explicit command line <tt class="docutils literal"><span class="pre">--[no-]auto[-update]</span></tt>
+option causes the <tt class="docutils literal">topgit.setAutoUpdate</tt> setting to be ignored.</p>
+<p>When both <tt class="docutils literal">rerere.enabled</tt> and <tt class="docutils literal">rerere.autoUpdate</tt> are set to true
+then <tt class="docutils literal">tg update</tt> will be able to automatically continue an update
+whenever <tt class="docutils literal">git rerere</tt> resolves all the conflicts during a merge.
+This can be such a huge time saver.  That's why the default is to have
+TopGit automatically set <tt class="docutils literal">rerere.autoUpdate</tt> to true while
+<tt class="docutils literal">tg update</tt> is running (but remember, unless <tt class="docutils literal">rerere.enabled</tt> has
+been set to <tt class="docutils literal">true</tt> it won't make any difference).</p>
 <p>When <tt class="docutils literal"><span class="pre">-a</span></tt> (or <tt class="docutils literal"><span class="pre">--all</span></tt>) is specifed, updates all topic branches
 matched by <tt class="docutils literal">&lt;pattern&gt;</tt>'s (see <tt class="docutils literal"><span class="pre">git-for-each-ref(1)</span></tt> for details),
 or all if no <tt class="docutils literal">&lt;pattern&gt;</tt> is given.  Any topic branches with missing
@@ -1557,7 +1991,18 @@ that are not yet instantiated locally, you can either bring in
 all the new branches from the remote using <tt class="docutils literal">tg remote
 <span class="pre">--populate</span></tt>, or only pick out the missing ones using <tt class="docutils literal">tg create
 <span class="pre">-r</span></tt> (<tt class="docutils literal">tg summary</tt> will point out branches with incomplete
-dependencies by showing an <tt class="docutils literal">!</tt> next to them).</p>
+dependencies by showing an <tt class="docutils literal">!</tt> next to them).  TopGit will attempt to
+instantiate just the missing ones automatically for you, if possible,
+when <tt class="docutils literal">tg update</tt> merges in the new dependencies from the remote.</p>
+<p>Using the alternative <tt class="docutils literal"><span class="pre">--base</span></tt> mode, <tt class="docutils literal">tg update</tt> will update
+the base of a specified <tt class="docutils literal">[BASE]</tt> branch (which is a branch created
+by <tt class="docutils literal">tg create</tt> using the <tt class="docutils literal"><span class="pre">--base</span></tt> option) to the specified
+committish (the second argument) and then immediately merge that into
+the branch itself using the specified message for the merge commit.
+If no message is specified on the command line, an editor will open.
+Unless <tt class="docutils literal"><span class="pre">--force</span></tt> is used the new value for the base must contain
+the old value (i.e. be a fast-forward update).  This is for safety.</p>
+<p>This mode makes updates to <tt class="docutils literal">[BASE]</tt> branches quick and easy.</p>
 <div class="line-block">
 <div class="line">TODO: <tt class="docutils literal">tg update <span class="pre">-a</span> <span class="pre">-c</span></tt> to autoremove (clean) up-to-date branches</div>
 </div>
@@ -1601,7 +2046,7 @@ a TopGit branch.</p>
 <h2>tg log</h2>
 <blockquote>
 <div class="line-block">
-<div class="line"><tt class="docutils literal">tg <span class="pre">[...]</span> log [&lt;name&gt;] <span class="pre">[--]</span> <span class="pre">[&lt;git-log-option&gt;...]</span></tt></div>
+<div class="line"><tt class="docutils literal">tg <span class="pre">[...]</span> log <span class="pre">[--compact]</span> [&lt;name&gt;] <span class="pre">[--]</span> <span class="pre">[&lt;git-log-option&gt;...]</span></tt></div>
 </div>
 <p>Prints the git log of the named topgit branch -- or the current
 branch, if you don't specify a name.</p>
@@ -1610,6 +2055,17 @@ branch, if you don't specify a name.</p>
 <tt class="docutils literal">git log <span class="pre">--first-parent</span> <span class="pre">--no-merges</span> $(tg base <span class="pre">&lt;name&gt;)..&lt;name&gt;</span></tt></blockquote>
 <p>where <tt class="docutils literal">&lt;name&gt;</tt> is the name of the TopGit topic branch (or omitted
 for the current branch).</p>
+<p>However, if <tt class="docutils literal">&lt;name&gt;</tt> is a <tt class="docutils literal">[BASE]</tt> branch the <tt class="docutils literal"><span class="pre">--no-merges</span></tt>
+option is omitted.</p>
+<p>If <tt class="docutils literal"><span class="pre">--compact</span></tt> is used then <tt class="docutils literal">git <span class="pre">log-compact</span></tt> will be used instead
+of <tt class="docutils literal">git log</tt>.  The <tt class="docutils literal"><span class="pre">--command=&lt;git-alias&gt;</span></tt> option can be used to
+replace &quot;log&quot; with any non-whitespace-containing command alias name,
+<tt class="docutils literal"><span class="pre">--compact</span></tt> is just a shortcut for <tt class="docutils literal"><span class="pre">--command=log-compact</span></tt>.  The
+<tt class="docutils literal"><span class="pre">git-log-compact</span></tt> tool may be found on its project page located at:</p>
+<blockquote>
+<a class="reference external" href="https://mackyle.github.io/git-log-compact">https://mackyle.github.io/git-log-compact</a></blockquote>
+<p>Note that the <tt class="docutils literal"><span class="pre">--compact</span></tt> or <tt class="docutils literal"><span class="pre">--command=</span></tt> option must be used
+before any <tt class="docutils literal"><span class="pre">--</span></tt> or <tt class="docutils literal">git log</tt> options to be recognized.</p>
 <p>NOTE: if you have merged changes from a different repository, this
 command might not list all interesting commits.</p>
 </blockquote>
@@ -1657,6 +2113,15 @@ option is used then it will be used instead of an empty tree (a new
 commit will be created if necessary to guarantee the specified tree is
 what's in the commit the newly created tag refers to).  The argument to
 the <tt class="docutils literal"><span class="pre">--tree</span></tt> option may be any valid treeish.</p>
+<p>If exactly one of the branches to be tagged is prefixed with a tilde
+(<tt class="docutils literal">~</tt>) it will be made the first parent of a consolidation commit if
+it is not already the sole commit needing to be tagged.  If <tt class="docutils literal"><span class="pre">--tree</span></tt>
+is NOT used, its tree will also be used instead of the empty tree for
+any new consolidation commit if one is created.  Note that if
+<tt class="docutils literal"><span class="pre">--tree</span></tt> is given explicitly it's tree is always used but that does
+not in any way affect the choice of first parent.  Beware that the
+<tt class="docutils literal">~</tt> may need to be quoted to prevent the shell from misinterpreting
+it into something else.</p>
 <p>All the options for creating a tag serve the same purpose as their Git
 equivalents except for two.  The <tt class="docutils literal"><span class="pre">--refs</span></tt> option suppresses tag
 creation entirely and emits the &quot;TOPGIT REFS&quot; section that would have
@@ -1741,7 +2206,7 @@ information, then <tt class="docutils literal">git rebase <span class="pre">--co
 <h2>tg revert</h2>
 <blockquote>
 <div class="line-block">
-<div class="line"><tt class="docutils literal">tg <span class="pre">[...]</span> revert <span class="pre">(-f</span> | <span class="pre">-i</span> | <span class="pre">-n)</span> <span class="pre">[-q]</span> <span class="pre">[--tgish-only]</span> <span class="pre">[--no-deps]</span> <span class="pre">[--no-stash]</span> <span class="pre">[--exclude</span> <span class="pre">&lt;ref&gt;...]</span> (&lt;tagname&gt; | <span class="pre">--stash)</span> <span class="pre">[&lt;ref&gt;...]</span>&nbsp;&nbsp; Or: tg <span class="pre">[...]</span> revert <span class="pre">[-l]</span> <span class="pre">[--no-short]</span> <span class="pre">[--hash]</span> <span class="pre">[--tgish-only]</span> <span class="pre">[(--deps</span> | <span class="pre">--rdeps)]</span> <span class="pre">[--exclude</span> <span class="pre">&lt;ref&gt;...]</span> (&lt;tagname&gt; | <span class="pre">--stash)</span> <span class="pre">[(--heads</span> | <span class="pre">&lt;ref&gt;...)]</span></tt></div>
+<div class="line"><tt class="docutils literal">tg <span class="pre">[...]</span> revert <span class="pre">(-f</span> | <span class="pre">-i</span> | <span class="pre">-n)</span> <span class="pre">[-q]</span> <span class="pre">[--tgish-only]</span> <span class="pre">[--no-deps]</span> <span class="pre">[--no-stash]</span> <span class="pre">[--exclude</span> <span class="pre">&lt;ref&gt;...]</span> (&lt;tagname&gt; | <span class="pre">--stash)</span> <span class="pre">[&lt;ref&gt;...]</span>&nbsp;&nbsp; Or: tg <span class="pre">[...]</span> revert <span class="pre">[-l]</span> <span class="pre">[--no-short]</span> <span class="pre">[--hash]</span> <span class="pre">[--tgish-only]</span> <span class="pre">[(--deps</span> | <span class="pre">--rdeps)]</span> <span class="pre">[--exclude</span> <span class="pre">&lt;ref&gt;...]</span> (&lt;tagname&gt; | <span class="pre">--stash)</span> <span class="pre">[(--[topgit-]heads]</span> | <span class="pre">&lt;ref&gt;...)]</span></tt></div>
 </div>
 <p>Provides the ability to revert one or more TopGit branches and their
 dependencies to a previous state contained within a tag created using
@@ -1755,13 +2220,20 @@ ref name <tt class="docutils literal"><span class="pre">--heads</span></tt> then
 data are shown.  The <tt class="docutils literal"><span class="pre">--deps</span></tt> option shows the specified refs and all
 of their dependencies in a single list with no duplicates.  The
 <tt class="docutils literal"><span class="pre">--rdeps</span></tt> option shows a display similar to <tt class="docutils literal">tg summary <span class="pre">--rdeps</span></tt>
-for each ref or all independent heads if no ref is given on the command
+for each ref or all TopGit heads if no ref is given on the command
 line.  The standard <tt class="docutils literal"><span class="pre">--no-short</span></tt>, <tt class="docutils literal"><span class="pre">--short=n</span></tt> etc. options may be
 used to override the default <tt class="docutils literal"><span class="pre">--short</span></tt> output.  With <tt class="docutils literal"><span class="pre">--hash</span></tt> (or
 <tt class="docutils literal"><span class="pre">--hash-only</span></tt>) show only the hash in <tt class="docutils literal"><span class="pre">--list</span></tt> mode in which case
 the default is <tt class="docutils literal"><span class="pre">--no-short</span></tt>.   The <tt class="docutils literal"><span class="pre">--hash</span></tt> option can be used much
 like the <tt class="docutils literal">git <span class="pre">rev-parse</span> <span class="pre">--verify</span></tt> command to extract a specific hash
 value out of a TopGit tag.</p>
+<p>Note that unlike <a class="reference internal" href="#tg-summary">tg summary</a>, here <tt class="docutils literal"><span class="pre">--heads</span></tt> actually does mean the
+<tt class="docutils literal">git <span class="pre">merge-base</span> <span class="pre">--independent</span></tt> heads of the stored refs from the tag
+data.  To see only the independent TopGit topic branch heads stored in
+the tag data use the <tt class="docutils literal"><span class="pre">--topgit-heads</span></tt> option instead.  The default
+for the <tt class="docutils literal"><span class="pre">--rdeps</span></tt> option is <tt class="docutils literal"><span class="pre">--topgit-heads</span></tt> but <tt class="docutils literal"><span class="pre">--heads</span></tt> can
+be given explicitly to change that.  (Note that <tt class="docutils literal"><span class="pre">--heads-independent</span></tt>
+is accepted as an alias for <tt class="docutils literal"><span class="pre">--heads</span></tt> as well.)</p>
 <p>The revert mode has three submodes, dry-run mode (<tt class="docutils literal"><span class="pre">-n</span></tt> or
 <tt class="docutils literal"><span class="pre">--dry-run</span></tt>), force mode (<tt class="docutils literal"><span class="pre">-f</span></tt> or <tt class="docutils literal"><span class="pre">--force</span></tt>) and interactive mode
 (<tt class="docutils literal"><span class="pre">-i</span></tt> or <tt class="docutils literal"><span class="pre">--interactive</span></tt>).  If <tt class="docutils literal"><span class="pre">--dry-run</span></tt> (or <tt class="docutils literal"><span class="pre">-n</span></tt>) is given
@@ -1818,9 +2290,11 @@ the pointed-to ref can always be used to find the previous value).</p>
 <h2>tg prev</h2>
 <blockquote>
 <div class="line-block">
-<div class="line"><tt class="docutils literal">tg <span class="pre">[...]</span> prev <span class="pre">[-i</span> | <span class="pre">-w]</span> [&lt;name&gt;]</tt></div>
+<div class="line"><tt class="docutils literal">tg <span class="pre">[...]</span> prev <span class="pre">[-v]</span> <span class="pre">[-i</span> | <span class="pre">-w]</span> <span class="pre">[-a</span> | <span class="pre">-n</span> &lt;steps&gt;] [&lt;name&gt;]</tt></div>
 </div>
-<p>Outputs the direct dependencies for the current or named branch.</p>
+<p>Output the &quot;previous&quot; branch(es) in the patch series containing the
+current or named branch.  The &quot;previous&quot; branch(es) being one step
+away by default.</p>
 <dl class="docutils">
 <dt>Options:</dt>
 <dd><table class="first last docutils option-list" frame="void" rules="none">
@@ -1833,20 +2307,33 @@ the pointed-to ref can always be used to find the previous value).</p>
 <tr><td class="option-group">
 <kbd><span class="option">-w</span></kbd></td>
 <td>show dependencies based on working tree instead of branch</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-n <var>&lt;steps&gt;</var></span></kbd></td>
+<td>take <tt class="docutils literal">&lt;steps&gt;</tt> &quot;previous&quot; steps (default 1)</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--all</span></kbd></td>
+<td>take as many &quot;previous&quot; steps as possible (aka <tt class="docutils literal"><span class="pre">-a</span></tt>)</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--verbose</span></kbd></td>
+<td>show containing series name(s) (aka <tt class="docutils literal"><span class="pre">-v</span></tt>)</td></tr>
 </tbody>
 </table>
 </dd>
 </dl>
+<p>The <tt class="docutils literal"><span class="pre">-n</span></tt> option may also be given as <tt class="docutils literal"><span class="pre">--count</span></tt> or <tt class="docutils literal"><span class="pre">--count=&lt;n&gt;</span></tt>.</p>
+<p>To list all dependencies of a branch see the <tt class="docutils literal"><span class="pre">--deps</span></tt> option of
+the <a class="reference internal" href="#tg-info">tg info</a> command.</p>
+<p>See also <a class="reference internal" href="#navigation">NAVIGATION</a> for full details on &quot;previous&quot; steps.</p>
 </blockquote>
 </div>
 <div class="section" id="tg-next">
 <h2>tg next</h2>
 <blockquote>
 <div class="line-block">
-<div class="line"><tt class="docutils literal">tg <span class="pre">[...]</span> next <span class="pre">[-i</span> | <span class="pre">-w]</span> [&lt;name&gt;]</tt></div>
+<div class="line"><tt class="docutils literal">tg <span class="pre">[...]</span> next <span class="pre">[-v]</span> <span class="pre">[-i</span> | <span class="pre">-w]</span> <span class="pre">[-a</span> | <span class="pre">-n</span> &lt;steps&gt;] [&lt;name&gt;]</tt></div>
 </div>
-<p>Outputs all branches which directly depend on the current or
-named branch.</p>
+<p>Output tne &quot;next&quot; branch(es) in the patch series containing the current
+or named branch.  The &quot;next&quot; branch(es) being one step away by default.</p>
 <dl class="docutils">
 <dt>Options:</dt>
 <dd><table class="first last docutils option-list" frame="void" rules="none">
@@ -1859,10 +2346,23 @@ named branch.</p>
 <tr><td class="option-group">
 <kbd><span class="option">-w</span></kbd></td>
 <td>show dependencies based on working tree instead of branch</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-n <var>&lt;steps&gt;</var></span></kbd></td>
+<td>take <tt class="docutils literal">&lt;steps&gt;</tt> &quot;next&quot; steps (default 1)</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--all</span></kbd></td>
+<td>take as many &quot;next&quot; steps as possible (aka <tt class="docutils literal"><span class="pre">-a</span></tt>)</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--verbose</span></kbd></td>
+<td>show containing series name(s) (aka <tt class="docutils literal"><span class="pre">-v</span></tt>)</td></tr>
 </tbody>
 </table>
 </dd>
 </dl>
+<p>The <tt class="docutils literal"><span class="pre">-n</span></tt> option may also be given as <tt class="docutils literal"><span class="pre">--count</span></tt> or <tt class="docutils literal"><span class="pre">--count=&lt;n&gt;</span></tt>.</p>
+<p>To list all dependents of a branch see the <tt class="docutils literal"><span class="pre">--dependents</span></tt> option of
+the <a class="reference internal" href="#tg-info">tg info</a> command.</p>
+<p>See also <a class="reference internal" href="#navigation">NAVIGATION</a> for full details on &quot;next&quot; steps.</p>
 </blockquote>
 </div>
 <div class="section" id="tg-migrate-bases">
@@ -1990,7 +2490,7 @@ case local changes happen to be diverging more than the remote ones.
 was called on the last time (stored in the <tt class="docutils literal">topgit.remote</tt> git
 configuration variable). You can manually run any command with a
 different base remote by passing <tt class="docutils literal"><span class="pre">-r</span> REMOTE</tt> <em>before</em> the subcommand
-name.</p>
+name or passing <tt class="docutils literal"><span class="pre">-u</span></tt> <em>before</em> the subcommand to run without one.</p>
 </div>
 <div class="section" id="technical">
 <h1>TECHNICAL</h1>
@@ -2127,8 +2627,22 @@ namespace) and similarly for a TopGit base, they can both be
 resolved to a Git commit identifier and then participate in
 a branch containment test.  An easy mnemonic for this is
 &quot;children contain the genes of their parents.&quot;</dd>
+<dt>BRE pattern</dt>
+<dd>A Basic Regular Expression (BRE) pattern.  These are older
+style regular expressions but have the advantage that all
+characters other than <tt class="docutils literal">\</tt>, <tt class="docutils literal">.</tt>, <tt class="docutils literal">*</tt> and <tt class="docutils literal">[</tt>
+automatically match themselves without need for backslash
+quoting (well actually, <tt class="docutils literal">^</tt> and <tt class="docutils literal">$</tt> are special at the
+beginning and end respectively but otherwise match themselves).</dd>
 <dt>contains</dt>
 <dd>See branch containment.</dd>
+<dt>ERE pattern</dt>
+<dd>An Extended Regular Expression (ERE) pattern.  These are newer
+style regular expressions where all the regular expression
+&quot;operator&quot; characters &quot;operate&quot; when NOT preceded by a
+backslash and are turned into normal characters with a <tt class="docutils literal">\</tt>.
+The backreference atom, however, may not work, but <tt class="docutils literal">?</tt>, <tt class="docutils literal">+</tt>
+and <tt class="docutils literal">|</tt> &quot;operators&quot; do; unlike BREs.</dd>
 <dt>TopGit</dt>
 <dd>Excellent system for managing a history of changes to one
 or more possibly interrelated patches.</dd>
@@ -2192,6 +2706,11 @@ basically these are just in-index merges done using the
 <tt class="docutils literal">git <span class="pre">read-tree</span> <span class="pre">-m</span> <span class="pre">--aggressive</span></tt> command one or more times
 possibily assisted by the <tt class="docutils literal">git <span class="pre">merge-index</span></tt> and the
 <tt class="docutils literal">git <span class="pre">merge-file</span></tt> commands.</dd>
+<dt>next branch</dt>
+<dd>In TopGit context the &quot;next&quot; branch refers to the branch that
+corresponds to the next (aka following) patch in an ordered
+(aka linearized) list of patches created by exporting the
+TopGit branches in patch application order.</dd>
 <dt>octopus merge</dt>
 <dd>A merge involving more than two heads.  Note that if there are
 less than three independent heads the resulting merge that
@@ -2220,6 +2739,11 @@ a remote branch in which case this does not apply)</li>
 <p class="last">Note that if a remote branch is present and is NOT out-of-date
 then it will contain its own base and (c) is mostly redundant.</p>
 </dd>
+<dt>previous branch</dt>
+<dd>In TopGit context the &quot;previous&quot; (or &quot;prev&quot;) branch refers to
+the branch that corresponds to the previous (aka preceding)
+patch in an ordered (aka linearized) list of patches created by
+exporting the TopGit branches in patch application order.</dd>
 <dt>remote TopGit branch</dt>
 <dd>A Git branch with the same branch name as a TopGit branch
 but living under <tt class="docutils literal"><span class="pre">refs/remotes/&lt;some</span> remote&gt;/</tt> instead
