@@ -983,7 +983,7 @@ update_branch_internal() {
 		if [ $# -ge 2 ]; then
 			info "Updating $_update_name base with deps: $deplist"
 			become_non_cacheable
-			msg="tgupdate: octopus merge $# deps into $topbases/$_update_name$lf$lf$deplines"
+			msg="tgupdate: octopus merge $# deps into $_update_name base$lf$lf$deplines"
 			if attempt_index_merge --remove -m "$msg" "refs/$topbases/$_update_name" "$@"; then
 				set --
 			else
@@ -1008,7 +1008,7 @@ update_branch_internal() {
 
 			info "Updating $_update_name base with $dep changes..."
 			become_non_cacheable
-			msg="tgupdate: merge $dep into $topbases/$_update_name"
+			msg="tgupdate: merge $dep into $_update_name base"
 			if
 				! attempt_index_merge $no_auto --remove -m "$msg" "refs/$topbases/$_update_name" "$fulldep^0" &&
 				! {
@@ -1044,7 +1044,7 @@ update_branch_internal() {
 			stash_now_if_requested
 			info "Reconciling $_update_name base with remote branch updates..."
 			become_non_cacheable
-			msg="tgupdate: merge ${_rname#refs/} onto $topbases/$_update_name"
+			msg="tgupdate: merge ${_rname#refs/} onto $_update_name base"
 			checkours=
 			checktheirs=
 			got_merge_with=
@@ -1091,7 +1091,7 @@ update_branch_internal() {
 	stash_now_if_requested
 	info "Updating $_update_name against ${plusextra}new base..."
 	become_non_cacheable
-	msg="tgupdate: merge ${plusextra}$topbases/$_update_name into $_update_name"
+	msg="tgupdate: merge ${plusextra}$_update_name base into $_update_name"
 	b4deps=
 	if [ -n "$brmmode" ] && [ "$base_remote" ]; then
 		b4deps="$(git rev-parse --verify --quiet "refs/heads/$_update_name:.topdeps" --)" && [ -n "$b4deps" ] ||
