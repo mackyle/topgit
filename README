@@ -774,10 +774,11 @@ tg create
 	``--topmsg-file`` option.  In any case the ``.topmsg`` content will be
 	automatically reformated to have a ``Subject:`` header line if needed.
 
-	If more than one dependency is listed, the automatic commit will not
-	take place until AFTER all the listed dependencies have been merged
-	into a base commit which will require some manual merge resolutions if
-	conflicts occur during the merge operations.
+	If more than one dependency is listed an automatic ``tg update`` runs
+	after the branch has been created to merge in the additional
+	dependencies and bring the branch up-to-date.  This can be suppressed
+	with the ``--no-commit`` option (which also suppresses the initial
+	commit).
 
 	Previous versions of TopGit behaved as though the ``--no-edit`` option
 	was always given on the command line.
