@@ -1765,16 +1765,22 @@ initial_setup()
 
 	# create global temporary directories, inside GIT_DIR
 
-	tg_tmp_dir=
-	trap '${TG_DEBUG:+echo} rm -rf "$tg_tmp_dir" >&2' EXIT
-	trap 'exit 129' HUP
-	trap 'exit 130' INT
-	trap 'exit 131' QUIT
-	trap 'exit 134' ABRT
-	trap 'exit 143' TERM
-	tg_tmp_dir="$(mktemp -d "$git_dir/tg-tmp.XXXXXX" 2>/dev/null)" || tg_tmp_dir=
-	[ -n "$tg_tmp_dir" ] || tg_tmp_dir="$(mktemp -d "${TMPDIR:-/tmp}/tg-tmp.XXXXXX" 2>/dev/null)" || tg_tmp_dir=
-	[ -n "$tg_tmp_dir" ] || [ -z "$TMPDIR" ] || tg_tmp_dir="$(mktemp -d "/tmp/tg-tmp.XXXXXX" 2>/dev/null)" || tg_tmp_dir=
+	if [ -n "$TG_TMPDIR" ] && [ -d "$TG_TMPDIR" ] && [ -w "$TG_TMPDIR" ] &&
+	   { >"$TG_TMPDIR/.check"; } >/dev/null 2>&1; then
+		tg_tmp_dir="$TG_TMPDIR"
+	else
+		tg_tmp_dir=
+		trap '${TG_DEBUG:+echo} rm -rf "$tg_tmp_dir" >&2' EXIT
+		trap 'exit 129' HUP
+		trap 'exit 130' INT
+		trap 'exit 131' QUIT
+		trap 'exit 134' ABRT
+		trap 'exit 143' TERM
+		tg_tmp_dir="$(mktemp -d "$git_dir/tg-tmp.XXXXXX" 2>/dev/null)" || tg_tmp_dir=
+		[ -n "$tg_tmp_dir" ] || tg_tmp_dir="$(mktemp -d "${TMPDIR:-/tmp}/tg-tmp.XXXXXX" 2>/dev/null)" || tg_tmp_dir=
+		[ -n "$tg_tmp_dir" ] || [ -z "$TMPDIR" ] || tg_tmp_dir="$(mktemp -d "/tmp/tg-tmp.XXXXXX" 2>/dev/null)" || tg_tmp_dir=
+	fi
+	unset TG_TMPDIR
 	tg_ref_cache="$tg_tmp_dir/tg~ref-cache"
 	tg_ref_cache_br="$tg_ref_cache.br"
 	tg_ref_cache_rbr="$tg_ref_cache.rbr"
@@ -1860,7 +1866,7 @@ noalt_setup()
 			unset GIT_ALTERNATE_OBJECT_DIRECTORIES
 		fi
 	fi
-	unset TG_OBJECT_DIRECTORY TG_PRESERVED_ALTERNATES tg_use_alt_odb
+	unset TG_TMPDIR TG_OBJECT_DIRECTORY TG_PRESERVED_ALTERNATES tg_use_alt_odb
 }
 
 set_topbases()
@@ -2033,7 +2039,10 @@ else
 	[ -z "$_tgabs" ] || tgbin="$_tgabs"
 	unset _tgabs _tgnameabs
 
-	tg() { command "$tgbin" "$@"; }
+	tg() (
+		TG_TMPDIR="$tg_tmp_dir" && export TG_TMPDIR &&
+		exec "$tgbin" "$@"
+	)
 
 	explicit_remote=
 	explicit_dir=
