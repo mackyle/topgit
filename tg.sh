@@ -532,7 +532,7 @@ create_ref_dirs()
 		NF == 2 && $1 ~ /^refs\/./ && $2 ~ /^[0-9a-fA-F]{4,}$/ {
 			fn = p $1 "/.ref"
 			print "0 " $2 >fn
-			close fn
+			close(fn)
 		}
 	' <"$tg_ref_cache"
 	echo 1 >"$tg_tmp_dir/tg~ref-dirs-created"
