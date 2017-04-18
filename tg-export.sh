@@ -125,7 +125,7 @@ create_tg_commit()
 
 	# Get commit message and authorship information
 	git cat-file blob "$name:.topmsg" 2>/dev/null |
-	git mailinfo "$playground/^msg" /dev/null > "$playground/^info"
+	git mailinfo -b "$playground/^msg" /dev/null > "$playground/^info"
 
 	unset GIT_AUTHOR_NAME
 	unset GIT_AUTHOR_EMAIL
