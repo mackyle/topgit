@@ -17,6 +17,7 @@ topmsg=
 topmsgfile=
 noedit=
 nocommit=
+noupdate=
 nodeps=
 topmsg=
 warntop=
@@ -24,7 +25,7 @@ quiet=
 branchtype=PATCH
 branchdesc=patch
 
-USAGE="Usage: ${tgname:-tg} [... -r remote] create [-q] [-m <msg> | -F <file>] [--topmsg <msg> | --topmsg-file <file>] [-n] [--no-commit] [--base] [<name> [<dep>...|-r [<rname>]] ]"
+USAGE="Usage: ${tgname:-tg} [... -r remote] create [-q] [-m <msg> | -F <file>] [--topmsg <msg> | --topmsg-file <file>] [-n] [--no-commit] [--no-update] [--base] [<name> [<dep>...|-r [<rname>]] ]"
 
 usage()
 {
@@ -55,6 +56,9 @@ while [ $# -gt 0 ]; do case "$1" in
 		;;
 	--no-commit)
 		nocommit=1
+		;;
+	--no-update)
+		noupdate=1
 		;;
 	-n|--no-edit)
 		noedit=1
@@ -156,7 +160,7 @@ if [ $# -gt 0 ]; then
 fi
 [ -n "$name" ] || { err "no branch name given"; usage 1; }
 [ -z "$remote" -o -n "$rname" ] || rname="$name"
-[ -z "$remote" -o -z "$msg$msgfile$topmsg$topmsgfile$nocommit$nodeps" ] || { err "-r may not be combined with other options"; usage 1; }
+[ -z "$remote" -o -z "$msg$msgfile$topmsg$topmsgfile$nocommit$noupdate$nodeps" ] || { err "-r may not be combined with other options"; usage 1; }
 [ $# -eq 0 -o -z "$remote" ] || { err "deps not allowed with -r"; usage 1; }
 [ $# -le 1 -o -z "$nodeps" ] || { err "--base (aka --no-deps) allows at most one <dep>"; usage 1; }
 [ -z "$msg" -o -z "$msgfile" ] || die "only one -F or -m option is allowed"
@@ -191,6 +195,7 @@ deps="$*"
 if [ -z "$deps" ]; then
 	# The common case
 	[ -n "$name" ] || die "no branch name given"
+	[ -z "$noupdate" ] || die "if using --no-update must supply at least one dependency"
 	if [ -n "$nodeps" ]; then
 		deps="HEAD"
 	else
@@ -287,7 +292,7 @@ esac; fi
 # Barf now rather than later if missing ident
 ensure_ident_available
 
-if [ -n "$merge" ] && [ -z "$unborn" ]; then
+if [ -n "$merge" ] && [ -z "$unborn" ] && [ -z "$noupdate" ]; then
 	# make sure the checkout won't fail
 	branch="${merge%% *}"
 	prefix=refs/heads/
@@ -387,7 +392,7 @@ rm -f "$git_dir/TG_EDITMSG"
 
 ## Find starting commit to create the base
 
-if [ -n "$merge" ]; then
+if [ -n "$merge" ] && [ -z "$noupdate" ]; then
 	# Unshift the first item from the to-merge list
 	branch="${merge%% *}"
 	merge="${merge#* }"

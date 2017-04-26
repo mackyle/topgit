@@ -795,6 +795,21 @@ tg create
 	have ``tg create`` add these headers with the given default values
 	to ``.topmsg`` before invoking the editor.
 
+	By default, ``tg create`` will also update the "starting location" to the
+	first dependency, and then do any merges of any other dependencies from
+	there. However, you can make it skip the initial update, and use the current
+	HEAD as the "starting location" for all merges / branch creation, by
+	supplying the ``--no-update`` option.  This is useful if you're trying to
+	turn an existing branch into a topgit-controlled branch "after the fact".
+	Ie, suppose you have a single-commit fixit branch "my_bugfix", which
+	branches off of master, and you wish to submit as a pull request upstream.
+	However, after creating the branch you notice a typo, and want to turn
+	your "my_bugfix" branch into a topgit-controlled branch. To do so, you could
+	just do ``git checkout my_bugfix`` followed by ``tg create --no-update
+	tg/my_bugfix master``.  You could then make a new fix-up commit correcting
+	your type, and then do ``tg export --force --collapse my_bugfix`` to get
+	a new "clean" single commit to push upstream as a pull_request.
+
 	The main task of ``tg create`` is to set up the topic branch base
 	from the dependencies.  This may fail due to merge conflicts if more
 	than one dependency is given.	In that case, after you commit the
