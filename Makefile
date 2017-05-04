@@ -27,6 +27,9 @@ __default_target__: __file_which_should_not_exist
 .DEFAULT:
 	+@set -- "$@" && set -ae && . ./Makefile.sh && $(MAKE) -f Makefile.mak "$@"
 
+target: __file_which_should_not_exist
+	+@set -- $(TARGET) && set -ae && . ./Makefile.sh && $(MAKE) -f Makefile.mak $(TARGET)
+
 __any_target__ $(TARGETS): __file_which_should_not_exist
 	+@set -- "$@" && set -ae && . ./Makefile.sh && $(MAKE) -f Makefile.mak "$@"
 
