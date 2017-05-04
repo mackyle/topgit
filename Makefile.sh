@@ -208,6 +208,20 @@ v_wildcard() {
 	unset _var _result _item _exp
 }
 
+# Sort the second and following argument(s) removing duplicates and join all the
+# results using a space and store that in the variable named by the first argument
+v_sort() {
+	_var="$1"
+	_saveifs="$IFS"
+	shift
+	IFS='
+'
+	set -- $(printf '%s\n' "$@" | LC_ALL=C sort -u)
+	IFS="$_saveifs"
+	eval "$_var="'"$*"'
+	unset _var _saveifs
+}
+
 # Write the third and following target arguments out as target with a dependency
 # line(s) to standard output where each line is created by stripping the target
 # argument suffix specified by the first argument ('' to strip nothing) and
