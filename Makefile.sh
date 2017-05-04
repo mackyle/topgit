@@ -222,6 +222,78 @@ v_sort() {
 	unset _var _saveifs
 }
 
+# Filter the fourth and following argument(s) according to the space-separated
+# list of '%' pattern(s) in the third argument doing a "filter-out" instead of
+# a "filter" if the second argument is true and join all the results using a
+# space and store that in the variable named by the first argument
+v_filter_() {
+	_var="$1"
+	_fo="$2"
+	_pat="$3"
+	_saveifs="$IFS"
+	shift 3
+	IFS='
+'
+	set -- $(awk -v "fo=$_fo" -f - "$_pat" "$*"<<'EOT'
+function qr(p) {
+	gsub(/[][*?+.|{}()^$\\]/, "\\\\&", p)
+	return p
+}
+function qp(p) {
+	if (match(p, /\\*%/)) {
+		return qr(substr(p, 1, RSTART - 1)) \
+			substr(p, RSTART, RLENGTH - (2 - RLENGTH % 2)) \
+			(RLENGTH % 2 ? ".*" : "%") \
+			qr(substr(p, RSTART + RLENGTH))
+	}
+	else
+		return qr(p)
+}
+function qm(s, _l, _c, _a, _i, _g) {
+	if (!(_c = split(s, _l, " "))) return "^$"
+	if (_c == 1) return "^" qp(_l[1]) "$"
+	_a = ""
+	_g = "^("
+	for (_i = 1; _i <= _c; ++_i) {
+		_a = _a _g qp(_l[_i])
+		_g = "|"
+	}
+	return _a ")$"
+}
+BEGIN {exit}
+END {
+	pat = ARGV[1]
+	vals = ARGV[2]
+	qpat = qm(pat)
+	cnt = split(vals, va, " ")
+	for (i=1; i<=cnt; ++i)
+		if ((va[i] ~ qpat) == !fo) print va[i]
+}
+EOT
+	)
+	IFS="$_saveifs"
+	eval "$_var="'"$*"'
+	unset _var _fo _pat _saveifs
+}
+
+# Filter the third and following argument(s) according to the space-separated
+# list of '%' pattern(s) in the second argument and join all the results using
+# a space and store that in the variable named by the first argument
+v_filter() {
+	_var="$1"
+	shift
+	v_filter_ "$_var" "" "$@"
+}
+
+# Filter out the third and following argument(s) according to the space-separated
+# list of '%' pattern(s) in the second argument and join all the results using
+# a space and store that in the variable named by the first argument
+v_filter_out() {
+	_var="$1"
+	shift
+	v_filter_ "$_var" "1" "$@"
+}
+
 # Write the third and following target arguments out as target with a dependency
 # line(s) to standard output where each line is created by stripping the target
 # argument suffix specified by the first argument ('' to strip nothing) and
