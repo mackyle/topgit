@@ -92,14 +92,18 @@ Makefile:
 .sh~:;
 .SUFFIXES:
 
-# But all is just an alias for DEFAULT_TEST_TARGET which defaults to test
-
-all: $(DEFAULT_TEST_TARGET)
-
 AT = @
 Q_ = $(AT)
 Q_0 = $(Q_)
 Q = $(Q_$(V))
+TEST_TARGET_test = test
+TEST_TARGET_prove = prove
+TEST_TARGET_ = $(TEST_TARGET_test)
+TEST_TARGET = $(TEST_TARGET_$(DEFAULT_TEST_TARGET))
+
+# But all is just an alias for DEFAULT_TEST_TARGET which defaults to test
+
+all: $(TEST_TARGET)
 
 test: pre-clean TG-TEST-SETTINGS $(TEST_LINT) FORCE
 	$(Q)$(CACHE_SETUP_TTY) $(MAKE) aggregate-results-and-cleanup
