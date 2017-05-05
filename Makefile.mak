@@ -158,24 +158,25 @@ clean: FORCE
 	+-$(Q)$(GMAKE) -C t clean
 
 BUILD_SETTINGS = \
-	TG_INST_BINDIR='$(bindir)' \
-	TG_INST_CMDDIR='$(cmddir)' \
-	TG_INST_HOOKSDIR='$(hooksdir)' \
-	TG_INST_SHAREDIR='$(sharedir)' \
-	SHELL_PATH='$(SHELL_PATH)' \
-	AWK_PATH='$(AWK_PATH)' \
-	TG_VERSION='$(version)' \
-	TG_GIT_MINIMUM_VERSION='$(GIT_MINIMUM_VERSION)' \
-#BUILD_SETTINGS"
+bs() { printf "%s\\n" \
+	"TG_INST_BINDIR='$(bindir)'" \
+	"TG_INST_CMDDIR='$(cmddir)'" \
+	"TG_INST_HOOKSDIR='$(hooksdir)'" \
+	"TG_INST_SHAREDIR='$(sharedir)'" \
+	"SHELL_PATH='$(SHELL_PATH)'" \
+	"AWK_PATH='$(AWK_PATH)'" \
+	"TG_VERSION='$(version)'" \
+	"TG_GIT_MINIMUM_VERSION='$(GIT_MINIMUM_VERSION)'" \
+;}
 
 # Makefile.sh sets FORCE_SETTINGS_BUILD to FORCE and pre-runs
 # make -f Makefile.mak TG-BUILD-SETTINGS thus avoiding this always
 # causing the targets that depend on it to build while still forcing
 # a rebuild if any settings actually change.
 TG-BUILD-SETTINGS: $(FORCE_SETTINGS_BUILD)
-	$(Q)if test x"$(BUILD_SETTINGS)" != x"`cat \"$@\" 2>/dev/null`"; then \
+	$(Q)$(BUILD_SETTINGS);if test x"$$(bs)" != x"`cat \"$@\" 2>/dev/null`"; then \
 		echo "* new build settings"; \
-		printf '%s\n' "$(BUILD_SETTINGS)" >"$@"; \
+		bs >"$@"; \
 	fi
 
 test: all FORCE
