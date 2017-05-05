@@ -51,7 +51,7 @@ QWRAPPER = $(QWRAPPER_$(V))
 
 # Very important rule to avoid "accidents" caused by Makefile.sh's existence
 # Some ridiculous "make" implementations will always implicitly "make Makefile"
-# even though .POSIX: has been specified and that's definately NOT POSIX!
+# even though .POSIX: has been specified and that's definitely NOT POSIX!
 Makefile:
 	@true
 
@@ -155,7 +155,7 @@ clean: FORCE
 	rm -f tg $(commands_out) $(utils_out) $(awk_out) $(hooks_out) $(helpers_out) $(help_out) tg-tg.txt topgit.html $(html_out)
 	rm -f TG-BUILD-SETTINGS Makefile.dep Makefile.var
 	rm -rf bin-wrappers
-	+-$(Q)$(GMAKE) -C t clean
+	+-$(Q)$(MAKE) -C t clean
 
 BUILD_SETTINGS = \
 bs() { printf "%s\\n" \
@@ -180,7 +180,7 @@ TG-BUILD-SETTINGS: $(FORCE_SETTINGS_BUILD)
 	fi
 
 test: all FORCE
-	+$(Q)$(GMAKE) -C t all
+	+$(Q)$(MAKE) -C t all
 
 FORCE: __file_which_should_not_exist
 

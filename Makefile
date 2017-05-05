@@ -35,7 +35,7 @@ __any_target__ $(TARGETS): __file_which_should_not_exist
 
 # Very important rule to avoid "accidents" caused by Makefile.sh's existence
 # Some ridiculous "make" implementations will always implicitly "make Makefile"
-# even though .POSIX: has been specified and that's definately NOT POSIX!
+# even though .POSIX: has been specified and that's definitely NOT POSIX!
 Makefile:
 	@true
 

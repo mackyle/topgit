@@ -83,15 +83,8 @@ version_arg=
 DESTDIRBOOL="No"
 [ -z "$DESTDIR" ] || DESTDIRBOOL="Yes"
 
-# the "t/" subdirectory still needs gmake
-[ -n "$GMAKE" ] || GMAKE="$(cmd_path "gmake")" || :	# most common
-[ -n "$GMAKE" ] || GMAKE="$(cmd_path "gnumake")" || :	# sometimes
-[ -n "$GMAKE" ] || GMAKE='$(MAKE)' || :			# perhaps
-
 [ -z "$MAKEFILESH_DEBUG" ] || {
-	(unset BUILD_SETTINGS && printenv) | LC_ALL=C grep '^[_A-Za-z][_A-Za-z0-9]*=' | LC_ALL=C sort
-	echo "---- BUILD_SETTINGS VALUE ----"
-	printenv "BUILD_SETTINGS"
+	printenv | LC_ALL=C grep '^[_A-Za-z][_A-Za-z0-9]*=' | LC_ALL=C sort
 } >"Makefile.var"
 
 # Force TG-BUILD-SETTINGS to be updated now if needed
