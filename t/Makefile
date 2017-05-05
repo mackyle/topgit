@@ -20,16 +20,16 @@ TARGETS = \
 #TARGETS
 
 __default_target__: __file_which_should_not_exist
-	+@set -- && set -ae && MAKE="$(MAKE)" && . ./Makefile.sh && $(MAKE) -f Makefile.mak
+	+@set -- && set -ae && MAKE="$(MAKE)" && . ./Makefile.sh && $(MAKE) -e -f Makefile.mak
 
 .DEFAULT:
-	+@set -- "$@" && set -ae && MAKE="$(MAKE)" && . ./Makefile.sh && $(MAKE) -f Makefile.mak "$@"
+	+@set -- "$@" && set -ae && MAKE="$(MAKE)" && . ./Makefile.sh && $(MAKE) -e -f Makefile.mak "$@"
 
 target: __file_which_should_not_exist
-	+@set -- $(TARGET) && set -ae && MAKE="$(MAKE)" && . ./Makefile.sh && $(MAKE) -f Makefile.mak $(TARGET)
+	+@set -- $(TARGET) && set -ae && MAKE="$(MAKE)" && . ./Makefile.sh && $(MAKE) -e -f Makefile.mak $(TARGET)
 
 __any_target__ $(TARGETS): __file_which_should_not_exist
-	+@set -- "$@" && set -ae && MAKE="$(MAKE)" && . ./Makefile.sh && $(MAKE) -f Makefile.mak "$@"
+	+@set -- "$@" && set -ae && MAKE="$(MAKE)" && . ./Makefile.sh && $(MAKE) -e -f Makefile.mak "$@"
 
 # Very important rule to avoid "accidents" caused by Makefile.sh's existence
 # Some ridiculous "make" implementations will always implicitly "make Makefile"
