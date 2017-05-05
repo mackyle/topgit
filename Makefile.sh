@@ -17,26 +17,29 @@ fi
 # prevent crazy "sh" implementations from exporting functions into environment
 set +a
 
+# common defines for all makefile(s)
+defines() {
+	POUND="#"
+
+	# Update if you add any code that requires a newer version of git
+	: "${GIT_MINIMUM_VERSION:=1.8.5}"
+
+	# This avoids having this in no less than three different places!
+	TG_STATUS_HELP_USAGE="st[atus] [-v] [--exit-code]"
+
+	# These are initialized here so config.sh or config.mak can change them
+	# They are deliberately left with '$(...)' constructs for make to expand
+	# so that if config.mak just sets prefix they all automatically change
+	[ -n "$prefix"   ] || prefix="$HOME"
+	[ -n "$bindir"   ] || bindir='$(prefix)/bin'
+	[ -n "$cmddir"   ] || cmddir='$(prefix)/libexec/topgit'
+	[ -n "$sharedir" ] || sharedir='$(prefix)/share/topgit'
+	[ -n "$hooksdir" ] || hooksdir='$(prefix)/hooks'
+}
+
 # wrap it up for safe returns
 # $1 is the current build target, if any
 makefile() {
-
-POUND="#"
-
-# Update if you add any code that requires a newer version of git
-: "${GIT_MINIMUM_VERSION:=1.8.5}"
-
-# This avoids having this in no less than three different places!
-TG_STATUS_HELP_USAGE="st[atus] [-v] [--exit-code]"
-
-# These are initialized here so config.sh or config.mak can change them
-# They are deliberately left with '$(...)' constructs for make to expand
-# so that if config.mak just sets prefix they all automatically change
-[ -n "$prefix"   ] || prefix="$HOME"
-[ -n "$bindir"   ] || bindir='$(prefix)/bin'
-[ -n "$cmddir"   ] || cmddir='$(prefix)/libexec/topgit'
-[ -n "$sharedir" ] || sharedir='$(prefix)/share/topgit'
-[ -n "$hooksdir" ] || hooksdir='$(prefix)/hooks'
 
 v_wildcard commands_in 'tg-[!-]*.sh'
 v_wildcard utils_in    'tg--*.sh'
@@ -65,9 +68,6 @@ version="$(
 
 # config.sh is wrapped up for return safety
 configsh
-
-[ -n "$CONFIGMAK" ] || CONFIGMAK="config.mak"
-[ -f "$CONFIGMAK" ] || CONFIGMAK="Makefile.mt"
 
 # config.sh may not unset these
 : "${SHELL_PATH:=/bin/sh}" "${AWK_PATH:=awk}"
@@ -106,8 +106,13 @@ ${MAKE:-make} -f Makefile.mak FORCE_SETTINGS_BUILD=FORCE TG-BUILD-SETTINGS
 
 # wrap it up for safety
 configsh() {
-	[ -f "config.sh" ] || return 0
-	. ./"config.sh"
+	[ -f "${MKTOP:+$MKTOP/}config.sh" ] || return 0
+	. ./"${MKTOP:+$MKTOP/}config.sh"
+	# now set CONFIGMAK and make it an absolute path
+	[ -n "$CONFIGMAK" ] || CONFIGMAK="${MKTOP:+$MKTOP/}config.mak"
+	[ -f "$CONFIGMAK" ] || CONFIGMAK="${MKTOP:+$MKTOP/}Makefile.mt"
+	case "$CONFIGMAK" in */?*);;*) CONFIGMAK="./$CONFIGMAK"; esac
+	CONFIGMAK="$(cd "${CONFIGMAK%/*}" && pwd)/${CONFIGMAK##*/}"
 }
 
 cmd_path() (
@@ -312,8 +317,9 @@ write_auto_deps() {
 }
 
 ##
-## Run "makefile" now
+## Run "makefile" now unless MKTOP is set
 ##
 
 set -ea
-makefile "$@"
+defines
+[ -n "$MKTOP" ] || makefile "$@"
