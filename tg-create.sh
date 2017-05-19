@@ -195,7 +195,7 @@ if [ -z "$deps" ]; then
 		deps="HEAD"
 	else
 		head="$(git symbolic-ref --quiet HEAD)" || :
-		[ -z "$head" ] || git rev-parse --verify --quiet "$head" -- ||
+		[ -z "$head" ] || git rev-parse --verify --quiet "$head" -- >/dev/null ||
 			die "refusing to auto-depend on unborn branch (use --base aka --no-deps)"
 		deps="${head#refs/heads/}"
 		[ "$deps" != "$head" ] || die "refusing to auto-depend on non-branch ref (${head:-detached HEAD})"
@@ -243,7 +243,7 @@ if [ -z "$nodeps" ]; then
 		[ "$d" != "@" ] || d="HEAD"
 		if [ "$d" = "HEAD" ]; then
 			sr="$(git symbolic-ref --quiet HEAD)" || :
-			[ -z "$sr" ] || git rev-parse --verify --quiet "$sr" -- ||
+			[ -z "$sr" ] || git rev-parse --verify --quiet "$sr" -- >/dev/null ||
 				die "refusing to depend on unborn branch (use --base aka --no-deps)"
 			[ -n "$sr" ] || die "cannot depend on a detached HEAD"
 			case "$sr" in refs/heads/*);;*)
