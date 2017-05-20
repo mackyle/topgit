@@ -186,9 +186,7 @@ fi
 ## Auto-guess dependencies
 
 [ "$name" != "@" ] || name="HEAD"
-deps="$*"
-[ "$deps" != "@" ] || deps="HEAD"
-if [ -z "$deps" ]; then
+if [ -z "$*" ]; then
 	# The common case
 	[ -n "$name" ] || die "no branch name given"
 	if [ -n "$nodeps" ]; then
@@ -201,6 +199,35 @@ if [ -z "$deps" ]; then
 		[ "$deps" != "$head" ] || die "refusing to auto-depend on non-branch ref (${head:-detached HEAD})"
 		quiet_info "automatically marking dependency on $deps"
 	fi
+else
+	# verify each dep is valid and expand "@" to "HEAD" and "HEAD" to it's symref (unless detached)
+	deps=
+	head="$(git symbolic-ref --quiet HEAD)" || :
+	for d in "$@"; do
+		[ "$d" != "@" ] || d="HEAD"
+		[ "$d" != "HEAD" ] || -z "$head" || d="$head"
+		case "$d" in
+			HEAD)
+				die "cannot depend on detached HEAD"
+				;;
+			refs/heads/?*)
+				d="${d#refs/heads/}"
+				;;
+			refs/*)
+				die "cannot depend on non-branch ref '$d'"
+				;;
+		esac
+		ref_exists "refs/heads/$d" || {
+			ok=
+			case "refs/$d" in refs/heads/?*)
+				d="${d#heads/}"
+				! ref_exists "refs/heads/$d" || ok=1
+				;;
+			esac
+			[ -n "$ok" ] ||  die "unknown branch dependency '$d'"
+		}
+		deps="${deps:+$deps }$d"
+	done
 fi
 
 unborn=
@@ -240,7 +267,6 @@ if [ -z "$nodeps" ]; then
 	olddeps="$deps"
 	deps=
 	while read d && [ -n "$d" ]; do
-		[ "$d" != "@" ] || d="HEAD"
 		if [ "$d" = "HEAD" ]; then
 			sr="$(git symbolic-ref --quiet HEAD)" || :
 			[ -z "$sr" ] || git rev-parse --verify --quiet "$sr" -- >/dev/null ||
