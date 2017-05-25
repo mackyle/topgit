@@ -1054,16 +1054,16 @@ last_verbose=t
 
 [ -n "$TEST_HELPER_DIRECTORY" ] && [ -d "$TEST_HELPER_DIRECTORY" ] && PATH="$TEST_HELPER_DIRECTORY:$PATH" || :
 if [ -n "$TG_TEST_INSTALLED" ]; then
-	TG_FULL_PATH="$(cmd_path tg)" && [ -n "$TG_FULL_PATH" ] ||
+	TG_TEST_FULL_PATH="$(cmd_path tg)" && [ -n "$TG_TEST_FULL_PATH" ] ||
 		fatal 'error: TG_TEST_INSTALLED set but no tg found in $PATH!'
 else
 	tg_bin_dir="$(cd "$TESTLIB_DIRECTORY/../bin-wrappers" 2>/dev/null && pwd -P || :)"
 	[ -x "$tg_bin_dir/tg" ] ||
 		fatal 'error: no ../bin-wrappers/tg executable found!'
 	PATH="$tg_bin_dir:$PATH"
-	TG_FULL_PATH="$tg_bin_dir/tg"
+	TG_TEST_FULL_PATH="$tg_bin_dir/tg"
 fi
-export TG_FULL_PATH
+export TG_TEST_FULL_PATH
 tg_version="$(tg --version)" ||
 	fatal 'error: tg --version failed!'
 case "$tg_version" in [Tt][Oo][Pp][Gg][Ii][Tt]\ [Vv][Ee][Rr][Ss][Ii][Oo][Nn]\ [0-9]*);;*)
