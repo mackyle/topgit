@@ -143,7 +143,7 @@ else
 		sizer = "exec stty size 0>&2 2>/dev/null"
 		info = ""
 		sizer | getline info
-		close sizer
+		close(sizer)
 		colcount = 0
 		if (split(info, nums, " ") >= 2 && nums[2] ~ /^[1-9][0-9]*$/)
 			colcount = 0 + nums[2]
