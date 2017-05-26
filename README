@@ -2102,6 +2102,10 @@ Try running the tests like so:
 	make DEFAULT_TEST_TARGET=prove test
 
 
+(For reference, the default value of ``DEFAULT_TEST_TARGET`` is ``test`` which
+can be used to override a setting that's been altered using the instructions
+shown later on below.)
+
 If that works (you can interrupt it with ``Ctrl-C``), try this next:
 
 ::
@@ -2126,6 +2130,18 @@ parallel operation (the ``-j`` *<n>*) option, then you might try this:
 
 	make -j 4 TESTLIB_TEST_OPTS=-q test
 
+If your make *does* support the parallel ``-j`` option but still seems to be
+only running one test at a time try it like this instead:
+
+::
+
+	make TESTLIB_MAKE_OPTS="-j 4" TESTLIB_TEST_OPTS=-q test
+
+The difference is that ``make -j 4`` relies on make to properly pass down the
+parallel job option all the way down to the sub-make that runs the individual
+tests when not using prove.  Putting the options in ``TESTLIB_MAKE_OPTS``
+passes them directly to that (and only that) particular invocation of make.
+
 The final bit of advice for running the tests is that any of those ``make``
 variable settings can be enabled by default in a top-level ``config.mak`` file.
 
@@ -2142,6 +2158,7 @@ TopGit checkout (or expanded release tarball):
 
 	DEFAULT_TEST_TARGET = prove
 	TESTLIB_PROVE_OPTS = -j 4 --timer
+	#TESTLIB_TEST_OPTS = --color # force colorized test output
 
 Now simply doing ``make test`` will use those options by default.
 

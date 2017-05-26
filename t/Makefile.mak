@@ -30,6 +30,9 @@
 ## TESTLIB_PROVE_OPTS
 ##            -- passed to $(PROVE) if the "prove" target is used
 ##
+## TESTLIB_MAKE_OPTS
+##            -- passed to multi-test sub $(MAKE) if the "test" target is used
+##
 ## DEFAULT_TEST_TARGET
 ##            -- defaults to "test" but can be "prove" to run with prove
 ##
@@ -162,7 +165,7 @@ test-lint-filenames:
 run-individual-tests: $(T)
 
 aggregate-results-and-cleanup:
-	$(Q)ec=0; TESTLIB_TEST_PARENT_INT_ON_ERROR=1 $(MAKE) -k run-individual-tests || ec=$$?; \
+	$(Q)ec=0; TESTLIB_TEST_PARENT_INT_ON_ERROR=1 $(MAKE) $(TESTLIB_MAKE_OPTS) -k run-individual-tests || ec=$$?; \
 	[ $$ec -eq 130 ] || $(MAKE) aggregate-results || exit && exit $$ec
 	$(Q)$(NOCLEANCMT)$(MAKE) -s post-clean
 
