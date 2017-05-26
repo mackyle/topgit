@@ -1311,7 +1311,7 @@ tg checkout
 	the default starting point from ``HEAD`` to the specified branch.
 
 	For the "next" and "previous" commands, the ``<steps>`` value may
-	be ``--all`` (or ``-a``) to take "As nany steps As possible" or
+	be ``--all`` (or ``-a``) to take "As many steps As possible" or
 	"step ALL the way" or "ALL steps at once" (or make something better
 	up yourself).
 
@@ -1387,13 +1387,13 @@ tg checkout
 	supply it, all the available topic branches are listed and you
 	can select one of them.
 
-	Normally, the ``push`` and ``pop`` commands moves one step in
+	Normally, the ``next`` and ``prev`` commands moves one step in
 	the dependency graph of the topic branches.  The ``-a`` option
 	causes them (and their aliases) to move as far as possible.
-	That is, ``tg checkout push -a`` moves to a topic branch that
+	That is, ``tg checkout next -a`` moves to a topic branch that
 	depends (directly or indirectly) on the current branch and
-	that no other branch depends on.  ``tg checkout pop -a``
-	moves to a regular branch that the current topic branch
+	that no other branch depends on.  ``tg checkout prev -a``
+	moves to a topic branch that the current topic branch
 	depends on (directly or indirectly).  If there is more than
 	one possibility, you will be prompted for your selection.
 
