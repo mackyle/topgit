@@ -25,6 +25,7 @@ See also:
 	:NAVIGATION_:	    Getting around with "next" and "prev"
 	:GLOSSARY_:	    All the TopGit vocabulary in one place
 	:TECHNICAL_:	    How it works behind the scenes
+	:`TESTING TOPGIT`_: How to run the TopGit test suite
 
 
 REQUIREMENTS
@@ -40,8 +41,9 @@ command first appeared) is needed in which case linked working trees are then
 fully supported for use with TopGit.
 
 The scripts need to be preprocessed and installed.  The Makefile that does
-this only requires a POSIX make utility (using "`make`" and "`make install`").
-Running the tests also requires only a POSIX make utility ("`make test`").
+this only requires a POSIX make utility (using "``make``" and "``make install``").
+Running the tests (see `TESTING TOPGIT`_) also requires only a POSIX make
+utility ("``make test``") but does require a ``perl`` binary to be available.
 
 It is possible to use the DESTDIR functionality to install TopGit to a
 staging area on one machine, archive that and then unarchive it on another
@@ -2067,6 +2069,87 @@ was called on the last time (stored in the ``topgit.remote`` git
 configuration variable). You can manually run any command with a
 different base remote by passing ``-r REMOTE`` *before* the subcommand
 name or passing ``-u`` *before* the subcommand to run without one.
+
+
+TESTING TOPGIT
+--------------
+
+Running the TopGit test suite only requires POSIX compatibile utilities (just
+a POSIX compatibile ``make`` will do) AND a ``perl`` binary.
+
+It is *not* necessary to install TopGit in order to run the TopGit test suite.
+
+To run the TopGit test suite, simply execute this from the top-level of a
+TopGit checkout or expanded release tarball:
+
+::
+
+	make test
+
+Yup, that's it.  But you're probably thinking, "Why have a whole section just
+to say 'run make test'?"  Am I right?
+
+The simple ``make test`` command produces a lot of output and while it is
+summarized at the end there's a better way.
+
+Do you have the ``prove`` utility available?  You need ``perl`` to run the
+tests and ``prove`` comes with ``perl`` so you almost cerainly do.
+
+Try running the tests like so:
+
+::
+
+	make DEFAULT_TEST_TARGET=prove test
+
+
+If that works (you can interrupt it with ``Ctrl-C``), try this next:
+
+::
+
+	make DEFAULT_TEST_TARGET=prove TESTLIB_PROVE_OPTS="-j 4 --timer" test
+
+If that one works (again, you can interrupt it with ``Ctrl-C``) that may end
+up being the keeper for running the tests.
+
+However, if you don't have ``prove`` for some reason even though you do have
+``perl``, there's still an alternative for briefer output.  Try this:
+
+::
+
+	make TESTLIB_TEST_OPTS=-q test
+
+Much of the normal testing output will be suppressed and there's still a
+summary at the end.  If you're stuck with this version but your make supports
+parallel operation (the ``-j`` *<n>*) option, then you might try this:
+
+::
+
+	make -j 4 TESTLIB_TEST_OPTS=-q test
+
+The final bit of advice for running the tests is that any of those ``make``
+variable settings can be enabled by default in a top-level ``config.mak`` file.
+
+For example, to make the ``prove -j 4 --timer`` (my personal favorite) the
+default when running the tests, add these lines (creating the file if it does
+not already exist) to the ``config.mak`` file located in the top-level of the
+TopGit checkout (or expanded release tarball):
+
+::
+
+	# config.mak file
+	# comments are allowed (if preceded by '#')
+	# so are blank lines
+
+	DEFAULT_TEST_TARGET = prove
+	TESTLIB_PROVE_OPTS = -j 4 --timer
+
+Now simply doing ``make test`` will use those options by default.
+
+There is copious documentation on the testing library and other options in
+the various ``README`` files located in the ``t`` subdirectory.  The
+``Makefile.mak`` file in the ``t`` subdirectory contains plenty of comments
+about possible makefile variable settings as well.
+
 
 
 TECHNICAL
