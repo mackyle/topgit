@@ -34,7 +34,7 @@ defines() {
 	[ -n "$bindir"   ] || bindir='$(prefix)/bin'
 	[ -n "$cmddir"   ] || cmddir='$(prefix)/libexec/topgit'
 	[ -n "$sharedir" ] || sharedir='$(prefix)/share/topgit'
-	[ -n "$hooksdir" ] || hooksdir='$(prefix)/hooks'
+	[ -n "$hooksdir" ] || hooksdir='$(cmddir)/hooks'
 }
 
 # wrap it up for safe returns
