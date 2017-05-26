@@ -14,7 +14,7 @@ all: \
 	shell_compatibility_test \
 	precheck \
 	tg $(commands_out) $(utils_out) $(awk_out) $(hooks_out) $(helpers_out) \
-	bin-wrappers/tg $(help_out) tg-tg.txt
+	bin-wrappers/tg bin-wrappers/pre-commit $(help_out) tg-tg.txt
 
 awk: $(awk_out)
 hooks: $(hooks_out)
@@ -101,11 +101,23 @@ bin-wrappers/tg : tg
 	$(QWRAPPER){ [ -d bin-wrappers ] || mkdir bin-wrappers; } && \
 	echo '#!$(SHELL_PATH_SQ)' >"$@" && \
 	curdir="$$(pwd -P)" && \
+	echo "TG_INST_BINDIR='$$curdir' && export TG_INST_BINDIR" >>"$@" && \
 	echo "TG_INST_CMDDIR='$$curdir' && export TG_INST_CMDDIR" >>"$@" && \
 	echo "TG_INST_SHAREDIR='$$curdir' && export TG_INST_SHAREDIR" >>"$@" && \
-	echo "TG_INST_HOOKSDIR='$$curdir' && export TG_INST_HOOKSDIR" >>"$@" && \
-	echo '[ -n "$$tg__include" ] || exec $(SHELL_PATH_SQ) -c '\''. "$$TG_INST_CMDDIR/tg"'\'' tg "$$@" || exit' >>"$@" && \
+	echo "TG_INST_HOOKSDIR='$$curdir/bin-wrappers' && export TG_INST_HOOKSDIR" >>"$@" && \
+	echo '[ -n "$$tg__include" ] || exec $(SHELL_PATH_SQ) -c '\''. "$$TG_INST_BINDIR/tg"'\'' tg "$$@" || exit' >>"$@" && \
 	echo ". '$$curdir/tg'" >>"$@" && \
+	chmod a+x "$@"
+
+bin-wrappers/pre-commit : hooks/pre-commit
+	$(QWRAPPER){ [ -d bin-wrappers ] || mkdir bin-wrappers; } && \
+	echo '#!$(SHELL_PATH_SQ)' >"$@" && \
+	curdir="$$(pwd -P)" && \
+	echo "TG_INST_BINDIR='$$curdir' && export TG_INST_BINDIR" >>"$@" && \
+	echo "TG_INST_CMDDIR='$$curdir' && export TG_INST_CMDDIR" >>"$@" && \
+	echo "TG_INST_SHAREDIR='$$curdir' && export TG_INST_SHAREDIR" >>"$@" && \
+	echo "TG_INST_HOOKSDIR='$$curdir/bin-wrappers' && export TG_INST_HOOKSDIR" >>"$@" && \
+	echo ". '$$curdir/hooks/pre-commit'" >>"$@" && \
 	chmod a+x "$@"
 
 $(help_out): README create-help.sh

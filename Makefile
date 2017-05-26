@@ -17,7 +17,7 @@ TARGETS = \
 	install	install-doc install-html \
 	tg--awksome tg-tg.txt topgit.html \
 	shell_compatibility_test \
-	bin-wrappers/tg \
+	bin-wrappers/tg bin-wrapper/pre-commit \
 	test \
 #TARGETS
 

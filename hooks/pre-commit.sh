@@ -1,16 +1,18 @@
 #!/bin/sh
 # TopGit - A different patch queue manager
-# Copyright (C) Petr Baudis <pasky@suse.cz>  2008
-# Copyright (C) Kyle J. McKay <mackyle@gmail.com>  2015
+# Copyright (C) 2008 Petr Baudis <pasky@suse.cz>
+# Copyright (C) 2015,2017 Kyle J. McKay <mackyle@gmail.com>
 # All rights reserved.
 # GPLv2
 
 ## Set up all the tg machinery
 
+: "${TG_INST_BINDIR:=@bindir@}"
+
 set -e
 tg__include=1
 tg_util() {
-	. "@bindir@"/tg
+	. "$TG_INST_BINDIR"/tg
 	tg_use_alt_odb=
 }
 tg_util
