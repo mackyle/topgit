@@ -33,13 +33,13 @@ Q = $(Q_$(V))
 QSED_ = $(AT)echo "[SED] $@" &&
 QSED_0 = $(QSED_)
 QSED = $(QSED_$(V))
-QHELP_ = $(AT)CMD="$@" CMD="$${CMD$(POUND)tg-}" && echo "[HELP] $${CMD%.txt}" &&
+QHELP_ = $(AT)CMD="$@" && CMD="$${CMD$(POUND)tg-}" && echo "[HELP] $${CMD%.txt}" &&
 QHELP_0 = $(QHELP_)
 QHELP = $(QHELP_$(V))
 QHELPTG_ = $(AT)echo "[HELP] tg" &&
 QHELPTG_0 = $(QHELPTG_)
 QHELPTG = $(QHELPTG_$(V))
-QHTML_ = $(AT)CMD="$@" CMD="$${CMD$(POUND)tg-}" && echo "[HTML] $${CMD%.html}" &&
+QHTML_ = $(AT)CMD="$@" && CMD="$${CMD$(POUND)tg-}" && echo "[HTML] $${CMD%.html}" &&
 QHTML_0 = $(QHTML_)
 QHTML = $(QHTML_$(V))
 QHTMLTOPGIT_ = $(AT)echo "[HTML] topgit" &&
@@ -109,7 +109,7 @@ bin-wrappers/tg : tg
 	chmod a+x "$@"
 
 $(help_out): README create-help.sh
-	$(QHELP)CMD="$@" CMD="$${CMD#tg-}" CMD="$${CMD%.txt}" && \
+	$(QHELP)CMD="$@" && CMD="$${CMD#tg-}" && CMD="$${CMD%.txt}" && \
 	$(SHELL_PATH) ./create-help.sh "$$CMD"
 
 doc: html
@@ -125,7 +125,7 @@ topgit.html: README create-html-usage.pl $(commands_in)
 	$(QHTMLTOPGIT)perl ./create-html-usage.pl < README | rst2html.py - $@
 
 $(html_out): create-html.sh
-	$(QHTML)CMD="$@" CMD="$${CMD#tg-}" CMD="$${CMD%.html}" && \
+	$(QHTML)CMD="$@" && CMD="$${CMD#tg-}" && CMD="$${CMD%.html}" && \
 	$(SHELL_PATH) ./create-html.sh "$$CMD"
 
 precheck: precheck_DESTDIR_$(DESTDIRBOOL)
