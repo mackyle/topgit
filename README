@@ -362,10 +362,14 @@ TopGit supports various config settings:
 
 	:ALIASES_:		``topgit.alias.*`` for Git-like command aliases
 	:`tg update`_:		``topgit.autostash`` automatic stash control
+	:`tg create`_:		``topgit.bcc`` default "Bcc:" value for create
+	:`tg create`_:		``topgit.cc`` default "Cc:" value for create
 	:`tg patch`_:		``topgit.from`` "From:" fixups by ``tg patch``
 	:`REMOTE HANDLING`_:	``topgit.remote`` TopGit's default remote
 	:SEQUESTRATION_:	``topgit.sequester`` for sequestration control
 	:`tg update`_:		``topgit.setAutoUpdate`` => ``rerere.autoUpdate``
+	:`tg create`_:		``topgit.subjectPrefix`` "[$prefix PATCH] foo"
+	:`tg create`_:		``topgit.to`` default "To:" value for create
 	:`tg migrate-bases`_:	``topgit.top-bases`` for refs bases location
 
 
@@ -792,7 +796,10 @@ tg create
 	You can set the ``topgit.to``, ``topgit.cc`` and ``topgit.bcc``
 	git configuration variables (see ``man git-config``) in order to
 	have ``tg create`` add these headers with the given default values
-	to ``.topmsg`` before invoking the editor.
+	to ``.topmsg`` before invoking the editor.  If the configuration
+	variable ``topgit.subjectPrefix`` is set its value will be inserted
+	*between* the initial ``[`` and the word ``PATCH`` in the subject
+	line (with a space added before the word ``PATCH`` of course).
 
 	The main task of ``tg create`` is to set up the topic branch base
 	from the dependencies.  This may fail due to merge conflicts if more
