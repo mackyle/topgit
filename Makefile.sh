@@ -99,7 +99,7 @@ ${MAKE:-make} -f Makefile.mak FORCE_SETTINGS_BUILD=FORCE TG-BUILD-SETTINGS
 
 # wrap it up for safety
 configsh() {
-	[ -f "${MKTOP:+$MKTOP/}config.sh" ] || return 0
+	! [ -f "${MKTOP:+$MKTOP/}config.sh" ] ||
 	. ./"${MKTOP:+$MKTOP/}config.sh"
 	# now set CONFIGMAK and make it an absolute path
 	[ -n "$CONFIGMAK" ] || CONFIGMAK="${MKTOP:+$MKTOP/}config.mak"
