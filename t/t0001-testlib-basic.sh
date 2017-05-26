@@ -127,7 +127,7 @@ test_expect_success 'pretend we have a fully passing test suite' "
 	> ok 1 - passing test #1
 	> ok 2 - passing test #2
 	> ok 3 - passing test #3
-	> # passed all 3 test(s)
+	> # full passed all 3 test(s)
 	> 1..3
 	EOF
 "
@@ -148,7 +148,7 @@ test_expect_success 'pretend we have a partially passing test suite' "
 	#      false
 	#
 	> ok 3 - passing test #3
-	> # failed 1 among 3 test(s)
+	> # partial failed 1 among 3 test(s)
 	> 1..3
 	EOF
 "
@@ -162,8 +162,8 @@ test_expect_success 'pretend we have a known breakage' "
 	check_sub_test_lib_test failing-todo <<-\\EOF
 	> ok 1 - passing test
 	> not ok 2 - pretend we have a known breakage # TODO known breakage
-	> # still have 1 known breakage(s)
-	> # passed all remaining 1 test(s)
+	> # failing still have 1 known breakage(s)
+	> # failing passed all remaining 1 test(s)
 	> 1..2
 	EOF
 "
@@ -175,7 +175,7 @@ test_expect_success 'pretend we have fixed a known breakage' "
 	EOF
 	check_sub_test_lib_test passing-todo <<-\\EOF
 	> ok 1 - pretend we have fixed a known breakage # TODO known breakage vanished
-	> # 1 known breakage(s) vanished; please update test(s)
+	> # passing 1 known breakage(s) vanished; please update test(s)
 	> 1..1
 	EOF
 "
@@ -192,9 +192,9 @@ test_expect_success 'pretend we have fixed one of two known breakages (run in su
 	> not ok 1 - pretend we have a known breakage # TODO known breakage
 	> ok 2 - pretend we have a passing test
 	> ok 3 - pretend we have fixed another known breakage # TODO known breakage vanished
-	> # 1 known breakage(s) vanished; please update test(s)
-	> # still have 1 known breakage(s)
-	> # passed all remaining 1 test(s)
+	> # partially 1 known breakage(s) vanished; please update test(s)
+	> # partially still have 1 known breakage(s)
+	> # partially passed all remaining 1 test(s)
 	> 1..3
 	EOF
 "
@@ -215,8 +215,8 @@ test_expect_success 'pretend we have a pass, fail, and known breakage' "
 	> #      false
 	> #
 	> not ok 3 - pretend we have a known breakage # TODO known breakage
-	> # still have 1 known breakage(s)
-	> # failed 1 among remaining 2 test(s)
+	> # mixed still have 1 known breakage(s)
+	> # mixed failed 1 among remaining 2 test(s)
 	> 1..3
 	EOF
 "
@@ -259,9 +259,9 @@ test_expect_success 'pretend we have a mix of all possible results' "
 	> not ok 8 - pretend we have a known breakage # TODO known breakage
 	> not ok 9 - pretend we have a known breakage # TODO known breakage
 	> ok 10 - pretend we have fixed a known breakage # TODO known breakage vanished
-	> # 1 known breakage(s) vanished; please update test(s)
-	> # still have 2 known breakage(s)
-	> # failed 3 among remaining 7 test(s)
+	> # mixed 1 known breakage(s) vanished; please update test(s)
+	> # mixed still have 2 known breakage(s)
+	> # mixed failed 3 among remaining 7 test(s)
 	> 1..10
 	EOF
 "
@@ -291,7 +291,7 @@ test_expect_success 'test --verbose' '
 	> #      false
 	> #
 	> Z
-	> # failed 1 among 3 test(s)
+	> # test failed 1 among 3 test(s)
 	> 1..3
 	EOF
 '
@@ -317,7 +317,7 @@ test_expect_success 'test --verbose-only' '
 	> #
 	> #      false
 	> #
-	> # failed 1 among 3 test(s)
+	> # test failed 1 among 3 test(s)
 	> 1..3
 	EOF
 '
@@ -337,7 +337,7 @@ test_expect_success 'TESTLIB_SKIP_TESTS' "
 		> ok 1 - passing test #1
 		> ok 2 # skip passing test #2 (TESTLIB_SKIP_TESTS)
 		> ok 3 - passing test #3
-		> # passed all 3 test(s)
+		> # testlib passed all 3 test(s)
 		> 1..3
 		EOF
 	)
@@ -361,7 +361,7 @@ test_expect_success 'TESTLIB_SKIP_TESTS several tests' "
 		> ok 4 - passing test #4
 		> ok 5 # skip passing test #5 (TESTLIB_SKIP_TESTS)
 		> ok 6 - passing test #6
-		> # passed all 6 test(s)
+		> # testlib passed all 6 test(s)
 		> 1..6
 		EOF
 	)
@@ -385,7 +385,7 @@ test_expect_success 'TESTLIB_SKIP_TESTS sh pattern' "
 		> ok 4 # skip passing test #4 (TESTLIB_SKIP_TESTS)
 		> ok 5 # skip passing test #5 (TESTLIB_SKIP_TESTS)
 		> ok 6 - passing test #6
-		> # passed all 6 test(s)
+		> # testlib passed all 6 test(s)
 		> 1..6
 		EOF
 	)
@@ -407,7 +407,7 @@ test_expect_success '--run basic' "
 	> ok 4 # skip passing test #4 (--run)
 	> ok 5 - passing test #5
 	> ok 6 # skip passing test #6 (--run)
-	> # passed all 6 test(s)
+	> # run passed all 6 test(s)
 	> 1..6
 	EOF
 "
@@ -428,7 +428,7 @@ test_expect_success '--run with a range' "
 	> ok 4 # skip passing test #4 (--run)
 	> ok 5 # skip passing test #5 (--run)
 	> ok 6 # skip passing test #6 (--run)
-	> # passed all 6 test(s)
+	> # run passed all 6 test(s)
 	> 1..6
 	EOF
 "
@@ -449,7 +449,7 @@ test_expect_success '--run with two ranges' "
 	> ok 4 # skip passing test #4 (--run)
 	> ok 5 - passing test #5
 	> ok 6 - passing test #6
-	> # passed all 6 test(s)
+	> # run passed all 6 test(s)
 	> 1..6
 	EOF
 "
@@ -470,7 +470,7 @@ test_expect_success '--run with a left open range' "
 	> ok 4 # skip passing test #4 (--run)
 	> ok 5 # skip passing test #5 (--run)
 	> ok 6 # skip passing test #6 (--run)
-	> # passed all 6 test(s)
+	> # run passed all 6 test(s)
 	> 1..6
 	EOF
 "
@@ -491,7 +491,7 @@ test_expect_success '--run with a right open range' "
 	> ok 4 - passing test #4
 	> ok 5 - passing test #5
 	> ok 6 - passing test #6
-	> # passed all 6 test(s)
+	> # run passed all 6 test(s)
 	> 1..6
 	EOF
 "
@@ -512,7 +512,7 @@ test_expect_success '--run with basic negation' "
 	> ok 4 - passing test #4
 	> ok 5 - passing test #5
 	> ok 6 - passing test #6
-	> # passed all 6 test(s)
+	> # run passed all 6 test(s)
 	> 1..6
 	EOF
 "
@@ -533,7 +533,7 @@ test_expect_success '--run with two negations' "
 	> ok 4 - passing test #4
 	> ok 5 - passing test #5
 	> ok 6 # skip passing test #6 (--run)
-	> # passed all 6 test(s)
+	> # run passed all 6 test(s)
 	> 1..6
 	EOF
 "
@@ -554,7 +554,7 @@ test_expect_success '--run a range and negation' "
 	> ok 4 - passing test #4
 	> ok 5 # skip passing test #5 (--run)
 	> ok 6 # skip passing test #6 (--run)
-	> # passed all 6 test(s)
+	> # run passed all 6 test(s)
 	> 1..6
 	EOF
 "
@@ -575,7 +575,7 @@ test_expect_success '--run range negation' "
 	> ok 4 - passing test #4
 	> ok 5 - passing test #5
 	> ok 6 - passing test #6
-	> # passed all 6 test(s)
+	> # run passed all 6 test(s)
 	> 1..6
 	EOF
 "
@@ -597,7 +597,7 @@ test_expect_success '--run include, exclude and include' "
 	> ok 4 - passing test #4
 	> ok 5 - passing test #5
 	> ok 6 # skip passing test #6 (--run)
-	> # passed all 6 test(s)
+	> # run passed all 6 test(s)
 	> 1..6
 	EOF
 "
@@ -619,7 +619,7 @@ test_expect_success '--run include, exclude and include, comma separated' "
 	> ok 4 - passing test #4
 	> ok 5 - passing test #5
 	> ok 6 # skip passing test #6 (--run)
-	> # passed all 6 test(s)
+	> # run passed all 6 test(s)
 	> 1..6
 	EOF
 "
@@ -641,7 +641,7 @@ test_expect_success '--run exclude and include' "
 	> ok 4 # skip passing test #4 (--run)
 	> ok 5 - passing test #5
 	> ok 6 # skip passing test #6 (--run)
-	> # passed all 6 test(s)
+	> # run passed all 6 test(s)
 	> 1..6
 	EOF
 "
@@ -663,7 +663,7 @@ test_expect_success '--run empty selectors' "
 	> ok 4 # skip passing test #4 (--run)
 	> ok 5 - passing test #5
 	> ok 6 # skip passing test #6 (--run)
-	> # passed all 6 test(s)
+	> # run passed all 6 test(s)
 	> 1..6
 	EOF
 "
@@ -833,7 +833,7 @@ test_expect_success 'tests clean up even on failures' "
 	> #
 	> #      test_when_finished \"(exit 2)\"
 	> #
-	> # failed 2 among 2 test(s)
+	> # failing failed 2 among 2 test(s)
 	> 1..2
 	EOF
 "

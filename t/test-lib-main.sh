@@ -564,11 +564,11 @@ test_done() {
 
 	if test "$test_fixed" != 0
 	then
-		say_color error "# $test_fixed known breakage(s) vanished; please update test(s)"
+		say_color error "# $this_test $test_fixed known breakage(s) vanished; please update test(s)"
 	fi
 	if test "$test_broken" != 0
 	then
-		say_color warn "# still have $test_broken known breakage(s)"
+		say_color warn "# $this_test still have $test_broken known breakage(s)"
 	fi
 	if test "$test_broken" != 0 || test "$test_fixed" != 0
 	then
@@ -591,13 +591,13 @@ test_done() {
 		then
 			if test $test_remaining -gt 0
 			then
-				say_color pass "# passed all $msg"
+				say_color pass "# $this_test passed all $msg"
 			fi
 			test -n "$test_wrote_plan_count" || say_tap "1..$test_count$skip_all"
 		fi
 		if test -n "$test_wrote_plan_count" && test "$test_wrote_plan_count" -ne "$test_count"
 		then
-			say_color error "# plan count of $test_wrote_plan_count does not match run count of $test_count"
+			say_color error "# $this_test plan count of $test_wrote_plan_count does not match run count of $test_count"
 			exit 1
 		fi
 
@@ -621,12 +621,12 @@ test_done() {
 	*)
 		if test $test_external_has_tap -eq 0
 		then
-			say_color error "# failed $test_failure among $msg"
+			say_color error "# $this_test failed $test_failure among $msg"
 			test -n "$test_wrote_plan_count" || say_tap "1..$test_count"
 		fi
 		if test -n "$test_wrote_plan_count" && test "$test_wrote_plan_count" -ne "$test_count"
 		then
-			say_color error "# plan count of $test_wrote_plan_count does not match run count of $test_count"
+			say_color error "# $this_test plan count of $test_wrote_plan_count does not match run count of $test_count"
 		fi
 
 		test -z "$HARNESS_ACTIVE" || exit 0
