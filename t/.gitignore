@@ -3,5 +3,6 @@
 /Makefile.var
 /empty
 /trash directory*
+/trash tmp directory*
 /test-results
 /.prove

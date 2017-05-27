@@ -105,6 +105,26 @@ Variables
     specifies is automatically created and destroyed (`test-lib.sh` makes
     that happen).
 
+- TRASHTMP_DIRECTORY
+
+    This directory is named after the specific test being run, for example,
+    `trash tmp directory.t0000-foo.sh`.  By default it's located in the
+    TEST_OUTPUT_DIRECTORY but the `--root` option to a test script (options
+    are parsed by the "`. ./test-lib.sh`" line) can change that.  Using the
+    `--root` option to specify a directory on a RAM disk can accelerate
+    testing.  This variable changes for every test and the directory it
+    specifies is automatically created and destroyed (`test-lib.sh` makes
+    that happen).
+
+    However, unlike TRASH_DIRECTORY, this directory is created on-demand the
+    first time the `test_get_temp` function is called (or a lazy prereq is
+    evaluated) and so should not be used directly.  Rather it exists primarily
+    to support creation of temporary test files that live completely outside
+    of TRASH_DIRECTORY and so can be created and used without concern about
+    any possible unintended consequences of temporary files lying around in
+    the TRASH_DIRECTORY (or a subdirectory thereof) causing unexpected test
+    results.
+
 - TESTLIB_SKIP_TESTS
 
     This variable can be used to skip whole tests or parts of tests.  It should
@@ -889,6 +909,17 @@ script has been sourced.
 
     Runs `<cmd> <arg>...` and fails verbosely unless the resulting status code
     is <status>.
+
+- test_get_temp [-d] [<name>]
+
+    Create a new temporary file (or directory with -d) in the temporary
+    directory $TRASHTMP_DIRECTORY with optional pattern prefix "<name>." and
+    output the resulting unique name of the newly created empty file (or
+    directory with -d).
+
+    The $TRASHTMP_DIRECTORY is created on-demand the first time this function
+    is called and is guaranteed to be outside of $TRASH_DIRECTORY but still
+    unique to the test script currently being run.
 
 - test_have_prereq <PREREQ>...
 

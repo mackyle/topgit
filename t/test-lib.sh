@@ -73,6 +73,7 @@ if [ "$1" = "--cache" ]; then
 			fatal "FATAL: Cannot prepare cache test area"
 		mkdir -p "$TRASH_DIRECTORY" && [ -d "$TRASH_DIRECTORY" ] ||
 			fatal "cannot mkdir -p $TRASH_DIRECTORY"
+		TRASHTMP_DIRECTORY="$TRASH_DIRECTORY"
 		savepwd="$PWD"
 		savehome="$HOME"
 		cd -P "$TRASH_DIRECTORY" || fatal "cannot cd to $TRASH_DIRECTORY"
@@ -89,7 +90,7 @@ if [ "$1" = "--cache" ]; then
 		HOME="$savehome"
 		cd "$savepwd" || fatal "cannot cd to $savepwd"
 		rm -rf "$TRASH_DIRECTORY"
-		unset savepwd savehome TRASH_DIRECTORY GNUPGHOME
+		unset savepwd savehome TRASH_DIRECTORY TRASHTMP_DIRECTORY GNUPGHOME
 	fi
 
 	# Add most GIT_XXX vars (variation of code from test-lib-main.sh)

@@ -305,17 +305,23 @@ test_lazy_prereq() {
 	eval test_prereq_lazily_$1=\$2
 }
 
+test_ensure_git_dir_() {
+	git rev-parse --git-dir >/dev/null 2>&1 ||
+	git init --quiet --template="$EMPTY_DIRECTORY" >/dev/null 2>&1 ||
+		fatal "cannot run git init"
+}
+
 test_run_lazy_prereq_() {
 	script='
-mkdir -p "$TRASH_DIRECTORY/prereq-test-dir" &&
+mkdir -p "$TRASHTMP_DIRECTORY/prereq-test-dir" &&
 (
-	cd "$TRASH_DIRECTORY/prereq-test-dir" &&'"$2"'
+	cd "$TRASHTMP_DIRECTORY/prereq-test-dir" &&'"$2"'
 )'
 	say >&3 "checking prerequisite: $1"
 	say >&3 "$script"
 	test_eval_ "$script"
 	eval_ret=$?
-	rm -rf "$TRASH_DIRECTORY/prereq-test-dir"
+	rm -rf "$TRASHTMP_DIRECTORY/prereq-test-dir"
 	if test "$eval_ret" = 0; then
 		say >&3 "prerequisite $1 ok"
 	else
@@ -533,9 +539,9 @@ test_external_lno() {
 		# Announce the script to reduce confusion about the
 		# test output that follows.
 		say_color "" "# run $test_count: $descr ($*)"
-		# Export TEST_DIRECTORY, TRASH_DIRECTORY and TESTLIB_TEST_LONG
-		# to be able to use them in script
-		export TEST_DIRECTORY TRASH_DIRECTORY TESTLIB_TEST_LONG
+		# Export TEST_DIRECTORY, TRASH_DIRECTORY, TRASHTMP_DIRECTORY
+		# and TESTLIB_TEST_LONG to be able to use them in script
+		export TEST_DIRECTORY TRASH_DIRECTORY TRASHTMP_DIRECTORY TESTLIB_TEST_LONG
 		# Run command; redirect its stderr to &4 as in
 		# test_run_, but keep its stdout on our stdout even in
 		# non-verbose mode.

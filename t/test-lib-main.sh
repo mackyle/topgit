@@ -623,6 +623,18 @@ test_done() {
 				rm -rf "$test_done_td_"
 			}
 		}
+		test -n "$remove_trashtmp" &&
+		test -d "$remove_trashtmp" &&
+		cd "${remove_trashtmp%/*}" &&
+		test_done_td_="${remove_trashtmp##*/}" &&
+		test -e "$test_done_td_" &&
+		rm -rf "$test_done_td_" &&
+		{
+			! test -e "$test_done_td_" || {
+				chmod -R u+w "$test_done_td_" &&
+				rm -rf "$test_done_td_"
+			}
+		}
 
 		test_at_end_hook_
 
@@ -675,6 +687,19 @@ yes() {
 
 run_with_limited_cmdline() {
 	(ulimit -s 128 && "$@")
+}
+
+# test_get_temp [-d] [<name>]
+# creates a new temporary file (or directory with -d) in the
+# temporary directory $TRASHTMP_DIRECTORY with pattern prefix NAME
+test_get_temp() {
+	test z"$TRASHTMP_DIRECTORY" != z ||
+		fatal "test_get_temp called before TRASHTMP_DIRECTORY set"
+	test -d "$TRASHTMP_DIRECTORY" ||
+	mkdir "$TRASHTMP_DIRECTORY" ||
+		fatal "could not create temp directory \"$TRASHTMP_DIRECTORY\""
+	test z"$1" != z"-d" || set -- "$2" "$1"
+	mktemp $2 "$TRASHTMP_DIRECTORY/${1:+$1.}XXXXXX"
 }
 
 
@@ -1131,6 +1156,7 @@ test_lazy_prereq SYMLINKS '
 '
 
 test_lazy_prereq FILEMODE '
+	test_ensure_git_dir_ &&
 	test "$(git config --bool core.filemode)" = true
 '
 
@@ -1154,6 +1180,7 @@ test_lazy_prereq UTF8_NFD_TO_NFC '
 '
 
 test_lazy_prereq AUTOIDENT '
+	test_ensure_git_dir_ &&
 	sane_unset GIT_AUTHOR_NAME &&
 	sane_unset GIT_AUTHOR_EMAIL &&
 	git var GIT_AUTHOR_IDENT
@@ -1284,19 +1311,32 @@ trap 'TESTLIB_EXIT_OK=t; exit 1' USR1
 # Test repository
 TRASH_DIRECTORY="trash directory.${0##*/}"
 TRASH_DIRECTORY="${TRASH_DIRECTORY%.sh}"
+TRASHTMP_DIRECTORY="trash tmp directory.${0##*/}"
+TRASHTMP_DIRECTORY="${TRASHTMP_DIRECTORY%.sh}"
 test -n "$root" && TRASH_DIRECTORY="$root/$TRASH_DIRECTORY"
+test -n "$root" && TRASHTMP_DIRECTORY="$root/$TRASHTMP_DIRECTORY"
 test -n "$root" && GIT_CEILING_DIRECTORIES="$root:$GIT_CEILING_DIRECTORIES"
 case "$TRASH_DIRECTORY" in
 /*) ;; # absolute path is good
- *) TRASH_DIRECTORY="$TEST_OUTPUT_DIRECTORY/$TRASH_DIRECTORY" ;;
+ *) TRASH_DIRECTORY="$TEST_OUTPUT_DIRECTORY/$TRASH_DIRECTORY"
+    TRASHTMP_DIRECTORY="$TEST_OUTPUT_DIRECTORY/$TRASHTMP_DIRECTORY" ;;
 esac
-test ! -z "$debug" || remove_trash=$TRASH_DIRECTORY
+test ! -z "$debug" || remove_trash="$TRASH_DIRECTORY"
+test ! -z "$debug" || remove_trashtmp="$TRASHTMP_DIRECTORY"
 ! test -e "$TRASH_DIRECTORY" || {
 	rm -rf "$TRASH_DIRECTORY" &&
 	! test -e "$TRASH_DIRECTORY" || {
 		chmod -R u+w "$TRASH_DIRECTORY" &&
 		rm -rf "$TRASH_DIRECTORY" &&
 		! test -e "$TRASH_DIRECTORY"
+	}
+} &&
+! test -e "$TRASHTMP_DIRECTORY" || {
+	rm -rf "$TRASHTMP_DIRECTORY" &&
+	! test -e "$TRASHTMP_DIRECTORY" || {
+		chmod -R u+w "$TRASHTMP_DIRECTORY" &&
+		rm -rf "$TRASHTMP_DIRECTORY" &&
+		! test -e "$TRASHTMP_DIRECTORY"
 	}
 } || {
 	TESTLIB_EXIT_OK=t
@@ -1314,6 +1354,8 @@ then
 else
 	mkdir -p "$TRASH_DIRECTORY"
 fi
+# $TRASHTMP_DIRECTORY is created on-demand only
+
 # Use -P to resolve symlinks in our working directory so that the cwd
 # in subprocesses like tg equals our $PWD (for pathname comparisons).
 cd -P "$TRASH_DIRECTORY" || exit 1
