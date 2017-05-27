@@ -165,7 +165,8 @@ test-lint-filenames:
 run-individual-tests: $(T)
 
 aggregate-results-and-cleanup:
-	$(Q)ec=0; TESTLIB_TEST_PARENT_INT_ON_ERROR=1 $(MAKE) -f Makefile.mak $(TESTLIB_MAKE_OPTS) -k run-individual-tests || ec=$$?; \
+	$(Q)ec=0; '$(SHELL_PATH_SQ)' -c 'TESTLIB_TEST_PARENT_INT_ON_ERROR=$$$$ exec "$$@"' "$(SHELL_PATH)" \
+	$(MAKE) -f Makefile.mak $(TESTLIB_MAKE_OPTS) -k run-individual-tests || ec=$$?; \
 	[ $$ec -eq 130 ] || $(MAKE) -f Makefile.mak aggregate-results || exit && exit $$ec
 	$(Q)$(NOCLEANCMT)$(MAKE) -f Makefile.mak -s post-clean
 

@@ -138,14 +138,23 @@ vcmp() {
 
 vcmp "$@"
 
-error() {
+error_lno() {
+	: "${callerlno:=$1}"
+	shift
 	say_color error "${LF}error: $*" >&7
 	printf '%s\n' "Bail out! ${0##*/}:${callerlno:+$callerlno:} error: $*" >&5
 	TESTLIB_EXIT_OK=t
-	[ -z "$TESTLIB_TEST_PARENT_INT_ON_ERROR" ] || kill -INT $PPID || :
-	kill -USR1 $$
+	[ -z "$TESTLIB_TEST_PARENT_INT_ON_ERROR" ] || {
+		perl -e "kill(-2, getpgrp($TESTLIB_TEST_PARENT_INT_ON_ERROR), getpgrp($PPID))" || :
+		kill -INT $TESTLIB_TEST_PARENT_INT_ON_ERROR $PPID || :
+	}
+	kill -USR1 $$ || :
 	exit 1
 }
+error() {
+	error_lno "" "$@"
+}
+alias error='error_lno "$LINENO"' >/dev/null 2>&1 || :
 
 say() {
 	say_color info "$@"
