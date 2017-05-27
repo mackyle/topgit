@@ -457,6 +457,7 @@ test_get_() {
 }
 
 fail_() {
+	test z"$2" = "z" || set +e
 	return ${1:-1}
 }
 
@@ -474,7 +475,7 @@ test_run_() {
 		linting=t
 		# 117 is magic because it is unlikely to match the exit
 		# code of other programs
-		test_eval_ss_ "1" "fail_ 117 && $1${LF}fail_ \$?"
+		test_eval_ss_ "1" "fail_ 117 && $1${LF}fail_ \$? 1"
 		if test "$?" != 117; then
 			error "bug in the test script: broken &&-chain: $1"
 		fi
