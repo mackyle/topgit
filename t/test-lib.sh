@@ -21,7 +21,7 @@ if [ "$1" = "--cache" ]; then
 		TZ _x05 _x40 _z40 EMPTY_TREE EMPTY_BLOB LF u200c color \
 		immediate TESTLIB_TEST_LONG run_list help quiet \
 		say_color_error say_color_skip say_color_warn say_color_pass \
-		say_color_info say_color_ TERM \
+		say_color_info say_color_ TERM TESTLIB_SHELL_HAS_SHOPT \
 		test_failure test_count test_fixed test_broken test_success \
 		test_external_has_tap last_verbose GIT_MINIMUM_VERSION \
 		TG_TEST_INSTALLED uname_s test_prereq TG_GIT_MINIMUM_VERSION \

@@ -1047,6 +1047,9 @@ test_external_has_tap=0
 test_lib_functions_init
 test_lib_functions_tg_init
 
+# Check for shopt
+: "${TESTLIB_SHELL_HAS_SHOPT=$(command -v shopt)}"
+
 last_verbose=t
 
 [ -n "$TEST_HELPER_DIRECTORY" ] && [ -d "$TEST_HELPER_DIRECTORY" ] && PATH="$TEST_HELPER_DIRECTORY:$PATH" || :
@@ -1326,6 +1329,10 @@ then
 	test_done
 fi
 
+if test z"${TESTLIB_SHELL_HAS_SHOPT=$(command -v shopt)}" = z"shopt"
+then
+	shopt -s expand_aliases >/dev/null 2>&1 || :
+fi
 
 # End test_lib_main_init_specific
 }
