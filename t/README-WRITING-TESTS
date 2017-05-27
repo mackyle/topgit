@@ -179,7 +179,7 @@ This is a perfectly valid test script fragment:
 	# do some more testing
 	blah blah blah
     }
-    
+
     test_expect_success 'sample' 'run_test_one'
 
 However, should the test fail, when the failing "script" is output to the log
@@ -305,7 +305,7 @@ This will not work as expected:
         : it works &&
 	itworked=1
     '
-    
+
     test_expect_success 'check' '
         test "$itworked" = "1"
     '
@@ -325,7 +325,7 @@ the `TESTLIB_TEST_NO_SUBSHELL` variable can be set like so:
 	itworked=1
     '
     unset TESTLIB_TEST_NO_SUBSHELL
-    
+
     test_expect_success 'check' '
         test "$itworked" = "1"
     '

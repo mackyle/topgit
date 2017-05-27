@@ -65,22 +65,22 @@ setting the "test_description" variable and then calling the
 provided functions to produce TAP output like so:
 
     test_description='title of test goes here
-    
+
     And any more lines go here much like a standard Git
     checkin comment although there's no requirement that
     the description follow any partiuclar layout.  It's
     only used by the -h|--help functionality.
     '
-    
+
     . ./test-lib.sh
-    
+
     test_expect_success 'small test' '
     	# do some testing
     	...
     '
-    
+
     ...
-    
+
     test_done
 
 For more detailed information on how to use the test-lib.sh
