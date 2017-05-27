@@ -248,7 +248,7 @@ test_unconfig() {
 		config_dir=$1
 		shift
 	fi
-	eval git ${config_dir:+-C \"\$config_dir\"} config --unset-all '"$@"' #"#"
+	eval git "${config_dir:+-C \"\$config_dir\"}" config --unset-all '"$@"'
 	config_status=$?
 	case "$config_status" in
 	5) # ok, nothing to unset
@@ -264,15 +264,15 @@ test_config() {
 	if test "$1" = -C
 	then
 		shift
-		config_dir=$1
+		config_dir="$1"
 		shift
 	fi
-	test_when_finished "test_unconfig ${config_dir:+-C '$config_dir'} '$1'" &&
-	eval git ${config_dir:+-C \"\$config_dir\"} config '"$@"' #"#"
+	eval test_when_finished test_unconfig "${config_dir:+-C \"\$config_dir\"}" '"$1"' &&
+	eval git "${config_dir:+-C \"\$config_dir\"}" config '"$@"'
 }
 
 test_config_global() {
-	test_when_finished "test_unconfig --global '$1'" &&
+	test_when_finished test_unconfig --global "$1" &&
 	git config --global "$@"
 }
 
@@ -864,7 +864,7 @@ test_seq() {
 #
 #	test_expect_success 'test core.capslock' '
 #		git config core.capslock true &&
-#		test_when_finished "git config --unset core.capslock" &&
+#		test_when_finished git config --unset core.capslock &&
 #		hello world
 #	'
 #
@@ -883,14 +883,35 @@ test_seq() {
 # what went wrong.
 
 test_when_finished() {
-	# We cannot detect when we are in a subshell in general, but by
-	# doing so on Bash is better than nothing (the test will
-	# silently pass on other shells).
-	test -z "$linting" || return 0
-	test "${BASH_SUBSHELL-0}" = 0 && test -z "$test_subshell_active_" ||
-	error "bug in test script: test_when_finished does nothing in a subshell"
-	test_cleanup="{ $*
-		} && (exit \"\$eval_ret\"); eval_ret=\$?; $test_cleanup"
+	test z"$*" != z && test -z "$linting" || return 0
+	test z"$TRASHTMP_DIRECTORY" != z ||
+	    fatal "test_when_finished cannot be used before TRASHTMP_DIRECTORY is set"
+	test -d "$TRASHTMP_DIRECTORY" ||
+	mkdir "$TRASHTMP_DIRECTORY" ||
+	    fatal "could not create temp directory \"$TRASHTMP_DIRECTORY\""
+	twf_script_="$TRASHTMP_DIRECTORY/test_when_finished_${test_count:-0}.sh"
+	twf_cmd_=
+	for twf_arg_ in "$@"; do
+		twf_dq_=1
+		case "$twf_arg_" in [A-Za-z_]*)
+			if test z"${twf_arg_%%[!A-Za-z_0-9]*}" = z"$twf_arg_"
+			then
+				twf_arg_sq_="$twf_arg_"
+				twf_dq_=
+			else case "$twf_arg_" in *=*)
+				twf_var_="${twf_arg_%%=*}"
+				if test z"${twf_var_%%[!A-Za-z_0-9]*}" = z"$twf_var_"
+				then
+					test_quotevar_ 3 twf_arg_sq_ "${twf_arg_#*=}"
+					twf_arg_sq_="$twf_var_=$twf_arg_sq_"
+					twf_dq_=
+				fi
+			esac; fi
+		esac
+		test z"$twf_dq_" = z || test_quotevar_ twf_arg_ twf_arg_sq_
+		twf_cmd_="${twf_cmd_:+$twf_cmd_ }$twf_arg_sq_"
+	done
+	printf '{ %s\n} && (exit "$eval_ret"); eval_ret=$?\n' "$twf_cmd_" >>"$twf_script_"
 }
 
 # Most tests can use the created repository, but some may need to create more.

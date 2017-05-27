@@ -859,6 +859,24 @@ script has been sourced.
     It will not be tagged if <tag> is the empty string or contains any
     whitespace.
 
+- test_config [-C <dir>] <name> <value> [...]
+
+    Run `git [-C <dir>] config <name> <value> [...]` now and schedule a
+    `git [-C <dir>] config --unset-all <name>` (via `test_unconfig`) using
+    `test_when_finished`.
+
+    This function allows for easy temporary configuration changes that are
+    automatically undone when the current test finishes.
+
+- test_config_global <name> <value> [...]
+
+    Run `git config --global <name> <value> [...]` now and schedule a
+    `git [-C <dir>] config --unset-all --global <name>` (via `test_unconfig`)
+    using `test_when_finished`.
+
+    This function allows for easy temporary global configuration changes that
+    are automatically undone when the current test finishes.
+
 - test_copy_bytes <count>
 
     This is a shortcut for a call to the `dd` utility (unlike the Git version
@@ -1042,15 +1060,46 @@ script has been sourced.
     The original version from the Git test library uses Git itself to do this
     conversion, but this implementation is strictly shell built-ins.
 
-- test_when_finished <arg>...
+- test_unconfig [-C <dir>] <arg>...
+
+    Runs `git [-C <dir>] config --unset-all <arg>...` immediately but ignores
+    any error resulting from the the value(s) to be unset not actually being
+    currently set at all (status 5).
+
+    Can be used for global values simply by making the first <arg> be `--global`
+    and the rest the global arg(s) to unset.
+
+- test_when_finished <cmd> [<arg>...]
 
     This function only works inside a test script!
 
-    Causes "<arg>..." to be "eval"'d when the current test script (the
+    Causes <cmd> [<arg>...] to be run when the current test script (the
     <script> arg to a test result function) exits.  May be used more than
     once to schedule multiple items.
 
-    Currently only works when `TESTLIB_TEST_NO_SUBSHELL` is set.
+    This function differs from Git's version in that <cmd> [<arg>...]
+    are automagically quoted and stored in a "test_when_finished_<n>.sh"
+    script that then gets sourced outside of any subshell that may have
+    been created by the test script at test exit time.  (The "<n>" value
+    is the number of the subtest within the test script and the script
+    itself is stored in the TRASHTMP_DIRECTORY.)
+
+    This means that `TESTLIB_TEST_NO_SUBSHELL` has no effect on this
+    functionality nor do subshells created implicitly (or explicitly) by
+    the test script itself.
+
+    Git's version uses eval.  To get the same effect make the <cmd> be
+    "eval".  However, that's not recommended as the eval will take place
+    outside of any test script subshells which means none of the variables
+    created inside the test script's subshells will be accessible at that time.
+    Instead use the normal form (it's much simpler to use anyway) which causes
+    any variables to be evaluated immediately when `test_when_finished` is
+    called to schedule the "when finished" operation.
+
+    This approach, however, precludes using `test_when_finished` to perform
+    some action using a variable that has not yet been set.  In that case the
+    "eval" form will be needed and probably `TESTLIB_TEST_NO_SUBSHELL` will
+    also have to be set to true to make it work.
 
 - test_write_lines <arg>...
 

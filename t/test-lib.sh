@@ -3,6 +3,18 @@
 # All rights reserved.
 # License GPLv2+
 
+# stores the single-quoted value of the variable name passed as
+# the first argument into the variable name passed as the second
+# (use test_quotevar_ 3 varname "$value" to quote a value directly)
+test_quotevar_() {
+	eval "set -- \"\${$1}\" \"$2\""
+	case "$1" in *"'"*)
+		set -- "$(printf '%s\nZ\n' "$1" | sed "s/'/'\\\''/g")" "$2"
+		set -- "${1%??}" "$2"
+	esac
+	eval "$2=\"'$1'\""
+}
+
 if [ "$1" = "--cache" ]; then
 	# export all state to $PWD/TG-TEST-CACHE
 	# then return a suitable value for 'TESTLIB_CACHE'
@@ -115,28 +127,17 @@ if [ "$1" = "--cache" ]; then
 			print join(" ", @vars);
 		')"
 
-	# stores the single-quoted value of the variable name passed as
-	# the first argument into the variable name passed as the second
-	# (use quotevar 3 varname "$value" to quote a value directly)
-	quotevar() {
-		eval "set -- \"\${$1}\" \"$2\""
-		case "$1" in *"'"*)
-			set -- "$(printf '%s\nZ\n' "$1" | sed "s/'/'\\\''/g")" "$2"
-			set -- "${1%??}" "$2"
-		esac
-		eval "$2=\"'$1'\""
-	}
 	# return true if variable name passed as the first argument is
 	# set even if to an empty value
 	isvarset() {
 		eval "test \"z\${$1+set}\" = \"zset\""
 	}
-	quotevar PWD PWD_SQ
-	quotevar TESTLIB_DIRECTORY TD_SQ
+	test_quotevar_ PWD PWD_SQ
+	test_quotevar_ TESTLIB_DIRECTORY TD_SQ
 	{
 		echo unset $UNSET_VARS "&&"
 		while read vname && [ -n "$vname" ]; do
-			! isvarset $vname || { quotevar "$vname" qv; printf '%s=%s &&\n' "$vname" "$qv"; }
+			! isvarset $vname || { test_quotevar_ "$vname" qv; printf '%s=%s &&\n' "$vname" "$qv"; }
 		done <<-EOT
 		$(echo $CACHE_VARS $EXPORT_VARS | LC_ALL=C sed 'y/ /\n/' | LC_ALL=C sort -u)
 		say_color_reset

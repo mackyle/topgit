@@ -792,6 +792,9 @@ then
 	exit 1
 fi
 
+# Mostly done with the no subshell tests
+unset TESTLIB_TEST_NO_SUBSHELL
+
 clean=no
 test_expect_success 'tests clean up after themselves' '
 	test_when_finished clean=yes
@@ -803,20 +806,16 @@ then
 	exit 1
 fi
 
-# Done with the no subshell tests
-unset TESTLIB_TEST_NO_SUBSHELL
-
 test_expect_success 'tests clean up even on failures' "
 	test_must_fail run_sub_test_lib_test \
 		failing-cleanup 'Failing tests with cleanup commands' <<-\\EOF &&
-	TESTLIB_TEST_NO_SUBSHELL=1
 	test_expect_success 'tests clean up even after a failure' '
 		touch clean-after-failure &&
 		test_when_finished rm clean-after-failure &&
 		(exit 1)
 	'
 	test_expect_success 'failure to clean up causes the test to fail' '
-		test_when_finished \"(exit 2)\"
+		test_when_finished eval \"(exit 2)\"
 	'
 	test_done
 	EOF
@@ -831,7 +830,7 @@ test_expect_success 'tests clean up even on failures' "
 	> not ok 2 - failure to clean up causes the test to fail
 	> #      failed: failing-cleanup.sh
 	> #
-	> #      test_when_finished \"(exit 2)\"
+	> #      test_when_finished eval \"(exit 2)\"
 	> #
 	> # failing failed 2 among 2 test(s)
 	> 1..2

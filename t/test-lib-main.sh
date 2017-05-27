@@ -456,13 +456,23 @@ test_get_() {
 	fi
 }
 
+# protects against use of "return" in test_when_finished scripts
+test_do_script_() {
+	. "$1"
+}
+
 fail_() {
 	test z"$2" = "z" || set +e
 	return ${1:-1}
 }
 
 test_run_() {
-	test_cleanup=:
+	test_cleanup="$TRASHTMP_DIRECTORY/test_when_finished_${test_count:-0}.sh"
+	! test -e "$test_cleanup" || {
+		rm -f "$test_cleanup" &&
+		! test -e "$test_cleanup" ||
+		error "FATAL: Cannot prepare test area"
+	}
 	test_subshell_active_=
 	expecting_failure=$2
 	linting=
@@ -487,9 +497,9 @@ test_run_() {
 	eval_ret=$?
 
 	if test -z "$immediate" || test $eval_ret = 0 ||
-	   test -n "$expecting_failure" && test "${test_cleanup:-:}" != ":"
+	   test -n "$expecting_failure" && test -s "$test_cleanup"
 	then
-		test_eval_ "$test_cleanup"
+		test_eval_ss_ "0" 'test_do_script_ "$test_cleanup" && (exit $eval_ret); eval_ret=$?'
 	fi
 	if test "$verbose" = "t" && test -n "$HARNESS_ACTIVE"
 	then
