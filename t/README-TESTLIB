@@ -815,12 +815,15 @@ script has been sourced.
     Create a new Git commit with "<message>" as the commit message optionally
     having a signed-off-by line (`--signoff`) using the next tick time by
     calling `test_tick` (unless `--notick` is used).
-    
+
     <file> defaults to "<message>.t", <contents> and <tag> default to
     "<message>".
 
-    The "<contents>" will be written (using `echo`) to <file> which is then
-    added and committed using <message> and then tagged using <message>.
+    The "<contents>" will be written (using `printf '%s\n'`) to <file> which is
+    then added and committed using <message> and then tagged using <message>.
+
+    It will not be tagged if <tag> is the empty string or contains any
+    whitespace.
 
 - test_copy_bytes <count>
 

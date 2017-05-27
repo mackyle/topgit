@@ -169,10 +169,23 @@ test_pause() {
 	fi
 }
 
+test_check_one_arg_() {
+	test $# -eq 1 &&
+	test z"$1" != z
+}
+
+test_eval_one_arg_() {
+	eval "$1 "'"$2"'
+}
+
 # Call test_commit with the arguments "<message> [<file> [<contents> [<tag>]]]"
 #
 # This will commit a file with the given contents and the given commit
 # message, and tag the resulting commit with the given tag name.
+#
+# <file> defaults to "<message>.t", <contents> and <tag> default to
+#  "<message>".  If the (possibly default) value for <tag> ends up being
+# empty or contains any whitespace the tag will be omitted.
 #
 # <file>, <contents>, and <tag> all default to <message>.
 
@@ -195,14 +208,17 @@ test_commit() {
 		shift
 	done &&
 	file=${2:-"$1.t"} &&
-	echo "${3-$1}" > "$file" &&
+	printf '%s\n' "${3-$1}" > "$file" &&
 	git add "$file" &&
 	if test -z "$notick"
 	then
 		test_tick
 	fi &&
 	git commit $signoff -m "$1" &&
-	git tag "${4:-$1}"
+	if test_check_one_arg_ ${4-$1}
+	then
+		test_eval_one_arg_ "git tag" ${4-$1}
+	fi
 }
 
 # Call test_merge with the arguments "<message> <commit>", where <commit>
