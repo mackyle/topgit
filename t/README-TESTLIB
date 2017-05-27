@@ -191,6 +191,20 @@ Variables
     thereby preventing the recursive testing library invocation from upsetting
     the TAP output of the parent.
 
+- test_tick
+
+    Initially unset.  Records the last unix epoch seconds value that was used
+    by the `test_tick` function to set both the `GIT_COMMITTER_DATE` and
+    `GIT_AUTHOR_DATE` variables.  Note that the `test_tick` function always
+    appends " -0700" to the value of "$test_tick" when constructing the value
+    for `GIT_COMMITTER_DATE` and `GIT_AUTHOR_DATE`.
+
+    If `test_tick` is unset when the `test_tick` function is called then it
+    will be set to 1112911993 (2005-04-07 15:13:13 -0700) and that value used.
+    Otherwise it will be advanced by 60 and the resulting value used.
+
+    See also the description of the `test_tick` utility function below.
+
 - this_test
 
     This variable is set automatically by the ". ./test-lib.sh" line.
@@ -978,6 +992,14 @@ script has been sourced.
     Set and export `GIT_COMMITTER_DATE` and `GIT_AUTHOR_DATE` to the same
     value (initially 1112911993 -- the time of the first Git commit) increasing
     it by exactly 60 seconds each time `test_tick` is called.
+
+    Note that when a test script starts running neither `GIT_COMMITTER_DATE`
+    nor `GIT_AUTHOR_DATE` are initially set.  It's not until after the first
+    time `test_tick` is called (it's called implicitly by `test_commit` and
+    `tg_test_create_branch` unless they're given the `--notick` option) that
+    both of them are set (unless the test script otherwise sets them itself).
+
+    See also the description of the `test_tick` variable above.
 
 - test_tristate <varname>
 
