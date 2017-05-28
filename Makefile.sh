@@ -59,6 +59,7 @@ v_stripadd_sfx html_out .sh .html tg-help.sh tg-status.sh tg-tg.sh $commands_in
 DEPFILE="Makefile.dep"
 {
 	write_auto_deps '' '.sh' tg $commands_out $utils_out $hooks_out $helpers_out
+	write_auto_deps '' '.awk' $awk_out
 } >"$DEPFILE"
 
 : "${SHELL_PATH:=/bin/sh}" "${AWK_PATH:=awk}"
