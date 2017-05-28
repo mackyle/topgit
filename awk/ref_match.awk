@@ -38,7 +38,7 @@
 # "-" is present it's a descending sort instead of ascending; only "objectname"
 # and "refname" keys are supported (obviously)
 #
-# This one was supposed to be jast a simple quick little thing *sigh*
+# This one was supposed to be just a simple quick little thing *sigh*
 #
 
 function arrayswp(anarray, i1, i2, _swapper) {
@@ -55,19 +55,20 @@ function kasort_order3(anarray, i1, i2, i3, _c12, _c13, _c23) {
 	_c12 = cmpkeys(anarray, i1, i2)
 	_c23 = cmpkeys(anarray, i2, i3)
 	if (_c12 <= 0) {
-		if (_c23 <= 0) return
+		if (_c23 <= 0) return (!_c12 || !_c23) ? -1 : 0
 		if (_c12 == 0) {
 			arrayswp(anarray, i1, i3)
-			return
+			return -1
 		}
 	} else if (_c23 >= 0) {
 		arrayswp(anarray, i1, i3)
-		return
+		return _c23 ? 0 : -1
 	}
 	_c13 = cmpkeys(anarray, i1, i3)
 	if (_c13 > 0) arrayswp(anarray, i1, i3)
 	if (_c12 <= 0) arrayswp(anarray, i2, i3)
 	else arrayswp(anarray, i1, i2)
+	return 0
 }
 
 # Could "ka" mean, oh I don't know, perhaps one of these?  ;)
@@ -75,7 +76,7 @@ function kasort_order3(anarray, i1, i2, i3, _c12, _c13, _c23) {
 #   Kick Ass sort
 #   Kyle's Array sort
 #
-function kasort_partition(anarray, si, ei, _mi, _le, _ge) {
+function kasort_partition(anarray, si, ei, _mi, _le, _ge, _o3) {
 	if (ei <= si) return
 	if (si + 1 == ei) {
 		if (cmpkeys(anarray, si, ei) > 0)
@@ -83,25 +84,27 @@ function kasort_partition(anarray, si, ei, _mi, _le, _ge) {
 		return
 	}
 	_mi = int((si + ei) / 2)
-	kasort_order3(anarray, si, _mi, ei)
+	_o3 = kasort_order3(anarray, si, _mi, ei)
 	if (si + 2 == ei) return
 	_le = si
 	_ge = ei
 	for (;;) {
 		if (_le < _mi)
-			while (++_le < _ge && _le != _mi && cmpkeys(anarray, _le, _mi) <= 0) ;
+			while (++_le < _ge && _le != _mi && cmpkeys(anarray, _le, _mi) <= _o3) ;
 		if (_le < _ge)
-			while (_le < --_ge && cmpkeys(anarray, _mi, _ge) <= 0) ;
+			while (_mi < _ge && _le < --_ge && cmpkeys(anarray, _mi, _ge) <= _o3) ;
+		if (_le < _ge && _ge <= _mi)
+			while (_le < --_ge && cmpkeys(anarray, _mi, _ge) < 0) ;
 		if (_mi <= _le && _le < _ge)
-			while (++_le < _ge && cmpkeys(anarray, _le, _mi) <= 0) ;
+			while (++_le < _ge && cmpkeys(anarray, _le, _mi) < 0) ;
 		if (_le < _ge) {
 			arrayswp(anarray, _le, _ge)
 			continue
 		}
-		if (_le < mi) {
+		if (_le < _mi) {
 			arrayswp(anarray, _le, _mi)
 			_mi = _le
-		} else {
+		} else if (_mi < _ge) {
 			arrayswp(anarray, _mi, _ge)
 			_mi = _ge
 		}
