@@ -1,0 +1,206 @@
+TopGit Testing Library
+======================
+
+The TopGit testing library consists of TopGit-specific additions to the testing
+library that are automatically available whenever the standard testing library
+functions and variables are.
+
+Familiarity with the standard testing library functions and variables as
+described in `README-TESTLIB` can provide valuable assistance in understanding
+the contents of this file.
+
+The functions described here are defined in the `test-lib-functions-tg.sh`
+file which contains copious comments for each one should the more succinct
+descriptions included here prove insufficiently enlightening.
+
+
+----------------
+TopGit Variables
+----------------
+
+- TG_TEST_FULL_PATH
+
+    Set by the testing library to the full absolute path to the `tg` executable
+    being used for testing.
+
+- tg_test_bases
+
+    Location of "top-bases" refs for `tg_test_v_getbases` function.  May have
+    any of these values:
+
+      * "" (the empty string or unset)  
+        default top-bases location for this release of TopGit (default value)
+      * `refs`  
+        Use `refs/top-bases` or `refs/remotes/`<remote-name>`/top-bases`
+      * `heads`  
+        Use `refs/heads/{top-bases}` or
+        `refs/remotes/`<remote-name>`/{top-bases}`
+      * anything else  
+        exit immediately with a fatal error when `tg_test_v_getbases` is called
+
+- tg_test_remote
+
+    Remote name to use when `tg_test_v_getremote` is called with no remote or
+    with an empty remote name argument.  A fatal error will occur if the
+    `tg_test_v_getname` function is called with an empty or omitted remote name
+    and this variable is unset or empty (the default value).
+
+
+------------------------
+TopGit Utility Functions
+------------------------
+
+- tg_test_bare_tree [-C <dirpath>] <treeish>
+
+    Output the hash of the tree equivalent to <treeish>^{tree} with any
+    top-level .topdeps and .topmsg files removed.  The returned tree is
+    guaranteed to exist in the object database.
+
+    The output tree hash will be located in the current repository unless
+    -C <dirpath> is used in which case it will be located in that Git
+    repository instead.
+
+- tg_test_create_branch [-C <dirpath>] [--notick] [+][\][[<remote>]:[:]]<branch>
+  [-m "message"] [:[:[:]]]<start> [<dep>...]
+
+    Create a new TopGit branch (head and base) named <branch>.  If the
+    [<remote>]: prefix is given it will be a remote TopGit branch only (using
+    `tg_test_remote` if the [<remote>] part is empty) or BOTH a local AND
+    remote TopGit branch if the [<remote>]:: prefix (double-colon) form is
+    used.
+
+    Unless --notick is used the `test_tick` function will be called before
+    creation of each new commit.  All of the refs to be created must not
+    already exist or a fatal error will occur.
+
+    The new <branch> will be created in the current repository unless
+    -C <dirpath> is used in which case it will be created in that Git
+    repository instead.
+
+    Unless the leading "+" is present the branch and its associated base
+    (local, remote or local and remote depending on the ":" prefix part)
+    MUST NOT already exist.  With "+" any pre-existing values are stepped on.
+    A leading "\" will be stripped from the branch name allowing branch names
+    that start with "+" to be specified as "\+branch" without having the "+"
+    be interpreted as the overwrite option.
+
+    If -m "message" is omitted the default is "branch <branch>".
+
+    The branch's starting point will be <start> which must be the name of an
+    existing branch under refs/heads and it will also be included as the first
+    line of the created .topdeps file.
+
+    However, if the :[:[:]]<start> form is used then <start> can be any
+    existing committish and it will NOT be included in the created .topdeps
+    file.
+
+    If two colons (e.g. "::start") are used then the created branch will be
+    bare and not have any .topdeps or .topmsg file and the [<dep>...]
+    arguments are forbidden.
+
+    If three colons are used (e.g. ":::start") the [<dep>...] arguments are
+    also forbidden, no additional .topdeps or .topmsg files added (but
+    existing ones in <start> will be left alone), the bases will NOT be
+    created (making it a non-TopGit branch) but they must also not exist
+    (unless "+" was used) and it will have a commit made on it in the style of
+    `test_commit` (except that only the message can be specified, the <file>,
+    <contents> and <tag> always use default values as described for
+    `test_commit`).  Note that since unlike the `test_commit` function, the
+    default message is "branch <<branch>" no tag will be created by default.
+    To cause a tag to be created, an explicit, single-word, refname-friendly
+    message must be provided.
+
+    With the :[:[:]]<start> form only, <start> may be the
+    empty string to start from a new empty tree root commit (or no parent at
+    all in the ":::" case).
+
+    Note that by combining the "+"<branch> form with a :::<start> line where
+    both <branch> and <start> are the same, more commits can be added to a
+    pre-existing branch.
+
+    Each given <dep> argument will be added as a line to the created .topdeps
+    file as-is WITHOUT ANY VALIDATION (except they are forbidden for bare
+    branches and will cause a fatal error in that case if given).
+
+    The repository in which the branches are created is left unmolested (i.e.
+    its working tree, index and symbolic-ref value of HEAD are unchanged).
+    However, if HEAD was a symbolic-ref to an unborn branch that's then created
+    by this function that could impact Git's interpretation of the worktree and
+    index.
+
+- tg_test_create_branches [-C <dirpath>] [--notick]
+
+    Read `tg_branch_create` instructions from standard input and then call
+    `tg_create_branch` for each set of instructions.
+
+    Standard input must be a sequence of line groups each consisting of two or
+    more non-empty lines where the groups are separated by a single blank line.
+    Each line group must have this form:
+
+        [+][\][[<remote>]:[:]]<branch> [optional] [message] [goes] [here]
+        [[delete]:[:[:]]]<start>
+        [<dep>]
+        [<dep>]
+        ...
+
+    Note that any <dep> lines must not be empty.  If there are no <dep>s, then
+    there must be no <dep> lines at all.
+
+    See the description of `tg_test_create_branch` for the meaning of the
+    arguments.  The provided <dirpath> and `--notick` options are passed along
+    on each call to `tg_test_create_branch`.
+
+    The "delete:[:[:]]<start>" form is an extension not handled by the
+    `tg_test_create_branch` function.  With "delete", a message is forbidden,
+    no <dep> lines are allowed and if <start> is not empty the branch to be
+    deleted must have the specified <start> value for the delete to succeed.
+    If the "delete:::" (three colon) form is used then any pre-existing base(s)
+    are ignored otherwise they will be removed.  Note that since there is only
+    one <start> value, if <start> is not empty, all refs (1, 2 or 4) to be
+    deleted must have that same <start> value.  Also note that "delete:..."
+    never removes any tags.  If <start> is left empty AND the leading "+" is
+    NOT present then all refs to be deleted must actually exist.
+
+    This function can be used to easily create a complicated deterministic
+    TopGit DAG for testing purposes.  Since each line group represents a call
+    to `tg_test_create_branch`, later groups may use any branch name created
+    by an earlier group as a <start> point.
+
+- tg_test_include [-C <dirpath>] [-r <remote>] [-u] [-f]
+
+    Source tg in `tg__include=1` mode to provide access to internal tg
+    functions.
+
+    If TG_TEST_FULL_PATH is unset a fatal error will occur.
+
+    The following options are available:
+
+      * `-C` <dirpath>  
+        Temporarily `cd` to <dirpath> before sourcing `tg`, but then return
+        to the original `$PWD` afterwards.
+      * `-r` <remote>  
+        Set `base_remote` to "<remote>" *before* sourcing `tg`.
+      * `-u`  
+        Unset `base_remote` *after* sourcing `tg`.
+      * `-f`  
+        Terminate with a fatal error instead of returning a non-0 result code
+
+    The `tg__include` variable will be left set to `1` after calling this
+    function.  The `base_remote` variable will remain set/unset after calling
+    this function solely based on the presence/absence of any `-r` and/or `-u`
+    options and the behavior of the sourced `tg` file.
+
+- tg_test_v_getbases <varname> [<remotename>]
+
+    Set the variable named by <varname> to the appropriate full ref prefix for
+    local bases (if <remotename> is omitted or empty) or the specified remote
+    given by <remotename>.
+
+    The value of `tg_test_bases` influences the value (see the description of
+    the `tg_test_bases` variable above for details).
+
+- tg_test_v_getremote <varname> [<remotename>]
+
+    Set the variable named by <varname> to "<remotename>" unless <remotename>
+    is omitted or empty in which case use "$tg_test_remote" unless it's empty
+    in which case die with a fatal error.

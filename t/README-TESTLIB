@@ -737,7 +737,8 @@ script (`say`, `say_color`, `test_debug` and `test_pause` being prime examples
 of such).
 
 These functions are intended to be called only _after_ the `./test-lib.sh`
-script has been sourced.
+script has been sourced.  See the `README-TESTLIB-TG` file for additional
+available utility functions that are TopGit-specific.
 
 - die
 
