@@ -858,7 +858,10 @@ script has been sourced.
     then added and committed using <message> and then tagged using <message>.
 
     It will not be tagged if <tag> is the empty string or contains any
-    whitespace.
+    whitespace or invalid ref name characters.  (Including at least one '^' or
+    '~' is a simple way to keep a single "word" that's a valid filename while
+    at the same time suppressing creation of a tag while not needing to
+    supply anything other than the <message> argument.)
 
 - test_config [-C <dir>] <name> <value> [...]
 
