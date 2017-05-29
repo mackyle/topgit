@@ -219,9 +219,10 @@ Variables
     appends " -0700" to the value of "$test_tick" when constructing the value
     for `GIT_COMMITTER_DATE` and `GIT_AUTHOR_DATE`.
 
-    If `test_tick` is unset when the `test_tick` function is called then it
-    will be set to 1112911993 (2005-04-07 15:13:13 -0700) and that value used.
-    Otherwise it will be advanced by 60 and the resulting value used.
+    If `test_tick` is unset or empty when the `test_tick` function is called
+    then it will be set to 1112911993 (2005-04-07 15:13:13 -0700) and that
+    value used.  Otherwise it will be advanced by 60 and the resulting value
+    used.
 
     See also the description of the `test_tick` utility function below.
 

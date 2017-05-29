@@ -145,7 +145,7 @@ sane_unset() {
 }
 
 test_tick() {
-	if test -z "${test_tick+set}"
+	if test -z "${test_tick:+set}"
 	then
 		test_tick=1112911993
 	else
