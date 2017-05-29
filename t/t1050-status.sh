@@ -14,12 +14,12 @@ working directory is clean'
 
 bareub='HEAD -> master [unborn]'
 
-born='HEAD -> master [7cfc564]
+born='HEAD -> master [0665c39]
 working directory is clean'
 
-bare='HEAD -> master [7cfc564]'
+bare='HEAD -> master [0665c39]'
 
-headborn='HEAD -> master [7cfc564]
+headborn='HEAD -> master [0665c39]
 '
 allfixed='
 all conflicts fixed; run "git commit" to record result'
