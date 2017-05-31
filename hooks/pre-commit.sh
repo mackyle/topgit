@@ -31,7 +31,7 @@ if head_=$(git symbolic-ref -q HEAD); then
 	esac
 
 else
-	exit 0;
+	exit 0
 fi
 
 check_topfile()
