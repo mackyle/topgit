@@ -119,11 +119,11 @@ vcmp() {
 		[ "z$vcmp_a_" != "z" -o "z$vcmp_b_" != "z" ]
 	do
 		if [ "${vcmp_a_:-0}" -lt "${vcmp_b_:-0}" ]; then
-			unset vcmp_a_ vcmp_b_
+			unset_ vcmp_a_ vcmp_b_
 			case "$2" in "<"|"<="|"!=") return 0; esac
 			return 1
 		elif [ "${vcmp_a_:-0}" -gt "${vcmp_b_:-0}" ]; then
-			unset vcmp_a_ vcmp_b_
+			unset_ vcmp_a_ vcmp_b_
 			case "$2" in ">"|">="|"!=") return 0; esac
 			return 1;
 		fi
@@ -131,7 +131,7 @@ vcmp() {
 		vcmp_b_="${3#$vcmp_b_}"
 		set -- "${vcmp_a_#.}" "$2" "${vcmp_b_#.}"
 	done
-	unset vcmp_a_ vcmp_b_
+	unset_ vcmp_a_ vcmp_b_
 	case "$2" in "="|"=="|"<="|">=") return 0; esac
 	return 1
 }
@@ -299,7 +299,7 @@ match_test_selector_list() {
 						"end: '$orig_selector'" >&2
 					exit 1
 				fi
-				unset x_
+				unset_ x_
 				;;
 			*)
 				if test "z$selector" != "z${selector#*[!0-9]}"
@@ -910,7 +910,7 @@ EDITOR=:
 # /usr/xpg4/bin/sh and /bin/ksh to bail out.  So keep the unsets
 # deriving from the command substitution clustered with the other
 # ones.
-unset VISUAL EMAIL LANGUAGE COLUMNS $("$PERL_PATH" -e '
+unset_ VISUAL EMAIL LANGUAGE COLUMNS $("$PERL_PATH" -e '
 	my @env = keys %ENV;
 	my $ok = join("|", qw(
 		TRACE
@@ -930,8 +930,8 @@ unset VISUAL EMAIL LANGUAGE COLUMNS $("$PERL_PATH" -e '
 	my @vars = grep(/^GIT_/ && !/^GIT_($ok)/o, @env);
 	print join("\n", @vars);
 ')
-unset XDG_CONFIG_HOME
-unset GITPERLLIB
+unset_ XDG_CONFIG_HOME
+unset_ GITPERLLIB
 GIT_AUTHOR_NAME='Te s t (Author)'
 GIT_AUTHOR_EMAIL=test@example.net
 GIT_COMMITTER_NAME='Fra mewor k (Committer)'
@@ -953,10 +953,10 @@ export GIT_TRACE_BARE
 
 # Protect ourselves from common misconfiguration to export
 # CDPATH into the environment
-unset CDPATH
+unset_ CDPATH
 
-unset GREP_OPTIONS
-unset UNZIP
+unset_ GREP_OPTIONS
+unset_ UNZIP
 
 case "$GIT_TRACE" in 1|2|[Tt][Rr][Uu][Ee])
 	GIT_TRACE=4

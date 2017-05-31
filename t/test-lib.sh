@@ -3,6 +3,11 @@
 # All rights reserved.
 # License GPLv2+
 
+# unset that ignnores error code that shouldn't be produced according to POSIX
+unset_() {
+	unset "$@" || :
+}
+
 # stores the single-quoted value of the variable name passed as
 # the first argument into the variable name passed as the second
 # (use test_quotevar_ 3 varname "$value" to quote a value directly)
@@ -68,7 +73,7 @@ if [ "$1" = "--cache" ]; then
 	. ./test-lib-main.sh
 	TESTLIB_TEST_TEE_STARTED=done
 	test_lib_main_init_generic "$@" || exit $?
-	unset TESTLIB_TEST_TEE_STARTED
+	unset_ TESTLIB_TEST_TEE_STARTED
 
 	if [ -n "$lazily_testable_prereq" ]; then
 		# run all the "lazy" prereq tests now in a new subdir
@@ -102,7 +107,7 @@ if [ "$1" = "--cache" ]; then
 		HOME="$savehome"
 		cd "$savepwd" || fatal "cannot cd to $savepwd"
 		rm -rf "$TRASH_DIRECTORY"
-		unset savepwd savehome TRASH_DIRECTORY TRASHTMP_DIRECTORY GNUPGHOME
+		unset_ savepwd savehome TRASH_DIRECTORY TRASHTMP_DIRECTORY GNUPGHOME
 	fi
 
 	# Add most GIT_XXX vars (variation of code from test-lib-main.sh)
@@ -135,7 +140,7 @@ if [ "$1" = "--cache" ]; then
 	test_quotevar_ PWD PWD_SQ
 	test_quotevar_ TESTLIB_DIRECTORY TD_SQ
 	{
-		echo unset $UNSET_VARS "&&"
+		echo unset $UNSET_VARS "|| : &&"
 		while read vname && [ -n "$vname" ]; do
 			! isvarset $vname || { test_quotevar_ "$vname" qv; printf '%s=%s &&\n' "$vname" "$qv"; }
 		done <<-EOT
@@ -193,7 +198,7 @@ whats_the_dir() {
 if [ -n "$TESTLIB_CACHE_ACTIVE" ]; then
 	# Everything should have been restored by the eval of "$TESTLIB_CACHE"
 	# Remove the leftover variables used to trigger use of the cache
-	unset TESTLIB_CACHE TESTLIB_CACHE_ACTIVE
+	unset_ TESTLIB_CACHE TESTLIB_CACHE_ACTIVE
 
 	# Handle --tee now if needed
 	test_lib_main_init_tee "$@"
@@ -204,6 +209,6 @@ else
 	# Normal, non-cached case where we run the init function
 	whats_the_dir -- "${TEST_DIRECTORY:-.}/test-lib.sh" testlib_dir_
 	. "$testlib_dir_/test-lib-main.sh" &&
-	unset _testlib_dir_ &&
+	unset_ _testlib_dir_ &&
 	test_lib_main_init "$@"
 fi

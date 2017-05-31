@@ -64,11 +64,11 @@
 tg_test_include() {
 	[ -f "$TG_TEST_FULL_PATH" ] && [ -r "$TG_TEST_FULL_PATH" ] ||
 		fatal "tg_test_include called while TG_TEST_FULL_PATH is unset or invalid"
-	unset _tgf_noremote _tgf_fatal _tgf_curdir _tgf_errcode
+	unset_ _tgf_noremote _tgf_fatal _tgf_curdir _tgf_errcode
 	_tgf_curdir="$PWD"
 	while [ $# -gt 0 ]; do case "$1" in
 		-h|--help)
-			unset _tgf_noremote _tgf_fatal _tgf_curdir
+			unset_ _tgf_noremote _tgf_fatal _tgf_curdir
 			echo "tg_test_include [-C <dir>] [-r <remote>] [-u]"
 			return 0
 			;;
@@ -84,7 +84,7 @@ tg_test_include() {
 			shift
 			[ -n "$1" ] || fatal "tg_test_include option -r requires an argument"
 			base_remote="$1"
-			unset _tgf_noremote
+			unset_ _tgf_noremote
 			;;
 		-f)
 			_tgf_fatal=1
@@ -102,7 +102,7 @@ tg_test_include() {
 			;;
 	esac; shift; done
 	[ $# -eq 0 ] || fatal "tg_test_include non-option arguments prohibited: $*"
-	unset tg__include # make sure it's not exported
+	unset_ tg__include # make sure it's not exported
 	tg__include=1
 	# MUST do this AFTER changing the current directory since it sets $git_dir!
 	_tgf_errcode=0
@@ -110,7 +110,7 @@ tg_test_include() {
 	[ -z "$_tgf_noremote" ] || base_remote=
 	cd "$_tgf_curdir" || _fatal "tg_test_include post-include cd failed to: $_tgf_curdir"
 	set -- "$_tgf_errcode" "$_tgf_fatal"
-	unset _tgf_noremote _tgf_fatal _tgf_curdir _tgf_errcode
+	unset_ _tgf_noremote _tgf_fatal _tgf_curdir _tgf_errcode
 	[ -z "$2" ] || [ "$1" = "0" ] || _fatal "tg_test_include sourcing of tg failed with status $1"
 	return $1
 }
@@ -145,7 +145,7 @@ tg_test_v_getbases() {
 	else
 		set -- "$1" "refs/$_tgbases"
 	fi
-	unset _tgbases
+	unset_ _tgbases
 	eval "$1"'="$2"'
 }
 
@@ -178,7 +178,7 @@ tg_test_bare_tree() {
 	[ $# -eq 1 ] && [ -n "$1" ] ||
 		fatal "tg_test_bare_tree missing treeish argument"
 	set -- "$_tct_dir" "$1"
-	unset _tct_dir
+	unset_ _tct_dir
 	git -C "$1" ls-tree --full-tree "$2^{tree}" |
 	# The first character after the '/' in the sed pattern is a literal tab
 	sed -e '/	\.topdeps$/d' -e '/	\.topmsg$/d' |
@@ -396,7 +396,7 @@ tg_test_create_branch() {
 		[ -n "$_tcb_plain" ] || set -- "$@" "$_tcb_bases/$_tcb_new" "$_tcb_scmt"
 		set -- "$@" "refs/heads/$_tcb_new" "$_tcb_hcmt"
 	fi
-	unset _tcb_dir _tcb_nto _tcb_new _tcb_bases _tcb_rmt _tcb_rmtonly _tcb_rmtbases _tcb_msg \
+	unset_ _tcb_dir _tcb_nto _tcb_new _tcb_bases _tcb_rmt _tcb_rmtonly _tcb_rmtbases _tcb_msg \
 	  _tcb_start _tcb_bare _tcb_sdep _tcb_vref _tcb_scmt _tcb_btr _tcb_hcmt _tcb_fmt _tcb_dps \
 	  _tcb_tms _tcb_htr _tcb_nooverwrite || :
 	(_ovwno="${3:+ }" && shift 3 && printf "update %s %s$_ovwno"'\n' "$@") | git -C "$1" update-ref --stdin ||
@@ -549,7 +549,7 @@ tg_test_create_branches() {
 		_tcbs_glno="$_tcbs_lno"
 	done
 	[ -z "$_tcbs_tick" ] || ! [ -e "$_tcbs_tick" ] || rm "$_tcbs_tick"
-	unset _tcbs_dir _tcbs_nto _tcbs_name _tcbs_bmsg _tcbs_bstrt _tcbs_lno \
+	unset_ _tcbs_dir _tcbs_nto _tcbs_name _tcbs_bmsg _tcbs_bstrt _tcbs_lno \
 		_tcbs_dep _tcbs_glno _tcbs_tick _tcbs_nod _tcbs_rbs _tcbs_fmt \
 		_tcbs_bases _tcbs_rmt _tcbs_rmtonly _tcbs_rmtbases _tcbs_mustexist || :
 	return 0

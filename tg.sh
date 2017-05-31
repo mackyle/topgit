@@ -24,6 +24,11 @@ lf='
 
 ## Auxiliary functions
 
+# unset that ignnores error code that shouldn't be produced according to POSIX
+unset_() {
+	unset "$@" || :
+}
+
 # Preserves current $? value while triggering a non-zero set -e exit if active
 # This works even for shells that sometimes fail to correctly trigger a -e exit
 check_exit_code()
@@ -101,7 +106,7 @@ v_quotearg()
 	shift
 	set -- "$_quotearg_v" \
 	"sed \"s/'/'\\\\\\''/g;1s/^/'/;\\\$s/\\\$/'/;s/'''/'/g;1s/^''\\(.\\)/\\1/\"" "$*"
-	unset _quotearg_v
+	unset_ _quotearg_v
 	if [ -z "$3" ]; then
 		if [ -z "$1" ]; then
 			echo "''"
@@ -142,11 +147,11 @@ vcmp()
 		[ "z$vcmp_a_" != "z" -o "z$vcmp_b_" != "z" ]
 	do
 		if [ "${vcmp_a_:-0}" -lt "${vcmp_b_:-0}" ]; then
-			unset vcmp_a_ vcmp_b_
+			unset_ vcmp_a_ vcmp_b_
 			case "$2" in "<"|"<="|"!=") return 0; esac
 			return 1
 		elif [ "${vcmp_a_:-0}" -gt "${vcmp_b_:-0}" ]; then
-			unset vcmp_a_ vcmp_b_
+			unset_ vcmp_a_ vcmp_b_
 			case "$2" in ">"|">="|"!=") return 0; esac
 			return 1;
 		fi
@@ -154,7 +159,7 @@ vcmp()
 		vcmp_b_="${3#$vcmp_b_}"
 		set -- "${vcmp_a_#.}" "$2" "${vcmp_b_#.}"
 	done
-	unset vcmp_a_ vcmp_b_
+	unset_ vcmp_a_ vcmp_b_
 	case "$2" in "="|"=="|"<="|">=") return 0; esac
 	return 1
 }
@@ -266,7 +271,7 @@ git_temp_alt_odb_cmd()
 		(
 			GIT_ALTERNATE_OBJECT_DIRECTORIES="$TG_PRESERVED_ALTERNATES"
 			GIT_OBJECT_DIRECTORY="$TG_OBJECT_DIRECTORY"
-			unset TG_OBJECT_DIRECTORY TG_PRESERVED_ALTERNATES
+			unset_ TG_OBJECT_DIRECTORY TG_PRESERVED_ALTERNATES
 			export GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_OBJECT_DIRECTORY
 			git "$@"
 		)
@@ -1717,7 +1722,7 @@ setup_git_dirs()
 				[ -n "$1" ] || warn "ignoring non-absolute core.hooksPath: $gchp"
 				;;
 		esac
-		unset gchp
+		unset_ gchp
 	fi
 }
 
@@ -1734,10 +1739,10 @@ basic_setup()
 	tgsequester="$(git config --bool topgit.sequester 2>/dev/null)" || :
 	tgnosequester=
 	[ "$tgsequester" != "false" ] || tgnosequester=1
-	unset tgsequester
+	unset_ tgsequester
 
 	# catch errors if topbases is used without being set
-	unset tg_topbases_set
+	unset_ tg_topbases_set
 	topbases="programmer*:error"
 	topbasesrx="programmer*:error}"
 	oldbases="$topbases"
@@ -1784,7 +1789,7 @@ initial_setup()
 		[ -n "$tg_tmp_dir" ] || tg_tmp_dir="$(mktemp -d "${TMPDIR:-/tmp}/tg-tmp.XXXXXX" 2>/dev/null)" || tg_tmp_dir=
 		[ -n "$tg_tmp_dir" ] || [ -z "$TMPDIR" ] || tg_tmp_dir="$(mktemp -d "/tmp/tg-tmp.XXXXXX" 2>/dev/null)" || tg_tmp_dir=
 	fi
-	unset TG_TMPDIR
+	unset_ TG_TMPDIR
 	tg_ref_cache="$tg_tmp_dir/tg~ref-cache"
 	tg_ref_cache_br="$tg_ref_cache.br"
 	tg_ref_cache_rbr="$tg_ref_cache.rbr"
@@ -1867,10 +1872,10 @@ noalt_setup()
 		if [ -n "$GIT_ALTERNATE_OBJECT_DIRECTORIES" ]; then
 			export GIT_ALTERNATE_OBJECT_DIRECTORIES
 		else
-			unset GIT_ALTERNATE_OBJECT_DIRECTORIES
+			unset_ GIT_ALTERNATE_OBJECT_DIRECTORIES
 		fi
 	fi
-	unset TG_TMPDIR TG_OBJECT_DIRECTORY TG_PRESERVED_ALTERNATES tg_use_alt_odb
+	unset_ TG_TMPDIR TG_OBJECT_DIRECTORY TG_PRESERVED_ALTERNATES tg_use_alt_odb
 }
 
 set_topbases()
@@ -1885,7 +1890,7 @@ set_topbases()
 	if [ -n "$tgtb" ] && [ "$tgtb" != "heads" ] && [ "$tgtb" != "refs" ]; then
 		if [ -n "$1" ]; then
 			# never die on the hook script
-			unset tgtb
+			unset_ tgtb
 		else
 			die "invalid \"topgit.top-bases\" setting (must be \"heads\" or \"refs\")"
 		fi
@@ -1902,11 +1907,11 @@ set_topbases()
 			oldbases="heads/{top-bases}";;
 		esac
 		# MUST NOT be exported
-		unset tgtb tg_topbases_set topbases_implicit_default
+		unset_ tgtb tg_topbases_set topbases_implicit_default
 		tg_topbases_set=1
 		return 0
 	fi
-	unset tgtb
+	unset_ tgtb
 
 	# check heads and top-bases and see what state the current
 	# repository is in.  remotes are ignored.
@@ -1928,7 +1933,7 @@ set_topbases()
 		err "(the tg migrate-bases command can also resolve this issue)"
 		die "schizophrenic repository requires topgit.top-bases setting"
 	fi
-	[ -z "$activebases" ] || unset topbases_implicit_default
+	[ -z "$activebases" ] || unset_ topbases_implicit_default
 	if [ "$activebases" = "refs/heads/{top-bases}" ]; then
 		topbases="heads/{top-bases}"
 		topbasesrx="heads/[{]top-bases[}]"
@@ -1940,7 +1945,7 @@ set_topbases()
 		oldbases="heads/{top-bases}"
 	fi
 	# MUST NOT be exported
-	unset rc activebases tg_topases_set
+	unset_ rc activebases tg_topases_set
 	tg_topbases_set=1
 	return 0
 }
@@ -2041,7 +2046,7 @@ else
 		tgdisplayac="$tgdisplay"
 	fi
 	[ -z "$_tgabs" ] || tgbin="$_tgabs"
-	unset _tgabs _tgnameabs
+	unset_ _tgabs _tgnameabs
 
 	tg() (
 		TG_TMPDIR="$tg_tmp_dir" && export TG_TMPDIR &&
@@ -2093,7 +2098,7 @@ else
 				do_help
 				exit 1
 			fi
-			unset noremote
+			unset_ noremote
 			base_remote="$1"
 			explicit_remote="$base_remote"
 			tgdisplay="$tgdisplaydir$tgname$gitcdopt -r $explicit_remote"
@@ -2101,7 +2106,7 @@ else
 			shift;;
 
 		-u)
-			unset base_remote explicit_remote
+			unset_ base_remote explicit_remote
 			noremote=1
 			tgdisplay="$tgdisplaydir$tgname$gitcdopt -u"
 			TG_EXPLICIT_REMOTE= && export TG_EXPLICIT_REMOTE
@@ -2115,7 +2120,7 @@ else
 				exit 1
 			fi
 			cd "$1"
-			unset GIT_DIR GIT_COMMON_DIR
+			unset_ GIT_DIR GIT_COMMON_DIR
 			if [ -z "$explicit_dir" ]; then
 				explicit_dir="$1"
 			else
@@ -2168,7 +2173,7 @@ else
 			exit 0;;
 
 		status|st)
-			unset base_remote
+			unset_ base_remote
 			basic_setup
 			set_topbases
 			do_status "$@"
@@ -2209,7 +2214,7 @@ else
 				TG_ALIAS_DEPTH="$looplevel"
 				export TG_ALIAS_DEPTH
 				if [ "!${tgalias#?}" = "$tgalias" ]; then
-					unset GIT_PREFIX
+					unset_ GIT_PREFIX
 					if pfx="$(git rev-parse --show-prefix 2>/dev/null)"; then
 						GIT_PREFIX="$pfx"
 						export GIT_PREFIX
@@ -2221,7 +2226,7 @@ else
 				fi
 				die "alias execution failed for: $tgalias"
 			}
-			unset TG_ALIAS_DEPTH
+			unset_ TG_ALIAS_DEPTH
 
 			showing_help=
 			if [ "$*" = "-h" ] || [ "$*" = "--help" ]; then
@@ -2229,7 +2234,7 @@ else
 			fi
 
 			[ -n "$showing_help" ] || initial_setup
-			[ -z "$noremote" ] || unset base_remote
+			[ -z "$noremote" ] || unset_ base_remote
 
 			nomergesetup="$showing_help"
 			case "$cmd" in base|contains|info|log|rebase|revert|summary|tag)

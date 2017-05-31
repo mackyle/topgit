@@ -110,7 +110,7 @@ run_index_merge() {
 		'o');;
 		  *) die;;
 	esac
-	unset USE_STRATEGY
+	sane_unset USE_STRATEGY
 	[ -z "$strat" ] || USE_STRATEGY="$strat" && export USE_STRATEGY
 	rm -f ".toolran" ".git/index-save"
 	cp -f ".git/index" ".git/index-save"

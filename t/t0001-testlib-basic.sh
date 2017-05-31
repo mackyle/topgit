@@ -67,7 +67,7 @@ _run_sub_test_lib_test_common () {
 
 		# Unset LINENO as it's not universally supported and we do not
 		# want to have to count lines to generate the expected output!
-		unset LINENO
+		unset LINENO || :
 
 		. ./test-lib.sh
 
@@ -793,7 +793,7 @@ then
 fi
 
 # Mostly done with the no subshell tests
-unset TESTLIB_TEST_NO_SUBSHELL
+sane_unset TESTLIB_TEST_NO_SUBSHELL
 
 clean=no
 test_expect_success 'tests clean up after themselves' '
@@ -854,7 +854,7 @@ TESTLIB_TEST_NO_SUBSHELL=1
 test_expect_success 'writing tree out with git write-tree' '
 	tree=$(git write-tree)
 '
-unset TESTLIB_TEST_NO_SUBSHELL
+sane_unset TESTLIB_TEST_NO_SUBSHELL
 
 # we know the shape and contents of the tree and know the object ID for it.
 test_expect_success 'validate object ID of a known tree' '
@@ -876,7 +876,7 @@ TESTLIB_TEST_NO_SUBSHELL=1
 test_tolerate_failure 'git write-tree should be able to write an empty tree' '
 	tree=$(git write-tree)
 '
-unset TESTLIB_TEST_NO_SUBSHELL
+sane_unset TESTLIB_TEST_NO_SUBSHELL
 
 if test -n "$tree"
 then
@@ -926,7 +926,7 @@ TESTLIB_TEST_NO_SUBSHELL=1
 test_expect_success 'writing tree out with git write-tree' '
 	tree=$(git write-tree)
 '
-unset TESTLIB_TEST_NO_SUBSHELL
+sane_unset TESTLIB_TEST_NO_SUBSHELL
 
 test_expect_success 'validate object ID for a known tree' '
 	test "$tree" = 087704a96baf1c2d1c869a8b084481e121c88b5b
@@ -992,7 +992,7 @@ TESTLIB_TEST_NO_SUBSHELL=1
 test_expect_success 'writing partial tree out with git write-tree --prefix' '
 	ptree=$(git write-tree --prefix=path3)
 '
-unset TESTLIB_TEST_NO_SUBSHELL
+sane_unset TESTLIB_TEST_NO_SUBSHELL
 
 test_expect_success 'validate object ID for a known tree' '
 	test "$ptree" = 21ae8269cacbe57ae09138dcc3a2887f904d02b3
@@ -1002,7 +1002,7 @@ TESTLIB_TEST_NO_SUBSHELL=1
 test_expect_success 'writing partial tree out with git write-tree --prefix' '
 	ptree=$(git write-tree --prefix=path3/subp3)
 '
-unset TESTLIB_TEST_NO_SUBSHELL
+sane_unset TESTLIB_TEST_NO_SUBSHELL
 
 test_expect_success 'validate object ID for a known tree' '
 	test "$ptree" = 3c5e5399f3a333eddecce7a9b9465b63f65f51e2
@@ -1072,7 +1072,7 @@ test_expect_success 'git commit-tree records the correct tree in a commit' '
 		 sed -n -e "s/^tree //p" -e "/^author /q") &&
 	test "z$tree" = "z$P"
 '
-unset TESTLIB_TEST_NO_SUBSHELL
+sane_unset TESTLIB_TEST_NO_SUBSHELL
 
 test_expect_success 'git commit-tree records the correct parent in a commit' '
 	commit1=$(echo NO | git commit-tree $P -p $commit0) &&

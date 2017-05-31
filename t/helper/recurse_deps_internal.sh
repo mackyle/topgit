@@ -29,12 +29,17 @@ cmd_path() (
         command -v "$1"
 )
 
+# unset that ignnores error code that shouldn't be produced according to POSIX
+unset_() {
+	unset "$@" || :
+}
+
 set -e
 
 tgbin="$(cmd_path tg)" && [ -n "$tgbin" ] && [ -x "$tgbin" ] && [ -r "$tgbin" ] ||
 	fatal "tg not found in \$PATH or not executable or not readable"
 
-unset noremote nocache
+unset_ noremote nocache
 while [ $# -gt 0 ]; do case "$1" in
 	-h|--help)
 		usage
@@ -51,7 +56,7 @@ while [ $# -gt 0 ]; do case "$1" in
 		shift
 		[ -n "$1" ] || fatal "option -r requires an argument"
 		base_remote="$1"
-		unset noremote
+		unset_ noremote
 		;;
 	--no-cache)
 		nocache=1

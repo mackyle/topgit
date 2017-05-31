@@ -444,7 +444,7 @@ test_expect_failure_lno() {
 		fi
 	fi
 	test_finish_
-	unset callerlno
+	unset_ callerlno
 }
 test_expect_failure() {
 	test_expect_failure_lno "" "$@"
@@ -478,7 +478,7 @@ test_tolerate_failure_lno() {
 		fi
 	fi
 	test_finish_
-	unset callerlno
+	unset_ callerlno
 }
 fi
 test_tolerate_failure() {
@@ -510,7 +510,7 @@ test_expect_success_lno() {
 		fi
 	fi
 	test_finish_
-	unset callerlno
+	unset_ callerlno
 }
 test_expect_success() {
 	test_expect_success_lno "" "$@"
@@ -568,7 +568,7 @@ test_external_lno() {
 		fi
 		test_external_skipped=
 	fi
-	unset callerlno
+	unset_ callerlno
 }
 test_external() {
 	test_external_lno "" "$@"
@@ -616,7 +616,7 @@ test_external_without_stderr_lno() {
 			test_failure=$(($test_failure + 1))
 		fi
 	fi
-	unset callerlno
+	unset_ callerlno
 }
 test_external_without_stderr() {
 	test_external_without_stderr_lno "" "$@"
