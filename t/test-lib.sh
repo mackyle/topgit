@@ -1,4 +1,4 @@
-# Test libe caching support
+# Test lib caching support
 # Copyright (C) 2016,2017 Kyle J. McKay.
 # All rights reserved.
 # License GPLv2+
