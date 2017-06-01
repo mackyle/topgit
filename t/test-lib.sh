@@ -3,9 +3,22 @@
 # All rights reserved.
 # License GPLv2+
 
+
+# some ridiculous sh implementations require 'trap ... EXIT' to be executed
+# OUTSIDE ALL FUNCTIONS to work in a sane fashion.  Always trap it and eval
+# "${TRAPEXIT_:-exit}" as a substitute.
+trapexit_()
+{
+	EXITCODE_=${1:-$?}
+	trap - EXIT
+	eval "${TRAPEXIT_:-exit $EXITCODE_}"
+	exit $EXITCODE_
+}
+trap 'trapexit_ $?' EXIT
+
 # unset that ignnores error code that shouldn't be produced according to POSIX
 unset_() {
-	unset "$@" || :
+	{ unset "$@"; } >/dev/null 2>&1 || :
 }
 
 # stores the single-quoted value of the variable name passed as

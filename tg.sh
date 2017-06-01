@@ -24,8 +24,21 @@ lf='
 
 ## Auxiliary functions
 
-# unset that ignnores error code that shouldn't be produced according to POSIX
-unset_() {
+# some ridiculous sh implementations require 'trap ... EXIT' to be executed
+# OUTSIDE ALL FUNCTIONS to work in a sane fashion.  Always trap it and eval
+# "${TRAPEXIT_:-exit}" as a substitute.
+trapexit_()
+{
+	EXITCODE_=${1:-$?}
+	trap - EXIT
+	eval "${TRAPEXIT_:-exit $EXITCODE_}"
+	exit $EXITCODE_
+}
+trap 'trapexit_ $?' EXIT
+
+# unset that ignores error code that shouldn't be produced according to POSIX
+unset_()
+{
 	unset "$@" || :
 }
 
@@ -40,7 +53,7 @@ check_exit_code()
 cmd_path()
 (
 	{ "unset" -f command unset unalias "$1"; } >/dev/null 2>&1 || :
-	{ "unalias" -a; } >/dev/null 2>&1 || :
+	{ "unalias" -a || unalias -m "*"; } >/dev/null 2>&1 || :
 	command -v "$1"
 )
 
@@ -48,6 +61,8 @@ cmd_path()
 # note deliberate use of '(' ... ')' rather than '{' ... '}'
 exec_lc_all_c()
 (
+	{ "unset" -f "$1" || :; } >/dev/null 2>&1 &&
+	shift &&
 	LC_ALL="C" &&
 	export LC_ALL &&
 	exec "$@"
@@ -56,18 +71,18 @@ exec_lc_all_c()
 # These tools work better for us with LC_ALL=C and by using these little
 # convenience functions LC_ALL=C does not have to appear in the code but
 # any Git translations will still appear for Git commands
-awk()	{ exec_lc_all_c @AWK_PATH@	"$@"; }
-cat()	{ exec_lc_all_c cat		"$@"; }
-cut()	{ exec_lc_all_c cut		"$@"; }
-find()	{ exec_lc_all_c find		"$@"; }
-grep()	{ exec_lc_all_c grep		"$@"; }
-join()	{ exec_lc_all_c join		"$@"; }
-paste()	{ exec_lc_all_c paste		"$@"; }
-sed()	{ exec_lc_all_c sed		"$@"; }
-sort()	{ exec_lc_all_c sort		"$@"; }
-tr()	{ exec_lc_all_c tr		"$@"; }
-wc()	{ exec_lc_all_c wc		"$@"; }
-xargs()	{ exec_lc_all_c xargs		"$@"; }
+awk()	{ exec_lc_all_c awk @AWK_PATH@	"$@"; }
+cat()	{ exec_lc_all_c cat cat		"$@"; }
+cut()	{ exec_lc_all_c cut cut		"$@"; }
+find()	{ exec_lc_all_c find find	"$@"; }
+grep()	{ exec_lc_all_c grep grep	"$@"; }
+join()	{ exec_lc_all_c join join	"$@"; }
+paste()	{ exec_lc_all_c paste paste	"$@"; }
+sed()	{ exec_lc_all_c sed sed		"$@"; }
+sort()	{ exec_lc_all_c sort sort	"$@"; }
+tr()	{ exec_lc_all_c tr tr		"$@"; }
+wc()	{ exec_lc_all_c wc wc		"$@"; }
+xargs()	{ exec_lc_all_c xargs xargs	"$@"; }
 
 # Output arguments without any possible interpretation
 # (Avoid misinterpretation of '\' characters or leading "-n", "-E" or "-e")
@@ -1779,12 +1794,13 @@ initial_setup()
 		tg_tmp_dir="$TG_TMPDIR"
 	else
 		tg_tmp_dir=
-		trap '${TG_DEBUG:+echo} rm -rf "$tg_tmp_dir" >&2' EXIT
-		trap 'exit 129' HUP
-		trap 'exit 130' INT
-		trap 'exit 131' QUIT
-		trap 'exit 134' ABRT
-		trap 'exit 143' TERM
+		TRAPEXIT_='${TG_DEBUG:+echo} rm -rf "$tg_tmp_dir" >&2'
+		trap 'trapexit_ 129' HUP
+		trap 'trapexit_ 130' INT
+		trap 'trapexit_ 131' QUIT
+		trap 'trapexit_ 134' ABRT
+		trap 'trapexit_ 141' PIPE
+		trap 'trapexit_ 143' TERM
 		tg_tmp_dir="$(mktemp -d "$git_dir/tg-tmp.XXXXXX" 2>/dev/null)" || tg_tmp_dir=
 		[ -n "$tg_tmp_dir" ] || tg_tmp_dir="$(mktemp -d "${TMPDIR:-/tmp}/tg-tmp.XXXXXX" 2>/dev/null)" || tg_tmp_dir=
 		[ -n "$tg_tmp_dir" ] || [ -z "$TMPDIR" ] || tg_tmp_dir="$(mktemp -d "/tmp/tg-tmp.XXXXXX" 2>/dev/null)" || tg_tmp_dir=

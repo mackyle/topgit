@@ -140,8 +140,7 @@ remove_cr() {
 # Use sane_unset when that should not be considered an error.
 
 sane_unset() {
-	"unset" "$@" || :
-	return 0
+	{ "unset" "$@"; } >/dev/null 2>&1 || :
 }
 
 test_tick() {
@@ -956,10 +955,12 @@ test_write_lines() {
 }
 
 git() (
+	{ "unset" -f git; } >/dev/null 2>&1 || :
 	"exec" "$GIT_PATH" "$@"
 )
 
 perl() (
+	{ "unset" -f perl; } >/dev/null 2>&1 || :
 	"exec" "$PERL_PATH" "$@"
 )
 

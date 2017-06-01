@@ -41,7 +41,7 @@
 
 cmd_path() (
 	{ "unset" -f command unset unalias "$1"; } >/dev/null 2>&1 || :
-	{ "unalias" -a; } >/dev/null 2>&1 || :
+	{ "unalias" -a || unalias -m "*"; } >/dev/null 2>&1 || :
 	command -v "$1"
 )
 
@@ -165,7 +165,7 @@ say_tap() {
 }
 
 _die() {
-	code=$?
+	code=${EXITCODE_:-$?}
 	if test -n "$TESTLIB_EXIT_OK"
 	then
 		exit $code
@@ -1314,9 +1314,14 @@ fi
 BASH_XTRACEFD=4
 
 TESTLIB_EXIT_OK=
-trap '_die' EXIT
-trap 'exit $?' HUP INT QUIT ABRT PIPE TERM
-trap 'TESTLIB_EXIT_OK=t; exit 1' USR1
+TRAPEXIT_='_die'
+trap 'trapexit_ 129' HUP
+trap 'trapexit_ 130' INT
+trap 'trapexit_ 131' QUIT
+trap 'trapexit_ 134' ABRT
+trap 'trapexit_ 141' PIPE
+trap 'trapexit_ 143' TERM
+trap 'TESTLIB_EXIT_OK=t; trapexit_ 1' USR1
 
 # Test repository
 TRASH_DIRECTORY="trash directory.${0##*/}"

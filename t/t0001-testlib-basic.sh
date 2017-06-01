@@ -65,11 +65,18 @@ _run_sub_test_lib_test_common () {
 		passing metrics
 		'
 
+		. ./test-lib.sh
+
 		# Unset LINENO as it's not universally supported and we do not
 		# want to have to count lines to generate the expected output!
-		unset LINENO || :
-
-		. ./test-lib.sh
+		# Attempting this:
+		#   unset LINENO || :
+		# may cause some broken sh implementations to abruptly terminate!
+		# Instead just unalias all to avoid picking up the line numbers
+		# after making sure unalias itself is not a function and
+		# dealing with broken zsh that's missing a proper "unalias -a".
+		{ "unset" -f unalias; } >/dev/null 2>&1 || :
+		{ "unalias" -a || unalias -m "*"; } >/dev/null 2>&1 || :
 
 		EOF
 		cat >>"$name.sh" &&

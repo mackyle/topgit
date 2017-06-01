@@ -25,7 +25,7 @@ fatal()
 
 cmd_path() (
         { "unset" -f command unset unalias "$1"; } >/dev/null 2>&1 || :
-        { "unalias" -a; } >/dev/null 2>&1 || :
+        { "unalias" -a || unalias -m "*"; } >/dev/null 2>&1 || :
         command -v "$1"
 )
 

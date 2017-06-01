@@ -104,12 +104,7 @@ if [ -z "$newhash" ]; then
 	oursf="$tg_tmp_dir/tgmerge_$$_ours"
 	thrsf="$tg_tmp_dir/tgmerge_$$_thrs"
 	trap 'rm -f "$basef" "$oursf" "$thrsf"' EXIT
-	trap 'exit 129' HUP
-	trap 'exit 130' INT
-	trap 'exit 131' QUIT
-	trap 'exit 134' ABRT
-	trap 'exit 141' PIPE
-	trap 'exit 143' TERM
+	trap 'exit' HUP INT QUIT ABRT PIPE TERM
 	git cat-file blob "$1" >"$basef" 2>/dev/null || exit 1
 	git cat-file blob "$2" >"$oursf" 2>/dev/null || exit 1
 	git cat-file blob "$3" >"$thrsf" 2>/dev/null || exit 1
