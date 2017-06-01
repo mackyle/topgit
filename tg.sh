@@ -1,7 +1,7 @@
 #!/bin/sh
 # TopGit - A different patch queue manager
-# Copyright (C) Petr Baudis <pasky@suse.cz>  2008
-# Copyright (C) Kyle J. McKay <mackyle@gmail.com>  2014,2015,2016
+# Copyright (C) 2008 Petr Baudis <pasky@suse.cz>
+# Copyright (C) 2014-2017 Kyle J. McKay <mackyle@gmail.com>
 # All rights reserved.
 # GPLv2
 
@@ -16,8 +16,8 @@ octet='[0-9a-f][0-9a-f]'
 octet4="$octet$octet$octet$octet"
 octet19="$octet4$octet4$octet4$octet4$octet$octet$octet"
 octet20="$octet4$octet4$octet4$octet4$octet4"
-nullsha="0000000000000000000000000000000000000000"
-mtblob="e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+nullsha="0000000000000000000000000000000000000000" # :|git mktree|tr 0-9a-f 0
+mtblob="e69de29bb2d1d6434b8b29ae775ad8c2e48c5391" # :|git hash-object --stdin -w
 tab='	'
 lf='
 '
