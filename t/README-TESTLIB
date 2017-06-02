@@ -831,6 +831,13 @@ available utility functions that are TopGit-specific.
     test script file as needed.  Note that it _will_ be called when the entire
     test script is skipped with a `1..0` plan line.
 
+- test_clear_when_finished
+
+    Any `test_when_finished` items already scheduled in the subtest script
+    so far are cleared (i.e. removed).  Calling `test_clear_when_finished`
+    before `test_when_finished` has first been called silently does nothing
+    with no error.
+
 - test_cmp <arg>...
 
     Shortcut for:
@@ -1116,6 +1123,8 @@ available utility functions that are TopGit-specific.
     some action using a variable that has not yet been set.  In that case the
     "eval" form will be needed and probably `TESTLIB_TEST_NO_SUBSHELL` will
     also have to be set to true to make it work.
+
+    See also `test_clear_when_finished`.
 
 - test_write_lines <arg>...
 

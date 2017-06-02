@@ -926,6 +926,15 @@ test_when_finished() {
 	printf '{ %s\n} && (exit "$eval_ret"); eval_ret=$?\n' "$twf_cmd_" >>"$twf_script_"
 }
 
+# clear out any test_when_finished items scheduled so far in this subtest
+test_clear_when_finished() {
+	tcwf_script_="$TRASHTMP_DIRECTORY/test_when_finished_${test_count:-0}.sh"
+	! test -e "$tcwf_script_" || {
+		rm -f "$tcwf_script_" &&
+		! test -e "$tcwf_script_"
+	}
+}
+
 # Most tests can use the created repository, but some may need to create more.
 # Usage: test_create_repo <directory>
 test_create_repo() {
