@@ -314,7 +314,7 @@ test_ensure_git_dir_() {
 
 test_run_lazy_prereq_() {
 	script='
-mkdir -p "$TRASHTMP_DIRECTORY/prereq-test-dir" &&
+test_ensure_temp_dir_ "test_run_lazy_prereq_" "prereq-test-dir" &&
 (
 	cd "$TRASHTMP_DIRECTORY/prereq-test-dir" &&'"$2"'
 )'
@@ -847,9 +847,10 @@ test_must_be_empty() {
 
 # Tests that its two parameters refer to the same revision
 test_cmp_rev() {
-	git rev-parse --verify "$1" >expect.rev &&
-	git rev-parse --verify "$2" >actual.rev &&
-	test_cmp expect.rev actual.rev
+	test_ensure_temp_dir_ "test_cmp_rev"
+	git rev-parse --verify "$1" -- >"$TRASHTMP_DIRECTORY/expect.rev" &&
+	git rev-parse --verify "$2" -- >"$TRASHTMP_DIRECTORY/actual.rev" &&
+	test_cmp "$TRASHTMP_DIRECTORY/expect.rev" "$TRASHTMP_DIRECTORY/actual.rev"
 }
 
 # Print a sequence of integers in increasing order, either with
@@ -899,11 +900,7 @@ test_seq() {
 
 test_when_finished() {
 	test z"$*" != z && test -z "$linting" || return 0
-	test z"$TRASHTMP_DIRECTORY" != z ||
-	    fatal "test_when_finished cannot be used before TRASHTMP_DIRECTORY is set"
-	test -d "$TRASHTMP_DIRECTORY" ||
-	mkdir "$TRASHTMP_DIRECTORY" ||
-	    fatal "could not create temp directory \"$TRASHTMP_DIRECTORY\""
+	test_ensure_temp_dir_ "test_when_finished"
 	twf_script_="$TRASHTMP_DIRECTORY/test_when_finished_${test_count:-0}.sh"
 	twf_cmd_=
 	for twf_arg_ in "$@"; do

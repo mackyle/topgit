@@ -853,6 +853,10 @@ available utility functions that are TopGit-specific.
     Save output of `git rev-parse --verify` on each argument to a file and
     then run `test_cmp expect.rev actual.rev` on the resulting two files.
 
+    The temporary files are actually placed in TRASHTMP_DIRECTORY so there's
+    no need to be concerned about contaminating a working tree that's being
+    used for testing or needing to do a `cd` to avoid that.
+
 - test_commit [--notick] [--signoff] <message> [<file> [<contents> [<tag>]]]
 
     Create a new Git commit with "<message>" as the commit message optionally

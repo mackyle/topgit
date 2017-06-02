@@ -699,15 +699,26 @@ run_with_limited_cmdline() {
 	(ulimit -s 128 && "$@")
 }
 
+# internal use function
+test_ensure_temp_dir_() {
+	test z"$TRASHTMP_DIRECTORY" != z ||
+		fatal "${1:+$1 called but }TRASHTMP_DIRECTORY is not set yet"
+	test -d "$TRASHTMP_DIRECTORY" || {
+		mkdir "$TRASHTMP_DIRECTORY" &&
+		test -d "$TRASHTMP_DIRECTORY"
+	} || fatal "could not create temp directory \"$TRASHTMP_DIRECTORY\""
+	test z"$2" = z ||
+	test -d "$TRASHTMP_DIRECTORY/$2" || {
+		mkdir "$TRASHTMP_DIRECTORY/$2" &&
+		test -d "$TRASHTMP_DIRECTORY/$2"
+	} || fatal "could not create temp subdirectory \"$TRASHTMP_DIRECTORY/$2\""
+}
+
 # test_get_temp [-d] [<name>]
 # creates a new temporary file (or directory with -d) in the
 # temporary directory $TRASHTMP_DIRECTORY with pattern prefix NAME
 test_get_temp() {
-	test z"$TRASHTMP_DIRECTORY" != z ||
-		fatal "test_get_temp called before TRASHTMP_DIRECTORY set"
-	test -d "$TRASHTMP_DIRECTORY" ||
-	mkdir "$TRASHTMP_DIRECTORY" ||
-		fatal "could not create temp directory \"$TRASHTMP_DIRECTORY\""
+	test_ensure_temp_dir_ "test_get_temp"
 	test z"$1" != z"-d" || set -- "$2" "$1"
 	mktemp $2 "$TRASHTMP_DIRECTORY/${1:+$1.}XXXXXX"
 }
