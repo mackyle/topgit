@@ -181,6 +181,13 @@ Variables
     function `test_create_repo` can always be used to easily create a
     repository (or two or more) if desired.
 
+- color
+
+    Set automatically or explicity using the `--color` or `--no-color` options.
+    It will be the empty string if "no color" is in effect or it will be the
+    string "--color" if "color" is in effect.  It can therefore be directly
+    used as an argument to git commands when producing debugging output.
+
 - skip_all
 
     If set to a non-empty value before calling the `test_done` function and

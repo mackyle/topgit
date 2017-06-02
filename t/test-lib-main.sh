@@ -762,7 +762,7 @@ test_lib_main_init_funcs() {
 
 [ -z "$test_lib_main_init_funcs_done" ] || return 0
 
-if test -n "$color"
+if test z"$color" != z
 then
 	say_color() {
 		test -z "$1" && test -n "$quiet" && return
@@ -1013,7 +1013,7 @@ do
 	-q|--q|--qu|--qui|--quie|--quiet)
 		quiet=t; shift ;;
 	--color)
-		color=t; shift ;;
+		color="--color"; shift ;;
 	--no-color)
 		color=; shift ;;
 	--tee)
@@ -1046,8 +1046,8 @@ test "x$TERM" != "xdumb" && (
 		tput setaf 1 >/dev/null 2>&1 &&
 		tput sgr0 >/dev/null 2>&1
 	) &&
-	color=t
-if test -n "$color"
+	color="--color"
+if test z"$color" != z
 then
 	# Save the color control sequences now rather than run tput
 	# each time say_color() is called.  This is done for two
