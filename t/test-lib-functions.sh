@@ -665,6 +665,20 @@ test_path_is_missing() {
 	fi
 }
 
+wc() {
+	wc_=0 &&
+	{
+		{
+			wc_vals_="$(command wc "$@")" &&
+			set -- $wc_vals_ &&
+			echo "$*"
+		} || wc_=$?
+	} &&
+	set -- "$wc_" &&
+	unset_ wc_ wc_vals_ &&
+	return $1
+}
+
 # test_line_count checks that a file has the number of lines it
 # ought to. For example:
 #
@@ -680,7 +694,7 @@ test_line_count() {
 	if test $# != 3
 	then
 		error "bug in the test script: not 3 parameters to test_line_count"
-	elif ! test $(( $(wc -l <"$3") )) "$1" "$2"
+	elif ! test $(wc -l <"$3") "$1" "$2"
 	then
 		echo "test_line_count: line count for $3 !$1 $2"
 		cat "$3"

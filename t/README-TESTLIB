@@ -1119,6 +1119,44 @@ available utility functions that are TopGit-specific.
     Run `<cmd> <arg>...` and verbosely complain (showing command and args) if
     it fails, but the exit status on failure will be converted to 1.
 
+- wc [-c|-m] [-lw] [<file>...]
+
+    This is a wrapper around the wc utility.  Some systems produce formatted
+    output with extra spaces in it that this wrapper conveniently removes.
+
+    BEWARE!  The output from the system's native wc will have all leading and
+    trailing spaces removed and all sequences of internal whitespace converted
+    to a single space.
+
+    Although it's not been disabled, avoid using wc with any <file> arguments!
+
+    Parsing out the filenames from the result is error prone (and they will
+    all end up on one line if there's more than one and any internal runs of
+    whitespace in the name(s) will each be converted to a single space courtesy
+    of the wrapper).
+
+    Instead redirect standard input to the file or files to be counted and
+    use `cat` if there's more than one file, something like this:
+
+        lines_1=$(wc -l < file1)
+        lines_2_plus_3=$(cat file2 file3 | wc -l)
+
+    To test line counts in a test script, use something like this:
+
+        printf "%s\n" one two three four >testfile &&
+        lines=$(wc -l <testfile) &&
+        test $lines -eq 4
+
+    While the output of a command can be piped directly to wc that means
+    the command's result status will be discarded (in favor of wc's if it's
+    the last command in the pipeline) so that should generally be avoided
+    (although the `cat` example above is probably okay to use).
+
+    If you're using wc to count something on its standard input then you can
+    safely use it just like the POSIX version without needing to be concerned
+    about bogus whitespace showing up in the result which is the whole point
+    of this wrapper in the first place.
+
 - write_script <file> [<shell-path>] < <script-text>
 
     Write a shebang line using <shell-path> (default is `$SHELL_PATH`) to
