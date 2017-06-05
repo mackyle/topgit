@@ -55,7 +55,7 @@ function kasort_order3(anarray, i1, i2, i3, _c12, _c13, _c23) {
 	_c12 = cmpkeys(anarray, i1, i2)
 	_c23 = cmpkeys(anarray, i2, i3)
 	if (_c12 <= 0) {
-		if (_c23 <= 0) return (!_c12 || !_c23) ? -1 : 0
+		if (_c23 <= 0) return ((!_c12 && _c23) || (!_c23 && _c12)) ? -1 : 0
 		if (_c12 == 0) {
 			arrayswp(anarray, i1, i3)
 			return -1
@@ -76,7 +76,7 @@ function kasort_order3(anarray, i1, i2, i3, _c12, _c13, _c23) {
 #   Kick Ass sort
 #   Kyle's Array sort
 #
-function kasort_partition(anarray, si, ei, _mi, _le, _ge, _o3) {
+function kasort_partition(anarray, si, ei, _mi, _le, _ge, _o3, _n) {
 	if (ei <= si) return
 	if (si + 1 == ei) {
 		if (cmpkeys(anarray, si, ei) > 0)
@@ -84,8 +84,13 @@ function kasort_partition(anarray, si, ei, _mi, _le, _ge, _o3) {
 		return
 	}
 	_mi = int((si + ei) / 2)
+	_n = ei - si
+	if (_n >= 44) {
+		_n = int(_n / 8)
+		kasort_order3(anarray, si + _n, _mi, ei - _n)
+	}
 	_o3 = kasort_order3(anarray, si, _mi, ei)
-	if (si + 2 == ei) return
+	if (_n == 2) return
 	_le = si
 	_ge = ei
 	for (;;) {
