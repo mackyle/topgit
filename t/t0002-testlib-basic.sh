@@ -22,6 +22,8 @@ modification *should* take notice and update the test vectors here.
 
 . ./test-lib.sh
 
+test_plan \?
+
 ################################################################
 # git init has been done in an empty repository.
 # make sure it is empty.

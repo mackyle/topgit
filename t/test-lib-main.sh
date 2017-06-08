@@ -668,6 +668,7 @@ test_done() {
 }
 
 test_plan() {
+	test z"$*" != z"?" || return 0
 	test -n "$1" && test "z$1" = "z${1#*[!0-9]}" || fatal "invalid test_plan argument: $1"
 	test "$1" -eq 0 || test -z "$2" || fatal "invalid test_plan arguments: $*"
 	if test "$1" -eq 0; then

@@ -492,6 +492,12 @@ plan line.  Additionally the `test_done` function performs some extra work.
     of tests to be run varies depending on test conditions.  Other times it's
     just damn inconvenient to have to count all those subtests.  ;)
 
+    To document that a `test_plan` number has been deliberately omitted, a
+    single argument of `?` can be used (e.g. `test_plan '?'` -- the "?" needs
+    to be quoted in some fashion to avoid wildcard expansion).  Using the
+    value "`?`" has the same effect as not having any `test_plan` line at all
+    but documents the intent not to have one.
+
     However, outputting the test plan line in advance makes those fancy test
     harnesses (like `prove`) show a "1/n" progress rather than "1/?" which is
     nice to have and that is the reason the `test_plan` function is provided.
