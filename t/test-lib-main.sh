@@ -376,6 +376,14 @@ maybe_setup_verbose() {
 	last_verbose=$verbose
 }
 
+want_verbose() {
+	test "$verbose" = t
+}
+
+want_no_verbose() {
+	! want_verbose
+}
+
 want_trace() {
 	test "$trace" = t && test "$verbose" = t
 }

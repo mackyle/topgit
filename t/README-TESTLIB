@@ -1034,6 +1034,14 @@ available utility functions that are TopGit-specific.
     Spawn an interactive `$SHELL` to pause testing until it exits -- causes an
     error if used without `--verbose`.  Should be used for debugging only.
 
+    Something like this can be use to leave it in a script (although this is
+    not recommended):
+
+        test_debug eval "want_no_verbose || test_pause"
+
+    which will cause the test in question to spawn a subshell whenever it's run
+    with both the --verbose and --debug options.
+
 - test_seq [<start>] <end>
 
     <start> defaults to 1.
