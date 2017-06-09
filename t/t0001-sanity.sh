@@ -10,7 +10,7 @@ TEST_NO_CREATE_REPO=1
 
 . ./test-lib.sh
 
-test_plan 11
+test_plan 13
 
 test_tolerate_failure 'POSIX unset behavior' '
 	test z"$(unset it && unset it && echo good || echo bad)" = z"good"
@@ -76,6 +76,18 @@ test_tolerate_failure 'POSIX awk pattern brace quantifiers' '
 	# can you hear us mocking you mawk?
 	result="$(echo not-mawk | awk "/^[a-z-]{5,}\$/")" &&
 	test z"$result" = z"not-mawk"
+'
+
+test_tolerate_failure 'POSIX awk ENVIRON array' '
+	EVAR="This  is  some  test  here" &&
+	export EVAR &&
+	val="$(awk "BEGIN{exit}END{print ENVIRON[\"EVAR\"]}")" &&
+	test z"$val" = z"$EVAR"
+'
+
+test_tolerate_failure 'POSIX tr NUL processing' '
+	val="$(perl -e "print 1,\"\\000\" x 3, 5" | tr "\\000" 2)" &&
+	test z"$val" = z"12225"
 '
 
 test_done
