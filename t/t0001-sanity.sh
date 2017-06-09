@@ -10,7 +10,7 @@ TEST_NO_CREATE_REPO=1
 
 . ./test-lib.sh
 
-test_plan 10
+test_plan 11
 
 test_tolerate_failure 'POSIX unset behavior' '
 	test z"$(unset it && unset it && echo good || echo bad)" = z"good"
@@ -70,5 +70,12 @@ function f3() {
 }
 BEGIN { exit; }
 "'
+
+test_tolerate_failure 'POSIX awk pattern brace quantifiers' '
+	# mawk stupidly does not support these
+	# can you hear us mocking you mawk?
+	result="$(echo not-mawk | awk "/^[a-z-]{5,}\$/")" &&
+	test z"$result" = z"not-mawk"
+'
 
 test_done
