@@ -9,13 +9,13 @@
 #  3. set -v if MAKEFILESH_DEBUG contains "v"
 
 MKTOP=..
-. "$MKTOP/Makefile.sh" # utility functions
+. "$MKTOP/Makefile.sh" # top-level defines
 
 # prevent crazy "sh" implementations from exporting functions into environment
 set +a
 
 # wrap it up for safe returns
-# $1 is the current build target, if any
+# "$@" is the current build target(s), if any
 makefile() {
 
 # config.sh is wrapped up for return safety
@@ -66,5 +66,5 @@ ${MAKE:-make} -f Makefile.mak FORCE_SETTINGS_BUILD=FORCE TG-TEST-SETTINGS
 # end of wrapper
 }
 
-set -ea
+. "$MKTOP/gnomake.sh" &&
 makefile "$@"
