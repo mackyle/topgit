@@ -93,7 +93,7 @@ function kasort_partition(anarray, si, ei, _mi, _le, _ge, _o3, _n) {
 	if (_n == 2) return
 	_le = si
 	_ge = ei
-	for (;;) {
+	while (1) {
 		if (_le < _mi)
 			while (++_le < _ge && _le != _mi && cmpkeys(anarray, _le, _mi) <= _o3) ;
 		if (_le < _ge)
@@ -173,7 +173,7 @@ BEGIN {
 	}
 	if (!sortref) sortref = 1
 	if (matchfmt == "") matchfmt = "%(objectname) %(objecttype)%09%(refname)"
-	fc = split(matchfmt, fmts, /%(%|[0-9a-fA-F]{2})/)
+	fc = split(matchfmt, fmts, /%(%|[0-9a-fA-F][0-9a-fA-F])/)
 	fi = 1
 	theformat = fmts[fi]
 	fpos = length(theformat) + 1
@@ -195,14 +195,16 @@ BEGIN {
 	}
 }
 
-pckdrefs && $2 ~ /^refs\/./ && $1 ~ /^[0-9A-Fa-f]{4,}$/ {
+pckdrefs && $2 ~ /^refs\/./ &&
+$1 ~ /^[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]+$/ {
 	r = $2
 	sub(/\/+$/, "", r)
 	refs[++cnt] = r "/"
 	hashes[cnt] = tolower($1)
 }
 
-!pckdrefs && $1 ~ /^refs\/./ && $2 ~ /^[0-9A-Fa-f]{4,}$/ {
+!pckdrefs && $1 ~ /^refs\/./ &&
+$2 ~ /^[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]+$/ {
 	r = $1
 	sub(/\/+$/, "", r)
 	refs[++cnt] = r "/"

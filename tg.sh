@@ -549,7 +549,9 @@ create_ref_dirs()
 		xargs -0 mkdir -p
 	}
 	awk -v p="$tg_tmp_dir/cached/" '
-		NF == 2 && $1 ~ /^refs\/./ && $2 ~ /^[0-9a-fA-F]{4,}$/ {
+		NF == 2 &&
+		$1 ~ /^refs\/./ &&
+		$2 ~ /^[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]+$/ {
 			fn = p $1 "/.ref"
 			print "0 " $2 >fn
 			close(fn)

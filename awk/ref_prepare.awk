@@ -72,12 +72,12 @@ BEGIN {
 		if (headbase == "") exitnow(2)
 		headbase = headbase "/"
 	}
-	if (topdeps ~ /^[^ \t\r\n:]+:[0-9A-Fa-f]{4,}$/) {
+	if (topdeps ~ /^[^ \t\r\n:]+:[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]+$/) {
 		colonat = index(topdeps, ":")
 		topdepsbr = substr(topdeps, 1, colonat - 1)
 		topdepsha = tolower(substr(topdeps, colonat + 1))
 	}
-	if (topmsg ~ /^[^ \t\r\n:]+:[0-9A-Fa-f]{4,}$/) {
+	if (topmsg ~ /^[^ \t\r\n:]+:[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]+$/) {
 		colonat = index(topmsg, ":")
 		topmsgbr = substr(topmsg, 1, colonat - 1)
 		topmsgha = tolower(substr(topmsg, colonat + 1))
@@ -105,7 +105,8 @@ function init(_e) {
 				scratch[1] = scratch[2]
 				scratch[2] = swapfield
 			}
-			if (scratch[1] ~ /^refs\/./ && scratch[2] ~ /^[0-9a-fA-F]{4,}$/)
+			if (scratch[1] ~ /^refs\/./ &&
+			    scratch[2] ~ /^[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]+$/)
 				refs[scratch[1]] = scratch[2]
 		}
 		close(refsfile)
