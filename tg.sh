@@ -2099,6 +2099,11 @@ else
 			shift
 			break;;
 
+		--awk-path)
+			cmd=awk-path
+			shift
+			break;;
+
 		--top-bases)
 			cmd=top-bases
 			shift
@@ -2204,6 +2209,10 @@ else
 		exec-path)
 			# Internal command
 			echol "$TG_INST_CMDDIR";;
+
+		awk-path)
+			# Internal command
+			echol "$TG_INST_CMDDIR/awk";;
 
 		top-bases)
 			# Maintenance command
