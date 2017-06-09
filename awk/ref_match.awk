@@ -11,11 +11,18 @@
 #  patterns  whitespace-separated for-each-ref style patterns to match
 #  matchfmt  a for-each-ref format string (limited, see below)
 #  sortkey   optional "[-]<key>" or "[-]<key>,[-]<key>" (see below)
+#  dupesok   keep dupes in output (only works if patterns is empty or "refs")
 #  maxout    stop after no more matches than this
+#
+# NOTE: fnmatch (FNM_PATHNAME) style matches are not currently supported.
+#       All "patterns" must match exactly as a prefix at a "/" boundary
+#       (a "prefix" that is actually the entire ref matches too).
 #
 # input is a list of "<ref> <hash>" per line (or packed-refs style if
 # pckdrefs is true) if there are multiple entries for the same ref name
-# only one wins (which exactly is indeterminate since the sort is unstable)
+# only one wins (which exactly is indeterminate since the sort is unstable).
+# However, if dupesok is true and there are no patterns (or the only pattern
+# is "refs" or "refs/") then refname duplicates will be kept in the output.
 #
 # hash values are always converted to lowercase
 #
@@ -241,7 +248,7 @@ function formatline(rname, oname, _out) {
 END {
 	multisort = 1
 	presortedbyrefonly = 0
-	if (patcnt > 1 || patarr[1] != "refs/") {
+	if (!dupesok || patcnt > 1 || patarr[1] != "refs/") {
 		savesortref = sortref
 		sortref = 1
 		if (cnt > 1) kasort_partition(refs, 1, cnt)
