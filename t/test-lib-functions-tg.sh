@@ -69,7 +69,7 @@ tg_test_include() {
 	while [ $# -gt 0 ]; do case "$1" in
 		-h|--help)
 			unset_ _tgf_noremote _tgf_fatal _tgf_curdir
-			echo "tg_test_include [-C <dir>] [-r <remote>] [-u]"
+			echo "tg_test_include [-C <dir>] [-r <remote>] [-u] [-f]"
 			return 0
 			;;
 		-C)
@@ -112,6 +112,61 @@ tg_test_include() {
 	set -- "$_tgf_errcode" "$_tgf_fatal"
 	unset_ _tgf_noremote _tgf_fatal _tgf_curdir _tgf_errcode
 	[ -z "$2" ] || [ "$1" = "0" ] || _fatal "tg_test_include sourcing of tg failed with status $1"
+	return $1
+}
+
+
+# tg_test_setup_topgit [-C <dir>] [-f]
+#
+tg_test_setup_topgit() {
+	[ -f "$TG_TEST_FULL_PATH" ] && [ -r "$TG_TEST_FULL_PATH" ] ||
+		fatal "tg_test_setup_topgit called while TG_TEST_FULL_PATH is unset or invalid"
+	unset_ _tgf_fatal _tgf_curdir _tgf_td
+	_tgf_curdir="$PWD"
+	while [ $# -gt 0 ]; do case "$1" in
+		-h|--help)
+			unset_ _tgf_fatal _tgf_curdir
+			echo "tg_test_setup_topgit [-C <dir>] [-f]"
+			return 0
+			;;
+		-C)
+			shift
+			[ -n "$1" ] || fatal "tg_test_include option -C requires an argument"
+			cd "$1" || return 1
+			;;
+		-f)
+			_tgf_fatal=1
+			;;
+		--)
+			shift
+			break
+			;;
+		-?*)
+			echo "tg_test_setup_topgit: unknown option: $1" >&2
+			usage 1
+			;;
+		*)
+			break
+			;;
+	esac; shift; done
+	[ $# -eq 0 ] || fatal "tg_test_setup_topgit non-option arguments prohibited: $*"
+	_tgf_td="$(test_get_temp -d setup)" || failt "tg_test_setup_topgit test_get_temp failed"
+	_tgf_td_script="$_tgf_td/${TG_TEST_FULL_PATH##*/}"
+	write_script "$_tgf_td_script" <<-'KLUDGE'
+		# without this $0 will be wrong and the installed hook will never run
+		tg__include=1 &&
+		PATH="${TG_TEST_FULL_PATH%/*}:$PATH" && export PATH &&
+		. "$TG_TEST_FULL_PATH" &&
+		setup_ours &&
+		setup_hook "pre-commit"
+	KLUDGE
+	_tgf_errcode=0
+	TG_TEST_FULL_PATH="$TG_TEST_FULL_PATH" "$_tgf_td_script" || _tgf_errcode=$?
+	cd "$_tgf_curdir" || _fatal "tg_test_setup_topgit post-setup cd failed to: $_tgf_curdir"
+	set -- "$_tgf_errcode" "$_tgf_fatal"
+	rm -rf "$_tgf_td"
+	unset_ _tgf_fatal _tgf_curdir _tgf_errcode _tgf_td _tgf_td_script
+	[ -z "$2" ] || [ "$1" = "0" ] || _fatal "tg_test_setup_topgit failed with status $1"
 	return $1
 }
 

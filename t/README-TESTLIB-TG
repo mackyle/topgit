@@ -190,6 +190,43 @@ TopGit Utility Functions
     this function solely based on the presence/absence of any `-r` and/or `-u`
     options and the behavior of the sourced `tg` file.
 
+- tg_test_setup_topgit [-C <dirpath>] [-f]
+
+    Perform TopGit merge and hook setup for a repository if it's not already
+    been done.
+
+    If TG_TEST_FULL_PATH is unset a fatal error will occur.
+
+    The following options are available:
+
+      * `-C` <dirpath>  
+        Temporarily `cd` to <dirpath> before sourcing `tg`, but then return
+        to the original `$PWD` afterwards.
+      * `-f`  
+        Terminate with a fatal error instead of returning a non-0 result code
+
+    Other than the repository being setup there are no side effects (the
+    operation happens in a subshell).  Note that the setup `pre-commit` script
+    will look for the basename of TG_TEST_FULL_PATH in PATH so the dirname of
+    TG_TEST_FULL_PATH must be in the PATH ahead of any other possible location
+    in order for the hook to actually run the TG_TEST_FULL_PATH version of
+    TopGit.
+
+    Normally this will always be guaranteed as the TG_TEST_FULL_PATH being
+    tested is located in the `bin-wrappers` directory which is always added to
+    the front of the PATH by the testing framework when TG_TEST_FULL_PATH is
+    using the `bin-wrappers` version.  If TG_TEST_FULL_PATH has been set to
+    something else for some reason either use a different mechanism to set up
+    the `pre-commit` hook or arrange for the dirname of TG_TEST_FULL_PATH to
+    get added to the front of the PATH.
+
+    The following will make sure the hook uses the correct version of TopGit:
+
+        PATH="${TG_TEST_FULL_PATH%/*}:$PATH" && export PATH
+
+    But make sure that's at the top-level of a test script and not in a subtest
+    where its effects will be discared at the end of the subtest subshell.
+
 - tg_test_v_getbases <varname> [<remotename>]
 
     Set the variable named by <varname> to the appropriate full ref prefix for
