@@ -267,7 +267,9 @@ END {
 				continue
 			}
 			if (substr(ref, 1, length(curpat)) == curpat) continue
-			while (patarr[++ji] < ref) ;
+			do
+				++ji
+			while (patarr[ji] < substr(ref, 1, length(patarr[ji])))
 			curpat = patarr[ji]
 			ref = ""
 			--i
