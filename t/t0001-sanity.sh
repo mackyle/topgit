@@ -10,7 +10,7 @@ TEST_NO_CREATE_REPO=1
 
 . ./test-lib.sh
 
-test_plan 9
+test_plan 10
 
 test_tolerate_failure 'POSIX unset behavior' '
 	test z"$(unset it && unset it && echo good || echo bad)" = z"good"
@@ -55,5 +55,20 @@ test_tolerate_failure 'POSIX function redir ops' '
 test_tolerate_failure 'unsettable LINENO' '
 	{ unset LINENO || :; }
 '
+
+test_tolerate_failure 'working awk implementation' '
+	# mawk will have a segmentation fault with this
+	awk "
+function f1(a1) {}
+function f2(a2) {
+	f1(a2);
+	for (;;) break;
+}
+function f3() {
+	f2(a3);
+	a3[1];
+}
+BEGIN { exit; }
+"'
 
 test_done
