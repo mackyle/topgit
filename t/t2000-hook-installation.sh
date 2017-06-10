@@ -58,6 +58,12 @@ test_expect_success 'setup_hook pre-commit' '
 '
 
 TG_CMDS="
+--version
+--status
+--hooks-path
+--exec-path
+--awk-path
+--top-bases
 annihilate
 base
 checkout
@@ -82,11 +88,13 @@ status
 summary
 tag
 update
+version
 "
 
 tg_cmd_will_setup() {
 	case "$1" in
-		base|contains|info|log|rebase|revert|status|st|summary|tag)
+		--version|--status|--hooks-path|--exec-path|--awk-path|--top-bases| \
+		base|contains|info|log|rebase|revert|status|st|summary|tag|version)
 			return 1
 	esac
 	return 0
