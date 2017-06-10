@@ -9,7 +9,7 @@ TEST_NO_CREATE_REPO=1
 
 . ./test-lib.sh
 
-test_plan 9
+test_plan 18
 
 test_expect_success 'no repo refs bases default' '
 	test_must_fail tg status >/dev/null 2>&1 &&
@@ -65,7 +65,7 @@ test_expect_success 'hard-coded refs bases' '
 
 test_expect_success 'hard-coded heads bases' '
 	test "$(tg -C heads --top-bases)" = "refs/heads/{top-bases}" &&
-	test "$(tg -C noset-mt -c topgit.top-bases=heads --top-bases)" = "refs/heads/{top-bases}" && 
+	test "$(tg -C noset-mt -c topgit.top-bases=heads --top-bases)" = "refs/heads/{top-bases}" &&
 	test "$(tg -C noset-mt -c topgit.top-bases=refs -c topgit.top-bases=heads --top-bases)" = "refs/heads/{top-bases}"
 '
 
@@ -87,6 +87,86 @@ test_expect_success 'auto detect heads and override' '
 
 test_expect_success 'default is refs until 0.20.0' '
 	test "$(tg -C noset-mt --top-bases)" = "refs/top-bases"
+'
+
+sane_unset tg_test_bases
+
+test_expect_success '--top-bases -r fails with no remote' '
+	test_must_fail tg -C noset-mt --top-bases -r &&
+	test_must_fail tg -C noset-refs --top-bases -r &&
+	test_must_fail tg -C noset-heads --top-bases -r &&
+	test_must_fail tg -C noset-both --top-bases -r
+'
+
+test_expect_success '--top-bases -r succeeds with no remote refs' '
+	tg -C noset-mt --top-bases -r origin &&
+	result="$(tg -C noset-refs --top-bases -r origin)" &&
+	test z"$result" = z"refs/remotes/origin/top-bases" &&
+	result="$(tg -C noset-heads --top-bases -r origin)" &&
+	test z"$result" = z"refs/remotes/origin/{top-bases}"
+'
+
+test_expect_success '--top-bases -r fails with schizo local bases' '
+	test_must_fail tg -C noset-both --top-bases -r origin
+'
+
+test_expect_success 'setup remote branches' '
+	tg_test_bases=refs &&
+	tg_test_create_branch -C noset-mt rmtrefs:brefs :: &&
+	tg_test_create_branch -C noset-mt rmtboth:brefs :: &&
+	tg_test_create_branch -C noset-refs rmtrefs:brefs :: &&
+	tg_test_create_branch -C noset-refs rmtboth:brefs :: &&
+	tg_test_create_branch -C noset-heads rmtrefs:brefs :: &&
+	tg_test_create_branch -C noset-heads rmtboth:brefs :: &&
+	tg_test_create_branch -C noset-both rmtrefs:brefs :: &&
+	tg_test_create_branch -C noset-both rmtboth:brefs :: &&
+	tg_test_bases=heads &&
+	tg_test_create_branch -C noset-mt rmtheads:bheads :: &&
+	tg_test_create_branch -C noset-mt rmtboth:bheads :: &&
+	tg_test_create_branch -C noset-refs rmtheads:bheads :: &&
+	tg_test_create_branch -C noset-refs rmtboth:bheads :: &&
+	tg_test_create_branch -C noset-heads rmtheads:bheads :: &&
+	tg_test_create_branch -C noset-heads rmtboth:bheads :: &&
+	tg_test_create_branch -C noset-both rmtheads:bheads :: &&
+	tg_test_create_branch -C noset-both rmtboth:bheads :: &&
+	unset tg_test_bases
+'
+
+test_expect_success '--top-bases -r fails with schizo local bases' '
+	test_must_fail tg -C noset-both --top-bases -r origin
+'
+
+test_expect_success '--top-bases -r fails with schizo remote bases' '
+	test_must_fail tg -C noset-mt --top-bases -r rmtboth
+'
+
+test_expect_success '--top-bases -r favors local bases location' '
+	result="$(tg -C noset-refs -r rmtrefs --top-bases -r)" &&
+	test z"$result" = z"refs/remotes/rmtrefs/top-bases" &&
+	result="$(tg -C noset-refs -c topgit.remote=rmtheads --top-bases -r)" &&
+	test z"$result" = z"refs/remotes/rmtheads/top-bases" &&
+	result="$(tg -C noset-heads -c topgit.remote=rmtrefs --top-bases -r)" &&
+	test z"$result" = z"refs/remotes/rmtrefs/{top-bases}" &&
+	result="$(tg -C noset-heads -r rmtheads --top-bases -r)" &&
+	test z"$result" = z"refs/remotes/rmtheads/{top-bases}"
+'
+
+test_expect_success '--top-bases -r autodetects remote bases location' '
+	result="$(tg -C noset-mt --top-bases -r rmtrefs)" &&
+	test z"$result" = z"refs/remotes/rmtrefs/top-bases" &&
+	result="$(tg -C noset-mt --top-bases -r rmtheads)" &&
+	test z"$result" = z"refs/remotes/rmtheads/{top-bases}"
+'
+
+test_expect_success '--top-bases -r topgit.top-bases override trumps all' '
+	for repo in noset-mt noset-refs noset-heads noset-both; do
+		for rmt in rmtrefs rmtheads rmtboth; do
+			result="$(tg -c topgit.top-bases=refs -C "$repo" --top-bases -r "$rmt")" &&
+			test z"$result" = z"refs/remotes/$rmt/top-bases" &&
+			result="$(tg -c topgit.top-bases=heads -C "$repo" --top-bases -r "$rmt")" &&
+			test z"$result" = z"refs/remotes/$rmt/{top-bases}"
+		done
+	done
 '
 
 test_done

@@ -1748,9 +1748,8 @@ setup_git_dirs()
 	fi
 }
 
-basic_setup()
+basic_setup_remote()
 {
-	setup_git_dirs $1
 	if [ -z "$base_remote" ]; then
 		if [ "${TG_EXPLICIT_REMOTE+set}" = "set" ]; then
 			base_remote="$TG_EXPLICIT_REMOTE"
@@ -1758,6 +1757,12 @@ basic_setup()
 			base_remote="$(git config topgit.remote 2>/dev/null)" || :
 		fi
 	fi
+}
+
+basic_setup()
+{
+	setup_git_dirs $1
+	basic_setup_remote
 	tgsequester="$(git config --bool topgit.sequester 2>/dev/null)" || :
 	tgnosequester=
 	[ "$tgsequester" != "false" ] || tgnosequester=1
@@ -2251,9 +2256,45 @@ else
 
 		top-bases)
 			# Maintenance command
+			do_topbases_help=
+			show_remote_topbases=
+			case "$1" in
+				--help|-h)
+					do_topbases_help=0;;
+				-r|--remote)
+					if [ $# -eq 2 ] && [ -n "$2" ]; then
+						# unadvertised, but make it work
+						base_remote="$2"
+						shift
+					fi
+					show_remote_topbases=1;;
+				*)
+					[ $# -eq 0 ] || do_topbases_help=1;;
+			esac
+			[ $# -le 1 ] || do_topbases_help=1
+			if [ -n "$do_topbases_help" ]; then
+				helpcmd='echo "Usage: ${tgname:-tg} [-r <remote>] --top-bases [-r]"'
+				[ $do_topbases_help -eq 0 ] || helpcmd="$helpcmd >&2"
+				eval "$helpcmd"
+				exit $do_topbases_help
+			fi
 			! git rev-parse --git-dir >/dev/null 2>&1 || setup_git_dirs
 			set_topbases
-			echol "refs/$topbases";;
+			if [ -n "$show_remote_topbases" ]; then
+				basic_setup_remote
+				[ -n "$base_remote" ] ||
+				die "no remote location given. Either use -r <remote> option or set topgit.remote"
+				rbases=
+				[ -z "$topbases_implicit_default" ] ||
+				check_remote_topbases "$base_remote" rbases "--top-bases"
+				if [ -n "$rbases" ]; then
+					echol "$rbases"
+				else
+					echol "refs/remotes/$base_remote/${topbases#heads/}"
+				fi
+			else
+				echol "refs/$topbases"
+			fi;;
 
 		*)
 			isutil=
