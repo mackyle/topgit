@@ -106,9 +106,14 @@ err()
 	info "error: $*" >&2
 }
 
-die()
+fatal()
 {
 	info "fatal: $*" >&2
+}
+
+die()
+{
+	fatal "$@"
 	exit 1
 }
 
