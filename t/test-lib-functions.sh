@@ -788,9 +788,10 @@ test_might_fail() {
 #	'
 
 test_expect_code() {
-	want_code=$1
-	shift
-	"$@"
+	want_code=$1 &&
+	shift &&
+	exit_code=0 &&
+	"$@" ||
 	exit_code=$?
 	if test $exit_code = $want_code
 	then
