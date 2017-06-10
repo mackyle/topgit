@@ -34,6 +34,14 @@ else
 	exit 0
 fi
 
+# status 0 iff HEAD exists and has neither .topdeps nor .topmsg entries
+is_bare_branch()
+{
+	_tbbtree="$(git rev-parse --quiet --verify HEAD^{tree} --)" || return 1
+	_tbbls="$(git ls-tree --full-tree "$_tbbtree" .topdeps .topmsg)" || return 1
+	test -z "$_tbbls"
+}
+
 # Input:
 #   $1 => variable name (set to "" for 0 return otherwise message)
 #   $2 => tree to inspect
@@ -53,7 +61,7 @@ v_check_topfile()
 	_file="$2"
 	_zerook="$3"
 
-	_ls_line="$(git ls-tree --long "$_tree" "$_file")" || {
+	_ls_line="$(git ls-tree --long --full-tree "$_tree" "$_file")" || {
 		eval "$_var="'"cannot ls tree for $_file"'
 		return 1
 	}
@@ -88,6 +96,7 @@ tree=$(git write-tree) ||
 
 ed=0 && v_check_topfile msg1 "$tree" ".topdeps" 1 || ed=$?
 em=0 && v_check_topfile msg2 "$tree" ".topmsg"    || em=$?
+[ $ed -ne 1 ] || [ $em -ne 1 ] || ! is_bare_branch || exit 0
 [ -z "$msg1" ] || fatal "$msg1"
 [ -z "$msg2" ] || fatal "$msg2"
 [ $ed -eq 0 ] && [ $em -eq 0 ] || exit 1

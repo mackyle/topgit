@@ -300,6 +300,12 @@ provides more explicit control over when a common base for a set of patches
 gets updated as well as providing a branch that shows in ``tg summary`` output
 and participates in ``tg remote --populate`` setup.
 
+Occasionally the functionality of a "base" branch is needed but it may not
+be possible to add any `.topdeps` or `.topmsg` files to the desired branch
+(perhaps it's externally controlled).  `BARE BRANCHES`_ can be used in this
+case, but while TopGit allows them it deliberately does not provide assistance
+in setting them up.
+
 Another advantage to using a "stage" branch is that if a new "patch" branch
 is created remotely and that new branch is added to a pre-existing "stage"
 branch on the remote then when the local version of the "stage" branch is
@@ -644,6 +650,97 @@ Instead just make a new commit to fix the typo.  The end result will end up
 being the same but without the merge conflicts.
 
 See also the discussion in the `NO UNDO`_ section.
+
+
+BARE BRANCHES
+-------------
+
+A "TopGit bare branch" (or just "bare branch" for short), refers to a TopGit
+branch that has neither a ``.topdeps`` nor a ``.topmsg`` file stored in it.
+And it's neither a new, still-empty empty branch nor an annihilated branch.
+
+Such branches are not recommended but are reluctantly accomodated.
+
+There are three situtations in which TopGit may encounter a TopGit branch
+that has neither a ``.topdeps`` nor a ``.topmsg`` file.
+
+	1. Branch creation with ``--no-commit``
+		Before the initial commit is made, the branch will still be
+		pointing to the same commit as its "top-bases" ref.  Branches
+		in this condition (where the branch and top-bases ref point to
+		the same commit) show up as having "No commits" in listings.
+
+	2. Annihilated branches
+		A branch is annihilated by making a new commit on the branch
+		that makes its tree identical to the tree of its corresponding
+		top-bases ref.  Although the trees will be the same, the
+		commits will be different and annihilated branches are
+		distinguished from "No commits" branches in this way.
+		Annihilated branches are generally invisible and do not show up
+		in listings or other status displays.  Intentionally so.
+
+	3. Bare branches
+		Any TopGit branch with neither a ``.topdeps`` file nor a
+		``.topmsg`` file whose branch and top-bases trees differ falls
+		into this category.  TopGit will not create such a branch
+		itself nor does it provide any commands to do so.
+
+Whenever possible, a TopGit "[BASE]" branch should be preferred to using a
+"bare branch" because a) it can never be mistaken for an annihilated branch,
+b) it has a nice subject attached (via its ``.topmsg`` file) that shows
+up in listings and c) exactly when and which updates are taken can be planned.
+
+Nevertheless, situations may arise where it's useful to have TopGit treat a
+branch as a "TopGit branch" so that it fully participates in all update
+activities (such as updating local branches based on their remote branches),
+but it's not feasible to turn it into a real "TopGit branch" as it comes from
+an external source and rather than controlling exactly when and what updates
+are picked up from it by TopGit (the precise use case of a "[BASE]" branch),
+all updates that appear on it are to be assimilated as soon as they occur.
+
+For this reason, TopGit will accomodate such "bare branches" but it will not
+create (nor provide the means to create) them itself.
+
+In order to create a "bare branch" all that's required is to create the
+necessary top-bases ref.  The choice of commit for the top-bases ref will
+affect the output of the "files", "log" and "patch" commands most directly
+(but all commands will be affected).
+
+To work properly as a "bare branch", the commit the "bare branch"'s base points
+to should be contained within the branch, be a different commit than the branch
+tip itself and have a different tree than the branch tip.  Simply setting the
+base to the parent commit of the "bare branch" will usually work, but should
+that commit at the tip of the "bare branch" end up getting reverted as the next
+commit, the trees would match and it would appear to be an annihilated branch
+rather than a "bare branch".  That is one of the reasons these branches are not
+recommended in the first place.
+
+Setting the base to the root commit of the branch is more reliable and may
+be accomplished like so for a local branch named "mybranch":
+
+::
+
+	git update-ref $(tg --top-bases)/mybranch \
+	  $(git rev-list --first-parent --max-parents=0 mybranch) ""
+
+Typically though it's more likely a remote bare branch will be needed.  For
+a remote named "origin" and a remote branch name of "vendor" this will do it:
+
+::
+
+	git update-ref $(tg --top-bases -r origin)/vendor \
+	  $(git rev-list --first-parent --max-parents=0 origin/vendor) ""
+
+Such "bare branches" are not likely ever to receive any more direct support in
+TopGit than acknowleging they can be useful in some situations and tolerating
+their existence by functioning properly with them even to the point of the
+``pre-commit`` hook tacitly allowing continued commits on such branches without
+complaints about missing ``.topdeps`` and ``.topmsg`` files.
+
+Note, however, that creating a regular TopGit branch that has no changes of its
+own with the "bare branch" as its single dependency provides a means to supply
+some kind of documentation if all other uses of the "bare branch" depend on
+this "wrapper" branch instead of directly on the "bare branch".
 
 
 SPEED AND CACHING
@@ -2330,6 +2427,17 @@ GLOSSARY
 		that any ``.topdeps`` and/or ``.topmsg`` files are excluded
 		from the result and the contents of the ``.topmsg`` file from
 		the TopGit branch is prefixed to the result.
+
+	TopGit bare branch
+		A Git branch whose tree does NOT contain any `.topdeps` or
+		`.topmsg` entries at the top-level of the tree.  It *does*
+		always have an associated "TopGit base" ref (otherwise it would
+		not be a "TopGit" branch).  See also `BARE BRANCHES`_.
+
+	bare branch
+		In TopGit context, "bare branch" almost always refers to a
+		"TopGit bare branch" and should be understood to mean such even
+		if the leading "TopGit" has been left off.
 
 	TopGit base
 		A Git branch that records the base upon which a TopGit branch's

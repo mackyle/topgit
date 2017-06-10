@@ -17,7 +17,7 @@ test_expect_success 'setup' '
 	git checkout tgb
 '
 
-test_expect_failure 'new bare commit allowed' '
+test_expect_success 'new bare commit allowed' '
 	test_commit "commit on already bare branch should work" xyz
 '
 
@@ -39,13 +39,13 @@ test_expect_success 'bare forbids adding .topmsg' '
 	test_must_fail git commit -m "add .topmsg"
 '
 
-test_expect_failure 'bare forbids adding .topdeps & .topmsg' '
+test_expect_success 'bare allows adding .topdeps & .topmsg' '
 	git reset --hard start &&
 	echo foo >.topmsg &&
 	git add .topmsg &&
 	echo master >.topdeps &&
 	git add .topdeps &&
-	test_must_fail git commit -m "add .topdeps & .topmsg"
+	git commit -m "add .topdeps & .topmsg"
 '
 
 test_done
