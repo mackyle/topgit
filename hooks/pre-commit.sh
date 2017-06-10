@@ -34,37 +34,63 @@ else
 	exit 0
 fi
 
-check_topfile()
+# Input:
+#   $1 => variable name (set to "" for 0 return otherwise message)
+#   $2 => tree to inspect
+#   $3 => file name to look for
+#   $4 => if non-empty allow a zero-length file
+# Output:
+#   0: specified blob exists and meets $4 condition and eval "$1="
+#   1: ls-tree gave no result for that file and eval "$1='some error message'"
+#   2: file is of type other than blob and eval "$1='some error message'"
+#   3: file is a zero length blob and $4 is empty and eval "$1='error message'"
+v_check_topfile()
 {
-	_tree=$1
-	_file=$2
+	_var="$1"
+	shift
+	eval "$_var="
+	_tree="$1"
+	_file="$2"
 	_zerook="$3"
 
-	_ls_line="$(git ls-tree --long "$_tree" "$_file")" ||
-		die "cannot ls tree for $_file"
+	_ls_line="$(git ls-tree --long "$_tree" "$_file")" || {
+		eval "$_var="'"cannot ls tree for $_file"'
+		return 1
+	}
 
-	[ -n "$_ls_line" ] ||
-		die "$_file is missing"
+	[ -n "$_ls_line" ] || {
+		eval "$_var="'"$_file is missing"'
+		return 1
+	}
 
 	# check for type and size
 	set -- $_ls_line
-	_type=$2
-	_size=$4
+	_type="$2"
+	_size="$4"
 
 	# check file is of type blob (file)
-	[ "x$_type" = "xblob" ] ||
-		die "$_file is not a file (i.e. not a 'blob')"
+	[ "x$_type" = "xblob" ] || {
+		eval "$_var=\"\$_file is not a file (i.e. not a 'blob')\""
+		return 2
+	}
 
 	# check for positive size
-	[ -n "$_zerook" -o "$_size" -gt 0 ] ||
-		die "$_file has empty size"
+	[ -n "$_zerook" -o "$_size" -gt 0 ] || {
+		eval "$_var="'"$_file has empty (i.e. 0) size"'
+		return 3
+	}
+
+	return 0
 }
 
 tree=$(git write-tree) ||
 	die "cannot write tree"
 
-check_topfile "$tree" ".topdeps" 1
-check_topfile "$tree" ".topmsg"
+ed=0 && v_check_topfile msg1 "$tree" ".topdeps" 1 || ed=$?
+em=0 && v_check_topfile msg2 "$tree" ".topmsg"    || em=$?
+[ -z "$msg1" ] || fatal "$msg1"
+[ -z "$msg2" ] || fatal "$msg2"
+[ $ed -eq 0 ] && [ $em -eq 0 ] || exit 1
 
 # Don't do anything more if neither .topdeps nor .topmsg is changing
 changedeps=
