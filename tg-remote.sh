@@ -41,22 +41,8 @@ if [ -n "$topbases_implicit_default" ]; then
 			"+refs/heads/*:refs/remotes/$name/*"
 	fi
 	# see if we have any remote bases
-	rc=0 remotebases=
-	remotebases="$(
-		git for-each-ref --format='%(refname)' "refs/remotes/$name" 2>/dev/null |
-		run_awk_ref_prefixes -n -- "refs/remotes/$name/{top-bases}" "refs/remotes/$name/top-bases" "refs/remotes/$name")" ||
-		rc=$?
-	if [ "$rc" = "65" ]; then
-		err "remote \"$name\" has top-bases in both locations:"
-		err "  refs/remotes/$name/{top-bases}/..."
-		err "  refs/remotes/$name/top-bases/..."
-		err "set \"topgit.top-bases\" to \"heads\" for the first, preferred location"
-		err "or set \"topgit.top-bases\" to \"refs\" for the second, old location"
-		err "(the \"-c topgit.top-bases=<val>\" option can be used for this)"
-		err "then re-run the tg remote command"
-		err "(the tg migrate-bases command can also help with this problem)"
-		die "schizophrenic remote \"$name\" requires topgit.top-bases setting"
-	fi
+	remotebases=
+	check_remote_topbases "$name" remotebases
 	if [ -n "$remotebases" ]; then
 		val="heads"
 		[ "$remotebases" = "refs/remotes/$name/{top-bases}" ] || val="refs"

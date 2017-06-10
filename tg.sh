@@ -1973,6 +1973,36 @@ set_topbases()
 	return 0
 }
 
+# $1 is remote name to check
+# $2 is optional variable name to set to result of check
+# $3 is optional command name to use in message (defaults to $cmd)
+# Fatal error if remote has schizophrenic top-bases
+# No error (and $2, if provided, will be set to empty) if remote has no top-bases at all
+check_remote_topbases()
+{
+	[ -n "$1" ] || die "programmer error: check_remote_topbases called with no remote argument"
+	_crrc=0 _crremotebases=
+	_crremotebases="$(
+		git for-each-ref --format='%(refname)' "refs/remotes/$1" 2>/dev/null |
+		run_awk_ref_prefixes -n -- "refs/remotes/$1/{top-bases}" "refs/remotes/$1/top-bases" "refs/remotes/$1")" ||
+		_crrc=$?
+	if [ "$_crrc" = "65" ]; then
+		err "remote \"$1\" has top-bases in both locations:"
+		err "  refs/remotes/$1/{top-bases}/..."
+		err "  refs/remotes/$1/top-bases/..."
+		err "set \"topgit.top-bases\" to \"heads\" for the first, preferred location"
+		err "or set \"topgit.top-bases\" to \"refs\" for the second, old location"
+		err "(the \"-c topgit.top-bases=<val>\" option can be used for this)"
+		err "then re-run the tg ${3:-$cmd} command"
+		err "(the tg migrate-bases command can also help with this problem)"
+		die "schizophrenic remote \"$1\" requires topgit.top-bases setting"
+	fi
+	[ "$_crrc" != "66" ] || _crremotebases= # just to be sure
+	[ -z "$2" ] || eval "$2="'"$_crremotebases"'
+	unset _crrc _crremotebases
+	return 0
+}
+
 # init_reflog "ref"
 # if "$logrefupdates" is set and ref is not under refs/heads/ then force
 # an empty log file to exist so that ref changes will be logged
