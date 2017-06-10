@@ -40,6 +40,7 @@ Makefile:
 .PRECIOUS:
 
 # Clean out the standard six single suffix inference rules
+.SUFFIXES:
 .SUFFIXES: .c .sh .f .c˜ .sh˜ .f˜
 .c:;
 .f:;

@@ -43,6 +43,7 @@ Makefile:
 
 # Clean out the standard six single suffix inference rules
 # Except for .sh (because it would then elicit a redefiniton warning)
+.SUFFIXES:
 .SUFFIXES: .c .sh .f .c˜ .sh˜ .f˜
 .c:;
 .f:;
@@ -50,6 +51,7 @@ Makefile:
 .c~:;
 .f~:;
 .sh~:;
+.SUFFIXES:
 .SUFFIXES: .sh .awk .txt .html
 
 # These are imperfect because they don't really reflect the correct dependencies
