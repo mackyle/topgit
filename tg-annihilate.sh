@@ -1,9 +1,9 @@
 #!/bin/sh
 # TopGit - A different patch queue manager
-# (C) Petr Baudis <pasky@suse.cz>  2008
-# (C) Per Cederqvist <ceder@lysator.liu.se>  2010
-# (C) Kyle J. McKay <mackyle@gmail.com>  2017
-# All rights reserved.
+# Copyright (C) 2008 Petr Baudis <pasky@suse.cz>
+# Copyright (C) 2010 Per Cederqvist <ceder@lysator.liu.se>
+# Copyright (C) 2017 Kyle J. McKay <mackyle@gmail.com>
+# All rights reserved
 # GPLv2
 
 force= # Whether to annihilate non-empty branch, or branch where only the base is left.
@@ -39,7 +39,7 @@ while [ -n "$1" ]; do
 		name="$arg";;
 	esac
 done
-
+ensure_work_tree
 
 ## Sanity checks
 

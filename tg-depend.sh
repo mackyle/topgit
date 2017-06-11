@@ -27,6 +27,7 @@ case "$subcmd" in
 		die "unknown subcommand ($subcmd)";;
 esac
 shift
+ensure_work_tree
 
 noupdate=
 nocommit=

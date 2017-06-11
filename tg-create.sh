@@ -143,6 +143,7 @@ while [ $# -gt 0 ]; do case "$1" in
 		break
 		;;
 esac; shift; done
+ensure_work_tree
 [ $# -gt 0 -o -z "$rname" ] || set -- "$rname"
 if [ $# -gt 0 ]; then
 	name="$1"

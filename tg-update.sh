@@ -209,6 +209,7 @@ if [ -z "$isactive" ] && [ $# -eq 1 ]; then
 fi
 if [ -n "$isactive" ] || [ -n "$isactiveopt" ]; then
 	[ $# -eq 1 ] && [ x"$1" != x"--status" ] || { do_status; exit 0; }
+	ensure_work_tree
 	if [ -z "$isactive" ]; then
 		clear_state
 		info "No update is currently active"
@@ -335,6 +336,7 @@ if [ -z "$restored" ]; then
 			;;
 		esac
 	done
+	ensure_work_tree
 	while [ $# -gt 0 ]; do
 		if [ -z "$all" ]; then
 			namecnt=$(( $namecnt + 1 ))

@@ -33,7 +33,7 @@ while [ -n "$1" ]; do
 	esac
 done
 
-
+ensure_work_tree
 ensure_clean_tree
 ensure_ident_available
 

@@ -9,6 +9,7 @@ case "$1" in -h|--help)
 	printf '%s\n' "$USAGE"
 	exit 0
 esac
+ensure_work_tree
 
 optmerge=
 optcontinue=

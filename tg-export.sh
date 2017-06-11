@@ -1,6 +1,8 @@
 #!/bin/sh
 # TopGit - A different patch queue manager
-# (c) Petr Baudis <pasky@suse.cz>  2008
+# Copyright (C) 2008 Petr Baudis <pasky@suse.cz>
+# Copyright (C) 2015-2017 Kyle J. McKay <mackyle@gmail.com>
+# All rights reserved
 # GPLv2
 
 name=
@@ -16,7 +18,6 @@ stripval=0
 allbranches=false
 binary=
 pl=
-
 
 ## Parse options
 
@@ -62,8 +63,6 @@ while [ -n "$1" ]; do
 	esac
 done
 
-
-
 [ -z "$branches" -o "$driver" = "quilt" ] ||
 	die "-b works only with the quilt driver"
 
@@ -84,6 +83,14 @@ done
 
 [ -z "$branches" ] || ! "$allbranches" ||
 	die "-b conflicts with the --all option"
+
+if [ "$driver" = "linearize" ]; then
+	setup_git_dir_is_bare
+	if [ -n "$git_dir_is_bare" ]; then
+		fatal 'export --linearize does not work on a bare repository...yet!'
+		ensure_work_tree
+	fi
+fi
 
 if [ -z "$branches" ] && ! "$allbranches"; then
 	# this check is only needed when no branches have been passed
@@ -428,5 +435,3 @@ elif [ "$driver" = "linearize" ]; then
 	fi
 
 fi
-
-# vim:noet

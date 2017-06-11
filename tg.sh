@@ -1415,6 +1415,12 @@ check_status()
 {
 	git_state=
 	git_remove=
+	tg_state=
+	tg_remove=
+	tg_topmerge=
+	setup_git_dir_is_bare
+	[ -z "$git_dir_is_bare" ] || return 0
+
 	if [ -e "$git_dir/MERGE_HEAD" ]; then
 		git_state="merge"
 	elif [ -e "$git_dir/rebase-apply/applying" ]; then
@@ -1435,9 +1441,6 @@ check_status()
 	fi
 	git_remove="${git_remove#./}"
 
-	tg_state=
-	tg_remove=
-	tg_topmerge=
 	if [ -e "$git_dir/tg-update" ]; then
 		tg_state="update"
 		tg_remove="$git_dir/tg-update"
@@ -1539,7 +1542,9 @@ do_status()
 		fi
 	fi
 	if [ -z "$git_state" ]; then
-		gsp="$(git status --porcelain 2>/dev/null)" || return 0 # bare repository
+		setup_git_dir_is_bare
+		[ -z "$git_dir_is_bare" ] || return 0
+		gsp="$(git status --porcelain 2>/dev/null)" || return 0 # bare repository???
 		gspcnt=0
 		[ -z "$gsp" ] ||
 		gspcnt="$(( $(printf '%s\n' "$gsp" | sed -n '/^??/!p' | wc -l) ))"
