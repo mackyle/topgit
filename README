@@ -388,7 +388,7 @@ These work exactly like Git's aliases except they are stored under
 ``topgit.alias.*`` instead.  See the ``git help config`` output under
 the ``alias.*`` section for details.  Do note that while alias nesting is
 explicitly permitted, a maximum nesting depth of 10 is enforced to help
-detect accidental aliasing loops from wedging the machine.
+detect accidental aliasing loops and keep them from wedging the machine.
 
 For example, to create an ``lc`` alias for the ``tg log --compact`` command
 this command may be used:
