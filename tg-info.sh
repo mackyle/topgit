@@ -6,7 +6,7 @@
 
 USAGE="\
 Usage: ${tgname:-tg} [...] info [--heads | --leaves | --series[=<head>]] [<name>]
-   Or: ${tgname:-tg} [...] info [--deps | --dependents] [<name>]"
+   Or: ${tgname:-tg} [...] info [--deps | --dependencies | --dependents] [<name>]"
 
 usage()
 {
@@ -39,7 +39,7 @@ while [ $# -gt 0 ]; do case "$1" in
 	--leaves)
 		leaves=1 datamode=1
 		;;
-	--deps)
+	--deps|--dependencies)
 		deps=1 datamode=1
 		;;
 	--dependents)

@@ -1069,7 +1069,8 @@ tg info
 	dependencies.
 
 	The ``--deps`` option shows non-annihilated TopGit dependencies of the
-	specified branch (default is ``HEAD``).
+	specified branch (default is ``HEAD``).  (It can also be spelled out
+	as ``--dependencies`` for the pedantically inclined.)
 
 	The ``--dependents`` option shows non-annihilated TopGit dependents
 	(i.e. branches that depend on the specified branch).  The default
