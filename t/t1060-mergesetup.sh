@@ -73,10 +73,10 @@ do_mergesetup() {
 	test_might_fail tg -C "$1" update no-such-branch-name >/dev/null 2>&1
 }
 
-test_expect_success 'mergesetup bare' '
+test_expect_success 'no bare mergesetup' '
 	test_must_fail mergesetup_is_ok bare.git &&
 	do_mergesetup bare.git &&
-	mergesetup_is_ok bare.git
+	test_must_fail mergesetup_is_ok bare.git
 '
 
 test_expect_success 'mergesetup normal top level' '

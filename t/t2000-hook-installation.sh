@@ -6,7 +6,7 @@ TEST_NO_CREATE_REPO=1
 
 . ./test-lib.sh
 
-test_plan 19
+test_plan 20
 
 has_tg_setup() {
 	test -s "${1:-.}/.git/info/attributes" &&
@@ -19,6 +19,12 @@ has_tg_setup() {
 has_no_tg_setup() {
 	test ! -e "${1:-.}/.git/info/attributes" &&
 	test ! -e "${1:-.}/.git/hooks/pre-commit" &&
+	test_must_fail git -C "${1:-.}" config merge.ours.driver
+}
+
+has_no_tg_setup_bare() {
+	test ! -e "${1:-.}/info/attributes" &&
+	test ! -e "${1:-.}/hooks/pre-commit" &&
 	test_must_fail git -C "${1:-.}" config merge.ours.driver
 }
 
@@ -141,5 +147,16 @@ for cmd in $TG_CMDS; do
 		'
 	fi
 done
+
+test_expect_success 'no setup happens in bare repository' '
+	git init --bare r5 && cd r5 &&
+	for cmd in $TG_CMDS; do
+		say "# checking tg $cmd does not do setup in bare repo"
+		test_might_fail tg $cmd && has_no_tg_setup_bare &&
+		test_might_fail tg $cmd --bogus-option-here && has_no_tg_setup_bare
+	done &&
+	has_no_tg_setup_bare &&
+	cd .. && rm -rf r5
+'
 
 test_done

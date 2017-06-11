@@ -446,6 +446,8 @@ auto_create_local_remote()
 # setup_hook NAME
 setup_hook()
 {
+	setup_git_dir_is_bare
+	[ -z "$git_dir_is_bare" ] || return 0
 	tgname="${0##*/}"
 	hook_call="\"\$(\"$tgname\" --hooks-path)\"/$1 \"\$@\""
 	if [ -f "$git_hooks_dir/$1" ] && grep -Fq "$hook_call" "$git_hooks_dir/$1"; then
@@ -487,6 +489,8 @@ setup_hook()
 # setup_ours (no arguments)
 setup_ours()
 {
+	setup_git_dir_is_bare
+	[ -z "$git_dir_is_bare" ] || return 0
 	if [ ! -s "$git_common_dir/info/attributes" ] || ! grep -q topmsg "$git_common_dir/info/attributes"; then
 		[ -d "$git_common_dir/info" ] || mkdir "$git_common_dir/info"
 		{
@@ -1006,6 +1010,14 @@ become_non_cacheable()
 	tg_read_only=
 	! [ -e "$tg_tmp_dir/cached" ] && ! [ -e "$tg_tmp_dir/tg~ref-dirs-created" ] ||
 	rm -rf "$tg_tmp_dir/cached" "$tg_tmp_dir/tg~ref-dirs-created"
+}
+
+# call this to make sure the current Git repository has an associated work tree
+ensure_work_tree()
+{
+	setup_git_dir_is_bare
+	[ -n "$git_dir_is_bare" ] || return 0
+	die "This operation must be run in a work tree"
 }
 
 # call this to make sure Git will not complain about a missing user/email
@@ -1715,6 +1727,15 @@ v_get_show_cdup()
 	[ -z "$1" ] || eval "$1="'"$git_cdup_result"'
 }
 
+setup_git_dir_is_bare()
+{
+	if [ -z "$git_dir_is_bare_setup" ]; then
+		git_dir_is_bare="$(git rev-parse --is-bare-repository)"
+		[ z"$git_dir_is_bare" = z"true" ] || git_dir_is_bare=
+		git_dir_is_bare_setup=1
+	fi
+}
+
 setup_git_dirs()
 {
 	[ -n "$git_dir" ] || git_dir="$(git rev-parse --git-dir)"
@@ -2278,7 +2299,8 @@ else
 				eval "$helpcmd"
 				exit $do_topbases_help
 			fi
-			! git rev-parse --git-dir >/dev/null 2>&1 || setup_git_dirs
+			git_dir=
+			! git_dir="$(git rev-parse --git-dir 2>&1)" || setup_git_dirs
 			set_topbases
 			if [ -n "$show_remote_topbases" ]; then
 				basic_setup_remote
