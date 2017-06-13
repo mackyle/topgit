@@ -22,7 +22,12 @@ do
 			failed=$(($failed + $value))
 			if test $value != 0
 			then
-				testnum=$(expr "$file" : 'test-results/\(t[0-9]*\)-')
+				testnum="${file#test-results/}"
+				testnum="${testnum%.counts}"
+				case "$testnum" in t[0-9]*)
+					testnum_="${testnum#t}"
+					testnum="t${testnum_%%[!0-9]*}"
+				esac
 				failed_tests="$failed_tests $testnum"
 			fi
 			;;
