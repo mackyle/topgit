@@ -172,7 +172,7 @@ collapsed_commit()
 	# Determine parent
 	[ -s "$playground/$name^parents" ] || git rev-parse --verify "refs/$topbases/$name^0" -- >> "$playground/$name^parents"
 	parent="$(cut -f 1 "$playground/$name^parents" 2> /dev/null |
-		while read p; do [ "$(git cat-file -t "$p" 2> /dev/null)" = tag ] && git cat-file tag "$p" | head -1 | cut -d' ' -f2 || echol "$p"; done)"
+		while read -r p; do git rev-parse --quiet --verify "$p^0" -- || :; done)"
 	if [ $(( $(cat "$playground/$name^parents" 2>/dev/null | wc -l) )) -gt 1 ]; then
 		# Produce a merge commit first
 		parent="$({
