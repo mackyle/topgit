@@ -218,8 +218,15 @@ branch_contains "refs/heads/$name" "refs/$topbases/$name" ||
 
 if has_remote "$name"; then
 	echo "Remote Mate: $base_remote/$name"
-	branch_contains "refs/$topbases/$name" "refs/remotes/$base_remote/${topbases#heads/}/$name" ||
-		echo "* Local base is out of date wrt. the remote base."
+	# has_remote only checks the single ref it's passed therefore
+	# check to see if the remote base is present especially since remote
+	# bases in the old location do not automatically fetched by default
+	if ref_exists "refs/remotes/$base_remote/${topbases#heads/}/$name"; then
+		branch_contains "refs/$topbases/$name" "refs/remotes/$base_remote/${topbases#heads/}/$name" ||
+			echo "* Local base is out of date wrt. the remote base."
+	else
+		echo "* Remote base ($base_remote/${topbases#heads/}/$name) is missing."
+	fi
 	branch_contains "refs/heads/$name" "refs/remotes/$base_remote/$name" ||
 		echo "* Local head is out of date wrt. the remote head."
 	branch_contains "refs/remotes/$base_remote/$name" "refs/heads/$name" ||
