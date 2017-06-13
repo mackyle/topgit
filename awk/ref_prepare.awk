@@ -62,8 +62,10 @@ BEGIN {
 	tbdrop = tblen + 1
 	if (headbase == "") {
 		if (topbases !~ /^refs\//) exitnow(2)
-		if (match(topbases, /^refs\/remotes\/[^\/]+\//)) {
-			headbase = substr(topbases, 1, RLENGTH)
+		if (topbases ~ /^refs\/remotes\//) {
+			if (topbases !~ /^refs\/remotes\/[^\/]+\/[^\/]+\//) exitnow(2)
+			headbase = topbases
+			sub(/\/[^\/]+\/$/, "/", headbase)
 		} else {
 			headbase = "refs/heads/"
 		}
