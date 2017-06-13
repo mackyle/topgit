@@ -825,6 +825,11 @@ test_cmp_bin() {
 	cmp "$@"
 }
 
+# Use git diff --no-index for the diff (with a few supporting options)
+test_diff() {
+	git --no-pager -c core.abbrev=16 diff --no-color --exit-code --no-prefix --no-index "$@"
+}
+
 # Call any command "$@" but be more verbose about its
 # failure. This is handy for commands like "test" which do
 # not output anything when they fail.

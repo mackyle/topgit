@@ -851,6 +851,7 @@ available utility functions that are TopGit-specific.
         $TESTLIB_TEST_CMP <arg>...
 
     Useful because `diff -u` will be used where supported instead of `cmp`.
+    See also `test_diff` for an alternative.
 
 - test_cmp_bin <arg>...
 
@@ -938,6 +939,17 @@ available utility functions that are TopGit-specific.
     a single argument and "eval"s it (while not guaranteeing anything about
     where the output goes).  To get the Git "eval" equivalent, use `eval` as
     the first <arg> and the string to be "eval"'d as the second.
+
+- test_diff <arg>...
+
+    Shortcut for:
+
+        git --no-pager -c core.abbrev=16 diff --no-color --exit-code \
+          --no-prefix --no-index <arg>...
+
+    Always gives nice diffs and they're always `-u` diffs.
+    This should be usable as a drop-in replacement for `test_cmp` everywhere
+    and its output should be deterministic as no dates or times are included.
 
 - test_dir_is_empty <dirpath>
 
