@@ -474,18 +474,22 @@ plan line.  Additionally the `test_done` function performs some extra work.
     value and `test_done` is called immediately when `./test-lib.sh` is
     sourced.
 
-- test_plan
+    The `test_done` function DOES NOT RETURN!  It _always_ ends up calling
+    exit with an exit status and therefore _never_ returns to the caller!
+
+- test_plan <count> <count==0> <optional> <alternate> <skip> <msg> <here>
 
     This function allows a test plan line to be output first.  If `$skip_all`
     is set it just passes through to `test_done`.  Otherwise it outputs the
     test plan line using the first argument as the total test count and then
     sets `test_wrote_plan_count=$1` so that the required subsequent call to
     `test_done` does not write a second test plan line.  (But if the value of
-    `$test_external_has_tap`is not 0 it will not output the test plan line.)
+    `$test_external_has_tap` is not 0 it will not output the test plan line.)
 
-    If the argument is 0, then `skip_all` will be set to the second argument
-    (or a suitable default if there is no second argument) and `test_done` will
-    be called immediately.
+    If the argument is 0, then `skip_all` will be set to the following
+    arguments (or a suitable default if there are no following arguments) and
+    `test_done` will be called immediately (which will cause an immediate
+    exit of the test script at that point).
 
     Using `test_plan` is inconvenient in that the number of subtests in the
     file must be known in advance.  Sometimes that's not possible if the number
@@ -498,16 +502,26 @@ plan line.  Additionally the `test_done` function performs some extra work.
     value "`?`" has the same effect as not having any `test_plan` line at all
     but documents the intent not to have one.
 
-    However, outputting the test plan line in advance makes those fancy test
-    harnesses (like `prove`) show a "1/n" progress rather than "1/?" which is
-    nice to have and that is the reason the `test_plan` function is provided.
+    If `test_plan` is never called (and the entire test was not skipped as a
+    result of a `TESTLIB_SKIP_TESTS` setting) a message urging addition of a
+    `test_plan` call will be output.  With support for a count of `?`, it's
+    always possible to add a `test_plan` call to the script.
+
+    Outputting the test plan line in advance makes those fancy test harnesses
+    (like `prove`) show a "1/n" progress rather than "1/?" which is nice to
+    have and that is the reason the `test_plan` function is provided (and the
+    prodding message output if it's not been called at `test_done` time).
 
     Also if a different number of tests are run than are planned the overall
-    test will fail with an error.
+    test will fail with an error which provides yet another test of the test
+    script itself which is not available without a call to `test_plan`.
 
     The `test_done` function MUST STILL BE CALLED at the end of the test script
     even when `test_plan` is used at the beginning otherwise test aggregation
-    and test cleanup will fail to take place!
+    and test cleanup will fail to take place!  The only exception is when a
+    `test_plan 0` (possibly with optional arguments) call is _always_ used as
+    it will implicitly call `test_done` before returning (and therefore never
+    actually return at all).
 
     Note that if it's not already clear from the description, use of the
     `test_plan` function is completely optional, but use of `test_done` is not.

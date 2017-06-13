@@ -570,6 +570,30 @@ test_at_end_hook_() {
 	:
 }
 
+# returns 1 if counts do not match
+# $1 is extra message, if any
+test_done_write_plan_() {
+	if test $test_external_has_tap -eq 0
+	then
+		if
+			test -z "$test_called_test_plan" &&
+			{
+				test -z "$1" ||
+				test z"$test_count" != z"0"
+			}
+		then
+			say_color warn "# please add test_plan call"
+		fi
+		test -n "$test_wrote_plan_count" || say_tap "1..$test_count$1"
+	fi
+	if test -n "$test_wrote_plan_count" && test "$test_wrote_plan_count" -ne "$test_count"
+	then
+		say_color error "# $this_test plan count of $test_wrote_plan_count does not match run count of $test_count"
+		return 1
+	fi
+	return 0
+}
+
 test_done() {
 	TESTLIB_EXIT_OK=t
 
@@ -621,13 +645,8 @@ test_done() {
 			then
 				say_color pass "# $this_test passed all $msg"
 			fi
-			test -n "$test_wrote_plan_count" || say_tap "1..$test_count$skip_all"
 		fi
-		if test -n "$test_wrote_plan_count" && test "$test_wrote_plan_count" -ne "$test_count"
-		then
-			say_color error "# $this_test plan count of $test_wrote_plan_count does not match run count of $test_count"
-			exit 1
-		fi
+		test_done_write_plan_ "$skip_all" || exit 1
 
 		test -n "$remove_trash" &&
 		test -d "$remove_trash" &&
@@ -662,12 +681,8 @@ test_done() {
 		if test $test_external_has_tap -eq 0
 		then
 			say_color error "# $this_test failed $test_failure among $msg"
-			test -n "$test_wrote_plan_count" || say_tap "1..$test_count"
 		fi
-		if test -n "$test_wrote_plan_count" && test "$test_wrote_plan_count" -ne "$test_count"
-		then
-			say_color error "# $this_test plan count of $test_wrote_plan_count does not match run count of $test_count"
-		fi
+		test_done_write_plan_ || :
 
 		test -z "$HARNESS_ACTIVE" || exit 0
 		exit 1 ;;
@@ -676,11 +691,15 @@ test_done() {
 }
 
 test_plan() {
+	test z"$test_called_test_plan" = z || fatal "test_plan may not be called more than once"
+	test_called_test_plan=1
 	test z"$*" != z"?" || return 0
 	test -n "$1" && test "z$1" = "z${1#*[!0-9]}" || fatal "invalid test_plan argument: $1"
-	test "$1" -eq 0 || test -z "$2" || fatal "invalid test_plan arguments: $*"
+	test "$1" -eq 0 || test z"$1" = z"$*" || fatal "invalid test_plan arguments: $*"
 	if test "$1" -eq 0; then
-		skip_all="${2:-skip all tests in $this_test}"
+		shift
+		msg="$*"
+		skip_all="${msg:-skip all tests in $this_test}"
 		test_done
 	fi
 	test $test_external_has_tap -ne 0 || say_tap "1..$1"
@@ -1397,6 +1416,7 @@ cd -P "$TRASH_DIRECTORY" || exit 1
 
 this_test=${0##*/}
 this_test=${this_test%%-*}
+test_called_test_plan=
 test_wrote_plan_count=
 test_last_subtest_ok=1
 if match_pattern_list "$this_test" $TESTLIB_SKIP_TESTS
