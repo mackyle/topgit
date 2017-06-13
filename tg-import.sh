@@ -1,8 +1,8 @@
 #!/bin/sh
 # TopGit - A different patch queue manager
-# Copyright (C) Petr Baudis <pasky@suse.cz>  2008
-# Copyright (C) Aneesh Kumar K.V <aneesh.kumar@linux.vnet.ibm.com>  2008
-# Copyright (C) Kyle J. McKay <mackyle@gmail.com>  2015
+# Copyright (C) 2008 Petr Baudis <pasky@suse.cz>
+# Copyright (C) 2008 Aneesh Kumar K.V <aneesh.kumar@linux.vnet.ibm.com>
+# Copyright (C) 2015,2017 Kyle J. McKay <mackyle@gmail.com>
 # All rights reserved.
 # GPLv2
 
@@ -155,8 +155,25 @@ for revpair in $ranges; do
 	rangeidx=$(( $rangeidx + 1 ))
 	case "$revpair" in
 	?*..?*)
-		rev1="$(expr "z$revpair" : 'z\(.*\)\.\.')"
-		rev2="$(expr "z$revpair" : 'z.*\.\.\(.*\)')"
+		rev1="${revpair%..*}"
+		rev2="${revpair##*..}"
+		;;
+	?*..)
+		rev1="${revpair%..}"
+		rev2="HEAD"
+		;;
+	..?*)
+		rev1="HEAD"
+		rev2="${revpair#..}"
+		;;
+	?*'^!')
+		rev2="${revpair%^!}"
+		cnt="$(git rev-list --no-walk --count --min-parents=1 --max-parents=1 "$rev2^0" -- 2>/dev/null)" || :
+		if [ "$cnt" = "1" ]; then
+			rev1="${revpair%^!}^"
+		else
+			die "Not a valid single-parent rev $rev2 ($revpair)"
+		fi
 		;;
 	*)
 		die "Unknown range spec $revpair"
@@ -180,5 +197,3 @@ for revpair in $ranges; do
 	}
 	test $? -eq 0
 done
-
-# vim:noet

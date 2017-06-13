@@ -1618,7 +1618,7 @@ tg export
 
 tg import
 ~~~~~~~~~
-	Import commits within the given revision range into TopGit,
+	Import commits within the given revision range(s) into TopGit,
 	creating one topic branch per commit. The dependencies are set
 	up to form a linear sequence starting on your current branch --
 	or a branch specified by the ``-d`` parameter, if present.
@@ -1627,9 +1627,18 @@ tg import
 	prefixed by ``t/`` by default; use ``-p <prefix>`` to specify an
 	alternative prefix (even an empty one).
 
+	Each "<range>" must be of the form <rev1>..<rev2> where either
+	<rev1> or <rev2> can be omitted to mean HEAD.  Additionally the
+	shortcut <rev>^! (see ``git help revisions``) is permitted as a
+	"<range>" to select the single commit <rev> but only if the
+	commit <rev> has *exactly* one parent.  This is really just a
+	shortcut for <rev>^..<rev> but somewhat safer since it will fail
+	if <rev> has other than one parent.
+
 	Alternatively, you can use the ``-s NAME`` parameter to specify
 	the name of the target branch; the command will then take one
-	more argument describing a *single* commit to import.
+	more argument describing a *single* commit to import (which may
+	have any number of parents).
 
 tg update
 ~~~~~~~~~
