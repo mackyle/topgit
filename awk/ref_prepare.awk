@@ -97,6 +97,15 @@ function quotevar(v) {
 	return "\047" v "\047"
 }
 
+function rmrefs() {
+	if (refsfile != "" && rmrf) {
+		system("rm -f " quotevar(refsfile))
+		rmrf = 0
+		refsfile = ""
+	}
+}
+END { rmrefs() }
+
 function init(_e) {
 	if (refsfile != "") {
 		while ((_e = (getline info <refsfile)) > 0) {
@@ -114,7 +123,7 @@ function init(_e) {
 		close(refsfile)
 		if (_e < 0) exitnow(2)
 	}
-	if (refsfile != "" && rmrf) system("rm -f " quotevar(refsfile))
+	rmrefs()
 }
 
 NR == 1 {init()}
