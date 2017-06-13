@@ -206,7 +206,7 @@ else
 	head="$(git symbolic-ref --quiet HEAD)" || :
 	for d in "$@"; do
 		[ "$d" != "@" ] || d="HEAD"
-		[ "$d" != "HEAD" ] || -z "$head" || d="$head"
+		[ "$d" != "HEAD" ] || [ -z "$head" ] || d="$head"
 		case "$d" in
 			HEAD)
 				die "cannot depend on detached HEAD"
