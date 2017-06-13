@@ -141,7 +141,7 @@ check_topdeps()
 	base_remote=
 	[ -z "$tg_topmerge" ] || [ ! -s "$git_dir/tg-update/remote" ] ||
 	IFS= read -r base_remote <"$git_dir/tg-update/remote" || :
-	git diff --cached "$root_dir/.topdeps" | diff_added_lines |
+	git diff --cached --ignore-space-at-eol -- "$root_dir/.topdeps" | diff_added_lines |
 	while read newly_added; do
 		ref_exists "refs/heads/$newly_added" ||
 		{ [ -n "$tg_topmerge" ] && auto_create_local_remote "$newly_added"; } ||

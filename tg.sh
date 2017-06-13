@@ -414,12 +414,16 @@ make_empty_commit()
 
 # standard input is a diff
 # standard output is the "+" lines with leading "+ " removed
+# beware that old lines followed by the dreaded '\ No newline at end of file'
+# will appear to be new lines if lines are added after them
+# the git diff --ignore-space-at-eol option can be used to prevent this
 diff_added_lines()
 {
 	awk '
 BEGIN      { in_hunk = 0; }
 /^@@ /     { in_hunk = 1; }
 /^\+/      { if (in_hunk == 1) printf("%s\n", substr($0, 2)); }
+!/^\\ No newline at end of file/ &&
 /^[^@ +-]/ { in_hunk = 0; }
 '
 }

@@ -1186,7 +1186,7 @@ update_branch_internal() {
 				fi
 			fi
 		done <<-EOT
-		$(git diff "$b4deps" "$l8rdeps" -- | diff_added_lines)
+		$(git diff --ignore-space-at-eol "$b4deps" "$l8rdeps" -- | diff_added_lines)
 		EOT
 	fi
 	return $_result
