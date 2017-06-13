@@ -377,8 +377,9 @@ else
 		echo
 		echo "<$branchdesc description>"
 		echo
-		echo "Signed-off-by: $author_addr"
-		[ "$(git config --bool format.signoff)" = true ] && echo "Signed-off-by: $author_addr"
+		sobpfx='#'
+		[ z"$(git config --bool format.signoff 2>/dev/null)" != z"true" ] || sobpfx=
+		echo "${sobpfx}Signed-off-by: $author_addr"
 	} | git stripspace >"$git_dir/TG_EDITMSG"
 fi
 if [ -z "$noedit" ]; then

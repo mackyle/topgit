@@ -368,6 +368,7 @@ EXTRA SETTINGS
 
 TopGit supports various config settings:
 
+	:`tg create`_:		``format.signoff`` template Signed-off-by line
 	:ALIASES_:		``topgit.alias.*`` for Git-like command aliases
 	:`tg update`_:		``topgit.autostash`` automatic stash control
 	:`tg create`_:		``topgit.bcc`` default "Bcc:" value for create
@@ -875,6 +876,13 @@ tg create
 	explicit value for the new ``.topmsg`` file using the ``--topmsg`` or
 	``--topmsg-file`` option.  In any case the ``.topmsg`` content will be
 	automatically reformated to have a ``Subject:`` header line if needed.
+
+	If the ``format.signoff`` config variable (see ``git help config``)
+	has been set to true then the ``Signed-off-by:`` header line added to
+	the end of the initial version of the ``.topmsg`` file will be
+	uncommented by default.  Otherwise it will still be there but will be
+	commented out and will be automatically stripped if no action is taken
+	to remove the comment character.
 
 	If more than one dependency is listed an automatic ``tg update`` runs
 	after the branch has been created to merge in the additional
