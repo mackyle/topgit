@@ -45,7 +45,7 @@ done
 name="$(verify_topgit_branch "${name:-HEAD}")"
 base_rev="$(git rev-parse --short --verify "refs/$topbases/$name^0" -- 2>/dev/null)" ||
 	die "not a TopGit-controlled branch"
-depcnt="$(( $(git cat-file blob "refs/heads/$name:.topdeps" 2>/dev/null | wc -l) ))"
+depcnt="$(git cat-file blob "refs/heads/$name:.topdeps" 2>/dev/null | awk 'END {print NR}')"
 nomerges=--no-merges
 [ "$depcnt" -gt 0 ] || nomerges=
 

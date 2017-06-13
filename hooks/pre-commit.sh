@@ -165,7 +165,7 @@ check_topdeps()
 	depdir="$(get_temp tg-depdir -d)" ||
 		die "cannot check for multiple occurrences of dependents"
 	cat_file "$head_:.topdeps" -i |
-		while read dep; do
+		while read -r dep || [ -n "$dep" ]; do
 			[ ! -d "$depdir/$dep" ] ||
 				die "multiple occurrences of the same dependent: $dep"
 			mkdir -p "$depdir/$dep" ||

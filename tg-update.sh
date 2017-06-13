@@ -51,7 +51,7 @@ usage()
 do_base_mode()
 {
 	v_verify_topgit_branch tgbranch "$1"
-	depcnt="$(( $(git cat-file blob "refs/heads/$tgbranch:.topdeps" 2>/dev/null | wc -l) ))"
+	depcnt="$(git cat-file blob "refs/heads/$tgbranch:.topdeps" 2>/dev/null | awk 'END {print NR}')"
 	if [ $depcnt -gt 0 ]; then
 		grammar="dependency"
 		[ $depcnt -eq 1 ] || grammar="dependencies"

@@ -227,7 +227,7 @@ if has_remote "$name"; then
 fi
 
 git cat-file blob "$name:.topdeps" 2>/dev/null |
-	sed '1{ s/^/Depends: /; n; }; s/^/         /;'
+awk 'NR == 1 {print "Depends: " $0} NR != 1 {print "         " $0}'
 
 depcheck="$(get_temp tg-depcheck)"
 missing_deps=

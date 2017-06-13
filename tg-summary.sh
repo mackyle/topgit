@@ -384,7 +384,7 @@ get_branch_list |
 			from=$head_from
 			[ "$name" = "$curname" ] ||
 				from=
-			cat_file "refs/heads/$name:.topdeps" $from | while read dep; do
+			cat_file "refs/heads/$name:.topdeps" $from | while read -r dep || [ -n "$dep" ]; do
 				dep_is_tgish=true
 				ref_exists "refs/$topbases/$dep" ||
 					dep_is_tgish=false

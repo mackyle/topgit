@@ -187,7 +187,7 @@ show_topgit_heads()
 	while read -r oneref; do
 		_rev="$(get_recorded_ref "$oneref")" && [ -n "$_rev" ] || continue
 		printf '%s\n' "$oneref" >>"$topics2"
-		git cat-file blob "$_rev:.topdeps" 2>/dev/null || :
+		git cat-file blob "$_rev:.topdeps" 2>/dev/null | awk '{print}'
 	done <"$topics" | sed -e 's,^,refs/heads/,' | sort -u >"$deplist"
 	topics="$topics2"
 	join -v 1 "$topics" "$deplist"

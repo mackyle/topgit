@@ -97,9 +97,12 @@ depend_add()
 		check_new_dep "$name"
 	done
 	[ -n "$nocommit" ] || ensure_ident_available
+	newdepsfile="$(get_temp newdeps)"
+	! [ -e "$root_dir/.topdeps" ] || awk '{print}' <"$root_dir/.topdeps" >"$newdepsfile"
 	for name in $names; do
-		echol "$name" >>"$root_dir/.topdeps"
+		echol "$name" >>"$newdepsfile"
 	done
+	cat "$newdepsfile" >"$root_dir/.topdeps"
 	git add -f "$root_dir/.topdeps"
 	case "$names" in
 	*" "*)
