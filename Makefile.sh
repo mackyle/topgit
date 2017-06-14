@@ -89,7 +89,7 @@ DESTDIRBOOL="No"
 } >"Makefile.var"
 
 # Force TG-BUILD-SETTINGS to be updated now if needed
-${MAKE:-make} -f Makefile.mak FORCE_SETTINGS_BUILD=FORCE TG-BUILD-SETTINGS
+${MAKE:-make} ${GNO_PD_OPT} -e -f Makefile.mak FORCE_SETTINGS_BUILD=FORCE TG-BUILD-SETTINGS
 
 # end of wrapper
 }
@@ -102,5 +102,6 @@ set -ea
 defines
 test -n "$MKTOP" || {
 	. ./gnomake.sh &&
+	set_gno_pd_opt &&
 	makefile "$@"
 }

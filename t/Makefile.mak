@@ -109,11 +109,11 @@ TEST_TARGET = $(TEST_TARGET_$(DEFAULT_TEST_TARGET))
 all: $(TEST_TARGET)
 
 test: pre-clean TG-TEST-SETTINGS $(TEST_LINT) FORCE
-	$(Q)$(CACHE_SETUP_TTY) $(MAKE) -f Makefile.mak aggregate-results-and-cleanup
+	$(Q)$(CACHE_SETUP_TTY) $(MAKE) $${GNO_PD_OPT} -f Makefile.mak aggregate-results-and-cleanup
 
 prove: pre-clean TG-TEST-SETTINGS $(TEST_LINT) FORCE
 	@echo "*** prove ***"; $(CACHE_SETUP) $(PROVE) --exec '$(SHELL_PATH_SQ)' $(TESTLIB_PROVE_OPTS) $(T) :: $(TESTLIB_TEST_OPTS)
-	$(Q)$(NOCLEANCMT)$(MAKE) -f Makefile.mak -s post-clean-except-prove-cache
+	$(Q)$(NOCLEANCMT)$(MAKE) $${GNO_PD_OPT} -f Makefile.mak -s post-clean-except-prove-cache
 
 .PRECIOUS: $(T)
 $(T): FORCE
@@ -166,9 +166,9 @@ run-individual-tests: $(T)
 
 aggregate-results-and-cleanup:
 	$(Q)ec=0; '$(SHELL_PATH_SQ)' -c 'TESTLIB_TEST_PARENT_INT_ON_ERROR=$$$$ exec "$$@"' "$(SHELL_PATH)" \
-	$(MAKE) -f Makefile.mak $(TESTLIB_MAKE_OPTS) -k run-individual-tests || ec=$$?; \
-	[ $$ec -eq 130 ] || $(MAKE) -f Makefile.mak aggregate-results || exit && exit $$ec
-	$(Q)$(NOCLEANCMT)$(MAKE) -f Makefile.mak -s post-clean
+	$(MAKE) $${GNO_PD_OPT} -f Makefile.mak $(TESTLIB_MAKE_OPTS) -k run-individual-tests || ec=$$?; \
+	[ $$ec -eq 130 ] || $(MAKE) $${GNO_PD_OPT} -f Makefile.mak aggregate-results || exit && exit $$ec
+	$(Q)$(NOCLEANCMT)$(MAKE) $${GNO_PD_OPT} -f Makefile.mak -s post-clean
 
 aggregate-results:
 	$(Q)for f in '$(TEST_RESULTS_DIRECTORY_SQ)'/t*-*.counts; do \

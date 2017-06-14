@@ -38,6 +38,70 @@ cmd_path() (
         command -v "$1"
 )
 
+# set GNO_PD_OPT to --no-print-directory
+#  - unless GNO_PD_OPT is already set (even if to empty)
+#  - unless "w" appears in MAKEFLAGS (check skipped if first arg is not-empty)
+#  - the $(MAKE) binary does NOT contain GNUmakefile
+#  - the $(MAKE) binary does NOT produce a "GNU Make ..." --version line
+set_gno_pd_opt() {
+	if test z"$GNO_PD_OPT" = z"--no-print-directory"; then
+		# It likes to sneak back in so rip it back out
+		case "$MAKEFLAGS" in "w"*)
+			MAKEFLAGS="${MAKEFLAGS#w}"
+		esac
+		return 0
+	fi
+	test z"${GNO_PD_OPT+set}" != z"set" || return 0
+	GNO_PD_OPT=
+	if test z"$1" = z; then
+		case "${MAKEFLAGS%%[ =]*}" in *w*)
+			return 0
+		esac
+	fi
+	set -- "$("${MAKE:-make}" --no-print-directory --version 2>/dev/null)" || :
+	case "$1" in "GNU "[Mm]"ake "*)
+		GNO_PD_OPT="--no-print-directory"
+	esac
+	return 0
+}
+
+# VAR += VAL
+# => vplus VAR VAL
+#
+# vplus appends the second and following arguments (concatenated with a space)
+# to the variable named by the first with a space if it's set and non-empty
+# or otherwise it's just set.  If there are no arguments nothing is done but
+# appending an empty string will set the variable to empty if it's not set
+vplus() {
+	test z"$1" != z || return 1
+	test $# -ge 2 || return 0
+	vplus_v_="$1"
+	shift
+	vplus_val_="$*"
+	set -- "$vplus_v_" "" "$vplus_val_"
+	unset vplus_v_ vplus_val_
+	eval set -- '"$1"' "\"\$$1\"" '"$3"'
+	set -- "$1" "${2:+$2 }$3"
+	eval "$1="'"$2"'
+}
+
+# vpre prepends the second and following arguments (concatenated with a space)
+# to the variable named by the first with a space if it's set and non-empty
+# or otherwise it's just set.  If there are no arguments nothing is done but
+# appending an empty string will set the variable to empty if it's not set
+vpre() {
+	test z"$1" != z || return 1
+	test $# -ge 2 || return 0
+	vpre_v_="$1"
+	shift
+	vpre_val_="$*"
+	set -- "$vpre_v_" "" "$vpre_val_"
+	unset vpre_v_ vpre_val_
+	eval set -- '"$1"' "\"\$$1\"" '"$3"'
+	set -- "$1" "$3${2:+ $2}"
+	eval "$1="'"$2"'
+}
+
 # stores the single-quoted value of the variable name passed as
 # the first argument into the variable name passed as the second
 # (use quotevar 3 varname "$value" to quote a value directly)

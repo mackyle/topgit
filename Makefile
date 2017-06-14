@@ -22,16 +22,16 @@ TARGETS = \
 #TARGETS
 
 __default_target__: __file_which_should_not_exist
-	+@set -- && set -ae && MAKE="$(MAKE)" && . ./Makefile.sh && $(MAKE) -e -f Makefile.mak
+	+@set -- && set -ae && MAKE="$(MAKE)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak
 
 .DEFAULT:
-	+@set -- "$@" && set -ae && MAKE="$(MAKE)" && . ./Makefile.sh && $(MAKE) -e -f Makefile.mak "$@"
+	+@set -- "$@" && set -ae && MAKE="$(MAKE)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak "$@"
 
 target: __file_which_should_not_exist
-	+@set -- $(TARGET) && set -ae && MAKE="$(MAKE)" && . ./Makefile.sh && $(MAKE) -e -f Makefile.mak $(TARGET)
+	+@set -- $(TARGET) && set -ae && MAKE="$(MAKE)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak $(TARGET)
 
 __any_target__ $(TARGETS): __file_which_should_not_exist
-	+@set -- "$@" && set -ae && MAKE="$(MAKE)" && . ./Makefile.sh && $(MAKE) -e -f Makefile.mak "$@"
+	+@set -- "$@" && set -ae && MAKE="$(MAKE)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak "$@"
 
 # Very important rule to avoid "accidents" caused by Makefile.sh's existence
 # Some ridiculous "make" implementations will always implicitly "make Makefile"
@@ -59,13 +59,13 @@ Makefile:
 # trying to make a specific target, these will often avoid the "up to date"
 # output that would otherwise occur for existing files with no dependencies
 .sh:
-	+@set -- "$@" && set -ae && MAKE="$(MAKE)" && . ./Makefile.sh && $(MAKE) -e -f Makefile.mak "$@"
+	+@set -- "$@" && set -ae && MAKE="$(MAKE)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak "$@"
 .awk:
-	+@set -- "$@" && set -ae && MAKE="$(MAKE)" && . ./Makefile.sh && $(MAKE) -e -f Makefile.mak "$@"
+	+@set -- "$@" && set -ae && MAKE="$(MAKE)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak "$@"
 .sh.txt:
-	+@set -- "$@" && set -ae && MAKE="$(MAKE)" && . ./Makefile.sh && $(MAKE) -e -f Makefile.mak "$@"
+	+@set -- "$@" && set -ae && MAKE="$(MAKE)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak "$@"
 .sh.html:
-	+@set -- "$@" && set -ae && MAKE="$(MAKE)" && . ./Makefile.sh && $(MAKE) -e -f Makefile.mak "$@"
+	+@set -- "$@" && set -ae && MAKE="$(MAKE)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak "$@"
 
 # This "phony" target must have at least one command otherwise it will not
 # actually run anything and so will not actually trigger the rules that depend

@@ -61,10 +61,11 @@ fi
 } >"Makefile.var"
 
 # Force TG-TEST-SETTINGS to be updated now if needed
-${MAKE:-make} -f Makefile.mak FORCE_SETTINGS_BUILD=FORCE TG-TEST-SETTINGS
+${MAKE:-make} ${GNO_PD_OPT} -e -f Makefile.mak FORCE_SETTINGS_BUILD=FORCE TG-TEST-SETTINGS
 
 # end of wrapper
 }
 
 . "$MKTOP/gnomake.sh" &&
+set_gno_pd_opt &&
 makefile "$@"
