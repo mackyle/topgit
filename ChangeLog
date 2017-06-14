@@ -1,0 +1,35 @@
+#! git-changelog-smudge.pl
+
+# This file is processed with the git-changelog.pl smudger during archive
+# creation to produce a "smudged" ChangeLog file containing the contents of the
+# annotated/signed tags listed below.
+
+#topgit-0.19.8	# POSIXly Proficient
+topgit-0.19.7	~TopGit-0.19.7 - Awesome Acceleration
+topgit-0.19.6
+topgit-0.19.5
+topgit-0.19.4	~TopGit-0.19.4 - Octopuses
+topgit-0.19.3
+topgit-0.19.2
+topgit-0.19.1
+topgit-0.19	~TopGit-0.19 - Undo At Last
+topgit-0.18	~TopGit-0.18 - Speedy Snail
+topgit-0.17
+topgit-0.16
+topgit-0.15.1
+topgit-0.15
+topgit-0.14
+topgit-0.13.2
+topgit-0.13.1
+topgit-0.13
+topgit-0.12
+topgit-0.11
+topgit-0.10	# 2014-04
+topgit-0.8
+topgit-0.7
+topgit-0.6
+topgit-0.5
+topgit-0.4
+topgit-0.3
+topgit-0.2
+topgit-0.1	^TopGit-0.1 - The Saga Begins # 2008-08
