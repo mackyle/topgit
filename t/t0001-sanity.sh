@@ -10,7 +10,7 @@ TEST_NO_CREATE_REPO=1
 
 . ./test-lib.sh
 
-test_plan 13
+test_plan 14
 
 test_tolerate_failure 'POSIX unset behavior' '
 	test z"$(unset it && unset it && echo good || echo bad)" = z"good"
@@ -88,6 +88,14 @@ test_tolerate_failure 'POSIX awk ENVIRON array' '
 test_tolerate_failure 'POSIX tr NUL processing' '
 	val="$(perl -e "print 1,\"\\000\" x 3, 5" | tr "\\000" 2)" &&
 	test z"$val" = z"12225"
+'
+
+test_tolerate_failure 'POSIX export unset var exports it' '
+	say_color info "# POSIX is, regrettably, quite explicit about this" &&
+	say_color info "# POSIX requires EVERY exported variable to be in child environment" &&
+	unset NO_SUCH_VAR &&
+	export NO_SUCH_VAR &&
+	printenv NO_SUCH_VAR >/dev/null
 '
 
 test_done
