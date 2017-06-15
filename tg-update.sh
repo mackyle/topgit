@@ -108,27 +108,31 @@ do_base_mode()
 	fi
 	git checkout -q $iowopt "$tgbranch" || die "git checkout failed"
 	msgopt=
+	# options validation guarantees that at most one of basemsg or basefile is set
 	[ -z "$basemsg" ] || msgopt='-m "$basemsg"'
-	fileopt=
-	[ -z "$basefile" ] || fileopt='-F "$basefile"'
+	if [ -n "$basefile" ]; then
+		# git merge does not accept a -F <msgfile> option so we have to fake it
+		basefilemsg="$(cat "$basefile")" || die "could not read file '$basefile'"
+		msgopt='-m "$basefilemsg"'
+	fi
+	editopt=
 	if [ -n "$editmode" ]; then
 		if [ "$editmode" = "0" ]; then
 			editopt="--no-edit"
 		else
 			editopt="--edit"
 		fi
+	fi
+	if [ -z "$basemsg$basefile" ]; then
+		[ -n "$editopt" ] || editopt="--edit"
+		basemsg="tg update --base $tgbranch $2"
+		msgopt='-m "$basemsg"'
 	else
-		if [ -z "$basemsg$basefile" ]; then
-			editopt="--edit"
-			basemsg="tg update --base $tgbranch $2"
-			msgopt='-m "$basemsg"'
-		else
-			editopt="--no-edit"
-		fi
+		[ -n "$editopt" ] || editopt="--no-edit"
 	fi
 	ncopt=
 	[ -z "$basenc" ] || ncopt="--no-commit"
-	eval git merge --no-ff --no-log --no-stat $auhopt $ncopt $editopt "$msgopt" "$fileopt" "refs/$topbases/$tgbranch" -- || exit
+	eval git merge --no-ff --no-log --no-stat $auhopt $ncopt $editopt "$msgopt" "refs/$topbases/$tgbranch" -- || exit
 	[ -n "$basenc" ] || checkout_symref_full "$current"
 	exit
 }
@@ -300,16 +304,16 @@ if [ -z "$restored" ]; then
 			basenc=1;;
 		--force|-f)
 			basefrc=1;;
-		-m)
-			[ $# -gt 0 ] && [ -n "$1" ] || die "option -m requires an argument"
+		-m|--message)
+			[ $# -gt 0 ] && [ -n "$1" ] || die "option $arg requires an argument"
 			basemsg="$1"
 			shift;;
 		-m?*)
 			basemsg="${1#-m}";;
 		--message=*)
 			basemsg="${1#--message=}";;
-		-F)
-			[ $# -gt 0 ] && [ -n "$1" ] || die "option -F requires an argument"
+		-F|--file)
+			[ $# -gt 0 ] && [ -n "$1" ] || die "option $arg requires an argument"
 			basefile="$1"
 			shift;;
 		-F?*)
