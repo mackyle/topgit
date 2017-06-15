@@ -888,7 +888,8 @@ tg create
 	after the branch has been created to merge in the additional
 	dependencies and bring the branch up-to-date.  This can be suppressed
 	with the ``--no-commit`` option (which also suppresses the initial
-	commit).
+	commit) or the ``--no-update`` option (which allows the initial commit
+	while suppressing only the update operation portion).
 
 	Previous versions of TopGit behaved as though the ``--no-edit`` option
 	was always given on the command line.

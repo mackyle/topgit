@@ -1,8 +1,8 @@
 #!/bin/sh
 # TopGit - A different patch queue manager
-# Copyright (C) Petr Baudis <pasky@suse.cz>  2008
-# Copyright (C) Kyle J. McKay <mackyle@gmail.com>  2015,2016,2017
-# All rights reserved.
+# Copyright (C) 2008 Petr Baudis <pasky@suse.cz>
+# Copyright (C) 2015,2016,2017 Kyle J. McKay <mackyle@gmail.com>
+# All rights reserved
 # GPLv2
 
 deps= # List of dependent branches
@@ -17,6 +17,7 @@ topmsg=
 topmsgfile=
 noedit=
 nocommit=
+noupdate=
 nodeps=
 topmsg=
 warntop=
@@ -24,7 +25,7 @@ quiet=
 branchtype=PATCH
 branchdesc=patch
 
-USAGE="Usage: ${tgname:-tg} [... -r remote] create [-q] [-m <msg> | -F <file>] [--topmsg <msg> | --topmsg-file <file>] [-n] [--no-commit] [--base] [<name> [<dep>...|-r [<rname>]] ]"
+USAGE="Usage: ${tgname:-tg} [... -r remote] create [-q] [-m <msg> | -F <file>] [--topmsg <msg> | --topmsg-file <file>] [-n] [--no-commit | --no-update] [--base] [<name> [<dep>...|-r [<rname>]] ]"
 
 usage()
 {
@@ -55,6 +56,9 @@ while [ $# -gt 0 ]; do case "$1" in
 		;;
 	--no-commit)
 		nocommit=1
+		;;
+	--no-update)
+		noupdate=1
 		;;
 	-n|--no-edit)
 		noedit=1
@@ -157,9 +161,10 @@ if [ $# -gt 0 ]; then
 fi
 [ -n "$name" ] || { err "no branch name given"; usage 1; }
 [ -z "$remote" -o -n "$rname" ] || rname="$name"
-[ -z "$remote" -o -z "$msg$msgfile$topmsg$topmsgfile$nocommit$nodeps" ] || { err "-r may not be combined with other options"; usage 1; }
+[ -z "$remote" -o -z "$msg$msgfile$topmsg$topmsgfile$nocommit$noupdate$nodeps" ] || { err "-r may not be combined with other options"; usage 1; }
 [ $# -eq 0 -o -z "$remote" ] || { err "deps not allowed with -r"; usage 1; }
 [ $# -le 1 -o -z "$nodeps" ] || { err "--base (aka --no-deps) allows at most one <dep>"; usage 1; }
+[ "$nocommit$noupdate" != "11" ] || die "--no-commit and --no-update are mutually exclusive options"
 [ -z "$msg" -o -z "$msgfile" ] || die "only one -F or -m option is allowed"
 [ "$msgfile" != "-" -o "$topmsgfile" != "-" ] || { err "--message-file and --topmsg-file may not both be '-'"; usage 1; }
 
@@ -507,6 +512,10 @@ esac
 quiet_info "Topic branch $name created."
 [ -n "$merge" ] || exit 0
 ## Merge other dependencies into the base
+if [ -n "$noupdate" ]; then
+	quiet_info "Remember to run $tgdisplay update to merge in dependencies."
+	exit 0
+fi
 quiet_info "Running $tgname update to merge in dependencies."
 [ -n "$nommsg" ] || ! [ -f "$git_dir/MERGE_MSG" ] || mv -f "$git_dir/MERGE_MSG" "$git_dir/TGMERGE_MSG" || :
 set -- "$name"

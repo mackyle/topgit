@@ -6,7 +6,7 @@ TEST_NO_CREATE_REPO=1
 
 . ./test-lib.sh
 
-test_plan 16
+test_plan 17
 
 test_recreate_repo_cd() {
 	! [ -e "$1" ] || rm -rf "$1"
@@ -38,6 +38,7 @@ test_expect_success 'tg create bad usage' '
 	test_must_fail tg create HEAD &&
 	test_must_fail tg create @ &&
 	test_must_fail tg create --no-deps foo bar &&
+	test_must_fail tg create --no-commit --no-update --no-deps HEAD &&
 	test_commit first^1 &&
 	git branch master2 &&
 	test_must_fail tg create master &&
@@ -187,10 +188,13 @@ test_expect_success 'tg create multiple deps' '
 	test_diff expected .topmsg &&
 	cnt="$(git rev-list --count HEAD)" &&
 	test $cnt -eq 4 &&
+	test_cmp_rev tgb HEAD &&
 	test_cmp_rev first HEAD^^ &&
 	test_cmp_rev master HEAD^2 &&
 	cnt="$(git rev-list --count HEAD^)" &&
-	test $cnt -eq 2
+	test $cnt -eq 2 &&
+	pcnt="$(git --no-pager log --no-color --format=format:%p -n 1 tgb | wc -w)" &&
+	test $pcnt -eq 2
 '
 
 test_expect_success 'tg create --no-commit' '
@@ -221,6 +225,25 @@ test_expect_success 'tg create multiple deps --no-commit' '
 	test_cmp_rev first HEAD &&
 	test_cmp_rev first tgb &&
 	test_cmp_rev first $(tg base tgb)
+'
+
+test_expect_success 'tg create multiple deps --no-update' '
+	test_recreate_repo_cd r0 &&
+	test_commit first^one &&
+	git branch first &&
+	test_commit second^one &&
+	tg create --no-update --topmsg subject:multi tgb first @ &&
+	printf "%s\n" first master >expected &&
+	test_diff expected .topdeps &&
+	printf "%s\n" "subject:multi" >expected &&
+	test_diff expected .topmsg &&
+	cnt="$(git rev-list --count --all)" &&
+	test $cnt -eq 3 &&
+	test_cmp_rev tgb HEAD &&
+	test_cmp_rev first tgb^ &&
+	test_cmp_rev first $(tg base tgb) &&
+	pcnt="$(git --no-pager log --no-color --format=format:%p -n 1 tgb | wc -w)" &&
+	test $pcnt -eq 1
 '
 
 test_done
