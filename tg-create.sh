@@ -367,7 +367,7 @@ if [ -n "$topmsgfile" ]; then
 		git stripspace <"$topmsgfile" >"$git_dir/TG_EDITMSG"
 	fi
 elif [ -n "$topmsg" ]; then
-	printf '%s\n' "$topmsg" | git stripspace >"$git_dir/TG_EDITMSG"
+	printf '%s\n' "$topmsg" | git stripspace | sed "1s/^[ $tab][ $tab]*//" >"$git_dir/TG_EDITMSG"
 fi
 if [ -s "$git_dir/TG_EDITMSG" ]; then
 	noedit=1
