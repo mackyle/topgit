@@ -106,8 +106,8 @@ bin-wrappers/tg : tg
 	echo "TG_INST_SHAREDIR='$$curdir' && export TG_INST_SHAREDIR" >>"$@" && \
 	echo "TG_INST_HOOKSDIR='$$curdir/bin-wrappers' && export TG_INST_HOOKSDIR" >>"$@" && \
 	echo '[ -n "$$tg__include" ] || exec $(SHELL_PATH_SQ) -c '\''. "$$TG_INST_BINDIR/tg"'\'' tg "$$@" || exit' >>"$@" && \
-	echo ". '$$curdir/tg'" >>"$@" && \
-	chmod a+x "$@"
+	echo ". '$$curdir/tg'" >>"$@" && sed <"$@" "/exec.* -c /{s/ -c / -x -c /;s/ tg / tgx /;}" >"$@x" && \
+	chmod a+x "$@" "$@x"
 
 bin-wrappers/pre-commit : hooks/pre-commit
 	$(QWRAPPER){ [ -d bin-wrappers ] || mkdir bin-wrappers; } && \
