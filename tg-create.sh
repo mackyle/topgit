@@ -200,6 +200,8 @@ if [ -z "$*" ]; then
 		[ "$deps" != "$head" ] || die "refusing to auto-depend on non-branch ref (${head:-detached HEAD})"
 		quiet_info "automatically marking dependency on $deps"
 	fi
+elif [ -n "$nodeps" ]; then
+	deps="$1"
 else
 	# verify each dep is valid and expand "@" to "HEAD" and "HEAD" to it's symref (unless detached)
 	deps=
