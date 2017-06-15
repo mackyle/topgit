@@ -375,7 +375,7 @@ else
 		! subject_prefix="$(git config topgit.subjectprefix)" || subject_prefix="$subject_prefix "
 		echo "Subject: [${subject_prefix}$branchtype] $name"
 		echo
-		echo "<$branchdesc description>"
+		echo "#$branchdesc description"
 		echo
 		sobpfx='#'
 		[ z"$(git config --bool format.signoff 2>/dev/null)" != z"true" ] || sobpfx=
