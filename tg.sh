@@ -1846,6 +1846,7 @@ initial_setup()
 		tg_tmp_dir="$(mktemp -d "$git_dir/tg-tmp.XXXXXX" 2>/dev/null)" || tg_tmp_dir=
 		[ -n "$tg_tmp_dir" ] || tg_tmp_dir="$(mktemp -d "${TMPDIR:-/tmp}/tg-tmp.XXXXXX" 2>/dev/null)" || tg_tmp_dir=
 		[ -n "$tg_tmp_dir" ] || [ -z "$TMPDIR" ] || tg_tmp_dir="$(mktemp -d "/tmp/tg-tmp.XXXXXX" 2>/dev/null)" || tg_tmp_dir=
+		[ -z "$tg_tmp_dir" ] || tg_tmp_dir="$(cd "$tg_tmp_dir" && pwd -P)"
 	fi
 	unset_ TG_TMPDIR
 	tg_ref_cache="$tg_tmp_dir/tg~ref-cache"
