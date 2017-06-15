@@ -16,15 +16,15 @@ patch and providing some tools to maintain the branches.
 See also:
 
 	:REQUIREMENTS_:	    Installation requirements
-	:SYNOPSIS_:	    Command line example session
-	:USAGE_:	    Command line details
-	:`NO UNDO`_:	    Where's the undo!!!
-	:CONVENTIONS_:	    Suggestions for organizing your TopGit branches
+	:SYNOPSIS_:         Command line example session
+	:USAGE_:            Command line details
+	:`NO UNDO`_:        Where's the undo!!!
+	:CONVENTIONS_:      Suggestions for organizing your TopGit branches
 	:`EXTRA SETTINGS`_: Various possible "topgit.*" config settings
-	:ALIASES_:	    Git-like TopGit command aliases
-	:NAVIGATION_:	    Getting around with "next" and "prev"
-	:GLOSSARY_:	    All the TopGit vocabulary in one place
-	:TECHNICAL_:	    How it works behind the scenes
+	:ALIASES_:          Git-like TopGit command aliases
+	:NAVIGATION_:       Getting around with "next" and "prev"
+	:GLOSSARY_:         All the TopGit vocabulary in one place
+	:TECHNICAL_:        How it works behind the scenes
 	:`TESTING TOPGIT`_: How to run the TopGit test suite
 
 
@@ -368,18 +368,18 @@ EXTRA SETTINGS
 
 TopGit supports various config settings:
 
-	:`tg create`_:		``format.signoff`` template Signed-off-by line
-	:ALIASES_:		``topgit.alias.*`` for Git-like command aliases
-	:`tg update`_:		``topgit.autostash`` automatic stash control
-	:`tg create`_:		``topgit.bcc`` default "Bcc:" value for create
-	:`tg create`_:		``topgit.cc`` default "Cc:" value for create
-	:`tg patch`_:		``topgit.from`` "From:" fixups by ``tg patch``
-	:`REMOTE HANDLING`_:	``topgit.remote`` TopGit's default remote
-	:SEQUESTRATION_:	``topgit.sequester`` for sequestration control
-	:`tg update`_:		``topgit.setAutoUpdate`` => ``rerere.autoUpdate``
-	:`tg create`_:		``topgit.subjectPrefix`` "[$prefix PATCH] foo"
-	:`tg create`_:		``topgit.to`` default "To:" value for create
-	:`tg migrate-bases`_:	``topgit.top-bases`` for refs bases location
+	:`tg create`_:          ``format.signoff`` template Signed-off-by line
+	:ALIASES_:              ``topgit.alias.*`` for Git-like command aliases
+	:`tg update`_:          ``topgit.autostash`` automatic stash control
+	:`tg create`_:          ``topgit.bcc`` default "Bcc:" value for create
+	:`tg create`_:          ``topgit.cc`` default "Cc:" value for create
+	:`tg patch`_:           ``topgit.from`` "From:" fixups by ``tg patch``
+	:`REMOTE HANDLING`_:    ``topgit.remote`` TopGit's default remote
+	:SEQUESTRATION_:        ``topgit.sequester`` for sequestration control
+	:`tg update`_:          ``topgit.setAutoUpdate`` => ``rerere.autoUpdate``
+	:`tg create`_:          ``topgit.subjectPrefix`` "[$prefix PATCH] foo"
+	:`tg create`_:          ``topgit.to`` default "To:" value for create
+	:`tg migrate-bases`_:   ``topgit.top-bases`` for refs bases location
 
 
 ALIASES
@@ -797,32 +797,32 @@ Global options:
 
 The ``tg`` tool has several subcommands:
 
-	:`tg annihilate`_:  Mark a TopGit-controlled branch as defunct
-	:`tg base`_:	    Show base commit for one or more TopGit branches
-	:`tg checkout`_:    Shortcut for git checkout with name matching
-	:`tg contains`_:    Which TopGit-controlled branch contains the commit
-	:`tg create`_:	    Create a new TopGit-controlled branch
-	:`tg delete`_:	    Delete a TopGit-controlled branch cleanly
-	:`tg depend`_:	    Add a new dependency to a TopGit-controlled branch
-	:`tg export`_:	    Export TopGit branch patches to files or a branch
-	:`tg files`_:	    Show files changed by a TopGit branch
-	:`tg help`_:	    Show TopGit help optionally using a browser
-	:`tg import`_:	    Import commit(s) to separate TopGit branches
-	:`tg info`_:	    Show status information about a TopGit branch
-	:`tg log`_:	    Run git log limiting revisions to a TopGit branch
-	:`tg mail`_:	    Shortcut for git send-email with ``tg patch`` output
+	:`tg annihilate`_:    Mark a TopGit-controlled branch as defunct
+	:`tg base`_:          Show base commit for one or more TopGit branches
+	:`tg checkout`_:      Shortcut for git checkout with name matching
+	:`tg contains`_:      Which TopGit-controlled branch contains the commit
+	:`tg create`_:        Create a new TopGit-controlled branch
+	:`tg delete`_:        Delete a TopGit-controlled branch cleanly
+	:`tg depend`_:        Add a new dependency to a TopGit-controlled branch
+	:`tg export`_:        Export TopGit branch patches to files or a branch
+	:`tg files`_:         Show files changed by a TopGit branch
+	:`tg help`_:          Show TopGit help optionally using a browser
+	:`tg import`_:        Import commit(s) to separate TopGit branches
+	:`tg info`_:          Show status information about a TopGit branch
+	:`tg log`_:           Run git log limiting revisions to a TopGit branch
+	:`tg mail`_:          Shortcut for git send-email with ``tg patch`` output
 	:`tg migrate-bases`_: Transition top-bases to new location
-	:`tg next`_:	    Show branches directly depending on a TopGit branch
-	:`tg patch`_:	    Generate a patch file for a TopGit branch
-	:`tg prev`_:	    Show non-annihilated TopGit dependencies for a branch
-	:`tg push`_:	    Run git push on TopGit branch(es) and depedencies
-	:`tg rebase`_:	    Auto continue git rebase if rerere resolves conflicts
-	:`tg remote`_:	    Set up remote for fetching/pushing TopGit branches
-	:`tg revert`_:	    Revert ref(s) to a state stored in a ``tg tag``
-	:`tg status`_:	    Show current TopGit status (e.g. in-progress update)
-	:`tg summary`_:	    Show various information about TopGit branches
-	:`tg tag`_:	    Create tag that records current TopGit branch state
-	:`tg update`_:	    Update TopGit branch(es) with respect to dependencies
+	:`tg next`_:          Show branches directly depending on a TopGit branch
+	:`tg patch`_:         Generate a patch file for a TopGit branch
+	:`tg prev`_:          Show non-annihilated TopGit dependencies for a branch
+	:`tg push`_:          Run git push on TopGit branch(es) and depedencies
+	:`tg rebase`_:        Auto continue git rebase if rerere resolves conflicts
+	:`tg remote`_:        Set up remote for fetching/pushing TopGit branches
+	:`tg revert`_:        Revert ref(s) to a state stored in a ``tg tag``
+	:`tg status`_:        Show current TopGit status (e.g. in-progress update)
+	:`tg summary`_:       Show various information about TopGit branches
+	:`tg tag`_:           Create tag that records current TopGit branch state
+	:`tg update`_:        Update TopGit branch(es) with respect to dependencies
 
 tg help
 ~~~~~~~
@@ -1119,7 +1119,7 @@ tg patch
 	  --binary	pass --binary to ``git diff-tree`` to enable generation
 	  		of binary patches
 	  --quiet	be quiet (aka ``-q``) about missing and unfixed From:
-	  --from	make sure patch has a From: line, if not add one using
+	  --from	make sure patch has a From: line, if not add one
 	  --from=<a>	<a> or Signed-off-by value or ident value; ``git am``
 	  		really gets unhappy with patches missing From: lines;
 	  		will NOT replace an existing non-empty From: header
@@ -1134,7 +1134,7 @@ tg patch
 
 	If the config variable ``topgit.from`` is set to a boolean it can be
 	used to enable or disable the ``--from`` option by default.  If it's
-	set to the speical value ``quiet`` the ``--quiet`` option is enabled
+	set to the special value ``quiet`` the ``--quiet`` option is enabled
 	and From: lines are left alone by default.  Any other non-empty value
 	is taken as a default ``--from=<value>`` option.  The ``--no-from``
 	option will temporarily disable use of the config value.
