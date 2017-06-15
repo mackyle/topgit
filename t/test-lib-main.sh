@@ -347,14 +347,14 @@ match_test_selector_list() {
 }
 
 maybe_teardown_verbose() {
-	test -z "$verbose_only" && return
+	test -z "$verbose_list" && return
 	exec 4>/dev/null 3>/dev/null
 	verbose=
 }
 
 maybe_setup_verbose() {
-	test -z "$verbose_only" && return
-	if match_pattern_list $test_count $verbose_only
+	test -z "$verbose_list" && return
+	if match_test_selector_list '--verbose-only' $test_count "$verbose_list"
 	then
 		if test "$verbose_log" = "t"
 		then
@@ -522,7 +522,7 @@ test_start_() {
 }
 
 test_finish_() {
-	echo >&3 ""
+	test z"$to_skip" = z"q" || echo >&3 ""
 	maybe_teardown_verbose
 }
 
@@ -555,8 +555,12 @@ test_skip() {
 
 	case "$to_skip" in
 	t)
-		say_color skip >&3 "skipping test: $@"
-		say_color_tap skip "ok $test_count # skip $1 ($skipped_reason)"
+		if test z"$runquiet" = z || test z"$skipped_reason" != z"--run"; then
+			say_color skip >&3 "skipping test: $@"
+			say_color_tap skip "ok $test_count # skip $1 ($skipped_reason)"
+		else
+			to_skip=q
+		fi
 		: true
 		;;
 	*)
@@ -702,8 +706,10 @@ test_plan() {
 		skip_all="${msg:-skip all tests in $this_test}"
 		test_done
 	fi
-	test $test_external_has_tap -ne 0 || say_tap "1..$1"
-	test_wrote_plan_count="$1"
+	if test z"$runquiet" = z; then
+		test $test_external_has_tap -ne 0 || say_tap "1..$1"
+		test_wrote_plan_count="$1"
+	fi
 }
 
 # Provide an implementation of the 'yes' utility
@@ -804,7 +810,7 @@ test_lib_main_init_funcs() {
 if test z"$color" != z
 then
 	say_color() {
-		test -z "$1" && test -n "$quiet" && return
+		test -z "$1" && test -n "$quiet" && test -z "$verbose" && return
 		eval "say_color_color=\$say_color_$1"
 		shift
 		_sfc=
@@ -820,7 +826,7 @@ then
 	}
 else
 	say_color() {
-		test -z "$1" && test -n "$quiet" && return
+		test -z "$1" && test -n "$quiet" && test -z "$verbose" && return
 		shift
 		printf '%s\n' "$*"
 	}
@@ -1047,7 +1053,7 @@ do
 	-v|--v|--ve|--ver|--verb|--verbo|--verbos|--verbose)
 		verbose=t; shift ;;
 	--verbose-only=*)
-		verbose_only=${1#--*=}
+		verbose_list=${1#--*=}
 		shift ;;
 	-q|--q|--qu|--qui|--quie|--quiet)
 		quiet=t; shift ;;
@@ -1077,6 +1083,8 @@ do
 		echo "error: unknown test option '$1'" >&2; exit 1 ;;
 	esac
 done
+
+test z"$quiet" = z || test z"$run_list" = z || test z"$HARNESS_ACTIVE" != z || runquiet=t
 
 test "x${color+set}" != "xset" &&
 test "x$TERM" != "xdumb" && (
@@ -1301,7 +1309,7 @@ test_lib_main_init_funcs
 
 if test -n "$HARNESS_ACTIVE"
 then
-	if test "$verbose" = t || test -n "$verbose_only" && test -z "$verbose_log$TESTLIB_OVERRIDE"
+	if test "$verbose" = t || test -n "$verbose_list" && test -z "$verbose_log$TESTLIB_OVERRIDE"
 	then
 		printf 'Bail out! %s\n' \
 		 'verbose mode forbidden under TAP harness; use --verbose-log'

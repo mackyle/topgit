@@ -307,6 +307,12 @@ options to _every_ test run by the Makefile.
     harness) and various output from test_external... functions.  Mainly
     useful to produce more compact output when NOT running under a TAP harness.
 
+    Ignored if `--verbose` is also active.
+
+    When combined with `--run` the skipping test message(s) that would
+    otherwise be output when tests are skipped by a `--run` option are
+    suppressed unless $HARNESS_ACTIVE.
+
 * --root=<path>
 
     Causes the "trash directories" to be created as subdirectories of `<path>`
@@ -389,22 +395,20 @@ options to _every_ test run by the Makefile.
 
     Note that `--verbose-log` *IS* compatible with $HARNESS_ACTIVE.
 
-* --verbose-only=<pattern-list>
+* --verbose-only=<run-list>
 
     The current subtest number (sub tests are numbered starting at 1) is
-    matched against each pattern in the the whitespace-separated
-    filename-wildcard-pattern list <pattern-list> and if there's a match then
-    `--verbose` is active for that subtest and if there is *NOT* a match then
-    `--verbose` is NOT active for that subtest.
+    matched against <run-list> (see description for `--run` option) and if
+    there's a match then `--verbose` is active for that subtest and if there is
+    *NOT* a match then `--verbose` is NOT active for that subtest.
 
-    For example, `--verbose-only="[1-3] 5"` will enable verbose for
+    For example, `--verbose-only="1-3,5"` will enable verbose for
     subtests 1, 2, 3 and 5 and will DISABLE verbose mode for subtests
-    4,6,7,8,9,10,11,12,13,14,15 etc.  The fancy <run-list> processing of the
-    `--run` option's argument is *NOT* available here.
+    4,6,7,8,9,10,11,12,13,14,15 etc.
 
-    Using this option with a non-empty <pattern-list> value completely
-    supersedes any explicit `--verbose` option (before or after).
-    (Using it with an empty value just silently has no effect.)
+    Using this option with a non-empty <run-list> value completely supersedes
+    any explicit `--verbose` option (before or after).  (Using it with an empty
+    value just silently has no effect.)
 
     Note that `--verbose-only=...` is not allowed when $HARNESS_ACTIVE unless
     `--verbose-log` is also used.
