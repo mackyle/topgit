@@ -785,12 +785,15 @@ These functions are intended to be called only _after_ the `./test-lib.sh`
 script has been sourced.  See the `README-TESTLIB-TG` file for additional
 available utility functions that are TopGit-specific.
 
-- die
+- die <optional> <message> <here>
 
     Can be used to exit a test script on an unexpected error, should be used
     after a `||` to preserve the exit code as in:
 
         perform_some_function perhaps with arguments || die
+
+    If the <optional> <message> <here> is present, it will be included in the
+    fatal error message (along with the exit code).
 
 - error <msg> <goes> <here>
 

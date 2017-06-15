@@ -170,7 +170,10 @@ _die() {
 	then
 		exit $code
 	else
-		echo >&5 "FATAL: Unexpected exit with code $code"
+		msg="$*"
+		msg="${msg:+($code) }$msg"
+		[ -n "$msg" ] || msg=" Unexpected exit with code $code"
+		echo >&5 "FATAL:$msg"
 		exit 1
 	fi
 }
