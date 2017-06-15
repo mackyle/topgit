@@ -1057,6 +1057,8 @@ do
 		shift ;;
 	-q|--q|--qu|--qui|--quie|--quiet)
 		quiet=t; shift ;;
+	--no-quiet)
+		quiet=0; shift ;;
 	--color)
 		color="--color"; shift ;;
 	--no-color)
@@ -1084,7 +1086,10 @@ do
 	esac
 done
 
+test z"$run_list" = z || test z"$quiet" != z || quiet=T
+test z"$quiet" != z"0" || quiet=
 test z"$quiet" = z || test z"$run_list" = z || test z"$HARNESS_ACTIVE" != z || runquiet=t
+test z"$quiet" != z"T" || quiet=
 
 test "x${color+set}" != "xset" &&
 test "x$TERM" != "xdumb" && (

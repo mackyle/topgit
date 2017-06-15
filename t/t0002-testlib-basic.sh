@@ -414,7 +414,7 @@ test_expect_success 'TESTLIB_SKIP_TESTS sh pattern' "
 
 test_expect_success '--run basic' "
 	run_sub_test_lib_test run-basic \
-		'--run basic' --run='1 3 5' <<-\\EOF &&
+		'--run basic' --run='1 3 5' --no-quiet <<-\\EOF &&
 	test_plan 6
 	for i in 1 2 3 4 5 6
 	do
@@ -436,7 +436,7 @@ test_expect_success '--run basic' "
 
 test_expect_success '--run with a range' "
 	run_sub_test_lib_test run-range \
-		'--run with a range' --run='1-3' <<-\\EOF &&
+		'--run with a range' --run='1-3' --no-quiet <<-\\EOF &&
 	test_plan 6
 	for i in 1 2 3 4 5 6
 	do
@@ -467,20 +467,18 @@ test_expect_success '--run with two ranges' "
 	test_done
 	EOF
 	check_sub_test_lib_test run-two-ranges <<-\\EOF
-	> 1..6
 	> ok 1 - passing test #1
 	> ok 2 - passing test #2
-	> ok 3 # skip passing test #3 (--run)
-	> ok 4 # skip passing test #4 (--run)
 	> ok 5 - passing test #5
 	> ok 6 - passing test #6
 	> # run passed all 6 test(s)
+	> 1..6
 	EOF
 "
 
 test_expect_success '--run with a left open range' "
 	run_sub_test_lib_test run-left-open-range \
-		'--run with a left open range' --run='-3' <<-\\EOF &&
+		'--run with a left open range' --run='-3' --no-quiet <<-\\EOF &&
 	test_plan 6
 	for i in 1 2 3 4 5 6
 	do
@@ -502,7 +500,7 @@ test_expect_success '--run with a left open range' "
 
 test_expect_success '--run with a right open range' "
 	run_sub_test_lib_test run-right-open-range \
-		'--run with a right open range' --run='4-' <<-\\EOF &&
+		'--run with a right open range' --run='4-' --no-quiet <<-\\EOF &&
 	test_plan 6
 	for i in 1 2 3 4 5 6
 	do
@@ -533,14 +531,13 @@ test_expect_success '--run with basic negation' "
 	test_done
 	EOF
 	check_sub_test_lib_test run-basic-neg <<-\\EOF
-	> 1..6
 	> ok 1 - passing test #1
 	> ok 2 - passing test #2
-	> ok 3 # skip passing test #3 (--run)
 	> ok 4 - passing test #4
 	> ok 5 - passing test #5
 	> ok 6 - passing test #6
 	> # run passed all 6 test(s)
+	> 1..6
 	EOF
 "
 
@@ -555,20 +552,18 @@ test_expect_success '--run with two negations' "
 	test_done
 	EOF
 	check_sub_test_lib_test run-two-neg <<-\\EOF
-	> 1..6
 	> ok 1 - passing test #1
 	> ok 2 - passing test #2
-	> ok 3 # skip passing test #3 (--run)
 	> ok 4 - passing test #4
 	> ok 5 - passing test #5
-	> ok 6 # skip passing test #6 (--run)
 	> # run passed all 6 test(s)
+	> 1..6
 	EOF
 "
 
 test_expect_success '--run a range and negation' "
 	run_sub_test_lib_test run-range-and-neg \
-		'--run a range and negation' --run='"'-4 !2'"' <<-\\EOF &&
+		'--run a range and negation' --run='"'-4 !2'"' --no-quiet <<-\\EOF &&
 	test_plan 6
 	for i in 1 2 3 4 5 6
 	do
@@ -599,14 +594,11 @@ test_expect_success '--run range negation' "
 	test_done
 	EOF
 	check_sub_test_lib_test run-range-neg <<-\\EOF
-	> 1..6
-	> ok 1 # skip passing test #1 (--run)
-	> ok 2 # skip passing test #2 (--run)
-	> ok 3 # skip passing test #3 (--run)
 	> ok 4 - passing test #4
 	> ok 5 - passing test #5
 	> ok 6 - passing test #6
 	> # run passed all 6 test(s)
+	> 1..6
 	EOF
 "
 
@@ -622,21 +614,18 @@ test_expect_success '--run include, exclude and include' "
 	test_done
 	EOF
 	check_sub_test_lib_test run-inc-neg-inc <<-\\EOF
-	> 1..6
-	> ok 1 # skip passing test #1 (--run)
 	> ok 2 - passing test #2
-	> ok 3 # skip passing test #3 (--run)
 	> ok 4 - passing test #4
 	> ok 5 - passing test #5
-	> ok 6 # skip passing test #6 (--run)
 	> # run passed all 6 test(s)
+	> 1..6
 	EOF
 "
 
 test_expect_success '--run include, exclude and include, comma separated' "
 	run_sub_test_lib_test run-inc-neg-inc-comma \
 		'--run include, exclude and include, comma separated' \
-		--run=1-5,\!1-3,2 <<-\\EOF &&
+		--run=1-5,\!1-3,2 --no-quiet <<-\\EOF &&
 	test_plan 6
 	for i in 1 2 3 4 5 6
 	do
@@ -668,21 +657,18 @@ test_expect_success '--run exclude and include' "
 	test_done
 	EOF
 	check_sub_test_lib_test run-neg-inc <<-\\EOF
-	> 1..6
 	> ok 1 - passing test #1
 	> ok 2 - passing test #2
-	> ok 3 # skip passing test #3 (--run)
-	> ok 4 # skip passing test #4 (--run)
 	> ok 5 - passing test #5
-	> ok 6 # skip passing test #6 (--run)
 	> # run passed all 6 test(s)
+	> 1..6
 	EOF
 "
 
 test_expect_success '--run empty selectors' "
 	run_sub_test_lib_test run-empty-sel \
 		'--run empty selectors' \
-		--run='1,,3,,,5' <<-\\EOF &&
+		--run='1,,3,,,5' --no-quiet <<-\\EOF &&
 	test_plan 6
 	for i in 1 2 3 4 5 6
 	do

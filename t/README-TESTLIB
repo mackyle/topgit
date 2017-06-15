@@ -301,7 +301,7 @@ options to _every_ test run by the Makefile.
     Set and export `TESTLIB_TEST_LONG=t`.  The `EXPENSIVE` prereq checks for
     this and only succeeds when `TESTLIB_TEST_LONG` is non-empty.
 
-* -q | --quiet
+* -q | --quiet | --no-quiet
 
     Suppresses some output lines such as "ok" (only when NOT running under a
     harness) and various output from test_external... functions.  Mainly
@@ -312,6 +312,14 @@ options to _every_ test run by the Makefile.
     When combined with `--run` the skipping test message(s) that would
     otherwise be output when tests are skipped by a `--run` option are
     suppressed unless $HARNESS_ACTIVE.
+
+    Use of `--run` will implicitly partially activate the `--quiet` option
+    unless the `--no-quiet` option is also given.  The "partially" part means
+    that it will only suppress the skipping test messages but not any other
+    messages that would ordinarily be suppressed with an explicit `--quiet`.
+
+    Use an explicit `--quiet` or `--no-quiet` to leave "partially quiet" mode
+    when the `--run` option is in use.
 
 * --root=<path>
 
@@ -348,6 +356,12 @@ options to _every_ test run by the Makefile.
     For example, "1-4,!3" will run only subtests 1, 2 and 4 but so will
     "1,2,4".  On the other hand, "!3,1-4" will run ALL subtests except 3
     (because it's equivalent to "1-,!3,1-4") as will just "!3".
+
+    Using the `--run` option (with a non-empty list) implicitly partially
+    activates the `--quiet` option (see the desciption of the `--quiet`
+    option) and moves the test plan line to the end (if there was a `test_plan`
+    call at the beginning), but adding an explicit `--no-quiet` (or `--quiet`)
+    will override all that.
 
 * --tee
 
