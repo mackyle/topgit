@@ -1888,7 +1888,7 @@ initial_setup()
 	[ -n "$_odbdir" ] && [ -d "$_odbdir" ] || tg_use_alt_odb=
 	_fulltmpdir=
 	[ -z "$tg_use_alt_odb" ] || _fulltmpdir="$(cd "$tg_tmp_dir" && pwd -P)"
-	case "$_fulltmpdir" in *[";:"]*) vcmp "$git_version" '>=' "2.11.1" || tg_use_alt_odb=; esac
+	case "$_fulltmpdir" in *[";:"]*|'"'*) vcmp "$git_version" '>=' "2.11.1" || tg_use_alt_odb=; esac
 	_fullodbdir=
 	[ -z "$tg_use_alt_odb" ] || _fullodbdir="$(cd "$_odbdir" && pwd -P)"
 	if [ -n "$tg_use_alt_odb" ] && [ -n "$TG_OBJECT_DIRECTORY" ] && [ -d "$TG_OBJECT_DIRECTORY/info" ] &&
@@ -1904,7 +1904,7 @@ initial_setup()
 		echol "$_fullodbdir" >"$tg_tmp_dir/objects/info/alternates"
 		TG_OBJECT_DIRECTORY="$_fulltmpdir/objects"
 		case "$TG_OBJECT_DIRECTORY" in
-			*[";:"]*)
+			*[";:"]*|'"'*)
 				# surround in "..." and backslash-escape internal '"' and '\\'
 				_altodbdq="\"$(printf '%s\n' "$TG_OBJECT_DIRECTORY" |
 					sed 's/\([""\\]\)/\\\1/g')\""
