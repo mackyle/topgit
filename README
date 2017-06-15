@@ -870,12 +870,13 @@ tg create
 
 	The commit message can be changed with the ``-m`` (or ``--message``) or
 	``-F`` (or ``--file``) option.  The automatic commit can be suppressed
-	by using the ``--no-ccmmit`` option.  Running the editor on the new
-	``.topmsg`` file can be suppressed by using ``-n`` (or ``--no-edit``)
-	(which also suppresses the automatic commit) or by providing an
-	explicit value for the new ``.topmsg`` file using the ``--topmsg`` or
-	``--topmsg-file`` option.  In any case the ``.topmsg`` content will be
-	automatically reformated to have a ``Subject:`` header line if needed.
+	by using the ``--no-ccmmit`` (or ``-n``) option.  Running the editor on
+	the new ``.topmsg`` file can be suppressed by using ```--no-edit``
+	(which does *NOT* suppress the automatic commit unless ``--no-commit``
+	is also given) or by providing an explicit value for the new
+	``.topmsg`` file using the ``--topmsg`` or ``--topmsg-file`` option.
+	In any case the ``.topmsg`` content will be automatically reformated to
+	have a ``Subject:`` header line if needed.
 
 	If the ``format.signoff`` config variable (see ``git help config``)
 	has been set to true then the ``Signed-off-by:`` header line added to
@@ -891,8 +892,8 @@ tg create
 	commit) or the ``--no-update`` option (which allows the initial commit
 	while suppressing only the update operation portion).
 
-	Previous versions of TopGit behaved as though the ``--no-edit`` option
-	was always given on the command line.
+	Previous versions of TopGit behaved as though both the ``--no-edit``
+	and ``--no-commit`` options were always given on the command line.
 
 	The default behavior has been changed to promote a separation between
 	commits that modify ``.topmsg`` and/or ``.topdeps`` and commits that

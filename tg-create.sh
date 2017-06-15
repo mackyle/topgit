@@ -25,7 +25,7 @@ quiet=
 branchtype=PATCH
 branchdesc=patch
 
-USAGE="Usage: ${tgname:-tg} [... -r remote] create [-q] [-m <msg> | -F <file>] [--topmsg <msg> | --topmsg-file <file>] [-n] [--no-commit | --no-update] [--base] [<name> [<dep>...|-r [<rname>]] ]"
+USAGE="Usage: ${tgname:-tg} [... -r remote] create [-q] [-m <msg> | -F <file>] [--topmsg <msg> | --topmsg-file <file>] [--no-edit] [--no-commit | --no-update] [--base] [<name> [<dep>...|-r [<rname>]] ]"
 
 usage()
 {
@@ -54,15 +54,14 @@ while [ $# -gt 0 ]; do case "$1" in
 	--force|-f)
 		force=1
 		;;
-	--no-commit)
+	-n|--no-commit)
 		nocommit=1
 		;;
 	--no-update)
 		noupdate=1
 		;;
-	-n|--no-edit)
+	--no-edit)
 		noedit=1
-		nocommit=1
 		;;
 	--no-deps|--base)
 		nodeps=1
@@ -387,7 +386,7 @@ else
 		sobpfx='#'
 		[ z"$(git config --bool format.signoff 2>/dev/null)" != z"true" ] || sobpfx=
 		echo "${sobpfx}Signed-off-by: $author_addr"
-	} | git stripspace >"$git_dir/TG_EDITMSG"
+	} | git stripspace ${noedit:+-s} >"$git_dir/TG_EDITMSG"
 fi
 if [ -z "$noedit" ]; then
 	cat <<EOT >>"$git_dir/TG_EDITMSG"
