@@ -125,7 +125,10 @@ pre-clean:
 	$(Q)rm -r -f '$(TEST_RESULTS_DIRECTORY_SQ)'
 
 post-clean-except-prove-cache:
-	rm -r -f empty 'trash directory'.* '$(TEST_RESULTS_DIRECTORY_SQ)'
+	rm -r -f '$(TEST_RESULTS_DIRECTORY_SQ)'
+	@chmod -R u+rw 'trash directory'.* >/dev/null 2>&1 || :
+	@chmod -R u+rw 'trash tmp directory'.* >/dev/null 2>&1 || :
+	rm -r -f empty 'trash directory'.* 'trash tmp directory'.*
 	rm -f TG-TEST-CACHE
 
 post-clean: post-clean-except-prove-cache FORCE
