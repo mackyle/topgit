@@ -660,24 +660,24 @@ test_done() {
 		cd "${remove_trash%/*}" &&
 		test_done_td_="${remove_trash##*/}" &&
 		test -e "$test_done_td_" &&
-		rm -rf "$test_done_td_" &&
+		{ rm -rf "$test_done_td_" || :; } >/dev/null 2>&1 &&
 		{
 			! test -e "$test_done_td_" || {
-				chmod -R u+w "$test_done_td_" &&
+				chmod -R u+rw "$test_done_td_" &&
 				rm -rf "$test_done_td_"
-			}
+			} || :
 		}
 		test -n "$remove_trashtmp" &&
 		test -d "$remove_trashtmp" &&
 		cd "${remove_trashtmp%/*}" &&
 		test_done_td_="${remove_trashtmp##*/}" &&
 		test -e "$test_done_td_" &&
-		rm -rf "$test_done_td_" &&
+		{ rm -rf "$test_done_td_" || :; } >/dev/null 2>&1 &&
 		{
 			! test -e "$test_done_td_" || {
-				chmod -R u+w "$test_done_td_" &&
+				chmod -R u+rw "$test_done_td_" &&
 				rm -rf "$test_done_td_"
-			}
+			} || :
 		}
 
 		test_at_end_hook_
@@ -1394,17 +1394,17 @@ esac
 test ! -z "$debug" || remove_trash="$TRASH_DIRECTORY"
 test ! -z "$debug" || remove_trashtmp="$TRASHTMP_DIRECTORY"
 ! test -e "$TRASH_DIRECTORY" || {
-	rm -rf "$TRASH_DIRECTORY" &&
+	{ rm -rf "$TRASH_DIRECTORY" || :; } >/dev/null 2>&1 &&
 	! test -e "$TRASH_DIRECTORY" || {
-		chmod -R u+w "$TRASH_DIRECTORY" &&
+		chmod -R u+rw "$TRASH_DIRECTORY" &&
 		rm -rf "$TRASH_DIRECTORY" &&
 		! test -e "$TRASH_DIRECTORY"
 	}
 } &&
 ! test -e "$TRASHTMP_DIRECTORY" || {
-	rm -rf "$TRASHTMP_DIRECTORY" &&
+	{ rm -rf "$TRASHTMP_DIRECTORY" || :; } >/dev/null 2>&1 &&
 	! test -e "$TRASHTMP_DIRECTORY" || {
-		chmod -R u+w "$TRASHTMP_DIRECTORY" &&
+		chmod -R u+rw "$TRASHTMP_DIRECTORY" &&
 		rm -rf "$TRASHTMP_DIRECTORY" &&
 		! test -e "$TRASHTMP_DIRECTORY"
 	}
