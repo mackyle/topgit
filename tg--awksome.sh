@@ -375,6 +375,11 @@ run_awk_topgit_msg()
 	if [ -z "$_ra_withan" ] && [ -z "$_ra_anfile" ]; then
 		_ra_anfile="$(get_temp rawk_annihilated)" || return 2
 	fi
+	_ra_misscmd=
+	if [ -n "$tgbin" ] && [ -x "$tgbin" ]; then
+		TG_BIN_ABS="$tgbin" && export TG_BIN_ABS
+		_ra_misscmd='eval "$TG_BIN_ABS" --make-empty-blob'
+	fi
 	{
 		if [ -n "$_ra_refsfile" ]; then
 			run_awk_ref_match ${_ra_pckdrefs:+-p} <"$_ra_refsfile" \
@@ -402,7 +407,8 @@ run_awk_topgit_msg()
 		-v "depsblob=$_ra_depsblob" \
 		-v "anfile=$_ra_anfile" \
 		-v "brfile=$_ra_brfile" \
-		-v "missing=$mtblob" |
+		-v "missing=$mtblob" \
+		-v "misscmd=$_ra_misscmd" |
 	git cat-file $gcfbopt --batch='%(objecttype) %(objectsize) %(rest)' | tr '\0' '\27' |
 	awk -f "$TG_INST_AWKDIR/topgit_msg" \
 		-v "withan=$_ra_withan" \
@@ -605,6 +611,11 @@ run_awk_topgit_deps()
 		_ra_brfile="$(get_temp rawk_branches)" || return 2
 	fi
 	[ -n "$_ra_noann" ] || _ra_withan=1
+	_ra_misscmd=
+	if [ -n "$tgbin" ] && [ -x "$tgbin" ]; then
+		TG_BIN_ABS="$tgbin" && export TG_BIN_ABS
+		_ra_misscmd='eval "$TG_BIN_ABS" --make-empty-blob'
+	fi
 	{
 		if [ -n "$_ra_refsfile" ]; then
 			run_awk_ref_match ${_ra_pckdrefs:+-p} <"$_ra_refsfile" \
@@ -630,7 +641,8 @@ run_awk_topgit_deps()
 		-v "noann=$_ra_noann" \
 		-v "anfile=$_ra_anfile" \
 		-v "brfile=$_ra_brfile" \
-		-v "missing=$mtblob" |
+		-v "missing=$mtblob" \
+		-v "misscmd=$_ra_misscmd" |
 	git cat-file $gcfbopt --batch='%(objecttype) %(objectsize) %(rest)' | tr '\0' '\27' |
 	awk -f "$TG_INST_AWKDIR/topgit_deps" \
 		-v "withan=$_ra_withan" \
