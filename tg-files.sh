@@ -38,6 +38,8 @@ if [ -n "$head_from" ] && [ "$name" != "$head" ]; then
 	die "$head_from makes only sense for the current branch"
 fi
 
+[ -z "$head_from" ] || ensure_work_tree
+
 b_tree=$(pretty_tree -t "$name" -b)
 t_tree=$(pretty_tree -t "$name" $head_from)
 

@@ -78,6 +78,7 @@ base_rev="$(git rev-parse --short --verify "refs/$topbases/$name^0" -- 2>/dev/nu
 if [ -n "$head_from" ] && [ "$name" != "$head" ]; then
 	die "$head_from makes only sense for the current branch"
 fi
+[ -z "$head_from" ] || ensure_work_tree
 
 usesob=
 [ -z "$fixfrom" ] || [ -n "$fromaddr" ] || {

@@ -6,7 +6,7 @@ TEST_NO_CREATE_REPO=1
 
 . ./test-lib.sh
 
-test_plan 20
+test_plan 15
 
 has_tg_setup() {
 	test -s "${1:-.}/.git/info/attributes" &&
@@ -100,7 +100,7 @@ version
 tg_cmd_will_setup() {
 	case "$1" in
 		--version|--status|--hooks-path|--exec-path|--awk-path|--top-bases| \
-		base|contains|info|log|rebase|revert|status|st|summary|tag|version)
+		base|contains|files|info|log|mail|next|patch|prev|rebase|revert|status|st|summary|tag|version)
 			return 1
 	esac
 	return 0

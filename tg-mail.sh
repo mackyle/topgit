@@ -40,6 +40,8 @@ fi
 
 patchfile="$(get_temp tg-mail)"
 
+[ -z "$head_from" ] || ensure_work_tree
+
 # let tg patch sort out whether $head_from makes sense for $name
 tg patch "$name" $head_from >"$patchfile"
 

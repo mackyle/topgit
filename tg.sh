@@ -1251,6 +1251,7 @@ v_get_tdmopt_internal()
 {
 	[ -n "$1" ] && [ -n "$3" ] || return 0
 	[ "$2" = "-i" ] || [ "$2" = "-w" ] || return 0
+	ensure_work_tree
 	_optval=
 	if v_verify_topgit_branch _tghead "HEAD" -f; then
 		if [ "$2" = "-w" ] && [ -f "$root_dir/$3" ] && [ -r "$root_dir/$3" ]; then
@@ -2384,7 +2385,7 @@ else
 			[ -z "$noremote" ] || unset_ base_remote
 
 			nomergesetup="$showing_help"
-			case "$cmd" in base|contains|info|log|rebase|revert|summary|tag)
+			case "$cmd" in base|contains|files|info|log|mail|next|patch|prev|rebase|revert|summary|tag)
 				# avoid merge setup where not necessary
 
 				nomergesetup=1
