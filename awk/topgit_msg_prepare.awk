@@ -16,6 +16,7 @@
 #   depsblob if true skip the 6th line of each group as it's a .topdeps blob
 #   missing  if non-empty output its value for the .topmsg blob instead
 #            of skipping, but still skip annihilated unless withan is true
+#   misscmd  if missing is used and not seen in a "check" line run this once
 #
 # note that withan affects brfile and output but withmt only affects output
 #
@@ -52,6 +53,10 @@
 #      a different .topmsg file is given its contents will be used as though
 #      it had been the branch's .topmsg file in the first place (only for
 #      annihildated/empty and branches without one though)
+#
+# If missing is non-empty AND it gets used AND misscmd is non-empty AND no
+# "blob check ?" line was seen for missing then misscmd will be run the FIRST
+# time missing is about to be output (it always runs BEFORE the line is output).
 #
 # output is 1 line per non-excluded TopGit branch with a .topmsg file where
 # each output line has this format:
@@ -100,6 +105,17 @@ BEGIN {
 	FS = " "
 }
 
+NF == 4 && $4 == "?" && $3 = "check" && $2 = "blob" && $1 != "" {
+	check[$1] = "blob"
+	next
+}
+
+function domissing() {
+	if (misscmd == "" || missing in check) return
+	system(misscmd)
+	check[missing] = ""
+}
+
 NF == 4 && $4 == ":" && $3 != "" && $2 != "missing" && $1 != "" {
 	if ((getline bc  + getline hc + \
 	     getline bct + getline hct + getline hcm) != 5) exitnow(2)
@@ -128,12 +144,14 @@ NF == 4 && $4 == ":" && $3 != "" && $2 != "missing" && $1 != "" {
 		ahcm[1] = missing
 		ahcm[2] = "blob"
 		K = (abc[1] == ahc[1]) ? 3 : 2
+		domissing()
 	}
 	if (brfile) print $3 >brfile
 	if (missing != "" && ahcm[2] != "blob") {
 		ahcm[1] = missing "^{}"
 		ahcm[2] = "blob"
 		if (!K) K = 1
+		domissing()
 	}
 	if (ahcm[2] == "blob") {
 		if (delay)

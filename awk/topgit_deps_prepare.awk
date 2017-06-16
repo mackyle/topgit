@@ -14,6 +14,7 @@
 #   noann    if true, omit annihilated branches from brfile
 #   missing  if non-empty output its value for the .topdeps blob instead
 #            of skipping, but still skip annihilated if noann is true
+#   misscmd  if missing is used and not seen in a "check" line run this once
 #
 # note that the "noann" variable only affects brfile, if true unless missing
 # is non-empty (in which case it suppresses the annihilated missing output), as
@@ -43,6 +44,10 @@
 #      a different .topdeps file is given its contents will be used as though
 #      it had been the branch's .topdeps file in the first place (only for
 #      annihildated and branches without one though)
+#
+# If missing is non-empty AND it gets used AND misscmd is non-empty AND no
+# "blob check ?" line was seen for missing then misscmd will be run the FIRST
+# time missing is about to be output (it always runs BEFORE the line is output).
 #
 # output is 1 line per non-annihilated TopGit branch with a .topdeps file where
 # each output line has this format:
@@ -76,6 +81,17 @@ BEGIN {
 	FS = " "
 }
 
+NF == 4 && $4 == "?" && $3 = "check" && $2 = "blob" && $1 != "" {
+	check[$1] = "blob"
+	next
+}
+
+function domissing() {
+	if (misscmd == "" || missing in check) return
+	system(misscmd)
+	check[missing] = ""
+}
+
 NF == 4 && $4 == ":" && $3 != "" && $2 != "missing" && $1 != "" {
 	if ((getline bc  + getline hc + \
 	     getline bct + getline hct + getline hcd) != 5) exitnow(2)
@@ -94,12 +110,14 @@ NF == 4 && $4 == ":" && $3 != "" && $2 != "missing" && $1 != "" {
 		} else {
 			ahcd[1] = missing
 			ahcd[2] = "blob"
+			domissing()
 		}
 	}
 	if (brfile) print $3 >brfile
 	if (missing != "" && ahcd[2] != "blob") {
 		ahcd[1] = missing "^{}"
 		ahcd[2] = "blob"
+		domissing()
 	}
 	if (ahcd[2] == "blob") {
 		if (delay)
