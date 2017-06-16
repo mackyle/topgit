@@ -201,9 +201,8 @@ case "$1" in version|--version|-V)
 	exit 0
 esac
 
-precheck
-[ "$1" = "precheck" ] && exit 0
-
+[ $# -eq 1 ] && [ "$1" = "--make-empty-blob" ] || precheck
+[ $# -ne 1 ] || [ "$1" != "precheck" ] || exit 0
 
 cat_depsmsg_internal()
 {
@@ -302,6 +301,14 @@ git_temp_alt_odb_cmd()
 
 git_write_tree() { git_temp_alt_odb_cmd write-tree "$@"; }
 git_mktree() { git_temp_alt_odb_cmd mktree "$@"; }
+
+make_mtblob() {
+	use_alt_temp_odb=1
+	tg_use_alt_odb=1
+	git_temp_alt_odb_cmd hash-object -t blob -w --stdin </dev/null >/dev/null 2>&1
+}
+# short-circuit this for speed
+[ $# -eq 1 ] && [ "$1" = "--make-empty-blob" ] && { make_mtblob || :; exit 0; }
 
 # get tree for the committed topic
 get_tree_()
