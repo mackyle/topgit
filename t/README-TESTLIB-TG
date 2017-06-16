@@ -61,7 +61,7 @@ TopGit Utility Functions
     repository instead.
 
 - tg_test_create_branch [-C <dirpath>] [--notick] [+][\][[<remote>]:[:]]<branch>
-  [-m "message"] [:[:[:]]]<start> [<dep>...]
+  [--no-topmsg] [-m "message"] [:[:[:]][~]]<start> [<dep>...]
 
     Create a new TopGit branch (head and base) named <branch>.  If the
     [<remote>]: prefix is given it will be a remote TopGit branch only (using
@@ -84,7 +84,10 @@ TopGit Utility Functions
     that start with "+" to be specified as "\+branch" without having the "+"
     be interpreted as the overwrite option.
 
-    If -m "message" is omitted the default is "branch <branch>".
+    If -m "message" is omitted the default is "branch <branch>", but if
+    --no-topmsg is used instead the branch will not have any .topmsg file at
+    all (just like a bare branch, but it could still have a .topdeps file).
+    The message, if given, will still be used for the commit message though.
 
     The branch's starting point will be <start> which must be the name of an
     existing branch under refs/heads and it will also be included as the first
@@ -92,11 +95,14 @@ TopGit Utility Functions
 
     However, if the :[:[:]]<start> form is used then <start> can be any
     existing committish and it will NOT be included in the created .topdeps
-    file.
+    file.  If the :~<start> form is used then it works the same way as just
+    :<start> except that the branch will not have a .topdeps file at all (just
+    like a bare branch, but it could still have a .topmsg file).
 
     If two colons (e.g. "::start") are used then the created branch will be
     bare and not have any .topdeps or .topmsg file and the [<dep>...]
-    arguments are forbidden.
+    arguments are forbidden.  This is a convenience to save typing as the
+    same thing can be accomplished using --no-topmsg and :~<start>.
 
     If three colons are used (e.g. ":::start") the [<dep>...] arguments are
     also forbidden, no additional .topdeps or .topmsg files added (but
@@ -110,7 +116,7 @@ TopGit Utility Functions
     To cause a tag to be created, an explicit, single-word, refname-friendly
     message must be provided.
 
-    With the :[:[:]]<start> form only, <start> may be the
+    With the :[:[:][~]]<start> form only, <start> may be the
     empty string to start from a new empty tree root commit (or no parent at
     all in the ":::" case).
 
@@ -137,8 +143,8 @@ TopGit Utility Functions
     more non-empty lines where the groups are separated by a single blank line.
     Each line group must have this form:
 
-        [+][\][[<remote>]:[:]]<branch> [optional] [message] [goes] [here]
-        [[delete]:[:[:]]]<start>
+        [+][\][[<remote>]:[:]]<branch> [--no-topmsg] [optional] [message] [here]
+        [[delete]:[:[:]][~]]<start>
         [<dep>]
         [<dep>]
         ...

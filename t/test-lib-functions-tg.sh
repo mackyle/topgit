@@ -241,7 +241,7 @@ tg_test_bare_tree() {
 }
 
 
-# tg_test_create_branch [-C <dir>] [--notick] [+][\][[<remote>]:[:]]<branch> [-m "message"] [:[:[:]]]<start> [<dep>...]
+# tg_test_create_branch [-C <dir>] [--notick] [+][\][[<remote>]:[:]]<branch> [--no-topmsg] [-m "message"] [:[:[:]][~]]<start> [<dep>...]
 #
 # Create a new TopGit branch named <branch> in the current repository (or
 # <dir> if given).
@@ -259,7 +259,10 @@ tg_test_bare_tree() {
 # If [-m "message"] is omitted the message will be "branch <branch>" and
 # the same with "[PATCH] " prepended for .topmsg (unless it's a bare branch).
 # A "[PATCH] " value will be prepended to any -m value when creating the
-# .topmsg file unless "message" starts with a "[" character.
+# .topmsg file unless "message" starts with a "[" character.  However, with
+# --no-topmsg the .topmsg file is omitted entirely just like a bare branch, but
+# it's still possible to have a .topdeps file in this case (the message will
+# still be used for the commit message if given).
 #
 # The branch will start from <start> which must be the name of a ref located
 # under refs/heads i.e. refs/heads/<start>.  <start> will become the first
@@ -271,9 +274,15 @@ tg_test_bare_tree() {
 # omitted from the .topdeps file so the .topdeps file will then be empty
 # unless at least one [<dep>...] is given.
 #
+# If <start> begins with ":~" it may be any committish AND the .topdeps file
+# will be omitted entirely just like a bare branch, but it's still possible to
+# have a .topmsg file in this case.
+#
 # If <start> begins with two colons "::" it may be any committish, but
 # [<dep>...] MUST BE OMITTED and the created TopGit branch will be bare
-# (i.e. it will have neither a .topmsg nor a .topdeps file at all).
+# (i.e. it will have neither a .topmsg nor a .topdeps file at all).  This is
+# really just a convenience shortcut to save typing because the same thing can
+# be accomplished with --no-topmsg and :~<start> instead.
 #
 # If <start> begins with three colons ":::" it may be any committish, but
 # [<dep>...] MUST BE OMITTED and the created branch will not have any
@@ -338,10 +347,12 @@ tg_test_create_branch() {
 			_tcb_rmtonly=1
 			;;
 	esac
-	[ -n "$_tcb_new" ] || 
+	[ -n "$_tcb_new" ] ||
 		fatal "tg_test_create_branch: invalid empty <branch> name"
 	[ -n "$_tcb_rmtonly" ] || tg_test_v_getbases _tcb_bases
 	[ -z "$_tcb_rmt" ] || tg_test_v_getbases _tcb_rmtbases "$_tcb_rmt"
+	_tcb_notm=
+	[ "$1" != "--no-topmsg" ] || { shift; _tcb_notm=1; }
 	_tcb_msg=
 	[ $# -lt 2 ] || [ "$1" != "-m" ] || { shift; _tcb_msg="$1"; shift; }
 	[ -n "$_tcb_msg" ] || _tcb_msg="branch $_tcb_new"
@@ -349,23 +360,32 @@ tg_test_create_branch() {
 		fatal "tg_test_create_branch: missing <start> point argument"
 	_tcb_start="$1"
 	shift
-	_tcb_bare=
+	_tcb_notd=
 	_tcb_plain=
 	_tcb_sdep="$_tcb_start"
 	_tcb_vref="refs/heads/$_tcb_start"
 	case "$_tcb_start" in
-		:::*)
+		":::"*)
 			_tcb_sdep=
 			_tcb_vref="${_tcb_start#:::}"
-			_tcb_bare=1
+			_tcb_vref="${_tcb_vref#~}"
+			_tcb_notd=1
+			_tcb_notm=1
 			_tcb_plain=1
 			;;
-		::*)
+		"::"*)
 			_tcb_sdep=
 			_tcb_vref="${_tcb_start#::}"
-			_tcb_bare=1
+			_tcb_vref="${_tcb_vref#~}"
+			_tcb_notd=1
+			_tcb_notm=1
 			;;
-		:*)
+		":~"*)
+			_tcb_sdep=
+			_tcb_vref="${_tcb_start#:~}"
+			_tcb_notd=1
+			;;
+		":"*)
 			_tcb_sdep=
 			_tcb_vref="${_tcb_start#:}"
 			;;
@@ -383,8 +403,8 @@ tg_test_create_branch() {
 		_tcb_scmt="$(git -C "$_tcb_dir" rev-parse --quiet --verify "$_tcb_vref^0" --)" && [ -n "$_tcb_scmt" ] ||
 			fatal "tg_test_create_branch: invalid starting point \"$_tcb_vref\""
 	fi
-	[ $# -eq 0 ] || [ -z "$_tcb_bare" ] ||
-		fatal "tg_test_create_branch: no <dep> arguments allowed for bare branch"
+	[ $# -eq 0 ] || [ -z "$_tcb_notd" ] ||
+		fatal "tg_test_create_branch: no <dep> arguments allowed for $(b=${_tcb_notm:+bare}&&echo ${b:-non-topdeps}) branch"
 	if [ -n "$_tcb_nooverwrite" ]; then
 		{
 		    [ -n "$_tcb_rmtonly" ] ||
@@ -405,22 +425,28 @@ tg_test_create_branch() {
 		fi
 	fi
 	_tcb_hcmt="$_tcb_scmt"
-	if [ -z "$_tcb_bare" ]; then
+	if [ z"$_tcb_notd$_tcb_notm" != z"11" ]; then
 		[ -z "$_tcb_sdep" ] || set -- "$_tcb_sdep" "$@"
 		_tcb_fmt=
 		[ $# -eq 0 ] || _tcb_fmt='%s\n'
-		_tcb_dps="$(printf "$_tcb_fmt" "$@" | git -C "$_tcb_dir" hash-object -t blob -w --stdin)" && [ -n "$_tcb_dps" ] ||
+		_tcb_dps=
+		[ -n "$_tcb_notd" ] || {
+			_tcb_dps="$(printf "$_tcb_fmt" "$@" | git -C "$_tcb_dir" hash-object -t blob -w --stdin)" && [ -n "$_tcb_dps" ] ||
 			fatal "tg_test_create_branch: git hash-object failed creating .topdeps blob"
-		case "$_tcb_msg" in
-			"["*) _tcb_sbj="Subject: $_tcb_msg";;
-			*) _tcb_sbj="Subject: [PATCH] $_tcb_msg";;
-		esac
-		_tcb_tms="$(printf '%s\n' "From: $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>" "$_tcb_sbj" |
-		  git -C "$_tcb_dir" hash-object -t blob -w --stdin)" && [ -n "$_tcb_tms" ] ||
+		}
+		_tcb_tms=
+		if [ -z "$_tcb_notm" ]; then
+			case "$_tcb_msg" in
+				"["*) _tcb_sbj="Subject: $_tcb_msg";;
+				*) _tcb_sbj="Subject: [PATCH] $_tcb_msg";;
+			esac
+			_tcb_tms="$(printf '%s\n' "From: $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>" "$_tcb_sbj" |
+				git -C "$_tcb_dir" hash-object -t blob -w --stdin)" && [ -n "$_tcb_tms" ] ||
 			fatal "tg_test_create_branch: git hash-object failed creating .topmsg blob"
+		fi
 		_tcb_htr="$({
 			git -C "$_tcb_dir" ls-tree --full-tree "$_tcb_hcmt^{tree}" &&
-			printf '100644 blob %s\011.topdeps\n100644 blob %s\011.topmsg\n' "$_tcb_dps" "$_tcb_tms"
+			printf '100644 blob %s\011%s\n' $_tcb_dps ${_tcb_dps:+.topdeps} $_tcb_tms ${_tcb_tms:+.topmsg}
 		  } | git -C "$_tcb_dir" mktree)" && [ -n "$_tcb_htr" ] ||
 			fatal "tg_test_create_branch: git mktree failed creating new branch \"$_tcb_new\" tree"
 		[ -n "$_tcb_nto" ] || test_tick
@@ -452,8 +478,8 @@ tg_test_create_branch() {
 		set -- "$@" "refs/heads/$_tcb_new" "$_tcb_hcmt"
 	fi
 	unset_ _tcb_dir _tcb_nto _tcb_new _tcb_bases _tcb_rmt _tcb_rmtonly _tcb_rmtbases _tcb_msg \
-	  _tcb_start _tcb_bare _tcb_sdep _tcb_vref _tcb_scmt _tcb_btr _tcb_hcmt _tcb_fmt _tcb_dps \
-	  _tcb_tms _tcb_htr _tcb_nooverwrite || :
+	  _tcb_start _tcb_notd _tcb_sdep _tcb_vref _tcb_scmt _tcb_btr _tcb_hcmt _tcb_fmt _tcb_dps \
+	  _tcb_tms _tcb_htr _tcb_notm _tcb_nooverwrite || :
 	(_ovwno="${3:+ }" && shift 3 && printf "update %s %s$_ovwno"'\n' "$@") | git -C "$1" update-ref --stdin ||
 		fatal "tg_test_create_branch: update-ref for branch \"$2\" failed"
 }
@@ -468,8 +494,8 @@ tg_test_create_branch() {
 # more non-empty lines where the groups are separated by a single blank line.
 # Each line group must have this form:
 #
-#   [+][\][[<remote>]:[:]]<branch> [optional] [message] [goes] [here]
-#   [[delete]:[:[:]]]<start>
+#   [+][\][[<remote>]:[:]]<branch> [--no-topmsg] [optional] [message] [here]
+#   [[delete]:[:[:]][~]]<start>
 #   [<dep>]
 #   [<dep>]
 #   ...
@@ -512,7 +538,13 @@ tg_test_create_branches() {
 		read -r _tcbs_strt && [ -n "$_tcbs_strt" ] ||
 			fatal "tg_test_create_branches: missing <start> at stdin line $_tcbs_lno"
 		_tcbs_lno="$(( $_tcbs_lno + 1 ))"
-		set -- "-C" "$_tcbs_dir" $_tcbs_nto "$_tcbs_bname" "-m" "$_tcbs_bmsg" "$_tcbs_strt"
+		_tcbs_dntm=
+		case "$_tcbs_bmsg" in "--no-topmsg"|"--no-topmsg "*)
+			_tcbs_dntm="--no-topmsg"
+			_tcbs_bmsg="${_tcbs_bmsg#--no-topmsg}"
+			_tcbs_bmsg="${_tcbs_bmsg# }"
+		esac
+		set -- "-C" "$_tcbs_dir" $_tcbs_nto "$_tcbs_bname" $_tcbs_dntm "-m" "$_tcbs_bmsg" "$_tcbs_strt"
 		_tcbs_nod=1
 		while read -r _tcbs_dep && [ -n "$_tcbs_dep" ]; do
 			_tcbs_lno="$(( $_tcbs_lno + 1 ))"
@@ -605,7 +637,7 @@ tg_test_create_branches() {
 	done
 	[ -z "$_tcbs_tick" ] || ! [ -e "$_tcbs_tick" ] || rm "$_tcbs_tick"
 	unset_ _tcbs_dir _tcbs_nto _tcbs_name _tcbs_bmsg _tcbs_bstrt _tcbs_lno \
-		_tcbs_dep _tcbs_glno _tcbs_tick _tcbs_nod _tcbs_rbs _tcbs_fmt \
+		_tcbs_dep _tcbs_glno _tcbs_tick _tcbs_nod _tcbs_rbs _tcbs_fmt _tcbs_dntm \
 		_tcbs_bases _tcbs_rmt _tcbs_rmtonly _tcbs_rmtbases _tcbs_mustexist || :
 	return 0
 }
