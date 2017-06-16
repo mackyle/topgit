@@ -236,6 +236,7 @@ run_awk_topgit_branches()
 		-v "headbase=$_ra_headbase" \
 		-v "rmrf=$_ra_rmrf" \
 		-v "refsfile=$_ra_refsfile" \
+		-v "chkblob=$mtblob" \
 		-v "depsblob=$_ra_depsblob" \
 		-v "msgblob=$_ra_msgblob" \
 		-v "topdeps=$_ra_topdeps" \
@@ -387,6 +388,7 @@ run_awk_topgit_msg()
 		-v "headbase=$_ra_headbase" \
 		-v "rmrf=$_ra_rmrf" \
 		-v "refsfile=$_ra_refsfile" \
+		-v "chkblob=$mtblob" \
 		-v "depsblob=$_ra_depsblob" \
 		-v "msgblob=1" \
 		-v "topdeps=$_ra_topdeps" \
@@ -616,6 +618,7 @@ run_awk_topgit_deps()
 		-v "headbase=$_ra_headbase" \
 		-v "rmrf=$_ra_rmrf" \
 		-v "refsfile=$_ra_refsfile" \
+		-v "chkblob=$mtblob" \
 		-v "depsblob=1" \
 		-v "msgblob=$_ra_msgblob" \
 		-v "topdeps=$_ra_topdeps" \

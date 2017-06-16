@@ -11,6 +11,7 @@
 #
 #   topbases  the full target topbases prefix (e.g. "refs/top-bases")
 #   headbase  the full heads prefix (default is based on topbases value)
+#   chkblob   if set spit out a verification line for this blob first
 #   depsblob  if true include 6th line ".topdeps" blob otherwise not
 #   msgblob   if true include 6th or 7th line ".topmsg" blob otherwise not
 #   refsfile  ref definitions are read from here and used to output hashes
@@ -44,6 +45,9 @@
 #
 # if both depsblob and msgblob are true depsblob is output before msgblob and
 # both always come after the fixed first 5 lines
+#
+# if chkblob is not empty an additional line will precede all other output
+# that verifies the existence of the chkblob object (and resolves it to a hash)
 #
 # note that if teeout is non-empty it will always be truncated before starting
 # to write the output even if no output is produced; also note that unlike the
@@ -124,6 +128,10 @@ function init(_e) {
 		if (_e < 0) exitnow(2)
 	}
 	rmrefs()
+}
+
+BEGIN {
+	if (chkblob != "") doprint(chkblob "^{blob}" " check ?")
 }
 
 NR == 1 {init()}

@@ -10,7 +10,7 @@ ap="$(tg --awk-path)" && test -n "$ap" && test -d "$ap" || die
 aprp="$ap/ref_prepare"
 test -f "$aprp" && test -r "$aprp" && test -x "$aprp" || die
 
-test_plan 18
+test_plan 20
 
 test_expect_success 'ref_prepare runs' '
 	# some stupid awks might not even compile it
@@ -69,6 +69,20 @@ h/0^{tree}
 	test_diff expected actual
 '
 
+test_expect_success 'chkblob on request' '
+	printf "%s" "\
+0666^{blob} check ?
+b/3 3 :
+b/3^0
+h/3^0
+b/3^{tree}
+h/3^{tree}
+" > expected &&
+	printf "%s\n" h/1 h/2 b b/ b/3 c/4 |
+	awk -v topbases=b -v headbase=h -v chkblob=0666 -f "$aprp" > actual &&
+	test_diff expected actual
+'
+
 test_expect_success 'depsblob on request' '
 	printf "%s" "\
 b/3 3 :
@@ -97,7 +111,7 @@ h/3^{tree}:.topmsg
 	test_diff expected actual
 '
 
-test_expect_success 'both blobs on request' '
+test_expect_success 'both .top blobs on request' '
 	printf "%s" "\
 b/3 3 :
 b/3^0
@@ -109,6 +123,22 @@ h/3^{tree}:.topmsg
 " > expected &&
 	printf "%s\n" h/1 h/2 b b/ b/3 c/4 |
 	awk -v topbases=b -v headbase=h -v msgblob=1 -v depsblob=1 -f "$aprp" > actual &&
+	test_diff expected actual
+'
+
+test_expect_success 'all blobs on request' '
+	printf "%s" "\
+0666^{blob} check ?
+b/3 3 :
+b/3^0
+h/3^0
+b/3^{tree}
+h/3^{tree}
+h/3^{tree}:.topdeps
+h/3^{tree}:.topmsg
+" > expected &&
+	printf "%s\n" h/1 h/2 b b/ b/3 c/4 |
+	awk -v topbases=b -v headbase=h -v chkblob=0666 -v msgblob=1 -v depsblob=1 -f "$aprp" > actual &&
 	test_diff expected actual
 '
 
