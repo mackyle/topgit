@@ -242,7 +242,7 @@ if [ -n "$deps" ]; then
 		refslist="-r=\"$tg_ref_cache\""
 		tdopt=
 		v_get_tdopt tdopt "$head_from"
-		eval run_awk_topgit_deps "$refslist" "$tdopt" '-n -t -m="$mtblob" -x="$exclude" "refs/$topbases"'
+		eval run_awk_topgit_deps "$refslist" "$tdopt" '-n -t -x="$exclude" "refs/$topbases"'
 	fi
 	exit 0
 fi

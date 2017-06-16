@@ -887,7 +887,7 @@ navigate_deps()
 		depscmd="$depscmd $1"
 		shift
 	esac
-	depscmd="$depscmd"' -a="$tmpann" -b="$tmptgbr" -r="$tmprfs" -m="$mtblob" -s "refs/$topbases"'
+	depscmd="$depscmd"' -a="$tmpann" -b="$tmptgbr" -r="$tmprfs" -s "refs/$topbases"'
 	if [ -n "$userc" ]; then
 		if [ -n "$dorad" ]; then
 			eval "$depscmd" >"$tmpdep"
@@ -956,7 +956,7 @@ recurse_deps_internal()
 			"refs/remotes/$base_remote/${topbases#heads/}" >"$tmptgrmtbr"
 	fi
 	depscmd="run_awk_topgit_deps${TG_DEBUG:+ -p=\"\$tg_ref_cache.pre\"}"
-	depscmd="$depscmd"' -a="$tmpann" -b="$tmptgbr" -r="$tmprfs" -m="$mtblob" "refs/$topbases"'
+	depscmd="$depscmd"' -a="$tmpann" -b="$tmptgbr" -r="$tmprfs" "refs/$topbases"'
 	if [ -n "$userc" ]; then
 		if [ -n "$dorad" ]; then
 			eval "$depscmd" >"$tmpdep"

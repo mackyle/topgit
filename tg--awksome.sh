@@ -54,6 +54,8 @@ run_awk_require()
 	done
 }
 
+[ -n "$mtblob" ] || run_awk_bug "mtblob must be set before sourcing awksome"
+
 # run_awk_ref_match [opts] [<for-each-ref-pattern>...]
 #
 # --sort=<key>    sort key (repeatable) last is primary same names as --format
@@ -262,7 +264,6 @@ run_awk_topgit_branches()
 # -r=<file>  read substitute refs list from here
 # -p         refs list is in packed-refs format rather than "<ref> <hash>"
 # -rmr       remove -r= <file> after it's been read (convenience knob)
-# -m=<hash>  use this hash for missing .topmsg files (use empty blob if given)
 # -i=<inbr>  whitespace separated list of branch names to include (unless in -x)
 # -x=<exbr>  whitespace separated list of branch names to exclude
 # -db        enable output of .topdeps blob lines
@@ -329,7 +330,6 @@ run_awk_topgit_msg()
 	_ra_rman=
 	_ra_brfile=
 	_ra_rmbr=
-	_ra_missing=
 	_ra_inclbr=
 	_ra_exclbr=
 	_ra_depsblob=
@@ -350,7 +350,6 @@ run_awk_topgit_msg()
 		-b=*)	_ra_brfile="${1#-b=}";;
 		-r=*)   _ra_refsfile="${1#-r=}";;
 		-rmr)	_ra_rmrf=1;;
-		-m=*)	_ra_missing="${1#-m=}";;
 		-i=*)	_ra_inclbr="${1#-i=}";;
 		-x=*)	_ra_exclbr="${1#-x=}";;
 		-db)	_ra_depsblob=1;;
@@ -401,7 +400,7 @@ run_awk_topgit_msg()
 		-v "depsblob=$_ra_depsblob" \
 		-v "anfile=$_ra_anfile" \
 		-v "brfile=$_ra_brfile" \
-		-v "missing=$_ra_missing" |
+		-v "missing=$mtblob" |
 	git cat-file $gcfbopt --batch='%(objecttype) %(objectsize) %(rest)' | tr '\0' '\27' |
 	awk -f "$TG_INST_AWKDIR/topgit_msg" \
 		-v "withan=$_ra_withan" \
@@ -493,7 +492,6 @@ run_awk_topmsg_header()
 # -r=<file>  read substitute refs list from here
 # -p         refs list is in packed-refs format rather than "<ref> <hash>"
 # -rmr       remove -r= <file> after it's been read (convenience knob)
-# -m=<hash>  use this hash for missing .topdeps files (use empty blob if given)
 # -i=<inbr>  whitespace separated list of branch names to include (unless in -x)
 # -x=<exbr>  whitespace separated list of branch names to exclude
 # -db        ignored (output of .topdeps blob lines is always enabled)
@@ -561,7 +559,6 @@ run_awk_topgit_deps()
 	_ra_rman=
 	_ra_brfile=
 	_ra_rmbr=
-	_ra_missing=
 	_ra_inclbr=
 	_ra_exclbr=
 	_ra_msgblob=
@@ -582,7 +579,6 @@ run_awk_topgit_deps()
 		-b=*)	_ra_brfile="${1#-b=}";;
 		-r=*)   _ra_refsfile="${1#-r=}";;
 		-rmr)	_ra_rmrf=1;;
-		-m=*)	_ra_missing="${1#-m=}";;
 		-i=*)	_ra_inclbr="${1#-i=}";;
 		-x=*)	_ra_exclbr="${1#-x=}";;
 		-db)	;;
@@ -631,7 +627,7 @@ run_awk_topgit_deps()
 		-v "noann=$_ra_noann" \
 		-v "anfile=$_ra_anfile" \
 		-v "brfile=$_ra_brfile" \
-		-v "missing=$_ra_missing" |
+		-v "missing=$mtblob" |
 	git cat-file $gcfbopt --batch='%(objecttype) %(objectsize) %(rest)' | tr '\0' '\27' |
 	awk -f "$TG_INST_AWKDIR/topgit_deps" \
 		-v "withan=$_ra_withan" \
