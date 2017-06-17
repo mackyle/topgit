@@ -94,6 +94,7 @@ done
 [ $# -eq 0 ] || defwithdeps=1
 [ -z "$exclude" ] || exclude="$exclude "
 doingall=
+[ $# -ne 0 ] || [ z"$head" != z"" ] || doingall=1
 if [ "$1" = "--all" ]; then
 	[ -z "$withdeps" ] || die "mutually exclusive options given"
 	[ $# -eq 1 ] || usage

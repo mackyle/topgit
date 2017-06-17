@@ -1200,9 +1200,8 @@ tg summary
 	Show overview of all TopGit-tracked topic branches and their
 	up-to-date status.  With a branch name limit output to that branch.
 	Using ``--deps-only`` or ``--rdeps`` changes the default from all
-	related branches to just the current ``HEAD`` branch but using
-	``--all`` as the branch name will show results for all branches
-	instead	of ``HEAD``.
+	branches to just the current ``HEAD`` branch but using ``--all`` as
+	the branch name will show results for all branches instead of ``HEAD``.
 
 		``>``
 			marks the current topic branch
@@ -1240,13 +1239,6 @@ tg summary
 	relevant information about each branch; you can pass ``-t`` (or ``-l``
 	or ``--list``) to get just a terse list of topic branch names quickly.
 	Also adding ``--verbose`` (or ``-v``) includes the subjects too.
-
-	If no options or arguments are passed, the default is not actually to
-	show ``--all`` branches (that was the default once upon a time).
-	Instead, the default is essentially ``--with-deps $(tg info --heads)``
-	with a fallback to ``--all`` if ``tg info`` doesn't give up any heads.
-	This usually provides a more intuitive result.  Explicitly using
-	``--all`` will always show all branches (related or not to ``HEAD``).
 
 	Passing ``--heads`` shows independent topic branch names and when
 	combined with ``--rdeps`` behaves as though ``--rdeps`` were run with
