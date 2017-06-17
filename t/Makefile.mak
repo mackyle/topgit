@@ -102,30 +102,31 @@ Q = $(Q_$(V))
 TEST_TARGET_test = test
 TEST_TARGET_prove = prove
 TEST_TARGET_ = $(TEST_TARGET_test)
-TEST_TARGET = $(TEST_TARGET_$(DEFAULT_TEST_TARGET))
+DEFAULT_TEST_TARGET_=$(DEFAULT_TEST_TARGET)
+TEST_TARGET = $(TEST_TARGET_$(DEFAULT_TEST_TARGET_))
 
 # But all is just an alias for DEFAULT_TEST_TARGET which defaults to test
 
 all: $(TEST_TARGET)
 
 test: pre-clean TG-TEST-SETTINGS $(TEST_LINT) FORCE
-	$(Q)$(CACHE_SETUP_TTY) $(MAKE) $${GNO_PD_OPT} -f Makefile.mak aggregate-results-and-cleanup
+	$(Q)set -m && $(CACHE_SETUP_TTY) $(MAKE) $${GNO_PD_OPT} -f Makefile.mak aggregate-results-and-cleanup
 
 prove: pre-clean TG-TEST-SETTINGS $(TEST_LINT) FORCE
-	@echo "*** prove ***"; $(CACHE_SETUP) $(PROVE) --exec '$(SHELL_PATH_SQ)' $(TESTLIB_PROVE_OPTS) $(T) :: $(TESTLIB_TEST_OPTS)
+	@echo "*** prove ***" && set -m && $(CACHE_SETUP) $(PROVE) --exec $(SHELL_PATH_SQ)'' $(TESTLIB_PROVE_OPTS) $(T) :: $(TESTLIB_TEST_OPTS)
 	$(Q)$(NOCLEANCMT)$(MAKE) $${GNO_PD_OPT} -f Makefile.mak -s post-clean-except-prove-cache
 
 .PRECIOUS: $(T)
 $(T): FORCE
-	@echo "*** $@ ***"; '$(SHELL_PATH_SQ)' $@ $(TESTLIB_TEST_OPTS)
+	@echo "*** $@ ***"; $(SHELL_PATH_SQ)'' $@ $(TESTLIB_TEST_OPTS)
 
 # How to clean up
 
 pre-clean:
-	$(Q)rm -r -f '$(TEST_RESULTS_DIRECTORY_SQ)'
+	$(Q)rm -r -f $(TEST_RESULTS_DIRECTORY_SQ)''
 
 post-clean-except-prove-cache:
-	rm -r -f '$(TEST_RESULTS_DIRECTORY_SQ)'
+	rm -r -f $(TEST_RESULTS_DIRECTORY_SQ)''
 	@chmod -R u+rw 'trash directory'.* >/dev/null 2>&1 || :
 	@chmod -R u+rw 'trash tmp directory'.* >/dev/null 2>&1 || :
 	rm -r -f empty 'trash directory'.* 'trash tmp directory'.*
@@ -153,12 +154,12 @@ test-lint-executable:
 		echo >&2 "non-executable tests:" $$bad; exit 1; }
 
 test-lint-shell-syntax:
-	$(Q)p='$(PERL_PATH_SQ)'; "$${p:-perl}" check-non-portable-shell.pl $(LINTTESTS) $(LINTSCRIPTS)
+	$(Q)p=$(PERL_PATH_SQ)''; "$${p:-perl}" check-non-portable-shell.pl $(LINTTESTS) $(LINTSCRIPTS)
 
 test-lint-filenames:
 	@# We do *not* pass a glob to ls-files but use grep instead, to catch
 	@# non-ASCII characters (which are quoted within double-quotes)
-	$(Q)g='$(GIT_PATH_SQ)'; bad="$$("$${g:-git}" -c core.quotepath=true ls-files 2>/dev/null | \
+	$(Q)g=$(GIT_PATH_SQ)''; bad="$$("$${g:-git}" -c core.quotepath=true ls-files 2>/dev/null | \
 			LC_ALL=C grep '['\''""*:<>?\\|]')" || :; \
 		test -z "$$bad" || { \
 		echo >&2 "non-portable file name(s): $$bad"; exit 1; }
@@ -168,15 +169,15 @@ test-lint-filenames:
 run-individual-tests: $(T)
 
 aggregate-results-and-cleanup:
-	$(Q)ec=0; '$(SHELL_PATH_SQ)' -c 'TESTLIB_TEST_PARENT_INT_ON_ERROR=$$$$ exec "$$@"' "$(SHELL_PATH)" \
-	$(MAKE) $${GNO_PD_OPT} -f Makefile.mak $(TESTLIB_MAKE_OPTS) -k run-individual-tests || ec=$$?; \
-	[ $$ec -eq 130 ] || $(MAKE) $${GNO_PD_OPT} -f Makefile.mak aggregate-results || exit && exit $$ec
+	$(Q)set -m && ec=0 && $(SHELL_PATH_SQ)'' -c 'TESTLIB_TEST_PARENT_INT_ON_ERROR=$$$$ exec "$$@"' $(SHELL_PATH_SQ)'' \
+	$(MAKE) $${GNO_PD_OPT} -f Makefile.mak -k $(TESTLIB_MAKE_OPTS) run-individual-tests || ec=$$? && \
+	test -e $(TEST_RESULTS_DIRECTORY_SQ)/bailout || { $(MAKE) $${GNO_PD_OPT} -f Makefile.mak aggregate-results || exit; } && exit $$ec
 	$(Q)$(NOCLEANCMT)$(MAKE) $${GNO_PD_OPT} -f Makefile.mak -s post-clean
 
 aggregate-results:
-	$(Q)for f in '$(TEST_RESULTS_DIRECTORY_SQ)'/t*-*.counts; do \
+	$(Q)for f in $(TEST_RESULTS_DIRECTORY_SQ)/t*-*.counts; do \
 		[ "$$f" = '$(TEST_RESULTS_DIRECTORY_SQ)/t*-*.counts' ] || echo "$$f"; \
-	done | '$(SHELL_PATH_SQ)' ./aggregate-results.sh
+	done | $(SHELL_PATH_SQ)'' ./aggregate-results.sh
 
 # Provide Makefile-determined settings in a test-available format
 

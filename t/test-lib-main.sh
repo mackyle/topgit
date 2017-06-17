@@ -143,11 +143,15 @@ error_lno() {
 	shift
 	say_color error "${LF}error: $*" >&7
 	printf '%s\n' "Bail out! ${0##*/}:${callerlno:+$callerlno:} error: $*" >&5
+	test_results_dir="${TEST_OUTPUT_DIRECTORY:-.}/test-results"
+	mkdir -p "$test_results_dir"
+	printf '%s\n' "Bail out! ${0##*/}:${callerlno:+$callerlno:} error: $*" >>"$test_results_dir/bailout"
 	TESTLIB_EXIT_OK=t
 	[ -z "$TESTLIB_TEST_PARENT_INT_ON_ERROR" ] || {
-		perl -e "kill(-2, getpgrp($TESTLIB_TEST_PARENT_INT_ON_ERROR), getpgrp($PPID))" || :
+		trap '' INT
+		perl -e "kill(-2, getpgrp($TESTLIB_TEST_PARENT_INT_ON_ERROR), getpgrp($PPID), getpgrp($$), getpgrp(0))" || :
 		kill -INT $TESTLIB_TEST_PARENT_INT_ON_ERROR $PPID || :
-	}
+	} >/dev/null 2>&1
 	kill -USR1 $$ || :
 	exit 1
 }
@@ -606,7 +610,7 @@ test_done() {
 
 	if test -z "$HARNESS_ACTIVE"
 	then
-		test_results_dir="$TEST_OUTPUT_DIRECTORY/test-results"
+		test_results_dir="${TEST_OUTPUT_DIRECTORY:-.}/test-results"
 		mkdir -p "$test_results_dir"
 		base=${0##*/}
 		test_results_path="$test_results_dir/${base%.sh}.counts"
