@@ -38,6 +38,9 @@ tests using the testing library and should be perused by anyone who finds the
 simplistic example in the `README` file to be insufficient.  It does not,
 however, serve as a comprehensive reference for the testing library.
 
+To quickly find the testing library function and/or variable needed refer to
+the [Quick Reference] section below.
+
 
 -------------
 Running Tests
@@ -48,9 +51,103 @@ test_expect/test_tolerate functions behave compared to Git's testing library.
 In this testing library the scripts passed to those functions are evaluated
 inside a subshell (test_eval_inner_ uses (...) instead of {...}).  This is
 done intentionally so that any errors in the test itself do not abort the
-testing process (and yes, that can happen).  This means that variables set in
-such test scripts DO NOT PERSIST after running the test scripts.  But see the
-TESTLIB_TEST_NO_SUBSHELL variable.
+testing process (and yes, that can happen).  It also allows `set -e` to be
+activated by default in the subshell (which it is).  As a side effect, this
+means that variables set in such test scripts DO NOT PERSIST after running the
+test scripts.  The `test_when_finished` function can be used to raise up some
+information out of the (possibly nested) subshell as it runs after the
+subtests's subshell has exited -- this is an enhancement compared to Git's
+version of `test_when_finished` which doesn't support any subshells at all.
+
+See the TESTLIB_TEST_NO_SUBSHELL variable to disable (NOT recommended) the use
+of a subshell.
+
+
+---------------
+Quick Reference
+---------------
+
+Variable                        | Description
+--------------------------------|----------------------------------------------
+TESTLIB_DIRECTORY               | directory where testing library code lives
+EMPTY_DIRECTORY                 | empty directory with no write permission
+TEST_DIRECTORY                  | directory with tNNNN-*.sh scripts to run
+TEST_HELPER_DIRECTORY           | directory with "helpers" (auto-added to PATH)
+TEST_OUTPUT_DIRECTORY           | test output ends up in here
+TRASH_DIRECTORY                 | test specific temporary "trash" directory
+TRASHTMP_DIRECTORY              | test specific temporary `test_get_temp` dir
+TESTLIB_SKIP_TESTS              | test suite wide test/subtest skipping pats
+TESTLIB_NO_TOLERATE             | `test_tolerate_failure` means expect success
+TESTLIB_TEST_CHAIN_LINT         | can be used to disable `&&` chaining test
+TESTLIB_TEST_NO_SUBSHELL        | prevent subshell for subtests (do not use)
+TEST_NO_CREATE_REPO             | suppress initial `test_create_repo .`
+color                           | either "" (--no-color) or "--color" (--color)
+skip_all                        | `test_done` skip value for `1..0` plan
+test_description                | must be non-empty before `. ./test-lib.sh`
+test_external_has_tap           | avoid changing -- will suppress TAP lines
+test_tick                       | last commit timestamp used see same function
+this_test                       | basename $0 | sed 's/-*//' (usually tNNNN)
+
+TAP function                    | Description
+--------------------------------|----------------------------------------------
+test_done                       | uncounted plan line and counts (call last)
+test_expect_success             | expect success from a script (no #TODO)
+test_expect_failure             | expect failure from a script (with #TODO)
+test_external                   | test external command
+test_external_without_stderr    | test external command & require empty stderr
+test_plan                       | output TAP plan line (call first)
+test_tolerate_failure           | expect success or failure from a script
+
+Utility function                | Description
+--------------------------------|----------------------------------------------
+die                             | fatally exit the test (or subshell) right now
+error                           | Bail out! now and kill all further testing
+list_contains                   | check comma-separated list against wildcards
+sane_unset                      | safe unset for broken sh implementations
+say                             | say_color info ... shortcut
+say_color                       | output in the named (special names) color
+say_color_tap                   | if $HARNESS_ACTIVE always output w/o color
+say_tap                         | say_color_tap info ... shortcut
+test_at_end_hook_               | called by `test_done` default is `:`
+test_clear_when_finished        | make code run just after current subtest exit
+test_cmp                        | fail if two text files do not match
+test_cmp_bin                    | fail if two binary files do not match
+test_cmp_rev                    | fail if two Git revspecs resolve differently
+test_commit                     | make a new commit optionally tagging it
+test_config                     | make test_when_finished reverted config mod
+test_config_global              | like `test_config` but `--global` config
+test_copy_bytes                 | transfer specified # of bytes from in to out
+test_create_repo                | create dif (if not exists) and `git init` it
+test_debug                      | with `--debug` run args otherwise nop
+test_diff                       | fancy (same semantics) `test_cmp` using git
+test_dir_is_empty               | verbose fail if directory not empty
+test_env                        | like /usr/bin/env but works for functions too
+test_expect_code                | fail unless command has specified exit status
+test_get_temp                   | create a new, unique empty temp file (or dir)
+test_have_prereq                | check for a prereq
+test_line_count                 | overblown `test` plus `wc` utility
+test_match_signal               | bad bad bad ksh
+test_merge                      | `test_tick` & `git merge` & `git tag` shortcut
+test_might_fail                 | succeeds for all but abnormal exits
+test_must_be_empty              | verbose fail if `test -s ...` is true
+test_must_fail                  | succeed for all non-0 and non-abnormal exits
+test_path_is_dir                | verbose failure if `test -d ...` fails
+test_path_is_file               | verbose failure if `test -f ...` fails
+test_path_is_missing            | verbose failure if `test -e ...` fails
+test_pause                      | interactive $SHELL if `--verbose` else error
+test_seq                        | shell-only version of 1 and 2 arg seq 
+test_set_editor                 | properly quote value and set+export EDITOR
+test_set_prereq                 | set specified prereq to true
+test_skip_or_die                | prefer `test_plan 0 <msg>` or `error <msg>`
+test_tick                       | set or increment(+60) the `test_tick` var
+test_tristate                   | reset variable to `true`, `false` or `auto`
+test_unconfig                   | safe `git config --unset-all` when unset
+test_when_finished              | run code right after current subtest exits
+test_write_lines                | overblown `printf '%s\n'` shortcut
+verbose                         | verbosely show a command's failures
+wc                              | whitespace safe version of wc
+write_script                    | make executable sh script from stdin
+yes                             | 99 times max shell-only version of yes
 
 
 ---------
@@ -83,10 +180,10 @@ Variables
 - TEST_HELPER_DIRECTORY
 
     The test helpers are located in here.  It defaults to
-    "$TEST_DIRECTORY/helper" if not set and that directory exists.  Helper
-    scripts should use this to locate any auxilliary files they might need
-    to use that are checked into version control alongside them.  This
-    variable is also exported.
+    "$TEST_DIRECTORY/helper" if not set and that directory exists.  It is
+    automatically added to the `PATH`.  Helper scripts should use this to
+    locate any auxilliary files they might need to use that are checked into
+    version control alongside them.  This variable is also exported.
 
 - TEST_OUTPUT_DIRECTORY
 
@@ -154,7 +251,7 @@ Variables
     This variable defaults to true (any non-empty value).  When true it results
     in a fatal "Bail out!" error if any test script code (the last argument to
     the `test_expect_success` function for example) does not have all of its
-    statements connected by `&&`.  This variable may be set to the empty string
+    statements connected by `&&`.  This variable may be set to the string "0"
     _BEFORE_ sourcing `test-lib.sh` to disable this.  Alternatively, the
     checker can be "fooled" by enclosing code in `{ ` ... `;}` or putting it in
     a separate function that's called.
@@ -170,6 +267,11 @@ Variables
     this.  Note that it may be toggled in between
     test_expect.../test_tolerate_... calls to only enable it for one test for
     example.
+
+    Use of this variable to disable subtest subshells is deprecated and may go
+    away at some point!  Avoid this if at all possible!  The
+    `test_when_finished` function (possibly combined with `test_get_temp`) can
+    be used to raise information out of a subtest subshell when required.
 
 - TEST_NO_CREATE_REPO
 
@@ -1108,6 +1210,11 @@ available utility functions that are TopGit-specific.
     Indicate that the test prerequisite <PREREQ> is available (should be a
     single word in ALL CAPS).  It may then be used as a prereq for any of the
     test result functions or be explicitly tested with `test_have_prereq`.
+
+    Note that for this to work inside a subtest and have the result be
+    available to subsequent subtests, it needs to be preceded by
+    `test_when_finished` (and also be run without that if `test_have_prereq` is
+    intended to work subsequently *inside* the same subtest's subshell).
 
 - test_skip_or_die <mode> <msg>
 

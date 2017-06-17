@@ -14,6 +14,27 @@ file which contains copious comments for each one should the more succinct
 descriptions included here prove insufficiently enlightening.
 
 
+---------------
+Quick Reference
+---------------
+
+TopGit variable                 | Description
+--------------------------------|----------------------------------------------
+TG_TEST_FULL_PATH               | full absolute path to `tg` being tested
+tg_test_bases                   | "" (default), "refs" or "heads"
+tg_test_remote                  | default remote name (default is "")
+
+TopGit utility function         | Description
+--------------------------------|----------------------------------------------
+tg_test_bare_tree               | make a bare `tree` out of any treeish
+tg_test_create_branch           | create a TopGit branch (multiple options)
+tg_test_create_branches         | script multiple `tg_test_create_branch` calls
+tg_test_include                 | source target `tg` in `tg__include` mode
+tg_test_setup_topgit            | do hook and merge TopGit setup only
+tg_test_v_getbases              | get local or remote full top-bases ref prefix
+tg_test_v_getremote             | error checking `: "${var:=$tg_test_remote}"
+
+
 ----------------
 TopGit Variables
 ----------------
