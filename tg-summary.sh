@@ -40,7 +40,7 @@ while [ -n "$1" ]; do
 	-t|--list|-l|--terse)
 		terse=1;;
 	-v|--verbose)
-		verbose=1;;
+		verbose=$(( $verbose + 1 ));;
 	--heads|--topgit-heads)
 		heads=1
 		headsindep=;;
@@ -374,7 +374,8 @@ if [ -n "$terse" ]; then
 	[ -z "$tg_read_only" ] || [ -z "$tg_ref_cache" ] || ! [ -s "$tg_ref_cache" ] ||
 	refslist="-r=\"$tg_ref_cache\""
 	cmd="run_awk_topgit_msg --list"
-	[ "${verbose:-0}" != "0" ] || cmd="run_awk_topgit_branches -n"
+	[ $verbose -lt 2 ] || cmd="run_awk_topgit_msg -c -nokind"
+	[ $verbose -gt 0 ] || cmd="run_awk_topgit_branches -n"
 	eval "$cmd" "$refslist" '-i="$branches" -x="$exclude" "refs/$topbases"'
 	exit 0
 fi

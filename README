@@ -1239,6 +1239,7 @@ tg summary
 	relevant information about each branch; you can pass ``-t`` (or ``-l``
 	or ``--list``) to get just a terse list of topic branch names quickly.
 	Also adding ``--verbose`` (or ``-v``) includes the subjects too.
+	Adding a second ``--verbose`` includes annihilated branches as well.
 
 	Passing ``--heads`` shows independent topic branch names and when
 	combined with ``--rdeps`` behaves as though ``--rdeps`` were run with
