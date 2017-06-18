@@ -116,13 +116,12 @@ t/branch [PATCH] use the base
 '
 
 test_expect_success "($repo) "'tg summary' '
-	sp=" " && # single space in there
 	printf "%s" "\
- * boo${sp}
+ * boo branch boo (missing .topmsg)
  * t/begin [PATCH] start here
  D t/branch [PATCH] use the base
 " > expected &&
-	tgx -C $repo summary > actual.raw &&
+	tg -C $repo summary > actual.raw &&
 	tab="	" && # a single tab in there
 	< actual.raw tr -s "$tab" " " > actual &&
 	test_diff expected actual

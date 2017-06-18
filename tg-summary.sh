@@ -309,6 +309,11 @@ processed=' '
 needslist=' '
 compute_ahead_list()
 {
+	refslist=
+	[ -z "$tg_read_only" ] || [ -z "$tg_ref_cache" ] || ! [ -s "$tg_ref_cache" ] ||
+	refslist="-r=\"$tg_ref_cache\""
+	msgsfile="$(get_temp msgslist)"
+	eval run_awk_topgit_msg -nokind "$refslist" '"refs/$topbases"' >"$msgsfile"
 	[ -z "$branches" ] || [ -n "$withdeps" ] || return 0
 	[ -n "$withdeps" ] || origbranches="$(tg summary --topgit-heads | paste -d ' ' -s -)"
 	aheadfile="$(get_temp aheadlist)"
@@ -363,15 +368,8 @@ process_branch()
 	ahead=' '
 	case "$aheadlist" in *" $name "*) ahead='*'; esac
 
-	if [ "$(ref_exists_rev "refs/heads/$name")" != "$(ref_exists_rev "refs/$topbases/$name")" ]; then
-		subject="$(cat_file "refs/heads/$name:.topmsg" $from | sed -n 's/^Subject: //p')"
-	else
-		# No commits yet
-		subject="(No commits)"
-	fi
-
-	printf '%-8s %-30s\t%s\n' "$current$nonempty$remote$rem_update$deps_update$deps_missing$base_update$ahead" \
-		"$name" "$subject"
+	printf '%-8s %s\n' "$current$nonempty$remote$rem_update$deps_update$deps_missing$base_update$ahead" \
+		"$name"
 }
 
 if [ -n "$terse" ]; then
@@ -385,8 +383,10 @@ if [ -n "$terse" ]; then
 	exit 0
 fi
 
+msgsfile=
 [ -n "$graphviz$sort" ] || compute_ahead_list
-get_branch_list |
+process_branches()
+{
 	while read name; do
 		case "$exclude" in *" $name "*) continue; esac
 		if [ -n "$graphviz$sort" ]; then
@@ -413,6 +413,32 @@ get_branch_list |
 			process_branch
 		fi
 	done
+}
+awkpgm='
+BEGIN {
+	if (msgsfile != "") {
+		while ((e = (getline msg <msgsfile)) > 0) {
+			gsub(/[ \t]+/, " ", msg)
+			sub(/^ /, "", msg)
+			if (split(msg, scratch, " ") < 2 ||
+			    scratch[1] == "" || scratch[2] == "") continue
+			msg = substr(msg, length(scratch[1]) + 2)
+			msgs[scratch[1]] = msg
+		}
+		close(msgsfile)
+	}
+}
+{
+	name = substr($0, 10)
+	if (name != "" && name in msgs)
+		printf "%-39s\t%s\n", $0, msgs[name]
+	else
+		print $0
+}
+'
+cmd='get_branch_list | process_branches'
+[ -z "$msgsfile" ] || cmd="$cmd"' | awk -v msgsfile="$msgsfile" "$awkpgm"'
+eval "$cmd"
 
 if [ -n "$graphviz" ]; then
 	echo '}'

@@ -134,14 +134,14 @@ test_expect_success 'bad usage' '
 '
 
 printf "%s" "\
-         basebare                      	
+         basebare                      	branch basebare (missing .topmsg)
  0       reused-1level1                	[PATCH] reused with one tg branch below
  0       reused-1level2                	[PATCH] reused with one tg branch below
  0  D  * reused-2level1                	[PATCH] reused with two tg branches below
  0  D  * reused-2level2                	[PATCH] reused with two tg branches below
  0  D    reused-multi                  	[PATCH] multi-level reuse
  0       root                          	[PATCH] standard root branch
- 0       rootdeps                      	
+ 0       rootdeps                      	branch rootdeps (missing .topmsg)
  0       rootmsg                       	[PATCH] topmsg root
  0       t/branch1                     	[PATCH] branch1 topgit
  0     * t/branch2                     	[PATCH] branch2 topgit
@@ -292,11 +292,11 @@ t/branch3                              	[PATCH] branch3 topgit
 	die failed to make pristine_list_verbose
 
 printf "%s" "\
-         basebare                      	
+         basebare                      	branch basebare (missing .topmsg)
  0       reused-1level2                	[PATCH] reused with one tg branch below
  0  D    reused-multi                  	[PATCH] multi-level reuse
  0       root                          	[PATCH] standard root branch
- 0       rootdeps                      	
+ 0       rootdeps                      	branch rootdeps (missing .topmsg)
  0       rootmsg                       	[PATCH] topmsg root
 " > pristine_heads_only.raw ||
 	die failed to make pristine_heads_only.raw
