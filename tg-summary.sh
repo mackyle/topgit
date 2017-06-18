@@ -27,7 +27,7 @@ verbose=0
 
 usage()
 {
-	echo "Usage: ${tgname:-tg} [...] summary [-t | --list | --heads[-only] | --sort | --deps[-only] | --rdeps | --graphviz] [-i | -w] [--tgish-only] [--with[out]-deps] [--exclude branch]... [--all | branch...]" >&2
+	echo "Usage: ${tgname:-tg} [...] summary [-t | --list | --heads[-only] | --sort | --deps[-only] | --rdeps | --graphviz] [-i | -w] [--tgish-only] [--with[out]-(deps|related)] [--exclude branch]... [--all | branch...]" >&2
 	exit 1
 }
 
@@ -52,7 +52,10 @@ while [ -n "$1" ]; do
 	--with-deps)
 		head=HEAD
 		withdeps=1;;
-	--without-deps|--no-with-deps)
+	--with-related)
+		head=HEAD
+		withdeps=2;;
+	--without-deps|--no-with-deps|--without-related|--no-with-related)
 		head=HEAD
 		withdeps=0;;
 	--graphviz)
@@ -105,6 +108,7 @@ if [ "$1" = "--all" ]; then
 fi
 [ "$heads$rdeps" != "11" ] || head=
 [ $# -ne 0 -o -z "$head" ] || set -- "$head"
+[ -z "$defwithdeps" ] || [ $# -ne 1 ] || [ z"$1" != z"HEAD" -a z"$1" != z"@" ] || defwithdeps=2
 
 [ "$terse$heads$headsonly$graphviz$sort$deps$depsonly" = "" ] ||
 	[ "$terse$heads$headsonly$graphviz$sort$deps$depsonly$rdeps" = "1" ] ||
@@ -262,6 +266,7 @@ if [ -z "$doingall$terse$graphviz$sort$withdeps$branches" ]; then
 fi
 [ "$withdeps" != "0" ] || withdeps=
 if [ -n "$withdeps" ]; then
+	[ "$withdeps" != "2" ] || branches="$(show_heads_topgit | paste -d " " -s -)"
 	savetgish="$tgish"
 	tgish=1
 	origbranches="$branches"
