@@ -206,7 +206,9 @@ show_rdeps()
 {
 	case "$exclude" in *" $_dep "*) return; esac
 	[ -z "$tgish" -o -n "$_dep_is_tgish" ] || return 0
-	printf '%s %s\n' "$_depchain" "$_dep"
+	elided=
+	[ -z "$rdepsonce" ] || [ "$_dep_xvisits" = 0 ] || elided="^"
+	printf '%s %s\n' "$_depchain" "$_dep$elided"
 }
 
 if [ -n "$rdeps" ]; then
