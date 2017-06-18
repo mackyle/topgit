@@ -63,7 +63,7 @@
 # using the startb starting point the graph is walked outputting one line for
 # each visited node with the following format:
 #
-#   M T L <node> [<parent> <branch> <chain> <names>]
+#   M T L V <node> [<parent> <branch> <chain> <names>]
 #
 # where M T L are single numeric digits with the following meanings:
 #
@@ -80,6 +80,10 @@
 #
 # contrary to the non-awk code this replaces, L == 1 IS possible with preord
 #
+# The V value is a non-negative integer indicating excess visits to this node
+# where the first visit is not in excess so it's 0 the next visit is the first
+# excess visit so it's 1 and so on.
+#
 # note that <node> will always be present and non-empty
 # unless withbr is true then <parent> will also always be present and non-empty
 # even if withbr IS true <parent> will be non-empty if extra path items were
@@ -89,7 +93,7 @@
 #
 # An output line might look like this:
 #
-#   0 1 1 t/foo/leaf t/foo/int t/stage
+#   0 1 1 0 t/foo/leaf t/foo/int t/stage
 #
 # L=2 "a leaf" means any node that is either not a TopGit branch or is a
 # non-annihilated TopGit branch with NO non-annihilated dependencies (that
@@ -254,12 +258,20 @@ included($1) && included($2) && !ann[$1] && (withan || !ann[$2]) {
 	}
 }
 
+function xvisits(node) {
+	if (node in xvisitcnts)
+		xvisitcnts[node] = xvisitcnts[node] + 1
+	else
+		xvisitcnts[node] = 0
+	return xvisitcnts[node]
+}
+
 function walktree(node, trail, level,
 	oncenodes, istgish, isleaf, children, childcnt, parent, child, visited, i)
 {
 	if (once > 0 && (node in oncenodes)) return
 	if (!heads[node]) {
-		if (!filter) print "1 0 0 " node trail
+		if (!filter) print "1 0 0 " xvisits(node) " " node trail
 		if (once) oncenodes[node] = 1
 		return
 	}
@@ -280,10 +292,11 @@ function walktree(node, trail, level,
 	if (isleaf != 2) isleaf = !istgish || (withan?linksx[node]:links[node]) == ""
 	if (preord && (level > 0 || withbr) && (!leaves || isleaf == 1) && (!tgonly || istgish)) {
 		if (filter) print parent node
-		else print "0 " istgish " " isleaf " " node trail
+		else print "0 " istgish " " isleaf " " xvisits(node) " " node trail
 	}
 	if (!once || !(node in oncenodes)) {
-		if (istgish == 2 && usermt && !leaves && !tgonly) print "0 0 0 " usermt node " " node trail
+		if (istgish == 2 && usermt && !leaves && !tgonly)
+			print "0 0 0 " xvisits(usermt node) " " usermt node " " node trail
 		if ((childcnt = split(links[node], children, " "))) {
 			visited = " " node trail " "
 			for (i = 1; i <= childcnt; ++i) {
@@ -298,7 +311,7 @@ function walktree(node, trail, level,
 	}
 	if (!preord && (level > 0 || withbr) && (!leaves || isleaf == 1) && (!tgonly || istgish)) {
 		if (filter) print parent node
-		else print "0 " istgish " " isleaf " " node trail
+		else print "0 " istgish " " isleaf " " xvisits(node) " " node trail
 	}
 	if (once) oncenodes[node] = 1
 }

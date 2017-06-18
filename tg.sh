@@ -910,10 +910,11 @@ navigate_deps()
 # get recursive list of dependencies with leading 0 if branch exists 1 if missing
 # followed by a 1 if the branch is "tgish" (2 if it also has a remote); 0 if not
 # followed by a 0 for a non-leaf, 1 for a leaf or 2 for annihilated tgish
-# but missing and remotes are always "0"
+# (but missing and remotes are always "0")
+# followed by a 0 for no excess visits or a positive number of excess visits
 # then the branch name followed by its depedency chain (which might be empty)
 # An output line might look like this:
-#   0 1 1 t/foo/leaf t/foo/int t/stage
+#   0 1 1 0 t/foo/leaf t/foo/int t/stage
 # If no_remotes is non-empty, exclude remotes
 # If recurse_preorder is non-empty, do a preorder rather than postorder traversal
 # If with_top_level is non-empty, include the top-level that's normally omitted
@@ -1059,6 +1060,7 @@ ensure_ident_available()
 #   _dep_is_tgish     boolean "1" if tgish; "" if not (which implies no remote)
 #   _dep_has_remote   boolean "1" if $_dep has_remote; "" if not
 #   _dep_annihilated  boolean "1" if $_dep annihilated; "" if not
+#   _dep_xvisits      non-negative integer number of excess visits (often 0)
 #
 # CMD may use a "return" statement without issue; its return value is ignored,
 # but if CMD sets _ret to a negative value, e.g. "-0" or "-1" the enumeration
@@ -1095,7 +1097,7 @@ recurse_deps()
 	eval recurse_deps_internal "$_opts" -- '"$@"' >"$_depsfile" || :
 
 	_ret=0
-	while read _ismissing _istgish _isleaf _dep _name _deppath; do
+	while read _ismissing _istgish _isleaf _dep_xvisits _dep _name _deppath; do
 		_depchain="$_name${_deppath:+ $_deppath}"
 		_dep_is_tgish=
 		[ "$_istgish" = "0" ] || _dep_is_tgish=1

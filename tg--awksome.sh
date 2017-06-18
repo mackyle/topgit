@@ -729,13 +729,14 @@ run_awk_topgit_deps()
 #
 # output lines look like this:
 #
-#   M T L <node> [<parent> <branch> <chain> <names>]
+#   M T L V <node> [<parent> <branch> <chain> <names>]
 #
 # where (see awk_topgit_recurse) M is 0 (not) or 1 (missing), T is 0 (not)
 # or 1 (tgish) or 2 (with remote) and L is 0 (not) or 1 (leaf) or 2 (annihilated)
+# and V is a non-negative integer number of excess visits to the node
 # so the following is an example of a possible output line:
 #
-#   0 1 1 t/foo/leaf t/foo/int t/stage
+#   0 1 1 0 t/foo/leaf t/foo/int t/stage
 #
 # Note that unlike most of the other run_awk_... functions, this function is
 # primarily just a convenience wrapper around the awk_topgit_recurse script
