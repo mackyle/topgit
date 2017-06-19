@@ -222,13 +222,18 @@ test_commit() {
 	fi
 }
 
-# Call test_merge with the arguments "<message> <commit>", where <commit>
-# can be a tag pointing to the commit-to-merge.
+# Call test_merge with the arguments "<message> [<opt>...] <commit>", where
+# <commit> can be a tag pointing to the commit-to-merge, but automatically skip
+# the tag if <message> is not tagish and supply --allow-unrelated-histories
+# when running Git >= 2.9.
 
 test_merge() {
 	test_tick &&
-	git merge -m "$1" "$2" &&
-	git tag "$1"
+	git merge $test_auh -m "$@" &&
+	if test_check_one_tag_ $1
+	then
+		git tag $1
+	fi
 }
 
 # This function helps systems where core.filemode=false is set.

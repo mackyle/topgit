@@ -83,6 +83,7 @@ TESTLIB_TEST_NO_SUBSHELL        | prevent subshell for subtests (do not use)
 TEST_NO_CREATE_REPO             | suppress initial `test_create_repo .`
 color                           | either "" (--no-color) or "--color" (--color)
 skip_all                        | `test_done` skip value for `1..0` plan
+test_auh                        | `--allow-unrelated-histories` if Git >= 2.9
 test_description                | must be non-empty before `. ./test-lib.sh`
 test_external_has_tap           | avoid changing -- will suppress TAP lines
 test_tick                       | last commit timestamp used see same function
@@ -297,6 +298,13 @@ Variables
     `1..0 # SKIP ` plan line.  If the test matches `$TESTLIB_SKIP_TESTS` when
     `./test-lib.sh` is sourced, `skip_all` will be set to a suitable value and
     `test_done` called immediately.
+
+- test_auh
+
+    Will automatically be set to empty unless the detected Git version is at
+    least version 2.9 in which case it will be set to the value
+    `--allow-unrelated-histories`.  Inteded for use with `git merge`.  The
+    `test_merge` function automatically supplies this.
 
 - test_description
 
@@ -1135,11 +1143,14 @@ available utility functions that are TopGit-specific.
     must be numeric).  This function only exists to accomodate `ksh` which
     uses 256+<signum> instead of the POSIX 128+<signum> for signal exit codes.
 
-- test_merge <message> <commit>
+- test_merge <message> [<opt>...] <commit>
 
     Shortcut for:
 
-        test_tick && git merge -m "<message>" <commit> && git tag "<message>"
+        test_tick && git merge -m "$@" && git tag "<message>"
+
+    Except that `--allow-unrelated-histories` is automatically supplied for
+    Git 2.9 or later and the tag is skipped if "<message>" is not tagish.
 
 - test_might_fail <cmd> [<arg>...]
 

@@ -56,7 +56,7 @@ if [ "$1" = "--cache" ]; then
 		test_external_has_tap last_verbose GIT_MINIMUM_VERSION \
 		TG_TEST_INSTALLED uname_s test_prereq TG_GIT_MINIMUM_VERSION \
 		TG_INST_BINDIR TG_INST_CMDDIR TG_INST_HOOKSDIR TG_VERSION \
-		TG_INST_SHAREDIR git_version tg_version UNAME_S \
+		TG_INST_SHAREDIR git_version test_auh tg_version UNAME_S \
 		lazily_tested_prereq satisfied_prereq PATH TESTLIB_TEST_CMP \
 		GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_PATH DIFF \
 		GIT_COMMITTER_NAME GIT_COMMITTER_EMAIL GIT_TEMPLATE_DIR \
