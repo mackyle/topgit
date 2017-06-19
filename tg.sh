@@ -1187,8 +1187,10 @@ branch_needs_update()
 		[ -z "$_dep_annihilated" ] || return 0
 
 		if [ -n "$_dep_has_remote" ]; then
-			branch_contains "refs/heads/$_dep" "refs/remotes/$base_remote/$_dep" ||
+			branch_contains "refs/heads/$_dep" "refs/remotes/$base_remote/$_dep" || {
 				echo "refs/remotes/$base_remote/$_dep $_dep $_depchain"
+				_ret=1
+			}
 		fi
 		# We want to sync with our base first and should output this before
 		# the remote branch, but the order does not actually matter to tg-update
@@ -1222,7 +1224,8 @@ branch_needs_update()
 # order is reversed from the order they will actually be updated in
 # order to accomodate tg info which treats out-of-date items that are
 # only in the base as already being in the head for status purposes.
-# It will also return non-zero status if NAME needs update.
+# It will also return non-zero status if NAME needs update (seems backwards
+# but think of it as non-zero status if any non-missing output lines produced)
 # If needs_update() hits missing dependencies, it will append
 # them to space-separated $missing_deps list and skip them.
 needs_update()
