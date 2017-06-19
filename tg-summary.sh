@@ -315,6 +315,7 @@ compute_ahead_list()
 	msgsfile="$(get_temp msgslist)"
 	eval run_awk_topgit_msg -nokind "$refslist" '"refs/$topbases"' >"$msgsfile"
 	needs_update_check_clear
+	needs_update_check_no_same=1
 	[ -z "$branches" ] || [ -n "$withdeps" ] || return 0
 	[ -n "$withdeps" ] || origbranches="$(navigate_deps -s=-1 | paste -d ' ' -s -)"
 	for onehead in $origbranches; do

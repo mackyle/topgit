@@ -1259,12 +1259,30 @@ needs_update_check_clear()
 }
 
 # needs_update_check NAME...
+#
 # A faster version of needs_update that always succeeds
 # No output and unsuitable for actually performing updates themselves
+# If any of NAME... are NOT up-to-date AND they were not already processed
+# return status always will be zero however a simple check of
+# needs_update_behind after the call will answer the:
+#   "are any out of date?": test -n "$needs_update_behind"
+#   "is <x> out of date?":  vcontains needs_update_behind "<x>"
 #
 # Note that results are cumulative and "no_remotes" is honored as well as other
 # variables that modify recurse_deps_internal behavior.  See the preceding
 # function to reset the results to empty when accumulation should start over.
+#
+# Unlike needs_update, the branch names are themselves also checked to see if
+# they are out-of-date with respect to their bases or remote branches (not just
+# their remote bases).  However, this can muddy some status results so this
+# can be disabled by setting needs_update_check_no_self to a non-empty value.
+#
+# Dependencies are normally considered "behind" if they need an update from
+# their base or remote but this can be suppressed by setting the
+# needs_update_check_no_same to a non-empty value.  This will NOT prevent
+# parents of those dependencies from still being considered behind in such a
+# case even though the dependency itself will not be.  Note that setting
+# needs_update_check_no_same also implies needs_update_check_no_self.
 #
 # The following whitespace-separated lists are updated with the results:
 #
@@ -1305,25 +1323,29 @@ needs_update_check()
 				[ -z "$_rdi_parent" ] || vsetadd needs_update_partial "$_rdi_parent"
 				continue
 			fi
-			[ -n "$_rdi_parent" ] || continue # a "self" line
-			[ "$_rdi_t$_rdi_l" != "12" ] || continue # annihilated
-			! vcontains needs_update_partial "$_rdi_node" || vsetadd needs_update_partial "$_rdi_parent"
+			[ "$_rdi_t$_rdi_l" != "12" ] || continue # always skip annihilated
 			_rdi_dertee= # :)
-			if vcontains needs_update_behind "$_rdi_node"; then
-				_rdi_dertee=1
+			if [ -n "$_rdi_parent" ]; then # not a "self" line
+				! vcontains needs_update_partial "$_rdi_node" || vsetadd needs_update_partial "$_rdi_parent"
+				! vcontains needs_update_behind "$_rdi_node" || _rdi_dertee=2
 			else
+				[ -z "$needs_update_check_no_self$needs_update_check_no_same" ] || continue # skip self
+			fi
+			if [ -z "$_rdi_dertee" ]; then
 				if [ "$_rdi_t" != "0" ]; then # tgish
 					if branch_contains "refs/heads/$_rdi_node" "refs/$topbases/$_rdi_node"; then
 						if [ "$_rdi_t" = "2" ]; then # will never be "2" when no_remotes is set
 							branch_contains "refs/heads/$_rdi_node" "refs/remotes/$base_remote/$_rdi_node" ||
-							_rdi_dertee=1
+							_rdi_dertee=3
 						fi
 					else
-						_rdi_dertee=1
+						_rdi_dertee=3
 					fi
+					[ -z "$_rdi_dertee" ] || [ -n "$needs_update_check_no_same" ] || _rdi_dertee=1
 				fi
-				[ -z "$_rdi_dertee" ] || vsetadd needs_update_behind "$_rdi_node"
 			fi
+			[ z"$_rdi_dertee" != z"1" ] || vsetadd needs_update_behind "$_rdi_node"
+			[ -n "$_rdi_parent" ] || continue # self line
 			case "$_rdi_node" in refs/*) _rdi_full="$_rdi_node";; *) _rdi_full="refs/heads/$_rdi_node";; esac
 			if ! branch_contains "refs/$topbases/$_rdi_parent" "$_rdi_full"; then
 				_rdi_dertee=1
