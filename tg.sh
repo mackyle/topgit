@@ -1478,7 +1478,7 @@ do_help()
 
 		echo "TopGit version $TG_VERSION - A different patch queue manager"
 		echo "Usage: $tgname [-C <dir>] [-r <remote> | -u]" \
-			"[-c <name>=<val>] [--no-pager] ($cmds) ..."
+			"[-c <name>=<val>] [--[no-]pager|-p] ($cmds) ..."
 		echo "   Or: $tgname help [-w] [<command>]"
 		echo "Use \"$tgdisplaydir$tgname help tg\" for overview of TopGit"
 	elif [ -r "$TG_INST_CMDDIR"/tg-$1 -o -r "$TG_INST_SHAREDIR/tg-$1.txt" ] ; then
@@ -2262,6 +2262,7 @@ else
 	explicit_dir=
 	gitcdopt=
 	noremote=
+	forcepager=
 
 	cmd=
 	while :; do case "$1" in
@@ -2297,8 +2298,11 @@ else
 			break;;
 
 		--no-pager)
-			GIT_PAGER_IN_USE=1 TG_PAGER_IN_USE=1 &&
-			export GIT_PAGER_IN_USE TG_PAGER_IN_USE
+			forcepager=0
+			shift;;
+
+		--pager|-p)
+			forcepager=1
 			shift;;
 
 		-r)
@@ -2369,6 +2373,10 @@ else
 			break;;
 
 	esac; done
+	if [ z"$forcepager" = z"0" ]; then
+		GIT_PAGER_IN_USE=1 TG_PAGER_IN_USE=1 &&
+		export GIT_PAGER_IN_USE TG_PAGER_IN_USE
+	fi
 
 	[ -n "$cmd" -o $# -lt 1 ] || { cmd="$1"; shift; }
 
@@ -2523,7 +2531,11 @@ else
 			[ -z "$_use_ref_cache" ] || v_create_ref_cache
 
 			fullcmd="${tgname:-tg} $cmd $*"
-			. "$TG_INST_CMDDIR"/tg-$isutil$cmd;;
+			if [ z"$forcepager" = z"1" ]; then
+				page '. "$TG_INST_CMDDIR"/tg-$isutil$cmd' "$@"
+			else
+				. "$TG_INST_CMDDIR"/tg-$isutil$cmd
+			fi;;
 	esac
 
 fi
