@@ -314,22 +314,14 @@ compute_ahead_list()
 	refslist="-r=\"$tg_ref_cache\""
 	msgsfile="$(get_temp msgslist)"
 	eval run_awk_topgit_msg -nokind "$refslist" '"refs/$topbases"' >"$msgsfile"
+	needs_update_check_clear
 	[ -z "$branches" ] || [ -n "$withdeps" ] || return 0
-	[ -n "$withdeps" ] || origbranches="$(tg summary --topgit-heads | paste -d ' ' -s -)"
-	aheadfile="$(get_temp aheadlist)"
-	savebr="$base_remote"
-	savenr="$no_remotes"
-	base_remote=
-	no_remotes=1
+	[ -n "$withdeps" ] || origbranches="$(navigate_deps -s=-1 | paste -d ' ' -s -)"
 	for onehead in $origbranches; do
 		case "$exclude" in *" $onehead "*) continue; esac
-		case "$processed" in *" $onehead "*) continue; esac
-		processed="${processed}$onehead "
-		needs_update "$onehead" || needslist="${needslist}$onehead "
-	done >"$aheadfile"
-	no_remotes="$savenr"
-	base_remote="$savebr"
-	aheadlist=" $(cut -d ' ' -f 1 <"$aheadfile" | sort -u | paste -d ' ' -s -) "
+		needs_update_check $onehead
+	done
+	aheadlist=" $needs_update_ahead "
 }
 
 process_branch()
@@ -354,15 +346,11 @@ process_branch()
 	[ "$remote" != 'r' -o "$rem_update" = 'R' ] || {
 		branch_contains "refs/remotes/$base_remote/$name" "refs/heads/$name" 2>/dev/null
 	} || rem_update='L'
+	needs_update_check "$name"
 	deps_update=' '
-	case "$processed" in
-		*" $name "*)
-			case "$needslist" in *" $name "*) deps_update='D'; esac;;
-		*)
-			needs_update "$name" >/dev/null || deps_update='D';;
-	esac
+	! vcontains needs_update_behind "$name" || deps_update='D'
 	deps_missing=' '
-	[ -z "$missing_deps" ] || deps_missing='!'
+	! vcontains needs_update_partial "$name" || deps_missing='!'
 	base_update=' '
 	branch_contains "refs/heads/$name" "refs/$topbases/$name" || base_update='B'
 	ahead=' '

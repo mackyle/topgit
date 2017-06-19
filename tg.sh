@@ -39,7 +39,7 @@ trap 'trapexit_ $?' EXIT
 # unset that ignores error code that shouldn't be produced according to POSIX
 unset_()
 {
-	unset "$@" || :
+	{ unset "$@"; } >/dev/null 2>&1 || :
 }
 
 # Preserves current $? value while triggering a non-zero set -e exit if active
@@ -1228,6 +1228,107 @@ branch_needs_update()
 needs_update()
 {
 	recurse_deps branch_needs_update "$1"
+}
+
+# append second arg to first arg variable gluing with space if first already set
+vplus()
+{
+	eval "$1=\"\${$1:+\$$1 }\$2\""
+}
+
+# true if whitespace separated first var name list contains second arg
+# use `vcontains 3 "value" "some list"` for a literal list
+vcontains()
+{
+	eval case "\" \${$1} \"" in '*" $2 "*) return 0; esac; return 1'
+}
+
+# if the $1 var does not already contain $2 it's appended
+vsetadd()
+{
+	vcontains "$1" "$2" || vplus "$1" "$2"
+}
+
+# reset needs_update_check results to empty
+needs_update_check_clear()
+{
+	unset_ needs_update_processed needs_update_behind needs_update_ahead needs_update_partial
+}
+
+# needs_update_check NAME...
+# A faster version of needs_update that always succeeds
+# No output and unsuitable for actually performing updates themselves
+#
+# Note that results are cumulative and "no_remotes" is honored as well as other
+# variables that modify recurse_deps_internal behavior.  See the preceding
+# function to reset the results to empty when accumulation should start over.
+#
+# The following whitespace-separated lists are updated with the results:
+#
+# The "no_remotes" setting is obeyed but remote names themselves will never
+# appear in any of the lists
+#
+#   needs_update_processed
+#       The branch names in here have been processed and will be skipped
+#
+#   needs_update_behind
+#       Any branch named in here needs an update from one or more of its
+#       direct or indirect dependencies (i.e. it's "out-of-date")
+#
+#   needs_update_ahead
+#       Any branch named in here is NOT fully contained by at least one of
+#       its dependents (i.e. it's a source of "out-of-date (aka dirty)"ness
+#
+#   needs_update_partial
+#       Any branch names in here are either missing themselves or have one
+#       or more detected missing dependencies (a completely missing remote
+#       branch is never "detected")
+needs_update_check()
+{
+	# each head must be processed independently or else there will be
+	# confusion about who's missing what and which branches actually are
+	# out of date
+	tmptgrdi="$tg_tmp_dir/tgrdi.$$"
+	for nucname in "$@"; do
+		! vcontains needs_update_processed "$nucname" || continue
+		# no need to fuss with recurse_deps, just use
+		# recurse_deps_internal directly
+		recurse_deps_internal -s -o=-1 "$nucname" >"$tmptgrdi"
+		while read -r _rdi_m _rdi_t _rdi_l _rdi_v _rdi_node _rdi_parent _rdi_chain; do
+			[ -n "$_rdi_node" ] || continue
+			vsetadd needs_update_processed "$_rdi_node"
+			if [ "$_rdi_m" != "0" ]; then # missing
+				vsetadd needs_update_partial "$_rdi_node"
+				[ -z "$_rdi_parent" ] || vsetadd needs_update_partial "$_rdi_parent"
+				continue
+			fi
+			[ -n "$_rdi_parent" ] || continue # a "self" line
+			[ "$_rdi_t$_rdi_l" != "12" ] || continue # annihilated
+			! vcontains needs_update_partial "$_rdi_node" || vsetadd needs_update_partial "$_rdi_parent"
+			_rdi_dertee= # :)
+			if vcontains needs_update_behind "$_rdi_node"; then
+				_rdi_dertee=1
+			else
+				if [ "$_rdi_t" != "0" ]; then # tgish
+					if branch_contains "refs/heads/$_rdi_node" "refs/$topbases/$_rdi_node"; then
+						if [ "$_rdi_t" = "2" ]; then # will never be "2" when no_remotes is set
+							branch_contains "refs/heads/$_rdi_node" "refs/remotes/$base_remote/$_rdi_node" ||
+							_rdi_dertee=1
+						fi
+					else
+						_rdi_dertee=1
+					fi
+				fi
+				[ -z "$_rdi_dertee" ] || vsetadd needs_update_behind "$_rdi_node"
+			fi
+			case "$_rdi_node" in refs/*) _rdi_full="$_rdi_node";; *) _rdi_full="refs/heads/$_rdi_node";; esac
+			if ! branch_contains "refs/$topbases/$_rdi_parent" "$_rdi_full"; then
+				_rdi_dertee=1
+				vsetadd needs_update_ahead "$_rdi_node"
+			fi
+			[ -z "$_rdi_dertee" ] || vsetadd needs_update_behind "$_rdi_parent"
+		done <"$tmptgrdi"
+	done
 }
 
 # branch_empty NAME [-i | -w]
