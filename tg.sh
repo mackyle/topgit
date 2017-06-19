@@ -955,7 +955,7 @@ recurse_deps_internal()
 			tmptgrmtbr="$tg_tmp_dir/tgrmtbr.$$"
 			ratr_opts="$ratr_opts -rmr"
 		fi
-		ratr_opts="$ratr_opts -r=\"\$tmptgbr\" -u=\"refs/remotes/\$base_remote/\${topbases#heads/}\""
+		ratr_opts="$ratr_opts -r=\"\$tmptgrmtbr\" -u=\"refs/remotes/\$base_remote/\${topbases#heads/}\""
 	fi
 	[ -z "$dogfer" ] ||
 	eval git for-each-ref '--format="%(refname) %(objectname)"' "$refpats" >"$tmprfs"
