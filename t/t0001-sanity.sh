@@ -10,7 +10,22 @@ TEST_NO_CREATE_REPO=1
 
 . ./test-lib.sh
 
-test_plan 14
+test_plan 15
+
+# required working
+
+test_expect_success 'POSIX tr to NUL processing' '
+	printf "1x2x3x" | tr "x" "\\000" >lines3z &&
+	val="$(xargs -0 <lines3z printf "%s\n" | wc -l)" &&
+	test $val -eq 3
+'
+
+test_expect_success 'POSIX tr from NUL processing' '
+	val="$(echo "x@@@y" | tr "x@y" "1\\0005" | tr "\\000" 2)" &&
+	test z"$val" = z"12225"
+'
+
+# tolerated breakage
 
 test_tolerate_failure 'POSIX unset behavior' '
 	test z"$(unset it && unset it && echo good || echo bad)" = z"good"
@@ -83,11 +98,6 @@ test_tolerate_failure 'POSIX awk ENVIRON array' '
 	export EVAR &&
 	val="$(awk "BEGIN{exit}END{print ENVIRON[\"EVAR\"]}")" &&
 	test z"$val" = z"$EVAR"
-'
-
-test_tolerate_failure 'POSIX tr NUL processing' '
-	val="$(perl -e "print 1,\"\\000\" x 3, 5" | tr "\\000" 2)" &&
-	test z"$val" = z"12225"
 '
 
 test_tolerate_failure 'POSIX export unset var exports it' '
