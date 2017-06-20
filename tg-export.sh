@@ -199,9 +199,9 @@ collapsed_commit()
 # previously collapsed branches stored in $playground.
 collapse()
 {
-	if [ -s "$playground/$_dep" ]; then
+	if [ -s "$playground/$_dep^commit" ]; then
 		# We've already seen this dep
-		commit="$(cat "$playground/$_dep")"
+		commit="$(cat "$playground/$_dep^commit")"
 
 	elif [ -z "$_dep_is_tgish" ]; then
 		# This dep is not for rewrite
@@ -213,7 +213,7 @@ collapse()
 		test -d "$playground/${_dep%/*}" || mkdir -p "$playground/${_dep%/*}"
 		commit="$(collapsed_commit "$_dep")"
 		bump_timestamp
-		echol "$commit" >"$playground/$_dep"
+		echol "$commit" >"$playground/$_dep^commit"
 	fi
 
 	# Propagate our work through the dependency chain
@@ -255,13 +255,13 @@ quilt()
 
 	unset _dep_tmp
 
-	if [ -e "$playground/$_dep" ]; then
+	if [ -e "$playground/$_dep^commit" ]; then
 		# We've already seen this dep
 		return
 	fi
 
 	test -d "$playground/${_dep%/*}" || mkdir -p "$playground/${_dep%/*}"
-	>>"$playground/$_dep"
+	>>"$playground/$_dep^commit"
 
 	if branch_empty "$_dep"; then
 		echo "Skip empty patch $_dep"
@@ -407,7 +407,7 @@ fi
 
 
 if [ "$driver" = "collapse" ]; then
-	cmd='git update-ref "refs/heads/$output" "$(cat "$playground/$name")"'
+	cmd='git update-ref "refs/heads/$output" "$(cat "$playground/$name^commit")"'
 	[ -n "$forcebranch" ] || cmd="$cmd \"\""
 	eval "$cmd"
 
