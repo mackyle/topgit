@@ -955,7 +955,7 @@ recurse_deps_internal()
 			tmptgrmtbr="$tg_tmp_dir/tgrmtbr.$$"
 			ratr_opts="$ratr_opts -rmr"
 		fi
-		ratr_opts="$ratr_opts -r=\"\$tmptgrmtbr\" -u=\"refs/remotes/\$base_remote/\${topbases#heads/}\""
+		ratr_opts="$ratr_opts -r=\"\$tmptgrmtbr\" -u=\":refs/remotes/\$base_remote/\${topbases#heads/}\""
 	fi
 	[ -z "$dogfer" ] ||
 	eval git for-each-ref '--format="%(refname) %(objectname)"' "$refpats" >"$tmprfs"
@@ -1052,9 +1052,9 @@ ensure_ident_available()
 # CMD can refer to the following variables:
 #
 #   _ret              starts as 0; CMD can change; will be final return result
-#   _dep              bare branch name or "refs/remotes/..." for a remote base
+#   _dep              bare branch name or ":refs/remotes/..." for a remote
 #   _name             has $_dep in its .topdeps ("" for top and $with_top_level)
-#   _depchain         0+ space-separated branch names forming a path to top
+#   _depchain         0+ space-sep branch names (_name first) form a path to top
 #   _dep_missing      boolean "1" if no such $_dep ref; "" if ref present
 #   _dep_is_leaf      boolean "1" if leaf; "" if not
 #   _dep_is_tgish     boolean "1" if tgish; "" if not (which implies no remote)
@@ -1188,7 +1188,7 @@ branch_needs_update()
 
 		if [ -n "$_dep_has_remote" ]; then
 			branch_contains "refs/heads/$_dep" "refs/remotes/$base_remote/$_dep" || {
-				echo "refs/remotes/$base_remote/$_dep $_dep $_depchain"
+				echo ":refs/remotes/$base_remote/$_dep $_dep $_depchain"
 				_ret=1
 			}
 		fi
@@ -1205,7 +1205,7 @@ branch_needs_update()
 	fi
 
 	if [ -n "$_name" ]; then
-		case "$_dep" in refs/*) _fulldep="$_dep";; *) _fulldep="refs/heads/$_dep";; esac
+		case "$_dep" in :*) _fulldep="${_dep#:}";; *) _fulldep="refs/heads/$_dep";; esac
 		if ! branch_contains "refs/$topbases/$_name" "$_fulldep"; then
 			# Some new commits in _dep
 			echo "$_dep $_depchain"
@@ -1217,7 +1217,7 @@ branch_needs_update()
 # needs_update NAME
 # This function is recursive; it outputs reverse path from NAME
 # to the branch (e.g. B_DIRTY B1 B2 NAME), one path per line,
-# inner paths first. Innermost name can be refs/remotes/<remote>/<name>
+# inner paths first. Innermost name can be :refs/remotes/<remote>/<name>
 # if the head is not in sync with the <remote> branch <name>, ':' if
 # the head is not in sync with the base (in this order of priority)
 # or '!' if dependency is missing.  Note that the remote branch, base
@@ -1319,7 +1319,7 @@ needs_update_check()
 		# recurse_deps_internal directly
 		recurse_deps_internal -s -o=-1 "$nucname" >"$tmptgrdi"
 		while read -r _rdi_m _rdi_t _rdi_l _rdi_v _rdi_node _rdi_parent _rdi_chain; do
-			case "$_rdi_node" in ""|refs/remotes/?*) continue; esac # empty or checked with remote head
+			case "$_rdi_node" in ""|:*) continue; esac # empty or checked with remote
 			vsetadd needs_update_processed "$_rdi_node"
 			if [ "$_rdi_m" != "0" ]; then # missing
 				vsetadd needs_update_partial "$_rdi_node"

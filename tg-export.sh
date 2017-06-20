@@ -376,7 +376,7 @@ driver()
 
 	[ -z "$_dep_is_tgish" ] || [ -z "$_dep_annihilated" ] || return 0
 
-	case $_dep in refs/remotes/*) return;; esac
+	case $_dep in ":"*) return; esac
 	branch_needs_update >/dev/null
 	[ "$_ret" -eq 0 ] ||
 		die "cancelling export of $_dep (-> $_name): branch not up-to-date"

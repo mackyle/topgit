@@ -938,7 +938,7 @@ update_branch_internal() {
 
 			# We do not distinguish between dependencies out-of-date
 			# and base/remote out-of-date cases for $dep here,
-			# but thanks to needs_update returning : or refs/remotes/<remote>/<name>
+			# but thanks to needs_update returning : or :refs/remotes/...
 			# for the latter, we do correctly recurse here
 			# in both cases.
 

@@ -188,7 +188,7 @@ test_expect_success 'branch_needs_update hasbase uptodate' '
 
 test_expect_success 'branch_needs_update hasrmt1 outofdate' '
 	> expected &&
-	echo "refs/remotes/rmt1/top-bases/hasrmt1 hasrmt1" > expected-base &&
+	echo ":refs/remotes/rmt1/top-bases/hasrmt1 hasrmt1" > expected-base &&
 	branch_needs_update -C outofdate hasrmt1 > actual &&
 	test_diff expected actual &&
 	test_must_fail branch_needs_update -C outofdate -r rmt1 hasrmt1 > actual &&
@@ -271,7 +271,7 @@ test_expect_success 'branch_needs_update uphasbase uptodate' '
 
 test_expect_success 'branch_needs_update uphasrmt1 outofdate' '
 	> expected &&
-	echo "refs/remotes/rmt1/top-bases/hasrmt1 hasrmt1 uphasrmt1" > expected-base &&
+	echo ":refs/remotes/rmt1/top-bases/hasrmt1 hasrmt1 uphasrmt1" > expected-base &&
 	branch_needs_update -C outofdate uphasrmt1 > actual &&
 	test_diff expected actual &&
 	test_must_fail branch_needs_update -C outofdate -r rmt1 uphasrmt1 > actual &&
@@ -292,7 +292,7 @@ test_expect_success 'branch_needs_update uphasrmt1 uptodate' '
 
 test_expect_success 'branch_needs_update uphasrmt2 outofdate' '
 	> expected &&
-	echo "refs/remotes/rmt2/hasrmt2 hasrmt2 uphasrmt2" > expected-remote &&
+	echo ":refs/remotes/rmt2/hasrmt2 hasrmt2 uphasrmt2" > expected-remote &&
 	branch_needs_update -C outofdate uphasrmt2 > actual &&
 	test_diff expected actual &&
 	branch_needs_update -C outofdate -r rmt1 uphasrmt2 > actual &&

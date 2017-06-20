@@ -247,23 +247,22 @@ sed '/^!/d' <"$depcheck" >"$depcheck2"
 if [ -s "$depcheck2" ]; then
 	echo "Needs update from:"
 	# 's/ [^ ]* *$//' -- last is $name
-	# 's/^[:] /:/'    -- don't distinguish base updates
+	# 's/^[:] /::/'   -- don't distinguish base updates
 	<"$depcheck2" sed -e 's/ [^ ]* *$//' -e 's/^[:] /:/' |
 		while read dep chain; do
+			extradep=
 			case "$dep" in
-				:*)
-					dep="${dep#:}"
+				::*)
+					dep="${dep#::}"
 					fulldep="refs/heads/$dep"
 					extradep="refs/$topbases/$dep"
 					;;
+				:*)
+					dep="${dep#:}"
+					fulldep="$dep"
+					;;
 				*)
-					extradep=
-					case "$dep" in
-						refs/*)
-							fulldep="$dep";;
-						*)
-							fulldep="refs/heads/$dep";;
-					esac
+					fulldep="refs/heads/$dep"
 					;;
 			esac
 			printf '%s' "$dep "
