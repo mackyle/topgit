@@ -41,6 +41,12 @@ while [ -n "$1" ]; do
 		terse=1;;
 	-v|--verbose)
 		verbose=$(( $verbose + 1 ));;
+	-vl|-lv)
+		terse=1 verbose=$(( $verbose + 1 ));;
+	-vv)
+		verbose=$(( $verbose + 2 ));;
+	-vvl|-vlv|-lvv)
+		terse=1 verbose=$(( $verbose + 2 ));;
 	--heads|--topgit-heads)
 		heads=1
 		headsindep=;;
