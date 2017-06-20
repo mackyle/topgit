@@ -210,18 +210,14 @@ collapse()
 	else
 		# First time hitting this dep; the common case
 		echo "Collapsing $_dep"
+		test -d "$playground/${_dep%/*}" || mkdir -p "$playground/${_dep%/*}"
 		commit="$(collapsed_commit "$_dep")"
 		bump_timestamp
-		_depdn="${_dep%/}"
-		case "$_depdn" in */*);;*) _depdn="./$_depdn"; esac
-		mkdir -p "$playground/${_depdn%/*}"
 		echol "$commit" >"$playground/$_dep"
 	fi
 
 	# Propagate our work through the dependency chain
-	_namedn="${_name%/}"
-	case "$_namedn" in */*);;*) _namedn="./$_namedn"; esac
-	mkdir -p "$playground/${_namedn%/*}"
+	test -d "$playground/${_name%/*}" || mkdir -p "$playground/${_name%/*}"
 	echo "$commit	$_dep" >>"$playground/$_name^parents"
 }
 
@@ -264,9 +260,7 @@ quilt()
 		return
 	fi
 
-	_depdn="${_dep%/}"
-	case "$_depdn" in */*);;*) _depdn="./$_depdn"; esac
-	mkdir -p "$playground/${_depdn%/*}"
+	test -d "$playground/${_dep%/*}" || mkdir -p "$playground/${_dep%/*}"
 	>>"$playground/$_dep"
 
 	if branch_empty "$_dep"; then
