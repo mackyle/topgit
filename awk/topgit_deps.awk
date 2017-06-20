@@ -66,6 +66,9 @@
 # is set to true; this is done as a convenience as the same effect is always
 # achieved by not passing any anfile value (or passing an empty string)
 #
+# any incoming branch names from the --batch .topdeps content that are not
+# valid git ref names are silently discarded without notice
+#
 
 BEGIN { exitcode = "" }
 function exitnow(e) { exitcode=e; exit e }
@@ -118,9 +121,14 @@ function wanted(abranch) {
 	return !tgonly || tgish[abranch]
 }
 
+function validbr(branchname) {
+	return "/" tolower(branchname) "/" !~ \
+	"//|\\.\\.|@\\173|/\\.|\\./|\\.lock/|[\\001-\\040\\177~^:\\\\*?\\133]"
+}
+
 NR == 1 {init()}
 
-NF == 3 && $3 != "" && $2 != "missing" && $1 != "" && $2 ~ /^[0-9]+$/ {
+NF == 3 && $2 != "missing" && $1 != "" && $2 ~ /^[0-9]+$/ && validbr($3) {
 	bn = $3
 	isann = ann[bn] || $1 != "blob"
 	incl = included(bn)
@@ -132,7 +140,7 @@ NF == 3 && $3 != "" && $2 != "missing" && $1 != "" && $2 ~ /^[0-9]+$/ {
 	err = 0
 	while (curlen < datalen && (err = getline) > 0) {
 		curlen += length($0) + 1
-		if (NF != 1 || $1 == "") continue
+		if (NF != 1 || $1 == "" || !validbr($1)) continue
 		if (!isann && !ann[$1] && included($1) && wanted($1)) {
 			if (rev)
 				items[++cnt] = $1 " " bn
