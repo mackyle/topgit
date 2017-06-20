@@ -1277,6 +1277,9 @@ needs_update_check_clear()
 # their remote bases).  However, this can muddy some status results so this
 # can be disabled by setting needs_update_check_no_self to a non-empty value.
 #
+# Unlike needs_update, here the remote base check is handled together with the
+# remote head check so if one is modified the other is too in the same way.
+#
 # Dependencies are normally considered "behind" if they need an update from
 # their base or remote but this can be suppressed by setting the
 # needs_update_check_no_same to a non-empty value.  This will NOT prevent
@@ -1316,7 +1319,7 @@ needs_update_check()
 		# recurse_deps_internal directly
 		recurse_deps_internal -s -o=-1 "$nucname" >"$tmptgrdi"
 		while read -r _rdi_m _rdi_t _rdi_l _rdi_v _rdi_node _rdi_parent _rdi_chain; do
-			[ -n "$_rdi_node" ] || continue
+			case "$_rdi_node" in ""|refs/remotes/?*) continue; esac # empty or checked with remote head
 			vsetadd needs_update_processed "$_rdi_node"
 			if [ "$_rdi_m" != "0" ]; then # missing
 				vsetadd needs_update_partial "$_rdi_node"
@@ -1335,7 +1338,8 @@ needs_update_check()
 				if [ "$_rdi_t" != "0" ]; then # tgish
 					if branch_contains "refs/heads/$_rdi_node" "refs/$topbases/$_rdi_node"; then
 						if [ "$_rdi_t" = "2" ]; then # will never be "2" when no_remotes is set
-							branch_contains "refs/heads/$_rdi_node" "refs/remotes/$base_remote/$_rdi_node" ||
+							branch_contains "refs/heads/$_rdi_node" "refs/remotes/$base_remote/$_rdi_node" &&
+							branch_contains "refs/$topbases/$_rdi_node" "refs/remotes/$base_remote/${topbases#heads/}/$_rdi_node" ||
 							_rdi_dertee=3
 						fi
 					else
@@ -1346,8 +1350,7 @@ needs_update_check()
 			fi
 			[ z"$_rdi_dertee" != z"1" ] || vsetadd needs_update_behind "$_rdi_node"
 			[ -n "$_rdi_parent" ] || continue # self line
-			case "$_rdi_node" in refs/*) _rdi_full="$_rdi_node";; *) _rdi_full="refs/heads/$_rdi_node";; esac
-			if ! branch_contains "refs/$topbases/$_rdi_parent" "$_rdi_full"; then
+			if ! branch_contains "refs/$topbases/$_rdi_parent" "refs/heads/$_rdi_node"; then
 				_rdi_dertee=1
 				vsetadd needs_update_ahead "$_rdi_node"
 			fi
