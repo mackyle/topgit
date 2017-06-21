@@ -109,6 +109,8 @@ TEST_TARGET = $(TEST_TARGET_$(DEFAULT_TEST_TARGET_))
 
 all: $(TEST_TARGET)
 
+settings: TG-TEST-SETTINGS
+
 test: pre-clean TG-TEST-SETTINGS $(TEST_LINT) FORCE
 	$(Q)set -m && $(CACHE_SETUP_TTY) $(MAKE) $${GNO_PD_OPT} -f Makefile.mak aggregate-results-and-cleanup
 

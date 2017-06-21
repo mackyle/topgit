@@ -16,7 +16,7 @@ TARGETS = \
 	all prove test pre-clean clean post-clean-except-prove-cache post-clean \
 	test-lint test-lint-duplicates test-lint-executable test-lint-shell-syntax \
 	test-lint-filenames run-individual-tests aggregate-results-and-cleanup \
-	aggregate-results TG-TEST-SETTINGS
+	aggregate-results TG-TEST-SETTINGS settings
 #TARGETS
 
 __default_target__: __file_which_should_not_exist

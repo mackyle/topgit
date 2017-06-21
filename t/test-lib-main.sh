@@ -1174,6 +1174,8 @@ else
 		fatal 'error: no ../bin-wrappers/tg executable found!'
 	PATH="$tg_bin_dir:$PATH"
 	TG_TEST_FULL_PATH="$tg_bin_dir/tg"
+	test -f "$TESTLIB_DIRECTORY/TG-TEST-SETTINGS" ||
+		echo 'warning: no TG-TEST-SETTINGS file found (run `make settings`)' >&2
 fi
 export TG_TEST_FULL_PATH
 tg_version="$(tg --version)" ||
