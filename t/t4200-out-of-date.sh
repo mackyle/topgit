@@ -26,7 +26,7 @@ TEST_NO_CREATE_REPO=1
 
 . ./test-lib.sh
 
-test_plan 55
+test_plan 59
 
 switch_to_ref() {
 	git symbolic-ref HEAD "$1" &&
@@ -142,6 +142,12 @@ test_expect_success 'setup more' '
 	git checkout -f --orphan orphan &&
 	git read-tree --empty &&
 	git clean -x -d -f
+'
+
+test_expect_success 'setup solitary' '
+	test_create_repo solitary &&
+	tg_test_create_branch -C solitary solitary : &&
+	tg_test_create_branch -C solitary +solitary -m "one solitary commit" :::solitary
 '
 
 # branch_needs_update level 1
@@ -617,6 +623,20 @@ test_expect_success 'needs_update_check more combined' '
 	test_diff expected actual
 '
 
+# solitary branch checks
+
+test_expect_success 'branch_needs_update solitary' '
+	> expected &&
+	branch_needs_update -C solitary solitary > actual &&
+	test_diff expected actual
+'
+
+test_expect_success 'needs_update_check solitary' '
+	printf "%s\n" "solitary" ":" ":" ":" >expected &&
+	needs_update_check -C solitary solitary > actual &&
+	test_diff expected actual
+'
+
 # check summary after checking the machinery itself
 
 squish() {
@@ -729,6 +749,13 @@ printf "%s" "\
 < more_summary.raw squish > more_summary ||
 	die failed to make more_summary
 
+printf "%s" "\
+         solitary                      	[PATCH] branch solitary
+" > solitary_summary.raw ||
+	die failed to make solitary_summary.raw
+< solitary_summary.raw squish > solitary_summary ||
+	die failed to make solitary_summary
+
 test_expect_success 'summary outofdate' '
 	tg -C outofdate summary > actual.raw &&
 	<actual.raw squish >actual &&
@@ -769,6 +796,12 @@ test_expect_success 'more summary' '
 	tg -C more summary > actual.raw &&
 	<actual.raw squish >actual &&
 	test_diff more_summary actual
+'
+
+test_expect_success 'solitary summary' '
+	tg -C solitary summary > actual.raw &&
+	<actual.raw squish >actual &&
+	test_diff solitary_summary actual
 '
 
 test_done

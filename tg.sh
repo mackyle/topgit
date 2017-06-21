@@ -963,7 +963,7 @@ recurse_deps_internal()
 		run_awk_topgit_branches -n -h="refs/remotes/$base_remote" -r="$tmprfs" \
 			"refs/remotes/$base_remote/${topbases#heads/}" >"$tmptgrmtbr"
 	fi
-	depscmd="run_awk_topgit_deps${TG_DEBUG:+ -p=\"\$tg_ref_cache.pre\"}"
+	depscmd="run_awk_topgit_deps -s${TG_DEBUG:+ -p=\"\$tg_ref_cache.pre\"}"
 	depscmd="$depscmd"' -a="$tmpann" -b="$tmptgbr" -r="$tmprfs" "refs/$topbases"'
 	if [ -n "$userc" ]; then
 		if [ -n "$dorad" ]; then
