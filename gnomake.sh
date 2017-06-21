@@ -20,13 +20,24 @@ set -e
 # If MKTOP is set, they are looked for there instead of in
 # the current directory.
 #
+# The CONFIGDEPS variable will be set to the ones that exist
+# (for use in dependency lines).
+#
 # wrap it up for safety
 configsh() {
-	! [ -f "${MKTOP:+$MKTOP/}config.sh" ] ||
-	. ./"${MKTOP:+$MKTOP/}config.sh"
+	[ z"$MKTOP" = z"/" ] || MKTOP="${MKTOP%/}"
+	CONFIGDEPS=
+	! [ -f "${MKTOP:+$MKTOP/}config.sh" ] || {
+		. ./"${MKTOP:+$MKTOP/}config.sh"
+		CONFIGDEPS="${CONFIGDEPS:+$CONFIGDEPS }${MKTOP:+$MKTOP/}config.sh"
+	}
 	# now set CONFIGMAK and make it an absolute path
 	[ -n "$CONFIGMAK" ] || CONFIGMAK="${MKTOP:+$MKTOP/}config.mak"
-	[ -f "$CONFIGMAK" ] || CONFIGMAK="${MKTOP:+$MKTOP/}Makefile.mt"
+	if [ -f "$CONFIGMAK" ]; then
+		CONFIGDEPS="${CONFIGDEPS:+$CONFIGDEPS }$CONFIGMAK"
+	else
+		CONFIGMAK="${MKTOP:+$MKTOP/}Makefile.mt"
+	fi
 	case "$CONFIGMAK" in */?*);;*) CONFIGMAK="./$CONFIGMAK"; esac
 	CONFIGMAK="$(cd "${CONFIGMAK%/*}" && pwd)/${CONFIGMAK##*/}"
 }

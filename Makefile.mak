@@ -16,6 +16,9 @@ all: \
 	tg $(commands_out) $(utils_out) $(awk_out) $(hooks_out) $(helpers_out) \
 	bin-wrappers/tg bin-wrappers/pre-commit $(help_out) tg-tg.txt
 
+settings: TG-BUILD-SETTINGS FORCE
+	+$(Q)cd t && $(MAKE) settings
+
 awk: $(awk_out)
 hooks: $(hooks_out)
 helpers: $(helpers_out)
@@ -185,11 +188,11 @@ bs() { printf "%s\\n" \
 # make -f Makefile.mak TG-BUILD-SETTINGS thus avoiding this always
 # causing the targets that depend on it to build while still forcing
 # a rebuild if any settings actually change.
-TG-BUILD-SETTINGS: $(FORCE_SETTINGS_BUILD)
+TG-BUILD-SETTINGS: $(CONFIGDEPS) $(FORCE_SETTINGS_BUILD)
 	$(Q)$(BUILD_SETTINGS);if test x"$$(bs)" != x"`cat \"$@\" 2>/dev/null`"; then \
 		echo "* new build settings"; \
 		bs >"$@"; \
-	fi
+	elif test z"$(FORCE_SETTINGS_BUILD)" = z; then touch "$@"; fi
 
 test: all FORCE
 	+$(Q)cd t && $(MAKE) all

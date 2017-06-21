@@ -110,6 +110,7 @@ TEST_TARGET = $(TEST_TARGET_$(DEFAULT_TEST_TARGET_))
 all: $(TEST_TARGET)
 
 settings: TG-TEST-SETTINGS
+	-@true # avoids the "Nothing to be done" message
 
 test: pre-clean TG-TEST-SETTINGS $(TEST_LINT) FORCE
 	$(Q)set -m && $(CACHE_SETUP_TTY) $(MAKE) $${GNO_PD_OPT} -f Makefile.mak aggregate-results-and-cleanup
@@ -197,11 +198,11 @@ ts() { printf "%s\\n" \
 	': "$${GIT_MINIMUM_VERSION:=$$TG_GIT_MINIMUM_VERSION}"' \
 ;}
 
-TG-TEST-SETTINGS: $(FORCE_SETTINGS_BUILD)
+TG-TEST-SETTINGS: $(CONFIGDEPS) $(FORCE_SETTINGS_BUILD)
 	$(Q)$(TEST_SETTINGS);if test x"$$(ts)" != x"`cat \"$@\" 2>/dev/null`"; then \
 		echo "* new test settings"; \
 		ts >"$@"; \
-	fi
+	elif test z"$(FORCE_SETTINGS_BUILD)" = z; then touch "$@"; fi
 
 FORCE: __file_which_should_not_exist
 
