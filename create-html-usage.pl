@@ -22,7 +22,9 @@ sub get_tg_usage($)
 	if (defined $xname) {
 		my $usage = `"$xname" -h 2>&1`;
 		chomp $usage;
-		$usage =~ s/^(Usage|\s+Or):\s*//mig;
+		$usage =~ s/^(Usage|\s+Or):\s*/: /mig;
+		$usage =~ s/[ \t]*\n[ \t]+/ /gs;
+		$usage =~ s/^: //mig;
 		return split "\n", $usage;
 	} elsif ($name eq "help") {
 		return "tg help [-w] [<command>]";
