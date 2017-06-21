@@ -120,7 +120,7 @@ bin-wrappers/pre-commit : hooks/pre-commit
 	echo ". '$$curdir/hooks/pre-commit'" >>"$@" && \
 	chmod a+x "$@"
 
-$(help_out): README create-help.sh
+$(help_out): README create-help.sh polish-help-txt.pl
 	$(QHELP)CMD="$@" && CMD="$${CMD#tg-}" && CMD="$${CMD%.txt}" && \
 	$(SHELL_PATH) ./create-help.sh "$$CMD"
 

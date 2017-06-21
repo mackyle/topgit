@@ -13,6 +13,4 @@ fi
 	/^~/ { next; } # Ignore the title underlines.
 	/^[^\t]/ { incommand = 0; next; }
 	{ if (incommand) { print $0; } }
-'  > tg-"$1".txt
-
-# vim:noet
+' | perl ./polish-help-txt.pl > tg-"$1".txt

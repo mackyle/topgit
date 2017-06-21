@@ -41,9 +41,15 @@ command first appeared) is needed in which case linked working trees are then
 fully supported for use with TopGit.
 
 The scripts need to be preprocessed and installed.  The Makefile that does
-this only requires a POSIX make utility (using "``make``" and "``make install``").
-Running the tests (see `TESTING TOPGIT`_) also requires only a POSIX make
-utility ("``make test``") but does require a ``perl`` binary to be available.
+this requires a POSIX make utility (using "``make``" and "``make install``")
+and some version of ``perl`` in the ``PATH`` somewhere (the ``perl`` binary
+is needed for correct help text file generation prior to the actual install).
+
+Once installed, TopGit uses only POSIX-compliant utilities (except that it
+also requires, obviously, Git).
+
+Running the tests (see `TESTING TOPGIT`_) has the same requirements as for
+installation (i.e. POSIX plus Perl).
 
 It is possible to use the DESTDIR functionality to install TopGit to a
 staging area on one machine, archive that and then unarchive it on another

@@ -56,7 +56,7 @@ while (my $line = <>) {
 	1 while $line =~ s/\t+/" " x (($+[0] - $-[0]) * 8 - $-[0] % 8)/e;
 	$line =~ s'^``(.*)``$'wrap(78, 4, $1)'e if $textmode;
 	$line =~ s'^(\s*):`(.+?)`_:'"$1$2  "'e if $textmode;
-	$line =~ s'^(\s*):(\w+?)_:'"$1$2"'e if $textmode;
+	$line =~ s'^(\s*):(\w+?)_?:'"$1$2"'e if $textmode;
 	if (defined($last)) {
 		printf "%s\n",  $last;
 		if ($line =~ /^[~]+$/ && $last =~ /^tg ([^\s]+)$/) {
