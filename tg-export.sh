@@ -5,9 +5,25 @@
 # All rights reserved
 # GPLv2
 
+USAGE="\
+Usage: ${tgname:-tg} [...] export [--collapse] [--force] <newbranch>
+   Or: ${tgname:-tg} [...] export --linearize [--force] <newbranch>
+   Or: ${tgname:-tg} [...] export --quilt [--force] [-a | --all | -b <branch>...]
+                [--binary] [--flatten] [--numbered] [--strip[=N]] <directory>"
+
+usage()
+{
+	if [ "${1:-0}" != 0 ]; then
+		printf '%s\n' "$USAGE" >&2
+	else
+		printf '%s\n' "$USAGE"
+	fi
+	exit ${1:-0}
+}
+
 name=
 branches=
-forcebranch=
+forceoutput=
 checkout_opt=-b
 output=
 driver=collapse
@@ -24,12 +40,14 @@ pl=
 while [ -n "$1" ]; do
 	arg="$1"; shift
 	case "$arg" in
+	-h|--help)
+		usage;;
 	-a|--all)
 		allbranches=true;;
 	-b)
 		branches="${branches:+$branches }$1"; shift;;
 	--force)
-		forcebranch=1;;
+		forceoutput=1;;
 	--flatten)
 		flatten=true;;
 	--binary)
@@ -55,15 +73,14 @@ while [ -n "$1" ]; do
 	--linearize)
 		driver=linearize;;
 	-*)
-		echo "Usage: ${tgname:-tg} [...] export ([--collapse] <newbranch> [--force] | [-a | --all | -b <branch1>...] [--binary] --quilt <directory> | --linearize <newbranch> [--force])" >&2
-		exit 1;;
+		usage 1;;
 	*)
 		[ -z "$output" ] || die "output already specified ($output)"
 		output="$arg";;
 	esac
 done
 
-[ -z "$branches" -o "$driver" = "quilt" ] ||
+[ -z "$branches" ] || [ "$driver" = "quilt" ] ||
 	die "-b works only with the quilt driver"
 
 [ "$driver" = "quilt" ] || ! "$numbered" ||
@@ -346,7 +363,7 @@ if [ "$driver" = "collapse" ] || [ "$driver" = "linearize" ]; then
 		die "no target branch specified"
 	if ! ref_exists "refs/heads/$output"; then
 		:
-	elif [ -z "$forcebranch" ]; then
+	elif [ -z "$forceoutput" ]; then
 		die "target branch '$output' already exists; first run: git$gitcdopt branch -D $output, or run $tgdisplay export with --force"
 	else
 		checkout_opt=-B
@@ -356,8 +373,8 @@ if [ "$driver" = "collapse" ] || [ "$driver" = "linearize" ]; then
 elif [ "$driver" = "quilt" ]; then
 	[ -n "$output" ] ||
 		die "no target directory specified"
-	[ ! -e "$output" ] ||
-		die "target directory already exists: $output"
+	[ -n "$forceoutput" ] || [ ! -e "$output" ] ||
+		die "target directory already exists (use --force to override): $output"
 
 	mkdir -p "$output"
 fi
@@ -408,7 +425,7 @@ fi
 
 if [ "$driver" = "collapse" ]; then
 	cmd='git update-ref "refs/heads/$output" "$(cat "$playground/$name^commit")"'
-	[ -n "$forcebranch" ] || cmd="$cmd \"\""
+	[ -n "$forceoutput" ] || cmd="$cmd \"\""
 	eval "$cmd"
 
 	depcount=$(( $(cat "$playground/^ticker" | wc -l) ))
