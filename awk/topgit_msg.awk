@@ -40,6 +40,10 @@
 # input must be result of the git --batch output as described for
 # awk_topgit_msg_prepare
 #
+# Note that if only1 is true or kwregex starts with a "+" then nothing at
+# all (normally there would at least be a blank line) will be output when
+# there are no matches
+#
 # output is 0 or more branch lines with .topmsg "Subject:" descriptions
 # in the same order they appear on the input in this format:
 #
@@ -106,6 +110,7 @@ BEGIN {
 	if (substr(kwregex, 1, 1) != "^") kwregex = "^" kwregex
 	if (substr(kwregex, length(kwregex)) != "$") kwregex = kwregex "$"
 	if (OFS == "") OFS = " "
+	doblank = !only1 && !inclkw
 }
 
 function included(abranch) {
@@ -203,7 +208,8 @@ $3 ~ /^[0123]$/ && $2 ~ /^[0-9]+$/ {
 			if (colfmt) outline = sprintf("%-39s\t", outline)
 			else outline = outline OFS
 		}
-		print outline subj
+		if (doblank || subj != "" || outline != "")
+			print outline subj
 		if (only1) exitnow(0)
 	}
 	if (err < 0) exitnow(2)
