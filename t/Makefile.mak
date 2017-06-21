@@ -190,6 +190,7 @@ ts() { printf "%s\\n" \
 	': "$${GIT_PATH:=git}"' \
 	': "$${DIFF:=$(DIFF)}"' \
 	': "$${TESTLIB_NO_TOLERATE=$(TESTLIB_NO_TOLERATE)}"' \
+	': "$${TESTLIB_TEST_TAP_ONLY=$(TESTLIB_TEST_TAP_ONLY)}"' \
 	': "$${GIT_MINIMUM_VERSION:=$(GIT_MINIMUM_VERSION)}"' \
 	': "$${GIT_MINIMUM_VERSION:=$$TG_GIT_MINIMUM_VERSION}"' \
 ;}

@@ -196,9 +196,14 @@ test_failure_() {
 	tlno="$1"
 	shift
 	say_color_tap error "not ok $test_count - $1"
-	shift
-	printf '%s\n' "$(printf '%s\n' "failed: ${0##*/}${tlno:+:$tlno}$LF$*")" |
-	sed -n -e '
+	if test z"${TESTLIB_TEST_TAP_ONLY:-0}" != z"0"; then
+		test z"$tlno" = z ||
+		say_color_tap "" "# failed: ${0##*/}${tlno:+:$tlno}: $test_count - $1"
+	else
+		ttit="$test_count - $1"
+		shift
+		printf '%s\n' "$(printf '%s\n' "failed: ${0##*/}${tlno:+:$tlno}: $ttit$LF$*")" |
+		sed -n -e '
 2 {
   :loop
   s/\([^ 	]\)/\1/
@@ -218,6 +223,7 @@ p
 $ i\
 #
 '
+	fi
 	test "$immediate" = "" || { TESTLIB_EXIT_OK=t; exit 1; }
 }
 
@@ -627,11 +633,11 @@ test_done() {
 
 	if test "$test_fixed" != 0
 	then
-		say_color error "# $this_test $test_fixed known breakage(s) vanished; please update test(s)"
+		say_color_tap error "# $this_test $test_fixed known breakage(s) vanished; please update test(s)"
 	fi
 	if test "$test_broken" != 0
 	then
-		say_color warn "# $this_test still have $test_broken known breakage(s)"
+		say_color_tap warn "# $this_test still have $test_broken known breakage(s)"
 	fi
 	if test "$test_broken" != 0 || test "$test_fixed" != 0
 	then
@@ -654,7 +660,7 @@ test_done() {
 		then
 			if test $test_remaining -gt 0
 			then
-				say_color pass "# $this_test passed all $msg"
+				say_color_tap pass "# $this_test passed all $msg"
 			fi
 		fi
 		test_done_write_plan_ "$skip_all" || exit 1
@@ -691,7 +697,7 @@ test_done() {
 	*)
 		if test $test_external_has_tap -eq 0
 		then
-			say_color error "# $this_test failed $test_failure among $msg"
+			say_color_tap error "# $this_test failed $test_failure among $msg"
 		fi
 		test_done_write_plan_ || :
 
@@ -816,7 +822,9 @@ test_lib_main_init_funcs() {
 
 if test z"$color" != z
 then
-	say_color() {
+	say_color_() {
+		test z"$1" != z || test z"${TESTLIB_TEST_TAP_ONLY:-0}" = z"0" || return 0
+		shift
 		test -z "$1" && test -n "$quiet" && test -z "$verbose" && return
 		eval "say_color_color=\$say_color_$1"
 		shift
@@ -832,12 +840,17 @@ then
 		printf '%s\n' "$_sfc$say_color_color$_sms$say_color_reset"
 	}
 else
-	say_color() {
+	say_color_() {
+		test z"$1" != z || test z"${TESTLIB_TEST_TAP_ONLY:-0}" = z"0" || return 0
+		shift
 		test -z "$1" && test -n "$quiet" && test -z "$verbose" && return
 		shift
 		printf '%s\n' "$*"
 	}
 fi
+
+# Public front-end
+say_color() { say_color_ "" "$@"; }
 
 # Just like say_color except if HARNESS_ACTIVE it's ALWAYS output and WITHOUT color
 say_color_tap() {
@@ -846,7 +859,7 @@ say_color_tap() {
 		shift
 		printf '%s\n' "$*"
 	else
-		say_color "$@"
+		say_color_ 1 "$@"
 	fi
 }
 
@@ -1067,6 +1080,10 @@ do
 		quiet=t; shift ;;
 	--no-quiet)
 		quiet=0; shift ;;
+	--tap-only)
+		TESTLIB_TEST_TAP_ONLY=1; shift;;
+	--no-tap-only)
+		TESTLIB_TEST_TAP_ONLY=0; shift;;
 	--color)
 		color="--color"; shift ;;
 	--no-color)
@@ -1329,6 +1346,18 @@ then
 		exit 1
 	fi
 fi
+
+test z"${TESTLIB_TEST_TAP_ONLY:-0}" = z"0" || test -z "$verbose$verbose_list" ||
+	test -n "$verbose_log$TESTLIB_OVERRIDE" || {
+	if test z"$TESTLIB_TEST_TAP_ONLY" = z"-1"; then
+		unset_ TESTLIB_TEST_TAP_ONLY
+		say_color "" "# auto-deactivating TESTLIB_TEST_TAP_ONLY=-1 in verbose mode"
+	else
+		printf 'Bail out! %s\n' \
+			'verbose mode forbidden with TESTLIB_TEST_TAP_ONLY; use --verbose-log'
+		exit 1
+	fi
+}
 
 test "${test_description}" != "" ||
 error "Test script did not set test_description."

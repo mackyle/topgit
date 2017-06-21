@@ -87,9 +87,9 @@ _run_sub_test_lib_test_common () {
 		export TEST_OUTPUT_DIRECTORY &&
 		if test -z "$neg"
 		then
-			./"$name.sh" "$@" >out 2>err
+			./"$name.sh" --no-tap-only "$@" >out 2>err
 		else
-			! ./"$name.sh" "$@" >out 2>err
+			! ./"$name.sh" --no-tap-only "$@" >out 2>err
 		fi
 	)
 }
@@ -155,7 +155,7 @@ test_expect_success 'pretend we have a partially passing test suite' "
 	> 1..3
 	> ok 1 - passing test #1
 	> not ok 2 - failing test #2
-	#      failed: partial-pass.sh
+	#      failed: partial-pass.sh: 2 - failing test #2
 	#
 	#      false
 	#
@@ -226,7 +226,7 @@ test_expect_success 'pretend we have a pass, fail, and known breakage' "
 	> 1..3
 	> ok 1 - passing test
 	> not ok 2 - failing test
-	> #      failed: mixed-results1.sh
+	> #      failed: mixed-results1.sh: 2 - failing test
 	> #
 	> #      false
 	> #
@@ -259,17 +259,17 @@ test_expect_success 'pretend we have a mix of all possible results' "
 	> ok 3 - passing test
 	> ok 4 - passing test
 	> not ok 5 - failing test
-	> #      failed: mixed-results2.sh
+	> #      failed: mixed-results2.sh: 5 - failing test
 	> #
 	> #      false
 	> #
 	> not ok 6 - failing test
-	> #      failed: mixed-results2.sh
+	> #      failed: mixed-results2.sh: 6 - failing test
 	> #
 	> #      false
 	> #
 	> not ok 7 - failing test
-	> #      failed: mixed-results2.sh
+	> #      failed: mixed-results2.sh: 7 - failing test
 	> #
 	> #      false
 	> #
@@ -304,7 +304,7 @@ test_expect_success 'test --verbose' '
 	> Z
 	> expecting success: false
 	> not ok 3 - failing test
-	> #      failed: test-verbose.sh
+	> #      failed: test-verbose.sh: 3 - failing test
 	> #
 	> #      false
 	> #
@@ -332,7 +332,7 @@ test_expect_success 'test --verbose-only' '
 	> ok 2 - test with output
 	> Z
 	> not ok 3 - failing test
-	> #      failed: test-verbose-only-2.sh
+	> #      failed: test-verbose-only-2.sh: 3 - failing test
 	> #
 	> #      false
 	> #
@@ -843,14 +843,14 @@ test_expect_success 'tests clean up even on failures' "
 	check_sub_test_lib_test failing-cleanup <<-\\EOF
 	> 1..2
 	> not ok 1 - tests clean up even after a failure
-	> #      failed: failing-cleanup.sh
+	> #      failed: failing-cleanup.sh: 1 - tests clean up even after a failure
 	> #
 	> #      touch clean-after-failure &&
 	> #      test_when_finished rm clean-after-failure &&
 	> #      (exit 1)
 	> #
 	> not ok 2 - failure to clean up causes the test to fail
-	> #      failed: failing-cleanup.sh
+	> #      failed: failing-cleanup.sh: 2 - failure to clean up causes the test to fail
 	> #
 	> #      test_when_finished eval \"(exit 2)\"
 	> #

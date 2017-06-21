@@ -80,6 +80,7 @@ TESTLIB_SKIP_TESTS              | test suite wide test/subtest skipping pats
 TESTLIB_NO_TOLERATE             | `test_tolerate_failure` means expect success
 TESTLIB_TEST_CHAIN_LINT         | can be used to disable `&&` chaining test
 TESTLIB_TEST_NO_SUBSHELL        | prevent subshell for subtests (do not use)
+TESTLIB_TEST_TAP_ONLY           | limit output to (almost) only TAP lines
 TEST_NO_CREATE_REPO             | suppress initial `test_create_repo .`
 color                           | either "" (--no-color) or "--color" (--color)
 skip_all                        | `test_done` skip value for `1..0` plan
@@ -273,6 +274,20 @@ Variables
     away at some point!  Avoid this if at all possible!  The
     `test_when_finished` function (possibly combined with `test_get_temp`) can
     be used to raise information out of a subtest subshell when required.
+
+- TESTLIB_TEST_TAP_ONLY
+
+    Setting this to a value other than empty or `0` suppresses extraneous
+    failure output (such as the script).  Incompatible with verbose mode (but
+    allowed with verbose log mode).  If set to the special value -1 it will
+    auto-disable when verbose mode is used.
+
+    Note that when TESTLIB_TEST_TAP_ONLY is enabled one additional line will
+    be output for each failure showing the file and line number, but _only_ if
+    the line number is available.  This extra line can be suppressed by using
+    `--quiet` when TESTLIB_TEST_TAP_ONLY is enabled.
+
+    Set `TESTLIB_TEST_TAP_ONLY = -1` in your `config.mak` and get happy.
 
 - TEST_NO_CREATE_REPO
 
@@ -472,6 +487,14 @@ options to _every_ test run by the Makefile.
     option) and moves the test plan line to the end (if there was a `test_plan`
     call at the beginning), but adding an explicit `--no-quiet` (or `--quiet`)
     will override all that.
+
+* --tap-only | --no-tap-only
+
+    Set `TESTLIB_TEST_TAP_ONLY` to `1` or `0` respectively.  See the
+    description for `TESTLIB_TEST_TAP_ONLY`.  Use of ``--tap-only`` is
+    incompatible with ``--verbose`` unless ``--verbose-log`` is also used.
+    Does _not_ cause `TESTLIB_TEST_TAP_ONLY` to be exported (unless it already
+    was exported).
 
 * --tee
 
