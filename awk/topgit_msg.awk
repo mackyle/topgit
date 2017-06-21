@@ -22,6 +22,17 @@
 # Note that if kwregex is non-empty and not "Subject" fancy missing
 # descriptions will be omitted and an empty string will be used
 #
+# kwregex must match the entire keyword or it will not be considered a match
+#
+# if kwregex starts with a "+" the "+" will be stripped and each matching
+# line will have the "pretty" keyword plus ": " prefixed to it (the "pretty"
+# keyword is all lowercased except for the first and any chars following an
+# internal "-" except that "ID" and "MIME" are always all uppercased)
+#
+# use of the "+"<regex> form will cause multiple matches for the same keyword
+# to all be output in the order encountered (otherwise just the first match is
+# output)
+#
 # if inclbr is non-empty a branch name must be listed to appear on stdout
 #
 # if a branch name appears in exclbr it is omitted from stdout trumping inclbr
@@ -85,8 +96,15 @@ BEGIN {
 	if (kwregex == "") kwregex = "subject"
 	kwregex = tolower(kwregex)
 	subjrx = kwregex == "subject"
+	if (substr(kwregex, 1, 1) == "+") {
+		inclkw = 1
+		kwregex = substr(kwregex, 2)
+	}
+	if (index(kwregex, "|") &&
+	    (substr(kwregex, 1, 1) != "(" || substr(kwregex, length(kwregex)) != ")"))
+		kwregex = "(" kwregex ")"
 	if (substr(kwregex, 1, 1) != "^") kwregex = "^" kwregex
-	if (substr(kwregex, length(kwregex), 1) != "$") kwregex = kwregex "$"
+	if (substr(kwregex, length(kwregex)) != "$") kwregex = kwregex "$"
 	if (OFS == "") OFS = " "
 }
 
@@ -113,6 +131,19 @@ function trimsp(str) {
 	return str
 }
 
+function prettykw(k, _kparts, _i, _c, _ans, _kpart) {
+	_ans = ""
+	_c = split(tolower(k), _kparts, /-/)
+	for (_i=1; _i<=_c; ++_i) {
+		_kpart = _kparts[_i]
+		if (_kpart == "id") _kpart = "ID"
+		else if (_kpart == "mime") _kpart = "MIME"
+		else _kpart = toupper(substr(_kpart, 1, 1)) substr(_kpart, 2)
+		_ans = _ans "-" _kpart
+	}
+	return substr(_ans, 2)
+}
+
 NF == 4 && $4 != "" && $3 != "" && $2 != "missing" && $1 != "" &&
 $3 ~ /^[0123]$/ && $2 ~ /^[0-9]+$/ {
 	bn = $4
@@ -126,18 +157,25 @@ $3 ~ /^[0123]$/ && $2 ~ /^[0-9]+$/ {
 	subj = ""
 	while (curlen < datalen && (err = getline) > 0) {
 		curlen += length($0) + 1
-		if (!inbody && $0 == "") inbody = 1
-		if (inbody) continue
-		if (!insubj) {
-			if (match($0, /^[^ \t\r\n:]+:/) &&
-			    match(tolower(substr($0, RSTART, RLENGTH - 1)), kwregex)) {
-				insubj = 1
-				subj = trimsp(substr($0, RLENGTH + 2))
+		if (!inbody) {
+			if (/^[ \t]*$/) inbody = 1
+			else if (insubj) {
+				if (/^[ \t\r\n]/) subj = strapp(subj, trimsp($0))
+				else if (inclkw) insubj = 0
+				else inbody = 1
 			}
-			continue
 		}
-		if (/^[ \t\r\n]/) subj = strapp(subj, trimsp($0))
-		else inbody = 1
+		if (inbody || insubj) continue
+		if (match($0, /^[^ \t\r\n:]+:/) &&
+		    match((kw=tolower(substr($0, RSTART, RLENGTH - 1))), kwregex)) {
+			insubj = 1
+			oldsubj = subj
+			subj = trimsp(substr($0, RLENGTH + 2))
+			if (inclkw) {
+				subj = strapp(prettykw(kw) ":", subj)
+				if (oldsubj != "") subj = oldsubj "\n" subj
+			}
+		}
 	}
 	if (included(bn) && wanted(bn, kind)) {
 		if (subjrx) {
