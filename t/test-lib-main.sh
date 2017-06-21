@@ -1384,10 +1384,12 @@ trap 'trapexit_ 143' TERM
 trap 'TESTLIB_EXIT_OK=t; trapexit_ 1' USR1
 
 # Test repository
-TRASH_DIRECTORY="trash directory.${0##*/}"
-TRASH_DIRECTORY="${TRASH_DIRECTORY%.sh}"
-TRASHTMP_DIRECTORY="trash tmp directory.${0##*/}"
-TRASHTMP_DIRECTORY="${TRASHTMP_DIRECTORY%.sh}"
+TRASH_DIRECTORY="${0%.sh}"
+test z"${TRASH_DIRECTORY##*/}" != z"sh" || TRASH_DIRECTORY="xsh"
+TRASH_DIRECTORY="trash directory.${TRASH_DIRECTORY##*/}"
+TRASHTMP_DIRECTORY="${0%.sh}"
+test z"${TRASHTMP_DIRECTORY##*/}" != z"sh" || TRASHTMP_DIRECTORY="xsh"
+TRASHTMP_DIRECTORY="trash tmp directory.${TRASHTMP_DIRECTORY##*/}"
 test -n "$root" && TRASH_DIRECTORY="$root/$TRASH_DIRECTORY"
 test -n "$root" && TRASHTMP_DIRECTORY="$root/$TRASHTMP_DIRECTORY"
 test -n "$root" && GIT_CEILING_DIRECTORIES="$root:$GIT_CEILING_DIRECTORIES"
