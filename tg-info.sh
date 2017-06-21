@@ -175,7 +175,7 @@ echo "Topic Branch: $name ($measure)"
 nocommits=
 [ "$(git rev-parse --verify --short "refs/heads/$name" --)" != "$base_rev" ] || nocommits=1
 
-[ -n "$nocommits" ] || git cat-file blob "$name:.topmsg" 2>/dev/null | grep ^Subject: || :
+[ -n "$nocommits" ] || subj="$(run_awk_topmsg_header "$name")" && printf "Subject: %s\n" "$subj" || :
 
 if [ "${verbose:-0}" -ge 1 ]; then
 	scratch="$(get_temp scratch)"
