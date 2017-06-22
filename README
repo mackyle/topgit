@@ -383,6 +383,7 @@ TopGit supports various config settings:
 	:`REMOTE HANDLING`_:    ``topgit.remote`` TopGit's default remote
 	:SEQUESTRATION_:        ``topgit.sequester`` for sequestration control
 	:`tg update`_:          ``topgit.setAutoUpdate`` => ``rerere.autoUpdate``
+	:`tg export`_:          ``topgit.subjectMode`` export [...] tag removal
 	:`tg create`_:          ``topgit.subjectPrefix`` "[$prefix PATCH] foo"
 	:`tg create`_:          ``topgit.to`` default "To:" value for create
 	:`tg migrate-bases`_:   ``topgit.top-bases`` for refs bases location
@@ -1568,6 +1569,30 @@ tg export
 	with one mandatory argument: the name of the branch where the
 	exported result will be stored.
 
+	Both the ``--collapse`` and ``--linearize`` modes also accept a
+	``-s <mode>`` option to specify subject handling behavior for the
+	freshly created commits.  There are five possible modes:
+
+		:keep:          Like ``git mailinfo -k``
+		:mailinfo:      Like ``git mailinfo``
+		:patch:         Remove first ``[PATCH*]`` if any
+		:topgit:        Remove first [PATCH*], [BASE], [ROOT] or [STAGE]
+		:trim:          Trim runs of spaces/tabs to a single space
+
+	The ``topgit`` (aka ``tg``) mode is the default (quelle surprise) and
+	like the ``patch`` mode will only strip the first square brackets tag
+	(if there is one) provided it's a TopGit-known tag (the ``patch``
+	variation will only strip a PATCH tag but still just the first one).
+	With ``trim`` (aka ``ws``) internal runs of spaces/tabs are converted
+	to a single space, but no square brackets tags are removed.  The ``ws``
+	mode should generally be preferred instead of using ``keep`` mode.
+	All modes always remove leading/trailing spaces and tabs and if the
+	``topgit.subjectPrefix`` value (see `tg create`_) has been set both the
+	``topgit`` and ``patch`` modes will match tags with that prefix too.
+
+	Setting the config variable ``topgit.subjectMode`` to one of the mode
+	values shown above will change the default to that mode.
+
 	When using the linearize mode::
 
 	 master$ tg export --linearize for-linus
@@ -1636,7 +1661,6 @@ tg export
 	eases sending out the patches.
 
 	| TODO: Make stripping of non-essential headers configurable
-	| TODO: Make stripping of [PATCH] and other prefixes configurable
 	| TODO: ``--mbox`` option to export instead as an mbox file
 	| TODO: support ``--all`` option in other modes of operation
 	| TODO: For quilt exporting, export the linearized history created in

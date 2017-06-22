@@ -6,8 +6,8 @@
 # GPLv2
 
 USAGE="\
-Usage: ${tgname:-tg} [...] export [--collapse] [--force] <newbranch>
-   Or: ${tgname:-tg} [...] export --linearize [--force] <newbranch>
+Usage: ${tgname:-tg} [...] export [--collapse] [--force] [-s <mode>] <newbranch>
+   Or: ${tgname:-tg} [...] export --linearize [--force] [-s <mode>] <newbranch>
    Or: ${tgname:-tg} [...] export --quilt [--force] [-a | --all | -b <branch>...]
                 [--binary] [--flatten] [--numbered] [--strip[=N]] <directory>"
 
@@ -31,6 +31,7 @@ flatten=false
 numbered=false
 strip=false
 stripval=0
+smode=
 allbranches=false
 binary=
 pl=
@@ -66,6 +67,9 @@ while [ -n "$1" ]; do
 		else
 			die "invalid parameter $arg"
 		fi;;
+	-s)
+		test $# -gt 0 && test -n "$1" || die "-s requires an argument"
+		smode="$1"; shift;;
 	--quilt)
 		driver=quilt;;
 	--collapse)
@@ -79,6 +83,19 @@ while [ -n "$1" ]; do
 		output="$arg";;
 	esac
 done
+
+[ -z "$smode" ] || [ "$driver" != "quilt" ] ||
+	die "-s works only with the collapse/linearize driver"
+
+if [ "$driver" != "quilt" ]; then
+	test -n "$smode" || smode="$(git config topgit.subjectmode)" || :
+	case "${smode:-tg}" in
+		tg) smode="topgit";;
+		ws) smode="trim";;
+		topgit|patch|mailinfo|trim|keep);;
+		*) die "invalid subject mode: $smode"
+	esac
+fi
 
 [ -z "$branches" ] || [ "$driver" = "quilt" ] ||
 	die "-b works only with the quilt driver"
@@ -141,6 +158,14 @@ bump_timestamp()
 	nowsecs=$(( $nowsecs + 1 ))
 }
 
+setup_smode()
+{
+	mik=
+	test z"$smode" = z"mailinfo" || { mik=-k &&
+	test z"$smode" = z"keep"; } ||
+	sprefix="$(git config topgit.subjectprefix)" || :
+}
+
 create_tg_commit()
 {
 	name="$1"
@@ -149,15 +174,39 @@ create_tg_commit()
 
 	# Get commit message and authorship information
 	git cat-file blob "$name:.topmsg" 2>/dev/null |
-	git mailinfo "$playground/^msg" /dev/null > "$playground/^info"
+	git mailinfo $mik "$playground/^msg" /dev/null > "$playground/^info"
 
 	unset GIT_AUTHOR_NAME
 	unset GIT_AUTHOR_EMAIL
 
-	GIT_AUTHOR_NAME="$(sed -n '/^Author/ s/Author: //p' "$playground/^info")"
-	GIT_AUTHOR_EMAIL="$(sed -n '/^Email/ s/Email: //p' "$playground/^info")"
-	GIT_AUTHOR_DATE="$(sed -n '/^Date/ s/Date: //p' "$playground/^info")"
-	SUBJECT="$(sed -n '/^Subject/ s/Subject: //p' "$playground/^info")"
+	GIT_AUTHOR_NAME="$(sed -n "/^Author/ s/Author:[ $tab]*//p" "$playground/^info")"
+	GIT_AUTHOR_EMAIL="$(sed -n "/^Email/ s/Email:[ $tab]*//p" "$playground/^info")"
+	GIT_AUTHOR_DATE="$(sed -n "/^Date/ s/Date:[ $tab]*//p" "$playground/^info")"
+	SUBJECT="$(sed -n "/^Subject/ s/Subject:[ $tab]*//p" "$playground/^info")"
+	if test z"$smode" != z"mailinfo" && test z"$smode" != z"keep"; then
+		SUBJECT="$(printf '%s\n' "$SUBJECT" |
+		awk -v mode="$smode" -v prefix="$sprefix" '{
+			gsub(/[ \t]+/, " ")
+			sub(/^[ \t]+/, "")
+			sub(/[ \t]+$/, "")
+			if (mode != "trim") {
+				if (prefix != "" &&
+				    tolower(substr($0, 1, (lp = 1 + length(prefix)))) == "[" tolower(prefix) &&
+				    index($0, "]")) {
+					if (substr($0, 1 + lp, 1) == " ") ++lp
+					lead = tolower(substr($0, 1 + lp, 6))
+					if (lead ~ /^patch/ || (mode == "topgit" &&
+					    lead ~ /^(base|root|stage)\]/))
+						$0 = "[" substr($0, 1 + lp)
+				}
+				if (!sub(/^\[[Pp][Aa][Tt][Cc][Hh][^]]*\][ \t]*/, "") &&
+				    mode == "topgit")
+					sub(/^\[([Bb][Aa][Ss][Ee]|[Rr][Oo][Oo][Tt]|[Ss][Tt][Aa][Gg][Ee])\][ \t]*/, "")
+			}
+			print
+			exit
+		}')"
+	fi
 
 	test -n "$GIT_AUTHOR_NAME" && export GIT_AUTHOR_NAME
 	test -n "$GIT_AUTHOR_EMAIL" && export GIT_AUTHOR_EMAIL
@@ -167,7 +216,7 @@ create_tg_commit()
 	export GIT_AUTHOR_DATE
 	export GIT_COMMITTER_DATE
 
-	(printf '%s\n\n' "$SUBJECT"; cat "$playground/^msg") |
+	(printf '%s\n\n' "${SUBJECT:-$name}"; cat "$playground/^msg") |
 	git stripspace |
 	git commit-tree "$tree" -p "$parent"
 
@@ -369,6 +418,7 @@ if [ "$driver" = "collapse" ] || [ "$driver" = "linearize" ]; then
 		checkout_opt=-B
 	fi
 	ensure_ident_available
+	setup_smode
 
 elif [ "$driver" = "quilt" ]; then
 	[ -n "$output" ] ||
