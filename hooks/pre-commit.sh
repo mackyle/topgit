@@ -164,7 +164,7 @@ check_topdeps()
 	# check for repetitions of deps
 	depdir="$(get_temp tg-depdir -d)" ||
 		die "cannot check for multiple occurrences of dependents"
-	cat_file "$head_:.topdeps" -i |
+	git cat-file blob ":0:.topdeps" 2>/dev/null |
 		while read -r dep || [ -n "$dep" ]; do
 			[ ! -d "$depdir/$dep" ] ||
 				die "multiple occurrences of the same dependent: $dep"
