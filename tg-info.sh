@@ -156,7 +156,7 @@ fi
 
 if [ -n "$deps$dependents" ]; then
 	alldeps="$(get_temp alldeps)"
-	tg --no-pager summary --deps >"$alldeps" || die "tg summary --deps failed"
+	tg --no-pager summary --tgish-only --deps >"$alldeps" || die "tg summary --deps failed"
 	if [ -n "$deps" ]; then
 		awk -v annb="$name" 'NF == 2 && $2 != "" && $1 == annb { print $2 }' <"$alldeps"
 	else
@@ -181,7 +181,7 @@ if [ "${verbose:-0}" -ge 1 ]; then
 	scratch="$(get_temp scratch)"
 	printf '%s\n' "$name" >"$scratch"
 	dependents="$(get_temp dependents_list)"
-	tg summary --deps | sort -k2,2 | join -1 2 - "$scratch" | cut -d ' ' -f 2 | sort -u >"$dependents"
+	tg summary --tgish-only --deps | sort -k2,2 | join -1 2 - "$scratch" | cut -d ' ' -f 2 | sort -u >"$dependents"
 	if ! [ -s "$dependents" ]; then
 		echo "Dependents: [none]"
 	else

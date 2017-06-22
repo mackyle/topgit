@@ -59,7 +59,7 @@ ensure_clean_tree
 ensure_clean_topfiles
 ensure_ident_available
 alldeps="$(get_temp alldeps)"
-tg --no-pager summary --deps >"$alldeps" || die "tg summary --deps failed"
+tg --no-pager summary --tgish-only --deps >"$alldeps" || die "tg summary --deps failed"
 
 # always auto stash even if it's just to the anonymous stash TG_STASH
 
