@@ -472,18 +472,29 @@ run_awk_topmsg_header()
 	fi
 	if [ -n "$_usestdin" ]; then
 		printf 'blob 32767 0 %s\n' "$1"
-		tr '\0' '\27'
 	else
-		printf '%s 0 %s\n' "${2:-refs/heads/$1:.topmsg}" "$1" |
-		git cat-file $gcfbopt --batch='%(objecttype) %(objectsize) %(rest)' |
-		tr '\0' '\27' | awk -v "bn=$1" \
-			'1 == NR && $2 == "missing" {printf "blob 0 1 %s\n\n", bn; next}{print}'
-	fi |
+		_ra_misscmd=
+		if [ -n "$tgbin" ] && [ -x "$tgbin" ]; then
+			TG_BIN_ABS="$tgbin" && export TG_BIN_ABS
+			_ra_misscmd='eval "$TG_BIN_ABS" --make-empty-blob'
+		fi
+		printf '%s\n' "$mtblob^{blob} check ?" \
+			"refs/$topbases/$1 $1 :" "refs/$topbases/$1^0" \
+			"refs/heads/$1^0" "refs/$topbases/$1^{tree}" \
+			"refs/heads/$1^{tree}" "refs/heads/$1^{tree}:.topmsg" |
+		git cat-file --batch-check='%(objectname) %(objecttype) %(rest)' |
+		awk -f "$TG_INST_AWKDIR/topgit_msg_prepare" \
+			-v "withan=1" \
+			-v "missing=$mtblob" \
+			-v "misscmd=$_ra_misscmd" |
+		git cat-file $gcfbopt --batch='%(objecttype) %(objectsize) %(rest)'
+	fi | tr '\0' '\27' |
 	awk -f "$TG_INST_AWKDIR/topgit_msg" \
 		-v "noname=$_ra_noname" \
 		-v "nokind=$_ra_nokind" \
 		-v "kwregex=$_ra_kwregex" \
 		-v "only1=1" \
+		-v "withan=1" \
 		-v "colfmt=$_ra_colfmt"
 }
 
