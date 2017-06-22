@@ -172,10 +172,10 @@ measure="$(measure_branch "refs/heads/$name" "$base_rev")"
 
 echo "Topic Branch: $name ($measure)"
 
-nocommits=
-[ "$(git rev-parse --verify --short "refs/heads/$name" --)" != "$base_rev" ] || nocommits=1
-
-[ -n "$nocommits" ] || subj="$(run_awk_topmsg_header "$name")" && printf "Subject: %s\n" "$subj" || :
+read -r bkind subj <<EOT
+$(run_awk_topmsg_header -kind "$name")
+EOT
+[ "$bkind" = "3" ] || printf "Subject: %s\n" "$subj"
 
 if [ "${verbose:-0}" -ge 1 ]; then
 	scratch="$(get_temp scratch)"
@@ -207,7 +207,7 @@ if [ "${verbose:-0}" -ge 1 ]; then
 	fi
 fi
 
-if [ -n "$nocommits" ]; then
+if [ "$bkind" = "3" ]; then
 	echo "* No commits."
 	exit 0
 fi
