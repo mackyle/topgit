@@ -166,7 +166,7 @@ done
 [ -s "$trf" ] || die "$reftype $tagname does not contain a TOPGIT REFS section"
 rcnt=$(( $(wc -l <"$trf") ))
 vcnt=$(( $(cut -d ' ' -f 2 <"$trf" | git cat-file --batch-check='%(objectname)' | grep -v ' missing$' | wc -l) ))
-[ "$rcnt" -eq "$vcnt" ] || die "$reftime $tagname contains $rcnt ref(s) but only $vcnt are still valid"
+[ "$rcnt" -eq "$vcnt" ] || die "$reftype $tagname contains $rcnt ref(s) but only $vcnt are still valid"
 cat "$trf" >"$tg_ref_cache"
 create_ref_dirs
 tg_ref_cache_only=1
