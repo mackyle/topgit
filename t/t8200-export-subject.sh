@@ -4,7 +4,7 @@ test_description='test export subject handling'
 
 . ./test-lib.sh
 
-test_plan 38
+test_plan 40
 
 tmp="$(test_get_temp commit)" || die
 
@@ -34,6 +34,10 @@ test_expect_success 'strip patch' '
 	tg export e/patch &&
 	subj="$(getsubj e/patch)" &&
 	test z"$subj" = z"just a patch"
+'
+
+test_expect_success 'fsck' '
+	git fsck --no-progress --no-dangling
 '
 
 test_expect_success 'bad modes' '
@@ -651,6 +655,10 @@ test_expect_success 'topgit mode not a root' '
 	tg export e/rnap &&
 	subj="$(getsubj e/rnap)" &&
 	test z"$subj" = z"[ROO] not a root"
+'
+
+test_expect_success 'wrap-up fsck' '
+	git fsck --no-progress --no-dangling
 '
 
 test_done

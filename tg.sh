@@ -2550,10 +2550,10 @@ else
 					_use_ref_cache=1;;
 				"export")
 					_use_ref_cache=1
-					suppress_alt=1;;
+					_suppress_alt=1;;
 				annihilate|create|delete|depend|import|update)
 					tg_read_only=
-					suppress_alt=1;;
+					_suppress_alt=1;;
 			esac
 			[ -z "$_suppress_alt" ] || noalt_setup
 			[ -z "$_use_ref_cache" ] || v_create_ref_cache
