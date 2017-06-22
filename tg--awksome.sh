@@ -283,9 +283,20 @@ run_awk_topgit_branches()
 # note that <bases-prefix> is required because this file is independent and
 # there is no universal default available
 #
-# output is one TopGit branch edge (i.e. two space-separated TopGit branch
-# names) per line (not output until after any -a or -b files have been fully
-# written and closed)
+# output is 0 or more branch lines with .topmsg "Subject:" descriptions
+# in the same order they appear on the input in this format:
+#
+#   <TopGit_branch_name> K description of the TopGit branch
+#
+# But if nokind is true the "K" field will be omitted; K can take these values:
+#
+#   0  non-annihilated, non-empty branch WITH a .topmsg file
+#   1  non-annihilated, non-empty branch WITHOUT a .topmsg file
+#   2  annihilated branch
+#   3  empty branch (an empty branch has the same branch and base commit hash)
+#
+# output does not appear until after any -a or -b files have been fully written
+# and closed first
 #
 # if -n is used annihilated branches will be omitted from the output (and any
 # -b=<file> if used), but if -a=<file> is NOT used then get_temp WILL be called
@@ -304,17 +315,6 @@ run_awk_topgit_branches()
 # sorted by branch name (always for the -a=<file> and -b=<file> output) but
 # that will only be the case for the stdout results for the first (second with
 # -r) branch name on each stdout line
-#
-# With -s a "self" link is output for each branch after all the .topdeps
-# entries (before with -r) have been output for that branch and the entries are
-# output in .topdeps order (reverse order with -r)
-#
-# Note that using -s and omitting -n is NOT enough to make a self link for
-# annihilated branches appear in the output; in order for them to appear (and
-# also any TopGit branches lacking a .topdeps file) the -m= option must be
-# used and the value passed must be the empty blob's hash
-#
-# Each "link" line output is <branch_name> <.topdeps_entry> (reversed with -r)
 #
 # Note that this function WILL call get_temp if -a= is NOT given AND -n is used
 # (but it will remove the temp file before returning)
@@ -425,21 +425,31 @@ run_awk_topgit_msg()
 
 # run_awk_topmsg_header [-r=<regex>] [--stdin] [opts] <branch_name> [blobish]
 #
-# -kind  include the kind field just before the description (normally omitted)
-# -name  include the branch name field as a first field (normally omitted)
+# -kind     include the kind field just before the description (normally omitted)
+# -name     include the branch name field as a first field (normally omitted)
+# -c        do simple column formatting if more than one output column
+# -r=<regx> auto-anchored case-insenstive keyword match (default is "subject")
+# --stdin   fake stdin being a blob and use that
+# -tm=<blb> blob to use as branch's .topmsg (any leading <foo>: is stripped off)
 #
 # with --stdin, the contents of a .topmsg file should be on stdin
 # otherwise if blobish is given it provides the input otherwise
-# refs/heads/<branch_name>:.topdeps^{blob} does
+# refs/heads/<branch_name>:.topdeps^{blob} does (or -tm=<blb> if used)
+#
+# --stdin and -tm= are incompatible
 #
 # with -r=<regex> a case-insensitive keyword regular expression (always
 # has to match the entire keyword name) instead of "Subject" can be used
-# to extract other headers ("Subject" is the default though)
+# to extract other headers ("Subject" is the default though) and if it starts
+# with a "+" all matches including their "pretty" keyword prefix will be output
 #
 # output will be the subject (or a suitable description if there is no .topmsg
 # or blobish or the input is empty); for non-subject keywords if the header
 # is not present just the empty string is output use -r="(Subject)" to do the
 # same thing for the subject header and avoid descriptive "missing" text
+#
+# see run_awk_topgit_msg description for description of output when -kind,
+# -name and/or -c are used
 #
 # "<branch_name>" is always required because it's used in the output message
 # whenever the "Subject:" header line is not present (for whatever reason)
@@ -452,12 +462,14 @@ run_awk_topmsg_header()
 	_ra_colfmt=
 	_ra_nokind=1
 	_ra_noname=1
+	_ra_topmsg=
 	while [ $# -gt 0 ]; do case "$1" in
 		-c)	_ra_colfmt=1;;
 		-kind)	_ra_nokind=;;
 		-name)	_ra_noname=;;
 		-r=*)	_ra_kwregex="${1#-r=}";;
 		--stdin) _usestdin=1;;
+		-tm=*)	_ra_topmsg="${1#-tm=}"; _ra_topmsg="${_ra_topmsg#*:}";;
 		--)    shift; break;;
 		-?*)	run_awk_bug "unknown run_awk_topmsg_header option: $1";;
 		*)	break;;
@@ -465,6 +477,7 @@ run_awk_topmsg_header()
 	if [ -n "$_usestdin" ]; then
 		[ $# -eq 1 ] || run_awk_bug "run_awk_topmsg_header --stdin requires exactly 1 arg"
 		[ -n "$1" ] || run_awk_bug "run_awk_topmsg_header --stdin requires a branch name"
+		[ -z "$_ra_topmsg" ] || run_awk_bug "run_awk_topmsg_header --stdin prohibits -tm=<blb>"
 	else
 		[ $# -le 2 ] || run_awk_bug "run_awk_topmsg_header allows at most 2 args"
 		[ $# -ge 1 ] && [ -n "$1" ] ||
@@ -478,10 +491,15 @@ run_awk_topmsg_header()
 			TG_BIN_ABS="$tgbin" && export TG_BIN_ABS
 			_ra_misscmd='eval "$TG_BIN_ABS" --make-empty-blob'
 		fi
+		if [ -n "$_ra_topmsg" ]; then
+			_ra_topmsg="$_ra_topmsg^{blob}"
+		else
+			_ra_topmsg="refs/heads/$1^{tree}:.topmsg"
+		fi
 		printf '%s\n' "$mtblob^{blob} check ?" \
 			"refs/$topbases/$1 $1 :" "refs/$topbases/$1^0" \
 			"refs/heads/$1^0" "refs/$topbases/$1^{tree}" \
-			"refs/heads/$1^{tree}" "refs/heads/$1^{tree}:.topmsg" |
+			"refs/heads/$1^{tree}" "$_ra_topmsg" |
 		git cat-file --batch-check='%(objectname) %(objecttype) %(rest)' |
 		awk -f "$TG_INST_AWKDIR/topgit_msg_prepare" \
 			-v "withan=1" \
@@ -554,10 +572,10 @@ run_awk_topmsg_header()
 # entries (before with -r) have been output for that branch and the entries are
 # output in .topdeps order (reverse order with -r)
 #
-# Note that using -s and omitting -n is NOT enough to make a self link for
-# annihilated branches appear in the output; in order for them to appear (and
-# also any TopGit branches lacking a .topdeps file) the -m= option must be
-# used and the value passed must be the empty blob's hash
+# Note that using -s and omitting -n is enough to make a self link for
+# annihilated branches appear in the output because the empty blob will be
+# automatically used (and first created if necessary) for any missing .topdeps
+# files.
 #
 # Each "link" line output is <branch_name> <.topdeps_entry> (reversed with -r)
 #
