@@ -90,6 +90,13 @@ test_expect_success 'setup' '
 	git checkout -f annihilated &&
 	test_tick &&
 	git commit --allow-empty -m "annihilated not empty" &&
+	git checkout -f t/branch2 &&
+	<.topmsg grep -v -i subject >.topmsg2 &&
+	mv -f .topmsg2 .topmsg &&
+	printf "%s\n" "subject:[PATCH] branch2" "	topgit" >> .topmsg &&
+	git add .topmsg &&
+	test_tick &&
+	git commit -m ".topmsg: no space after subject colon" &&
 	reset_repo &&
 	git clean -x -d -f &&
 	cd .. &&
