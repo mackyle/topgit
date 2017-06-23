@@ -184,6 +184,32 @@ vcmp()
 	return 1
 }
 
+# true if "$1" is an existing dir and is empty except for
+# any additional files given as extra arguments.  If "$2"
+# is the single character "." then all ".*" files will be
+# ignored for the test (plus any further args, if any)
+is_empty_dir() {
+	test -n "$1" && test -d "$1" || return 1
+	iedd_="$1"
+	shift
+	ieddnok_='\.?$'
+	if [ z"$1" = z"." ]; then
+		ieddnok_=
+		shift
+		while ! case "$1" in "."*) ! :; esac; do shift; done
+	fi
+	if [ $# -eq 0 ]; then
+		! \ls -a1 "$iedd_" | grep -q -E -v '^\.'"$ieddnok_"
+	else
+		# we only handle ".git" right now for efficiency
+		[ z"$*" = z".git" ] || {
+			fatal "[BUG] is_empty_dir not implemented for arguments: $*"
+			exit 70
+		}
+		! \ls -a1 "$iedd_" | grep -q -E -v -i -e '^\.\.?$' -e '^\.git$'
+	fi
+}
+
 precheck() {
 	if ! git_version="$(git version)"; then
 		die "'git version' failed"
