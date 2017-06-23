@@ -144,8 +144,8 @@ tgf="$(get_temp tag)"
 trf="$(get_temp refs)"
 tagdataref="$refname^{tag}"
 while
-	git cat-file tag "$tagdataref" >"$tgf" || die "cannot read tag: $refname"
-	sed -ne '/^-----BEGIN TOPGIT REFS-----$/,/^-----END TOPGIT REFS-----$/p' <"$tgf" |
+	git cat-file tag "$tagdataref" >"$tgf"t || die "cannot read tag: $refname"
+	sed -ne '/^-----BEGIN TOPGIT REFS-----$/,/^-----END TOPGIT REFS-----$/p' <"$tgf"t |
 	sed -ne "/^\\($octet20\\) \\(refs\/[^ $tab][^ $tab]*\\)\$/{s//\\2 \\1/;p;}" |
 	sed -e "s,^refs/$oldbases/,refs/$topbases/,g" |
 	sort -u -b -k1,1 >"$trf"
@@ -165,7 +165,7 @@ do
 done
 [ -s "$trf" ] || die "$reftype $tagname does not contain a TOPGIT REFS section"
 rcnt=$(( $(wc -l <"$trf") ))
-vcnt=$(( $(cut -d ' ' -f 2 <"$trf" | git cat-file --batch-check='%(objectname)' | grep -v ' missing$' | wc -l) ))
+vcnt=$(( $(cut -d ' ' -f 2 <"$trf" | git cat-file $gcfbopt --batch-check='%(objectname)' | grep -v ' missing$' | wc -l) ))
 [ "$rcnt" -eq "$vcnt" ] || die "$reftype $tagname contains $rcnt ref(s) but only $vcnt are still valid"
 cat "$trf" >"$tg_ref_cache"
 create_ref_dirs
@@ -338,6 +338,11 @@ refslist() {
 
 if [ -n "$list" ]; then
 	if [ -z "$deps$rdeps" ]; then
+		# accelerate showing everything in full
+		if [ -z "$refs$exclude" ] && [ z"$short" = z"--no-short" ]; then
+			<"$trf" sed -n 's/^\([^ ][^ ]*\) \([^ ][^ ]*\)$/\2 \1/p'
+			exit
+		fi
 		while read -r name rev; do
 			case "$exclude" in *" $name "*) continue; esac
 			[ -z "$refs" ] || case " $refs " in *" $name "*);;*) continue; esac
