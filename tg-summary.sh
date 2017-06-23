@@ -182,47 +182,37 @@ if [ -n "$heads" -a -z "$rdeps" ]; then
 	exit 0
 fi
 
-skip_ann=
-show_dep() {
-	case "$exclude" in *" $_dep "*) return; esac
-	case " $seen_deps " in *" $_dep "*) return 0; esac
-	seen_deps="${seen_deps:+$seen_deps }$_dep"
-	[ -z "$tgish" -o -n "$_dep_is_tgish" ] || return 0
-	[ -z "$skip_ann" ] || [ -z "$_dep_annihilated" ] && printf '%s\n' "$_dep"
-	return 0
-}
-
+# if $1 is non-empty, show the dep only (including self), not the edge (no self)
 show_deps()
 {
-	no_remotes=1
-	recurse_deps_exclude=
-	get_branch_list | while read _b; do
-		case "$exclude" in *" $_b "*) continue; esac
-		case " $recurse_deps_exclude " in *" $_b "*) continue; esac
-		seen_deps=
-		save_skip="$skip_ann"
-		_dep="$_b"; _dep_is_tgish=1; skip_ann=; show_dep; skip_ann="$save_skip"
-		recurse_deps show_dep "$_b"
-		recurse_deps_exclude="$recurse_deps_exclude $seen_deps"
-	done
+	if [ -n "$branches" ]; then
+		edgenum=2
+		[ -z "$1" ] || edgenum=1
+		no_remotes=1
+		recurse_deps_exclude="$exclude"
+		recurse_deps_internal -n ${tgish:+-t} -m ${1:+-s} -e=$edgenum -- $branches | sort -u
+	else
+		cutcmd=
+		[ -z "$1" ] || cutcmd='| cut -d " " -f 2 | sort -u'
+		refslist=
+		[ -z "$tg_read_only" ] || [ -z "$tg_ref_cache" ] || ! [ -s "$tg_ref_cache" ] ||
+		refslist="-r=\"$tg_ref_cache\""
+		tdopt=
+		v_get_tdopt tdopt "$head_from"
+		eval run_awk_topgit_deps "$refslist" "$tdopt" "${tgish:+-t}" \
+			"${1:+-s}" '-n -x="$exclude" "refs/$topbases"' "$cutcmd"
+	fi
 }
 
-if [ -n "$depsonly" ]; then
-	show_deps | sort -u -b -k1,1
+if [ -n "$deps$depsonly$sort" ]; then
+	eval show_deps $depsonly "${sort:+|tsort}"
 	exit 0
 fi
 
-show_rdeps()
-{
-	case "$exclude" in *" $_dep "*) return; esac
-	[ -z "$tgish" -o -n "$_dep_is_tgish" ] || return 0
-	elided=
-	[ -z "$rdepsonce" ] || [ "$_dep_xvisits" = 0 ] || elided="^"
-	printf '%s %s\n' "$_depchain" "$_dep$elided"
-}
-
 if [ -n "$rdeps" ]; then
 	no_remotes=1
+	recurse_preorder=1
+	recurse_deps_exclude="$exclude"
 	showbreak=
 	{
 		if [ -n "$heads" ]; then
@@ -230,33 +220,23 @@ if [ -n "$rdeps" ]; then
 		else
 			get_branch_list
 		fi
-	} | while read b; do
+	} | while read -r b; do
 		case "$exclude" in *" $b "*) continue; esac
+		ref_exists "refs/heads/$b" || continue
 		[ -z "$showbreak" ] || echo
 		showbreak=1 
-		ref_exists "refs/heads/$b" || continue
-		{
-			echol "$b"
-			recurse_preorder=1
-			recurse_deps ${rdepsonce:+-o=-o=-1} show_rdeps "$b"
-		} | sed -e 's/[^ ][^ ]*[ ]/  /g'
+		recurse_deps_internal ${tgish:+-t} -n -s ${rdepsonce:+-o=-1} "$b" |
+		awk -v elided="$rdepsonce" '{
+			if ($1 == "1" || NF < 5) next
+			xvisits = $4
+			dep = $5
+			sub(/^[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+/, "")
+			gsub(/ [^ ]+/, "  ")
+			xtra = ""
+			if (elided && xvisits > 0) xtra="^"
+			print $0 dep xtra
+		}'
 	done
-	exit 0
-fi
-
-if [ -n "$deps" ]; then
-	if [ -n "$branches" ]; then
-		no_remotes=1
-		recurse_deps_exclude="$exclude"
-		recurse_deps_internal -n -t -m -e=2 -- $branches | sort -u
-	else
-		refslist=
-		[ -z "$tg_read_only" ] || [ -z "$tg_ref_cache" ] || ! [ -s "$tg_ref_cache" ] ||
-		refslist="-r=\"$tg_ref_cache\""
-		tdopt=
-		v_get_tdopt tdopt "$head_from"
-		eval run_awk_topgit_deps "$refslist" "$tdopt" '-n -t -x="$exclude" "refs/$topbases"'
-	fi
 	exit 0
 fi
 
@@ -276,15 +256,26 @@ if [ -n "$withdeps" ]; then
 	savetgish="$tgish"
 	tgish=1
 	origbranches="$branches"
-	branches="$(skip_ann=1; show_deps | sort -u -b -k1,1 | paste -d " " -s -)"
+	branches="$(show_deps 1 | paste -d " " -s -)"
 	tgish="$savetgish"
+fi
+
+if [ -n "$terse" ]; then
+	refslist=
+	[ -z "$tg_read_only" ] || [ -z "$tg_ref_cache" ] || ! [ -s "$tg_ref_cache" ] ||
+	refslist="-r=\"$tg_ref_cache\""
+	cmd="run_awk_topgit_msg --list"
+	[ $verbose -lt 2 ] || cmd="run_awk_topgit_msg -c -nokind"
+	[ $verbose -gt 0 ] || cmd="run_awk_topgit_branches -n"
+	eval "$cmd" "$refslist" '-i="$branches" -x="$exclude" "refs/$topbases"'
+	exit 0
 fi
 
 curname="$(strip_ref "$(git symbolic-ref -q HEAD)")" || :
 
 if [ -n "$graphviz" ]; then
-	cat <<EOT
-# GraphViz output; pipe to:
+	printf '%s\n\n' \
+'# GraphViz output; pipe to:
 #   | dot -Tpng -o <output>
 # or
 #   | dot -Txlib
@@ -297,24 +288,20 @@ graph [
   fontsize = 14
   labelloc=top
   pad = "0.5,0.5"
-];
-
-EOT
+];'
+	show_deps | while read -r name dep; do
+		printf '"%s" -> "%s";\n' "$name" "$dep"
+		if [ "$name" = "$curname" ] || [ "$dep" = "$curname" ]; then
+			printf '"%s" [%s];\n' "$curname" "style=filled,fillcolor=yellow"
+		fi
+	done
+	printf '%s\n' '}'
+	exit 0
 fi
 
-if [ -n "$sort" ]; then
-	tsort_input="$(get_temp tg-summary-sort)"
-	exec 4>$tsort_input
-	exec 5<$tsort_input
-fi
-
-## List branches
-
-aheadlist=
-processed=' '
-needslist=' '
 compute_ahead_list()
 {
+	aheadlist=
 	refslist=
 	[ -z "$tg_read_only" ] || [ -z "$tg_ref_cache" ] || ! [ -s "$tg_ref_cache" ] ||
 	refslist="-r=\"$tg_ref_cache\""
@@ -367,48 +354,6 @@ process_branch()
 		"$name"
 }
 
-if [ -n "$terse" ]; then
-	refslist=
-	[ -z "$tg_read_only" ] || [ -z "$tg_ref_cache" ] || ! [ -s "$tg_ref_cache" ] ||
-	refslist="-r=\"$tg_ref_cache\""
-	cmd="run_awk_topgit_msg --list"
-	[ $verbose -lt 2 ] || cmd="run_awk_topgit_msg -c -nokind"
-	[ $verbose -gt 0 ] || cmd="run_awk_topgit_branches -n"
-	eval "$cmd" "$refslist" '-i="$branches" -x="$exclude" "refs/$topbases"'
-	exit 0
-fi
-
-msgsfile=
-[ -n "$graphviz$sort" ] || compute_ahead_list
-process_branches()
-{
-	while read name; do
-		case "$exclude" in *" $name "*) continue; esac
-		if [ -n "$graphviz$sort" ]; then
-			from=$head_from
-			[ "$name" = "$curname" ] ||
-				from=
-			cat_file "refs/heads/$name:.topdeps" $from | while read -r dep || [ -n "$dep" ]; do
-				dep_is_tgish=true
-				ref_exists "refs/$topbases/$dep" ||
-					dep_is_tgish=false
-				[ -z "$tgish" ] || [ "$dep_is_tgish" = "true" ] || continue
-				if ! "$dep_is_tgish" || ! branch_annihilated $dep; then
-					if [ -n "$graphviz" ]; then
-						echo "\"$name\" -> \"$dep\";"
-						if [ "$name" = "$curname" ] || [ "$dep" = "$curname" ]; then
-							echo "\"$curname\" [style=filled,fillcolor=yellow];"
-						fi
-					else
-						echo "$name $dep" >&4
-					fi
-				fi
-			done
-		else
-			process_branch
-		fi
-	done
-}
 awkpgm='
 BEGIN {
 	if (msgsfile != "") {
@@ -431,14 +376,8 @@ BEGIN {
 		print $0
 }
 '
-cmd='get_branch_list | process_branches'
+msgsfile=
+compute_ahead_list
+cmd='get_branch_list | while read name; do process_branch; done'
 [ -z "$msgsfile" ] || cmd="$cmd"' | awk -v msgsfile="$msgsfile" "$awkpgm"'
 eval "$cmd"
-
-if [ -n "$graphviz" ]; then
-	echo '}'
-fi
-
-if [ -n "$sort" ]; then
-	tsort <&5
-fi

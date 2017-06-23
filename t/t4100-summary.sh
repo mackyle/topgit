@@ -205,6 +205,9 @@ reused-2level2 reused-2level1
 reused-multi reused-2level1
 reused-multi t/branch3
 reused-multi reused-2level2
+t/branch1 branch1
+t/branch2 branch2
+t/branch3 branch3
 " >pristine_deps || die failed to make pristine_deps
 
 printf "%s" "\
