@@ -423,8 +423,8 @@ if [ "$driver" = "collapse" ] || [ "$driver" = "linearize" ]; then
 elif [ "$driver" = "quilt" ]; then
 	[ -n "$output" ] ||
 		die "no target directory specified"
-	[ -n "$forceoutput" ] || [ ! -e "$output" ] ||
-		die "target directory already exists (use --force to override): $output"
+	[ -n "$forceoutput" ] || [ ! -e "$output" ] || is_empty_dir "$output" . ||
+		die "non-empty target directory already exists (use --force to override): $output"
 
 	mkdir -p "$output"
 fi
