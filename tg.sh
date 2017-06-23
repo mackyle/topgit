@@ -605,12 +605,14 @@ remove_ref_cache()
 # setting tg_ref_cache_only to non-empty will force non-$tg_ref_cache lookups to fail
 rev_parse()
 {
+	rev_parse_code_=1
 	if [ -n "$tg_ref_cache" -a -s "$tg_ref_cache" ]; then
-		awk -v r="$1" 'BEGIN {e=1}; $1 == r {print $2; e=0; exit}; END {exit e}' <"$tg_ref_cache"
-	else
-		[ -z "$tg_ref_cache_only" ] || return 1
-		git rev-parse --quiet --verify "$1^0" -- 2>/dev/null
+		rev_parse_code_=0
+		awk -v r="$1" 'BEGIN {e=1}; $1 == r {print $2; e=0; exit}; END {exit e}' <"$tg_ref_cache" ||
+		rev_parse_code_=$?
 	fi
+	[ $rev_parse_code_ -ne 0 ] && [ -z "$tg_ref_cache_only" ] || return $rev_parse_code_
+	git rev-parse --quiet --verify "$1^0" -- 2>/dev/null
 }
 
 # ref_exists_rev REF
@@ -634,8 +636,8 @@ ref_exists_rev()
 	_result_rev=
 	{ read -r _result _result_rev <"$tg_tmp_dir/cached/$1/.ref"; } 2>/dev/null || :
 	[ -z "$_result" ] || { printf '%s' "$_result_rev"; return $_result; }
-	_result_rev="$(rev_parse "$1")"
-	_result=$?
+	_result=0
+	_result_rev="$(rev_parse "$1")" || _result=$?
 	[ -d "$tg_tmp_dir/cached/$1" ] || mkdir -p "$tg_tmp_dir/cached/$1" 2>/dev/null
 	[ ! -d "$tg_tmp_dir/cached/$1" ] ||
 	echo $_result $_result_rev >"$tg_tmp_dir/cached/$1/.ref" 2>/dev/null || :
@@ -660,8 +662,8 @@ ref_exists_rev_short()
 	_result_rev=
 	{ read -r _result _result_rev <"$tg_tmp_dir/cached/$1/.rfs"; } 2>/dev/null || :
 	[ -z "$_result" ] || { printf '%s' "$_result_rev"; return $_result; }
-	_result_rev="$(rev_parse "$1")"
-	_result=$?
+	_result=0
+	_result_rev="$(rev_parse "$1")" || _result=$?
 	if [ $_result -eq 0 ]; then
 		_result_rev="$(git rev-parse --verify ${2:---short} --quiet "$_result_rev^0" --)"
 		_result=$?
