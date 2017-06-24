@@ -267,7 +267,7 @@ run_awk_topgit_branches()
 # -rmr       remove -r= <file> after it's been read (convenience knob)
 # -i=<inbr>  whitespace separated list of branch names to include (unless in -x)
 # -x=<exbr>  whitespace separated list of branch names to exclude
-# -db        enable output of .topdeps blob lines
+# -db        ignored (output of .topdeps blob lines is always enabled)
 # -mb        ignored (output of .topmsg blob lines is always enabled)
 # -td=<tdbr> must be <branch>:<hash> to use <hash>^{blob} as <branch>'s .topdeps
 # -tm=<tmbr> must be <branch>:<hash> to use <hash>^{blob} as <branch>'s .topmsg
@@ -294,6 +294,7 @@ run_awk_topgit_branches()
 #   1  non-annihilated, non-empty branch WITHOUT a .topmsg file
 #   2  annihilated branch
 #   3  empty branch (an empty branch has the same branch and base commit hash)
+#   4  bare branch (same as 1 AND also WITHOUT a .topdeps file)
 #
 # output does not appear until after any -a or -b files have been fully written
 # and closed first
@@ -333,7 +334,6 @@ run_awk_topgit_msg()
 	_ra_rmbr=
 	_ra_inclbr=
 	_ra_exclbr=
-	_ra_depsblob=
 	_ra_topdeps=
 	_ra_topmsg=
 	_ra_teeout=
@@ -353,7 +353,7 @@ run_awk_topgit_msg()
 		-rmr)	_ra_rmrf=1;;
 		-i=*)	_ra_inclbr="${1#-i=}";;
 		-x=*)	_ra_exclbr="${1#-x=}";;
-		-db)	_ra_depsblob=1;;
+		-db)	;;
 		-mb)	;;
 		-tm=*)	_ra_topmsg="${1#-tm=}";;
 		-td=*)	_ra_topdeps="${1#-td=}";;
@@ -394,7 +394,7 @@ run_awk_topgit_msg()
 		-v "rmrf=$_ra_rmrf" \
 		-v "refsfile=$_ra_refsfile" \
 		-v "chkblob=$mtblob" \
-		-v "depsblob=$_ra_depsblob" \
+		-v "depsblob=1" \
 		-v "msgblob=1" \
 		-v "topdeps=$_ra_topdeps" \
 		-v "topmsg=$_ra_topmsg" \
@@ -404,7 +404,7 @@ run_awk_topgit_msg()
 	awk -f "$TG_INST_AWKDIR/topgit_msg_prepare" \
 		-v "withan=$_ra_withan" \
 		-v "withmt=$_ra_withmt" \
-		-v "depsblob=$_ra_depsblob" \
+		-v "depsblob=2" \
 		-v "anfile=$_ra_anfile" \
 		-v "brfile=$_ra_brfile" \
 		-v "missing=$mtblob" \
@@ -462,7 +462,9 @@ run_awk_topmsg_header()
 	_ra_colfmt=
 	_ra_nokind=1
 	_ra_noname=1
+	_ra_topdeps=
 	_ra_topmsg=
+	_ra_depsblob=
 	while [ $# -gt 0 ]; do case "$1" in
 		-c)	_ra_colfmt=1;;
 		-kind)	_ra_nokind=;;
@@ -494,14 +496,17 @@ run_awk_topmsg_header()
 		if [ -n "$_ra_topmsg" ]; then
 			_ra_topmsg="$_ra_topmsg^{blob}"
 		else
+			_ra_depsblob=2
+			_ra_topdeps='"refs/heads/$1^{tree}:.topdeps"'
 			_ra_topmsg="refs/heads/$1^{tree}:.topmsg"
 		fi
-		printf '%s\n' "$mtblob^{blob} check ?" \
-			"refs/$topbases/$1 $1 :" "refs/$topbases/$1^0" \
-			"refs/heads/$1^0" "refs/$topbases/$1^{tree}" \
-			"refs/heads/$1^{tree}" "$_ra_topmsg" |
+		eval printf '"%s\n"' '"$mtblob^{blob} check ?"' \
+			'"refs/$topbases/$1 $1 :" "refs/$topbases/$1^0"' \
+			'"refs/heads/$1^0" "refs/$topbases/$1^{tree}"' \
+			'"refs/heads/$1^{tree}"' "$_ra_topdeps" '"$_ra_topmsg"' |
 		git cat-file --batch-check='%(objectname) %(objecttype) %(rest)' |
 		awk -f "$TG_INST_AWKDIR/topgit_msg_prepare" \
+			-v "depsblob=$_ra_depsblob" \
 			-v "withan=1" \
 			-v "missing=$mtblob" \
 			-v "misscmd=$_ra_misscmd" |

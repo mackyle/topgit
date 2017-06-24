@@ -141,7 +141,7 @@ test_expect_success 'bad usage' '
 '
 
 printf "%s" "\
-         basebare                      	branch basebare (missing .topmsg)
+         basebare                      	branch basebare (bare branch)
  0       reused-1level1                	[PATCH] reused with one tg branch below
  0       reused-1level2                	[PATCH] reused with one tg branch below
  0  D  * reused-2level1                	[PATCH] reused with two tg branches below
@@ -283,7 +283,7 @@ rootmsg
 " >pristine_heads || die failed to make pristine_heads
 
 printf "%s" "\
-basebare                               	branch basebare (missing .topmsg)
+basebare                               	branch basebare (bare branch)
 reused-1level1                         	[PATCH] reused with one tg branch below
 reused-1level2                         	[PATCH] reused with one tg branch below
 reused-2level1                         	[PATCH] reused with two tg branches below
@@ -302,7 +302,7 @@ t/branch3                              	[PATCH] branch3 topgit
 	die failed to make pristine_list_verbose
 
 printf "%s" "\
-         basebare                      	branch basebare (missing .topmsg)
+         basebare                      	branch basebare (bare branch)
  0       reused-1level2                	[PATCH] reused with one tg branch below
  0  D    reused-multi                  	[PATCH] multi-level reuse
  0       root                          	[PATCH] standard root branch
@@ -315,7 +315,7 @@ printf "%s" "\
 
 printf "%s" "\
 annihilated                            	branch annihilated (annihilated)
-basebare                               	branch basebare (missing .topmsg)
+basebare                               	branch basebare (bare branch)
 reused-1level1                         	[PATCH] reused with one tg branch below
 reused-1level2                         	[PATCH] reused with one tg branch below
 reused-2level1                         	[PATCH] reused with two tg branches below

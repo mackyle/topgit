@@ -69,16 +69,21 @@
 #   1  non-annihilated, non-empty branch WITHOUT a .topmsg file
 #   2  annihilated branch
 #   3  empty branch (an empty branch has the same branch and base commit hash)
+#   4  bare branch (only if depsblob is true and has a value other than "1")
 #
-# if missing is empty K = 1..3 lines will not be output at all
+# if missing is empty K = 1..4 lines will not be output at all
 # if missing is anything that causes a "missing" result it will defeat all
-# K = 1..3 output lines when subsequently fed through git cat-file --batch
+# K = 1..4 output lines when subsequently fed through git cat-file --batch
 #
 # in most other contexts empty branches are treated the same as annihilated
 # branches (because their branch and base trees are necessarily the same), but
 # here a distinction is made so a different message can be shown for them
 #
-# output should then be feed to:
+# if depsblob is true and set to a value other than "1" then the depsblob line
+# won't just be ignored, it should be a real depsblob line and it will be used
+# to generate the K = 4 status value
+#
+# output should then be fed to:
 #
 #   git cat-file --batch='%(objecttype) %(objectsize) %(rest)' | tr '\0' '\27'
 #
@@ -119,7 +124,10 @@ function domissing() {
 NF == 4 && $4 == ":" && $3 != "" && $2 != "missing" && $1 != "" {
 	if ((getline bc  + getline hc + \
 	     getline bct + getline hct + getline hcm) != 5) exitnow(2)
-	if (depsblob && (getline hcm) != 1) exitnow(2)
+	if (depsblob) {
+		split(hcm, ahcd)
+		if ((getline hcm) != 1) exitnow(2)
+	}
 	split(bc, abc)
 	split(hc, ahc)
 	split(bct, abct)
@@ -148,9 +156,15 @@ NF == 4 && $4 == ":" && $3 != "" && $2 != "missing" && $1 != "" {
 	}
 	if (brfile) print $3 >brfile
 	if (missing != "" && ahcm[2] != "blob") {
+		if (!K) {
+			if (depsblob && depsblob != "1" &&
+			    ahcd[2] == "missing" && ahcm[2] == "missing")
+				K = 4
+			else
+				K = 1
+		}
 		ahcm[1] = missing "^{}"
 		ahcm[2] = "blob"
-		if (!K) K = 1
 		domissing()
 	}
 	if (ahcm[2] == "blob") {

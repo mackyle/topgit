@@ -103,7 +103,7 @@ t/branch
 test_expect_success "($repo) "'tg summary --verbpse --list' '
 	ocntb="$(obj_count $repo)" &&
 	printf "%s" "\
-boo branch boo (missing .topmsg)
+boo branch boo (bare branch)
 t/begin [PATCH] start here
 t/branch [PATCH] use the base
 " > expected &&
@@ -117,7 +117,7 @@ t/branch [PATCH] use the base
 
 test_expect_success "($repo) "'tg summary' '
 	printf "%s" "\
- * boo branch boo (missing .topmsg)
+ * boo branch boo (bare branch)
  * t/begin [PATCH] start here
  D t/branch [PATCH] use the base
 " > expected &&
@@ -131,7 +131,7 @@ test_expect_success "($repo) "'tg info --series' '
 	tab="	" && # a single tab in there
 	printf "%s" "\
 * t/begin [PATCH] start here
- boo branch boo (missing .topmsg)
+ boo branch boo (bare branch)
  t/branch [PATCH] use the base
 " > expected &&
 	tg -C $repo info --series t/begin > actual.raw &&
@@ -139,7 +139,7 @@ test_expect_success "($repo) "'tg info --series' '
 	test_diff expected actual &&
 	printf "%s" "\
  t/begin [PATCH] start here
-* boo branch boo (missing .topmsg)
+* boo branch boo (bare branch)
  t/branch [PATCH] use the base
 " > expected &&
 	tg -C $repo info --series boo > actual.raw &&
@@ -147,7 +147,7 @@ test_expect_success "($repo) "'tg info --series' '
 	test_diff expected actual &&
 	printf "%s" "\
 t/begin [PATCH] start here
-boo branch boo (missing .topmsg)
+boo branch boo (bare branch)
 t/branch [PATCH] use the base
 " > expected &&
 	tg -C $repo info --series t/branch > actual.raw &&

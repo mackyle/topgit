@@ -118,7 +118,7 @@ function included(abranch) {
 }
 
 function wanted(abranch, akind) {
-	return !akind || akind == 1 ||
+	return !akind || akind == 1 || akind == 4 ||
 	(withmt != "" && akind == 3 && withmt) ||
 	((akind != 3 || withmt == "") && withan)
 }
@@ -150,7 +150,7 @@ function prettykw(k, _kparts, _i, _c, _ans, _kpart) {
 }
 
 NF == 4 && $4 != "" && $3 != "" && $2 != "missing" && $1 != "" &&
-$3 ~ /^[0123]$/ && $2 ~ /^[0-9]+$/ {
+$3 ~ /^[01234]$/ && $2 ~ /^[0-9]+$/ {
 	bn = $4
 	kind = $3
 	datalen = $2 + 1
@@ -193,6 +193,8 @@ $3 ~ /^[0123]$/ && $2 ~ /^[0-9]+$/ {
 				}
 			} else if (kind == 1) {
 				subj = "branch " bn " (missing .topmsg)"
+			} else if (kind == 4) {
+				subj = "branch " bn " (bare branch)"
 			} else if (kind == 3) {
 				subj = "branch " bn " (no commits)"
 			} else {
