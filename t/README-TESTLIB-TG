@@ -29,6 +29,7 @@ TopGit utility function         | Description
 tg_test_bare_tree               | make a bare `tree` out of any treeish
 tg_test_create_branch           | create a TopGit branch (multiple options)
 tg_test_create_branches         | script multiple `tg_test_create_branch` calls
+tg_test_create_tag              | create a TopGit annotated refs state tag
 tg_test_include                 | source target `tg` in `tg__include` mode
 tg_test_setup_topgit            | do hook and merge TopGit setup only
 tg_test_v_getbases              | get local or remote full top-bases ref prefix
@@ -192,6 +193,20 @@ TopGit Utility Functions
     TopGit DAG for testing purposes.  Since each line group represents a call
     to `tg_test_create_branch`, later groups may use any branch name created
     by an earlier group as a <start> point.
+
+- tg_test_create_tag [-C <dir>] [--notick] [-t] <tag> [<for-each-ref-pat>...]
+
+    If no for-each-ref patterns are given then refs/heads, refs/top-bases and
+    refs/remotes are used.  Only refs that have type `commit` will be put in
+    the tag.  The result will be a new annotated tag <tag> that can be used
+    as a source for `tg revert` (and therefore the `tg -w` option too).
+
+    The for-each-ref-pat arguments are passed directly to `git for-each-ref`
+    and may therefore use all wildcard features available with that command.
+
+    Unlike ordinary `tg tag` tags, the resulting tags tag the empty blob (or
+    with -t the empty tree) and there is no consolidation commit made at all,
+    ever.
 
 - tg_test_include [-C <dirpath>] [-r <remote>] [-u] [-f]
 

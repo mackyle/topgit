@@ -643,6 +643,57 @@ tg_test_create_branches() {
 }
 
 
+# tg_test_create_tag [-C <dirpath>] [--notick] [-t] <newtag> [<for-each-ref-pat>...]
+#
+# If no for-each-ref patterns are given then refs/heads, refs/top-bases and
+# refs/remotes are used.  Only refs that have type `commit` will be put in
+# the tag.  The result will be a new annotated tag <newtag> that can be used
+# as a source for `tg revert` (and therefore the `tg -w` option too).
+#
+# The for-each-ref-pat arguments are passed directly to `git for-each-ref`
+# and may therefore use all wildcard features available with that command.
+#
+# Unlike ordinary `tg tag` tags, the resulting tags tag the empty blob (or with
+# -t the empty tree) and there is no consolidation commit made at all, ever.
+#
+tg_test_create_tag() {
+	_tct_dir="."
+	[ $# -lt 2 ] || [ "$1" != "-C" ] || { shift; _tct_dir="${1:-.}"; shift; }
+	[ -d "$_tct_dir" ] ||
+		fatal "tg_test_create_tag: no such directory \"$_tct_dir\""
+	_tct_nto=
+	[ "$1" != "--notick" ] || { _tct_nto="$1"; shift; }
+	_tct_obj="blob"
+	[ "$1" != "-t" ] || { _tct_obj="tree"; shift; }
+	[ $# -ge 1 ] ||
+		fatal "tg_test_create_tag: missing tag name argument"
+	_tct_tname="$1" && shift
+	_tct_refs="$(test_get_temp tagrefs)"
+	[ $# -gt 0 ] || set -- "refs/heads" "refs/remotes" "refs/top-bases"
+	git -C "$_tct_dir" for-each-ref --format="%(objecttype) %(objectname) %(refname)" "$@" |
+	sed -n 's/^commit //p' >"$_tct_refs"
+	_tct_mt="$(git -C "$_tct_dir" hash-object --stdin -t "$_tct_obj" -w </dev/null)"
+	[ -n "$_tct_nto" ] || test_tick
+	_tct_id="$(git var GIT_COMMITTER_IDENT)"
+	[ $(wc -l <"$_tct_refs") -gt 0 ] || return 1
+	_tct_tag="$({
+		printf '%s\n' \
+		"object $_tct_mt" \
+		"type $_tct_obj" \
+		"tag $_tct_tname" \
+		"tagger $_tct_id" \
+		"" \
+		"-----BEGIN TOPGIT REFS-----"
+		cat "$_tct_refs" && printf '%s\n' \
+		"-----END TOPGIT REFS-----"
+	} | git -C "$_tct_dir" hash-object --stdin -t tag -w)" || return 1
+	rm -f "$_tct_refs"
+	git update-ref "refs/tags/$_tct_tname" "$_tct_tag" "" || return 1
+	unset_ _tct_dir _tct_nto _tct_obj _tct_tname _tct_refs _tct_mt _tct_id _tct_tag
+	return 0
+}
+
+
 ##
 ## TopGit specific test functions "init" function
 ##
