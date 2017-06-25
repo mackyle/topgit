@@ -599,13 +599,13 @@ test_done_write_plan_() {
 				test z"$test_count" != z"0"
 			}
 		then
-			say_color warn "# please add test_plan call"
+			say_color_tap warn "# please add test_plan call"
 		fi
 		test -n "$test_wrote_plan_count" || say_tap "1..$test_count$1"
 	fi
 	if test -n "$test_wrote_plan_count" && test "$test_wrote_plan_count" -ne "$test_count"
 	then
-		say_color error "# $this_test plan count of $test_wrote_plan_count does not match run count of $test_count"
+		say_color_tap error "# $this_test plan count of $test_wrote_plan_count does not match run count of $test_count"
 		return 1
 	fi
 	return 0
