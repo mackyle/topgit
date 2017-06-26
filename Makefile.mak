@@ -137,7 +137,8 @@ tg-tg.txt: README create-html-usage.pl $(commands_in)
 	$(QHELPTG)perl ./create-html-usage.pl --text < README > $@
 
 topgit.html: README create-html-usage.pl $(commands_in)
-	$(QHTMLTOPGIT)perl ./create-html-usage.pl < README | rst2html.py - $@
+	$(QHTMLTOPGIT)perl ./create-html-usage.pl < README | rst2html.py - $@ && \
+	perl -i -pe 's/&nbsp;/\&#160;/g' "$@"
 
 $(html_out): create-html.sh
 	$(QHTML)CMD="$@" && CMD="$${CMD#tg-}" && CMD="$${CMD%.html}" && \
