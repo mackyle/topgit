@@ -90,6 +90,7 @@ push
 rebase
 remote
 revert
+shell
 status
 summary
 tag
@@ -100,7 +101,7 @@ version
 tg_cmd_will_setup() {
 	case "$1" in
 		--version|--status|--hooks-path|--exec-path|--awk-path|--top-bases| \
-		base|contains|files|info|log|mail|next|patch|prev|rebase|revert|status|st|summary|tag|version)
+		base|contains|files|info|log|mail|next|patch|prev|rebase|revert|shell|status|st|summary|tag|version)
 			return 1
 	esac
 	return 0
@@ -115,8 +116,8 @@ test_expect_success 'no setup happens for help' '
 	test_might_fail tg --bogus && has_no_tg_setup &&
 	for cmd in $TG_CMDS; do
 		say "# checking tg $cmd help variations" &&
-		test_might_fail tg $cmd -h && has_no_tg_setup &&
-		test_might_fail tg $cmd --help && has_no_tg_setup
+		test_might_fail </dev/null tg $cmd -h && has_no_tg_setup &&
+		test_might_fail </dev/null tg $cmd --help && has_no_tg_setup
 	done &&
 	has_no_tg_setup &&
 	cd .. && rm -rf r3
@@ -127,8 +128,8 @@ test_expect_success 'no setup happens for exempted commands' '
 	for cmd in $TG_CMDS; do
 		if ! tg_cmd_will_setup "$cmd"; then
 			say "# checking tg $cmd does not do setup"
-			test_might_fail tg $cmd && has_no_tg_setup &&
-			test_might_fail tg $cmd --bogus-option-here && has_no_tg_setup
+			test_might_fail </dev/null tg $cmd && has_no_tg_setup &&
+			test_might_fail </dev/null tg $cmd --bogus-option-here && has_no_tg_setup
 		fi
 	done &&
 	has_no_tg_setup &&
@@ -140,8 +141,8 @@ for cmd in $TG_CMDS; do
 		test_expect_success "setup happens for tg $cmd" '
 			rm -rf rt && test_create_repo rt && cd rt &&
 			has_no_tg_setup &&
-			test_might_fail tg $cmd &&
-			test_might_fail tg $cmd --bogus-option-here &&
+			test_might_fail </dev/null tg $cmd &&
+			test_might_fail </dev/null tg $cmd --bogus-option-here &&
 			has_tg_setup &&
 			cd .. && rm -rf rt
 		'
@@ -152,8 +153,8 @@ test_expect_success 'no setup happens in bare repository' '
 	git init --bare r5 && cd r5 &&
 	for cmd in $TG_CMDS; do
 		say "# checking tg $cmd does not do setup in bare repo"
-		test_might_fail tg $cmd && has_no_tg_setup_bare &&
-		test_might_fail tg $cmd --bogus-option-here && has_no_tg_setup_bare
+		test_might_fail </dev/null tg $cmd && has_no_tg_setup_bare &&
+		test_might_fail </dev/null tg $cmd --bogus-option-here && has_no_tg_setup_bare
 	done &&
 	has_no_tg_setup_bare &&
 	cd .. && rm -rf r5

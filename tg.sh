@@ -1053,8 +1053,11 @@ become_non_cacheable()
 }
 
 # call this to make sure the current Git repository has an associated work tree
+# also make sure we are not in wayback mode
 ensure_work_tree()
 {
+	[ -z "$wayback" ] ||
+	die "the wayback machine cannot be used with the specified options"
 	setup_git_dir_is_bare
 	[ -n "$git_dir_is_bare" ] || return 0
 	die "This operation must be run in a work tree"
@@ -1534,7 +1537,7 @@ do_help()
 
 		echo "TopGit version $TG_VERSION - A different patch queue manager"
 		echo "Usage: $tgname [-C <dir>] [-r <remote> | -u]" \
-			"[-c <name>=<val>] [--[no-]pager|-p] ($cmds) ..."
+			"[-c <name>=<val>] [--[no-]pager|-p] [-w [:]<tgtag>] ($cmds) ..."
 		echo "   Or: $tgname help [-w] [<command>]"
 		echo "Use \"$tgdisplaydir$tgname help tg\" for overview of TopGit"
 	elif [ -r "$TG_INST_CMDDIR"/tg-$1 -o -r "$TG_INST_SHAREDIR/tg-$1.txt" ] ; then
@@ -1972,32 +1975,9 @@ basic_setup()
 	oldbases="$topbases"
 }
 
-## Initial setup
-initial_setup()
+tmpdir_setup()
 {
-	# suppress the merge log editor feature since git 1.7.10
-
-	GIT_MERGE_AUTOEDIT=no
-	export GIT_MERGE_AUTOEDIT
-
-	basic_setup $1
-	iowopt=
-	! vcmp "$git_version" '>=' "2.5" || iowopt="--ignore-other-worktrees"
-	gcfbopt=
-	! vcmp "$git_version" '>=' "2.6" || gcfbopt="--buffer"
-	auhopt=
-	! vcmp "$git_version" '>=' "2.9" || auhopt="--allow-unrelated-histories"
-	v_get_show_cdup root_dir
-	root_dir="${root_dir:-.}"
-	logrefupdates="$(git config --bool core.logallrefupdates 2>/dev/null)" || :
-	[ "$logrefupdates" = "true" ] || logrefupdates=
-
-	# make sure root_dir doesn't end with a trailing slash.
-
-	root_dir="${root_dir%/}"
-
-	# create global temporary directories, inside GIT_DIR
-
+	[ -z "$tg_tmp_dir" ] || return 0
 	if [ -n "$TG_TMPDIR" ] && [ -d "$TG_TMPDIR" ] && [ -w "$TG_TMPDIR" ] &&
 	   { >"$TG_TMPDIR/.check"; } >/dev/null 2>&1; then
 		tg_tmp_dir="$TG_TMPDIR"
@@ -2015,17 +1995,20 @@ initial_setup()
 		[ -n "$tg_tmp_dir" ] || [ -z "$TMPDIR" ] || tg_tmp_dir="$(mktemp -d "/tmp/tg-tmp.XXXXXX" 2>/dev/null)" || tg_tmp_dir=
 		[ -z "$tg_tmp_dir" ] || tg_tmp_dir="$(cd "$tg_tmp_dir" && pwd -P)"
 	fi
-	unset_ TG_TMPDIR
+	[ -n "$tg_tmp_dir" ] && [ -w "$tg_tmp_dir" ] && { >"$tg_tmp_dir/.check"; } >/dev/null 2>&1 ||
+		die "could not create a writable temporary directory"
+
+	# whenever tg_tmp_dir is != "" these must always be set
 	tg_ref_cache="$tg_tmp_dir/tg~ref-cache"
 	tg_ref_cache_br="$tg_ref_cache.br"
 	tg_ref_cache_rbr="$tg_ref_cache.rbr"
 	tg_ref_cache_ann="$tg_ref_cache.ann"
 	tg_ref_cache_dep="$tg_ref_cache.dep"
-	[ -n "$tg_tmp_dir" ] && [ -w "$tg_tmp_dir" ] && { >"$tg_ref_cache"; } >/dev/null 2>&1 ||
-		die "could not create a writable temporary directory"
+}
 
-	# make sure global cache directory exists inside GIT_DIR or $tg_tmp_dir
-
+cachedir_setup()
+{
+	[ -z "$tg_cache_dir" ] || return 0
 	user_id_no="$(id -u)" || :
 	: "${user_id_no:=_99_}"
 	tg_cache_dir="$git_common_dir/tg-cache"
@@ -2041,6 +2024,17 @@ initial_setup()
 	[ -n "$tg_cache_dir" ] ||
 		die "could not create a writable tg-cache directory (even a temporary one)"
 
+	if [ -n "$2" ]; then
+		# allow the wayback machine to share a separate cache
+		[ -d "$tg_cache_dir/wayback" ] || mkdir "$tg_cache_dir/wayback" >/dev/null 2>&1 || :
+		! [ -d "$tg_cache_dir/wayback" ] || ! { >"$tg_cache_dir/wayback/.tgcache"; } >/dev/null 2>&1 ||
+		tg_cache_dir="$tg_cache_dir/wayback"
+	fi
+}
+
+# set up alternate deb dirs
+altodb_setup()
+{
 	# GIT_ALTERNATE_OBJECT_DIRECTORIES can contain double-quoted entries
 	# since Git v2.11.1; however, it's only necessary for : (or perhaps ;)
 	# so we avoid it if possible and require v2.11.1 to do it at all
@@ -2052,25 +2046,27 @@ initial_setup()
 	# same repository we were invoked on
 
 	tg_use_alt_odb=1
-	_odbdir="${GIT_OBJECT_DIRECTORY:-$git_common_dir/objects}"
-	[ -n "$_odbdir" ] && [ -d "$_odbdir" ] || tg_use_alt_odb=
-	_fulltmpdir=
-	[ -z "$tg_use_alt_odb" ] || _fulltmpdir="$(cd "$tg_tmp_dir" && pwd -P)"
-	case "$_fulltmpdir" in *[";:"]*|'"'*) vcmp "$git_version" '>=' "2.11.1" || tg_use_alt_odb=; esac
 	_fullodbdir=
-	[ -z "$tg_use_alt_odb" ] || _fullodbdir="$(cd "$_odbdir" && pwd -P)"
-	if [ -n "$tg_use_alt_odb" ] && [ -n "$TG_OBJECT_DIRECTORY" ] && [ -d "$TG_OBJECT_DIRECTORY/info" ] &&
+	_odbdir="${GIT_OBJECT_DIRECTORY:-$git_common_dir/objects}"
+	[ -n "$_odbdir" ] && [ -d "$_odbdir" ] && _fullodbdir="$(cd "$_odbdir" && pwd -P)" ||
+		die "could not find objects directory"
+	if [ -n "$TG_OBJECT_DIRECTORY" ] && [ -d "$TG_OBJECT_DIRECTORY/info" ] &&
 	   [ -f "$TG_OBJECT_DIRECTORY/info/alternates" ] && [ -r "$TG_OBJECT_DIRECTORY/info/alternates" ]; then
 		if IFS= read -r _otherodbdir <"$TG_OBJECT_DIRECTORY/info/alternates" &&
 		   [ -n "$_otherodbdir" ] && [ "$_otherodbdir" = "$_fullodbdir" ]; then
 			tg_use_alt_odb=2
 		fi
 	fi
+	_fulltmpdir="$(cd "$tg_tmp_dir" && pwd -P)"
 	if [ "$tg_use_alt_odb" = "1" ]; then
 		# create an alternate objects database to keep the ephemeral objects in
 		mkdir -p "$tg_tmp_dir/objects/info"
-		echol "$_fullodbdir" >"$tg_tmp_dir/objects/info/alternates"
 		TG_OBJECT_DIRECTORY="$_fulltmpdir/objects"
+		[ "$_fullodbdir" = "$TG_OBJECT_DIRECTORY" ] ||
+		echol "$_fullodbdir" >"$tg_tmp_dir/objects/info/alternates"
+	fi
+	case "$_fulltmpdir" in *[";:"]*|'"'*) vcmp "$git_version" '>=' "2.11.1" || tg_use_alt_odb=; esac
+	if [ "$tg_use_alt_odb" = "1" ]; then
 		case "$TG_OBJECT_DIRECTORY" in
 			*[";:"]*|'"'*)
 				# surround in "..." and backslash-escape internal '"' and '\\'
@@ -2107,6 +2103,150 @@ noalt_setup()
 		fi
 	fi
 	unset_ TG_TMPDIR TG_OBJECT_DIRECTORY TG_PRESERVED_ALTERNATES tg_use_alt_odb
+}
+
+## Initial setup
+initial_setup()
+{
+	# suppress the merge log editor feature since git 1.7.10
+
+	GIT_MERGE_AUTOEDIT=no
+	export GIT_MERGE_AUTOEDIT
+
+	basic_setup $1
+	iowopt=
+	! vcmp "$git_version" '>=' "2.5" || iowopt="--ignore-other-worktrees"
+	gcfbopt=
+	! vcmp "$git_version" '>=' "2.6" || gcfbopt="--buffer"
+	auhopt=
+	! vcmp "$git_version" '>=' "2.9" || auhopt="--allow-unrelated-histories"
+	v_get_show_cdup root_dir
+	root_dir="${root_dir:-.}"
+	logrefupdates="$(git config --bool core.logallrefupdates 2>/dev/null)" || :
+	[ "$logrefupdates" = "true" ] || logrefupdates=
+
+	# make sure root_dir doesn't end with a trailing slash.
+
+	root_dir="${root_dir%/}"
+
+	# create global temporary and cache directories, usually inside GIT_DIR
+
+	tmpdir_setup
+	unset_ TG_TMPDIR
+	cachedir_setup
+
+	# the wayback machine directory serves as its own "altodb"
+	[ -n "$wayback" ] || altodb_setup
+}
+
+activate_wayback_machine()
+{
+	[ -n "${1#:}" ] || [ -n "$2" ] || { wayback=; return 0; }
+	setup_git_dirs
+	tmpdir_setup
+	altodb_setup
+	tgwbr=
+	tgwbr2=
+	if [ -n "${1#:}" ]; then
+		tgwbr="$(get_temp wbinfo)"
+		tgwbr2="${tgwbr}2"
+		tg revert --list --no-short "${1#:}" >"$tgwbr" && test -s "$tgwbr" || return 1
+		# tg revert will likely leave a revert-tag-only cache which is not what we want
+		remove_ref_cache
+	fi
+	cachedir_setup "" 1 # use a separate wayback cache dir
+	# but don't step on the normal one if the separate one could not be set up
+	case "$tg_cache_dir" in */wayback);;*) tg_cache_dir=; esac
+	altodb="$TG_OBJECT_DIRECTORY"
+	if [ -n "$3" ] && [ -n "$2" ]; then
+		[ -d "$3" ] || { mkdir -p "$3" && [ -d "$3" ]; } ||
+			die "could not create wayback directory: $3"
+		tg_wayback_dir="$(cd "$3" && pwd -P)" || die "could not get wayback directory full path"
+		[ -d "$tg_wayback_dir/.git" ] || { mkdir -p "$tg_wayback_dir/.git" && [ -d "$tg_wayback_dir/.git" ]; } ||
+			die "could not initialize wayback directory: $3"
+		is_empty_dir "$tg_wayback_dir" ".git" && is_empty_dir "$tg_wayback_dir/.git" "." ||
+			die "wayback directory is not empty: $3"
+		mkdir "$tg_wayback_dir/.git/objects"
+		mkdir "$tg_wayback_dir/.git/objects/info"
+		cat "$altodb/info/alternates" >"$tg_wayback_dir/.git/objects/info/alternates"
+	else
+		tg_wayback_dir="$tg_tmp_dir/wayback"
+		mkdir "$tg_wayback_dir"
+		mkdir "$tg_wayback_dir/.git"
+		ln -s "$altodb" "$tg_wayback_dir/.git/objects"
+	fi
+	mkdir "$tg_wayback_dir/.git/refs"
+	printf '0 Wayback Machine' >"$tg_wayback_dir/.git/gc.pid"
+	qpesc="$(printf '%s\n' "$git_common_dir" | sed -e 's/\([\\""]\)/\\\1/g' -e '$!s/$/\\n/' | tr -d '\n')"
+	laru="false"
+	[ -z "$2" ] || laru="true"
+	printf '%s' "\
+[include]
+	path = \"$qpesc/config\"
+[core]
+	bare = false
+	logAllRefUpdates = $laru
+	repositoryFormatVersion = 0
+[extensions]
+	preciousObjects = true
+[gc]
+	auto = 0
+	autoDetach = false
+	autoPackLimit = 0
+	packRefs = false
+[remote \"wayback\"]
+	url = \"$qpesc\"
+[push]
+	default = nothing
+	followTags = true
+[alias]
+	wayback-updates = fetch --force --no-tags --dry-run wayback refs/*:refs/*
+" >"$tg_wayback_dir/.git/config"
+	cat "$git_dir/HEAD" >"$tg_wayback_dir/.git/HEAD"
+	case "$1" in ":"?*);;*)
+		git show-ref >"$tg_wayback_dir/.git/packed-refs"
+		git --git-dir="$tg_wayback_dir/.git" pack-refs --all
+	esac
+	noalt_setup
+	TG_OBJECT_DIRECTORY="$altodb" && export TG_OBJECT_DIRECTORY
+	if [ -n "${1#:}" ]; then
+		<"$tgwbr" sed 's/^\([^ ][^ ]*\) \([^ ][^ ]*\)$/update \2 \1/' |
+		git --git-dir="$tg_wayback_dir/.git" update-ref -m "wayback to $1" ${2:+--create-reflog} --stdin
+	fi
+	if test -n "$2"; then
+		# extra setup for potential shell
+		qpesc2="$(printf '%s\n' "$git_common_dir" | sed -e 's/\([\\""]\)/\\\\\1/g' -e '$!s/$/\\n/' | tr -d '\n')"
+		printf '\twayback-repository = "!printf '\''%%s\\\\n'\'' \\"%s\\""\n' "$qpesc2" >>"$tg_wayback_dir/.git/config"
+		qtesc="$(printf '%s\n' "${1:-:}" | sed 's/\([""]\)/\\\1/g')"
+		printf '\twayback-tag = "!printf '\''%%s\\\\n'\'' \\"%s\\""\n' "$qtesc" >>"$tg_wayback_dir/.git/config"
+		if [ -d "$git_common_dir/rr-cache" ]; then
+			ln -s "$git_common_dir/rr-cache" "$tg_wayback_dir/.git/rr-cache"
+			printf "[rerere]\n\tenabled = true\n" >>"$tg_wayback_dir/.git/config"
+		fi
+		wbauth=
+		wbprnt=
+		if [ -n "${1#:}" ]; then
+			[ -n "$tgwbr2" ] || tgwbr2="$(get_temp wbtag)"
+			git --git-dir="$git_common_dir" cat-file tag "${1#:}" >"$tgwbr2" || return 1
+			wbprnt="${lf}parent $(git --git-dir="$git_common_dir" rev-parse --verify --quiet "${1#:}"^0 -- 2>/dev/null)" || wbprnt=
+			wbauth="$(<"$tgwbr2" awk '{if(!$0)exit;if($1=="tagger")print "author" substr($0,7)}')"
+		fi
+		wbcmtr="committer Wayback Machine <-> $(date "+%s %z")"
+		[ -n "$wbauth" ] || wbauth="author${wbcmtr#committer}"
+		wbtree="$(git --git-dir="$tg_wayback_dir/.git" mktree </dev/null)"
+		wbcmt="$({
+			printf '%s\n' "tree $wbtree$wbprnt" "$wbauth" "$wbcmtr" ""
+			if [ -n "$tgwbr2" ]; then
+				<"$tgwbr2" sed -e '1,/^$/d' -e '/^-----BEGIN/,$d' | git stripspace
+			else
+				echo "Wayback Machine"
+			fi
+		} | git --git-dir="$tg_wayback_dir/.git" hash-object -t commit -w --stdin)"
+		test -n "$wbcmt" || return 1
+		echo "$wbcmt" >"$tg_wayback_dir/.git/HEAD"
+	fi
+	cd "$tg_wayback_dir"
+	unset git_dir git_common_dir
 }
 
 set_topbases()
@@ -2319,6 +2459,7 @@ else
 	gitcdopt=
 	noremote=
 	forcepager=
+	wayback=
 
 	cmd=
 	while :; do case "$1" in
@@ -2416,6 +2557,21 @@ else
 			export GIT_CONFIG_PARAMETERS
 			shift;;
 
+		-w)
+			if [ -n "$wayback" ]; then
+				echo "Option -w may be used at most once." >&2
+				do_help
+				exit 1
+			fi
+			shift
+			if [ -z "$1" ]; then
+				echo "Option -w requires an argument." >&2
+				do_help
+				exit 1
+			fi
+			wayback="$1"
+			shift;;
+
 		--)
 			shift
 			break;;
@@ -2490,7 +2646,10 @@ else
 				exit $do_topbases_help
 			fi
 			git_dir=
-			! git_dir="$(git rev-parse --git-dir 2>&1)" || setup_git_dirs
+			if git_dir="$(git rev-parse --git-dir 2>&1)"; then
+				[ -z "$wayback" ] || activate_wayback_machine "$wayback"
+				setup_git_dirs
+			fi
 			set_topbases
 			if [ -n "$show_remote_topbases" ]; then
 				basic_setup_remote
@@ -2529,6 +2688,8 @@ else
 				TG_ALIAS_DEPTH="$looplevel"
 				export TG_ALIAS_DEPTH
 				if [ "!${tgalias#?}" = "$tgalias" ]; then
+					[ -z "$wayback" ] ||
+					die "-w is not allowed before an '!' alias command"
 					unset_ GIT_PREFIX
 					if pfx="$(git rev-parse --show-prefix 2>/dev/null)"; then
 						GIT_PREFIX="$pfx"
@@ -2537,7 +2698,7 @@ else
 					cd "./$(git rev-parse --show-cdup 2>/dev/null)"
 					exec @SHELL_PATH@ -c "${tgalias#?} \"\$@\"" @SHELL_PATH@ "$@"
 				else
-					eval 'exec "$tgbin"' "$tgalias" '"$@"'
+					eval 'exec "$tgbin"' "${wayback:+-w \"\$wayback\"}" "$tgalias" '"$@"'
 				fi
 				die "alias execution failed for: $tgalias"
 			}
@@ -2548,15 +2709,38 @@ else
 				showing_help=1
 			fi
 
-			[ -n "$showing_help" ] || initial_setup
-			[ -z "$noremote" ] || unset_ base_remote
-
 			nomergesetup="$showing_help"
-			case "$cmd" in base|contains|files|info|log|mail|next|patch|prev|rebase|revert|summary|tag)
+			case "$cmd" in base|contains|files|info|log|mail|next|patch|prev|rebase|revert|shell|summary|tag)
 				# avoid merge setup where not necessary
 
 				nomergesetup=1
 			esac
+
+			if [ -n "$wayback" ] && [ -z "$showing_help" ]; then
+				[ -n "$nomergesetup" ] ||
+				die "the wayback machine cannot be used with the \"$cmd\" subcommand"
+				if [ "$cmd" = "shell" ]; then
+					# this is ugly; `tg shell` should handle this but it's too
+					# late there so we have to do it here
+					wayback_dir=
+					case "$1" in
+						"--directory="?*)
+							wayback_dir="${1#--directory=}" && shift;;
+						"--directory=")
+							die "--directory requires an argument";;
+						"--directory")
+							[ $# -ge 2 ] || die "--directory requires an argument"
+							wayback_dir="$2" && shift 2;;
+					esac
+					activate_wayback_machine "$wayback" 1 "$wayback_dir"
+				else
+					activate_wayback_machine "$wayback"
+				fi ||
+				die "failed to set the wayback machine to target \"$wayback\""
+			fi
+
+			[ -n "$showing_help" ] || initial_setup
+			[ -z "$noremote" ] || unset_ base_remote
 
 			if [ -z "$nomergesetup" ]; then
 				# make sure merging the .top* files will always behave sanely
