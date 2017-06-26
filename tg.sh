@@ -2710,7 +2710,7 @@ else
 			fi
 
 			nomergesetup="$showing_help"
-			case "$cmd" in base|contains|files|info|log|mail|next|patch|prev|rebase|revert|shell|summary|tag)
+			case "$cmd" in base|contains|export|files|info|log|mail|next|patch|prev|rebase|revert|shell|summary|tag)
 				# avoid merge setup where not necessary
 
 				nomergesetup=1
