@@ -122,6 +122,7 @@ if [ "$driver" = "linearize" ]; then
 	setup_git_dir_is_bare
 	if [ -n "$git_dir_is_bare" ]; then
 		fatal 'export --linearize does not work on a bare repository...yet!'
+		fatal '(but you can use `tg -w : export --linearize` instead for now)'
 		ensure_work_tree
 	fi
 fi
@@ -407,6 +408,7 @@ linearize()
 
 ## Machinery
 
+wayback_push=
 if [ "$driver" = "collapse" ] || [ "$driver" = "linearize" ]; then
 	[ -n "$output" ] ||
 		die "no target branch specified"
@@ -419,6 +421,8 @@ if [ "$driver" = "collapse" ] || [ "$driver" = "linearize" ]; then
 	fi
 	ensure_ident_available
 	setup_smode
+	[ -z "$wayback" ] || wayback_push="$(git config --get remote.wayback.url 2>/dev/null)" || :
+	[ -z "$wayback" ] || [ -n "$wayback_push" ] || die "enable to configure wayback export"
 
 elif [ "$driver" = "quilt" ]; then
 	[ -n "$output" ] ||
@@ -477,6 +481,7 @@ if [ "$driver" = "collapse" ]; then
 	cmd='git update-ref "refs/heads/$output" "$(cat "$playground/$name^commit")"'
 	[ -n "$forceoutput" ] || cmd="$cmd \"\""
 	eval "$cmd"
+	[ -z "$wayback_push" ] || git -c "remote.wayback.url=$wayback_push" push -q ${forceoutput:+--force} wayback "refs/heads/$output:refs/heads/$output"
 
 	depcount=$(( $(cat "$playground/^ticker" | wc -l) ))
 	echo "Exported topic branch $name (total $depcount topics) to branch $output"
@@ -486,7 +491,8 @@ elif [ "$driver" = "quilt" ]; then
 	echo "Exported topic branch$pl $name (total $depcount topics) to directory $output"
 
 elif [ "$driver" = "linearize" ]; then
-	git checkout -q $iowopt $checkout_opt $output
+	git checkout -q --no-track $iowopt $checkout_opt $output
+	[ -z "$wayback_push" ] || git -c "remote.wayback.url=$wayback_push" push -q ${forceoutput:+--force} wayback "refs/heads/$output:refs/heads/$output"
 
 	echol "$name"
 	if test $(git rev-parse --verify "$(pretty_tree "$name")^{tree}" --) != $(git rev-parse --verify "HEAD^{tree}" --); then

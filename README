@@ -1709,6 +1709,11 @@ tg export
 	getting the order without consulting the series file, which
 	eases sending out the patches.
 
+	Note that ``tg export`` is fully compatible with the `wayback machine`_
+	and when used with the ``--collapse`` or ``--linearize`` options will
+	"push" the resulting branch back into the main repository when used in
+	wayback mode.
+
 	| TODO: Make stripping of non-essential headers configurable
 	| TODO: ``--mbox`` option to export instead as an mbox file
 	| TODO: support ``--all`` option in other modes of operation

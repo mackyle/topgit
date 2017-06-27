@@ -2223,27 +2223,29 @@ activate_wayback_machine()
 			ln -s "$git_common_dir/rr-cache" "$tg_wayback_dir/.git/rr-cache"
 			printf "[rerere]\n\tenabled = true\n" >>"$tg_wayback_dir/.git/config"
 		fi
-		wbauth=
-		wbprnt=
-		if [ -n "${1#:}" ]; then
-			[ -n "$tgwbr2" ] || tgwbr2="$(get_temp wbtag)"
-			git --git-dir="$git_common_dir" cat-file tag "${1#:}" >"$tgwbr2" || return 1
-			wbprnt="${lf}parent $(git --git-dir="$git_common_dir" rev-parse --verify --quiet "${1#:}"^0 -- 2>/dev/null)" || wbprnt=
-			wbauth="$(<"$tgwbr2" awk '{if(!$0)exit;if($1=="tagger")print "author" substr($0,7)}')"
-		fi
-		wbcmtr="committer Wayback Machine <-> $(date "+%s %z")"
-		[ -n "$wbauth" ] || wbauth="author${wbcmtr#committer}"
-		wbtree="$(git --git-dir="$tg_wayback_dir/.git" mktree </dev/null)"
-		wbcmt="$({
-			printf '%s\n' "tree $wbtree$wbprnt" "$wbauth" "$wbcmtr" ""
-			if [ -n "$tgwbr2" ]; then
-				<"$tgwbr2" sed -e '1,/^$/d' -e '/^-----BEGIN/,$d' | git stripspace
-			else
-				echo "Wayback Machine"
+		if [ z"$2" != z"2" ]; then
+			wbauth=
+			wbprnt=
+			if [ -n "${1#:}" ]; then
+				[ -n "$tgwbr2" ] || tgwbr2="$(get_temp wbtag)"
+				git --git-dir="$git_common_dir" cat-file tag "${1#:}" >"$tgwbr2" || return 1
+				wbprnt="${lf}parent $(git --git-dir="$git_common_dir" rev-parse --verify --quiet "${1#:}"^0 -- 2>/dev/null)" || wbprnt=
+				wbauth="$(<"$tgwbr2" awk '{if(!$0)exit;if($1=="tagger")print "author" substr($0,7)}')"
 			fi
-		} | git --git-dir="$tg_wayback_dir/.git" hash-object -t commit -w --stdin)"
-		test -n "$wbcmt" || return 1
-		echo "$wbcmt" >"$tg_wayback_dir/.git/HEAD"
+			wbcmtr="committer Wayback Machine <-> $(date "+%s %z")"
+			[ -n "$wbauth" ] || wbauth="author${wbcmtr#committer}"
+			wbtree="$(git --git-dir="$tg_wayback_dir/.git" mktree </dev/null)"
+			wbcmt="$({
+				printf '%s\n' "tree $wbtree$wbprnt" "$wbauth" "$wbcmtr" ""
+				if [ -n "$tgwbr2" ]; then
+					<"$tgwbr2" sed -e '1,/^$/d' -e '/^-----BEGIN/,$d' | git stripspace
+				else
+					echo "Wayback Machine"
+				fi
+			} | git --git-dir="$tg_wayback_dir/.git" hash-object -t commit -w --stdin)"
+			test -n "$wbcmt" || return 1
+			echo "$wbcmt" >"$tg_wayback_dir/.git/HEAD"
+		fi
 	fi
 	cd "$tg_wayback_dir"
 	unset git_dir git_common_dir
@@ -2734,7 +2736,10 @@ else
 					esac
 					activate_wayback_machine "$wayback" 1 "$wayback_dir"
 				else
-					activate_wayback_machine "$wayback"
+					_fullwb=
+					# export might drop out into a shell for conflict resolution
+					[ "$cmd" != "export" ] || _fullwb=2
+					activate_wayback_machine "$wayback" "$_fullwb"
 				fi ||
 				die "failed to set the wayback machine to target \"$wayback\""
 			fi
