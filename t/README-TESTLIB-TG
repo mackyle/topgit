@@ -159,7 +159,7 @@ TopGit Utility Functions
 - tg_test_create_branches [-C <dirpath>] [--notick]
 
     Read `tg_branch_create` instructions from standard input and then call
-    `tg_create_branch` for each set of instructions.
+    `tg_test_create_branch` for each set of instructions.
 
     Standard input must be a sequence of line groups each consisting of two or
     more non-empty lines where the groups are separated by a single blank line.
