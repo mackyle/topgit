@@ -1,0 +1,2009 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta charset="utf-8" />
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<title>TopGit-0.19.8 - Wayback to POSIX Proficiency</title>
+<style type="text/css">
+/* <![CDATA[ */
+
+/* Markdown.pl fancy style sheet
+** Copyright (C) 2017 Kyle J. McKay.
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions are met:
+**
+**   1. Redistributions of source code must retain the above copyright notice,
+**      this list of conditions and the following disclaimer.
+**
+**   2. Redistributions in binary form must reproduce the above copyright
+**      notice, this list of conditions and the following disclaimer in the
+**      documentation and/or other materials provided with the distribution.
+**
+**   3. Neither the name of the copyright holder nor the names of its
+**      contributors may be used to endorse or promote products derived from
+**      this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+** AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+** IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+** ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+** LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+** CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+** SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+** INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+** CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+** ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+** POSSIBILITY OF SUCH DAMAGE.
+*/
+
+div._markdown-code-bt > pre, div._markdown-code > pre {
+	margin: 0;
+	padding: 0;
+	overflow: auto;
+}
+
+div._markdown-code-bt > pre > code, div._markdown-code > pre > code {
+	display: inline-block;
+	margin: 0;
+	padding: 0.5em 0;
+	border-top: thin dotted;
+	border-bottom: thin dotted;
+}
+
+ol._markdown-ol {
+	counter-reset: _markdown-item;
+}
+ol._markdown-ol[start="0"] {
+	counter-reset: _markdown-item -1;
+}
+ol._markdown-ol[start="5"] {
+	counter-reset: _markdown-item 4;
+}
+ol._markdown-ol[start="10"] {
+	counter-reset: _markdown-item 9;
+}
+ol._markdown-ol > span._markdown-ol-incr {
+	counter-increment: _markdown-item;
+}
+ol._markdown-ol > span._markdown-ol-incr-2 {
+	counter-increment: _markdown-item 2;
+}
+ol._markdown-ol > span._markdown-ol-incr-5 {
+	counter-increment: _markdown-item 5;
+}
+ol._markdown-ol > span._markdown-ol-incr-10 {
+	counter-increment: _markdown-item 10;
+}
+ol._markdown-lc-greek, li._markdown-lc-greek {
+	list-style-type: lower-greek;
+}
+ol._markdown-ol > li {
+	counter-increment: _markdown-item;
+}
+ol._markdown-ol > li._markdown-li,
+ol._markdown-ol > li._markdown-li-lc,
+ol._markdown-ol > li._markdown-li-lc-greek,
+ol._markdown-ol > li._markdown-li-uc {
+	list-style-type: none;
+	display: block;
+}
+ol._markdown-ol > li._markdown-li:before,
+ol._markdown-ol > li._markdown-li-lc:before,
+ol._markdown-ol > li._markdown-li-lc-greek:before,
+ol._markdown-ol > li._markdown-li-uc:before {
+	position: absolute;
+	text-align: right;
+	white-space: nowrap;
+	margin-left: -9ex;
+	width: 9ex;
+}
+ol._markdown-ol > li._markdown-li[type="1"]:before {
+	content: counter(_markdown-item, decimal) ")\A0 \A0 ";
+}
+ol._markdown-ol > li._markdown-li-lc[type="i"]:before,
+ol._markdown-ol > li._markdown-li-lc[type="I"]:before {
+	content: counter(_markdown-item, lower-roman) ")\A0 \A0 ";
+}
+ol._markdown-ol > li._markdown-li-uc[type="I"]:before,
+ol._markdown-ol > li._markdown-li-uc[type="i"]:before {
+	content: counter(_markdown-item, upper-roman) ")\A0 \A0 ";
+}
+ol._markdown-ol > li._markdown-li-lc[type="a"]:before,
+ol._markdown-ol > li._markdown-li-lc[type="A"]:before {
+	content: counter(_markdown-item, lower-alpha) ")\A0 \A0 ";
+}
+ol._markdown-ol > li._markdown-li-lc-greek[type="a"]:before,
+ol._markdown-ol > li._markdown-li-lc-greek[type="A"]:before {
+	content: counter(_markdown-item, lower-greek) ")\A0 \A0 ";
+}
+ol._markdown-ol > li._markdown-li-uc[type="A"]:before,
+ol._markdown-ol > li._markdown-li-uc[type="a"]:before {
+	content: counter(_markdown-item, upper-alpha) ")\A0 \A0 ";
+}
+
+li._markdown-checkbox-on,
+li._markdown-checkbox-off {
+	list-style-type: none;
+	display: block;
+}
+li._markdown-checkbox-on > span:first-child + span + span,
+li._markdown-checkbox-off > span:first-child + span + span {
+	position: absolute;
+	clip: rect(0,0,0,0);
+}
+li._markdown-checkbox-on > span:first-child,
+li._markdown-checkbox-off > span:first-child,
+li._markdown-checkbox-on > span:first-child + span,
+li._markdown-checkbox-off > span:first-child + span {
+	display: block;
+	position: absolute;
+	margin-left: -3ex;
+	width: 1em;
+	height: 1em;
+}
+li._markdown-checkbox-on > span:first-child > span:first-child,
+li._markdown-checkbox-off > span:first-child > span:first-child {
+	display: block;
+	position: absolute;
+	left: 0.75pt; top: 0.75pt; right: 0.75pt; bottom: 0.75pt;
+}
+li._markdown-checkbox-on > span:first-child > span:first-child:before,
+li._markdown-checkbox-off > span:first-child > span:first-child:before {
+	display: inline-block;
+	position: relative;
+	right: 1pt;
+	width: 100%;
+	height: 100%;
+	border: 1pt solid;
+	content: "";
+}
+li._markdown-checkbox-on > span:first-child + span:before {
+	position: relative;
+	left: 2pt;
+	bottom: 1pt;
+	font-size: 125%;
+	line-height: 80%;
+	content: "\2713";
+}
+
+/* ]]> */
+</style>
+</head>
+<body style="text-align:center">
+<div style="display:inline-block;text-align:left;max-width:42pc">
+<!-- git-changelog-smudge.pl -\-smudge -\- ChangeLog -->
+
+<h1 id="_topgit-0_19_8_-_wayback_to_posix_proficiency_">TopGit-0.19.8 - Wayback to POSIX Proficiency</h1>
+
+<h2 id="_2017-06-27_">2017-06-27</h2>
+
+<p><em>Reminder</em></p>
+
+<blockquote>
+  <p>TopGit 0.19.4 (2017-02-14) introduced support for a new top-bases location
+     under heads.  This new location will become the default as of the TopGit
+     0.20.0 release.  The current location under refs will continue to be
+     supported in the future.  See <code>tg help migrate-bases</code> for more details.</p>
+</blockquote>
+
+<p>This release is primarily a bug fix and maintenance release.  A few extra
+options may have slipped in here and there.  The test suite has grown immensely
+which should help reduce future regressions.  One new feature did rear its head
+way back at the last minute though.</p>
+
+<h2 id="_posix_propaganda_">POSIX Propaganda</h2>
+
+<p>With this release TopGit should be fully POSIX compliant once it has been
+installed.  Installation and testing also require Perl, but as of this release
+even the test suite can be run with just POSIX + Perl.  (If you want to make
+the .html docs you will also need a .rst processor, but "shhhh" about that.)
+It even works with some awks (I'm looking at you "mawk{1}") that aren't
+actually fully POSIX compliant.</p>
+
+<h2 id="_maintenance_maintenance_maintenance_">Maintenance Maintenance Maintenance</h2>
+
+<p>A veritable plethora of fixes pervades this release.  There are now over 875
+individual tests in 33 files.  Some things that probably should have worked
+before (like <code>tg export --quilt --force</code> and <code>@</code> and <code>HEAD</code> being accepted as
+aliases for the current branch everywhere it makes sense) do now.</p>
+
+<p>Some more commands that should have worked in a read-only bare repository but
+didn't now do.</p>
+
+<p>There's more tolerance for "not-quite-POSIX" shells when running in what they
+claim to be is a "POSIX" mode but really isn't all that.  Before choosing one
+of them as TopGit's shell be sure to first run the test suite using that shell.
+Not to worry, both bash and dash (when running as <code>/bin/sh</code>) are fine.</p>
+
+<p>Bare branches (a TopGit branch with neither a .topmsg nor a .topdeps file) are
+officially tolerated.  They mostly worked before; they work better now.</p>
+
+<p>And speaking of <code>.topdeps</code> files, manually edited ones (naughty, naughty) that
+are not quite up to snuff should cause fewer problems now.</p>
+
+<p>An overall overhaul of <code>tg summary</code> resulted in a nice speed boost there
+(probably the last it's likely to get as its stone has been squeezed dry now).</p>
+
+<h2 id="_options_galore_">Options Galore</h2>
+
+<p>The <code>tg export --quilt</code> mode now understands how to <code>--force</code> outputting to a
+directory that already exists (and no longer commplains if the directory does
+exist but is empty).</p>
+
+<p>A new branch can be <code>tg create</code>d using <code>--no-update</code> to skip the final update
+when more than one dependency is listed.</p>
+
+<p>The <code>tg summary</code> command in list mode will include annihilated branches now
+if you ask nicely (<code>--list --verbose --verbose</code> or just <code>-vvl</code>) and <code>tg info</code>
+will even describe them properly too.</p>
+
+<p>But back to <code>tg export</code> and its two other <code>--collapse</code> and <code>--linearize</code> modes;
+It got a new <code>-s &lt;mode&gt;</code> option to specify how to handle subject lines
+primarily focused on removal of <code>[PATCH]</code> and similar tags.  Instead of blindly
+stripping everything off, the default now is to delicately remove only the
+first <code>[...]</code> tag and only if it's one of the four TopGit knows about (those
+would be "PATCH", "BASE", "ROOT" and "STAGE").  This should result in patches
+that are imported and then exported keeping their same subject line.  But there
+are five possible modes (including the previous "strip it all off") available
+in an attempt to make sure everybody gets happy.</p>
+
+<p>And last but not least there's one new global option...</p>
+
+<h2 id="_the_wayback_machine_">The Wayback Machine</h2>
+
+<p>A new feature slipped into this release at the last minute.  It comes with a
+new global <code>-w &lt;tgtag&gt;</code> option and a new <code>shell</code> subcommand.</p>
+
+<p>By specifying the name of a tag created using <code>tg tag</code> (or even automatically
+via the auto stash functionality), a TopGit command can be run in the context
+of the refs namespace recorded in that <code>tg tag</code>.  Either with all other refs
+present and unchanged or with all other refs pruned away.</p>
+
+<p>This functionality can be particularly useful in combination with <code>tg export</code>
+to easily produce copies of older versions of a patch set.</p>
+
+<p>The global <code>-w</code> option only permits use with read-only TopGit subcommands and
+the new <code>shell</code> subcommand.</p>
+
+<p>The new <code>tg shell</code> command will spawn a new copy of the shell (or execute a
+specific command) with the current working directory set to a temporary
+repository that shares the objects but has had its refs namespace altered to
+the specified wayback state.  When the shell is exited it's all cleaned up
+automatically, but there's even an option to place that "temporary" directory
+somewhere else so that it can persist and be reused.</p>
+
+<div class="_markdown-code-bt"><pre style="display:none"></pre><pre><code>Kyle J. McKay (188):
+      tg.sh: next version is 0.19.8
+      Makefile: add "target" target
+      Makefile.sh: add v_sort function
+      Makefile.sh: add v_filter and v_filter_out functions
+      Makefile: make sure $(MAKE) is passed to Makefile.sh
+      Makefile.mak: compute TG-BUILD-SETTINGS differently
+      Makefile.sh: support sub makes
+      t/Makefile: switch to gnomake system
+      t/Makefile.mak: improve DEFAULT_TEST_TARGET handling
+      Makefile: run $(MAKE) -f Makefile.mak using -e
+      tg-create.sh: add missing "&gt;/dev/null" to rev-parse test
+      tg-create.sh: allow "@" and "HEAD" as dep shortcuts
+      test-lib-tg: consistently use "tg_test" or "TG_TEST" prefix
+      Makefile.mak: work around broken sh behavior
+      Makefile.sh: make sure CONFIGMAK is always set
+      Makefile.mak: do not use non-POSIX make -C option
+      awk: make sure close function calls use parentheses
+      README: fix several typos
+      Makefile.sh: correct default location of hooksdir
+      hooks/pre-commit: make it work properly in test environment
+      README: add topgit.{cc,cc,to,subjectPrefix} links to vars section
+      README: minor tg-checkout doc updates
+      t/test-lib-main.sh: include $this_test in comments
+      README: add a "TESTING TOPGIT" section
+      t/Makefile.mak: introduce TESTLIB_MAKE_OPTS make variable
+      t/Makefile.mak: avoid bloat when making self
+      test-lib: bail quickly and with line number
+      test-lib: move BASH_XTRACEFD assignment into test_lib_main_init_specific
+      test-lib-main.sh: workaround broken bash
+      test-lib-main.sh: enable line numbers when using bash
+      test-lib-functions.sh: allow test_commit to skip the tag
+      t/README*: cleanup whitespace and typo errors
+      README-TESTLIB: improve test_tick documentation
+      test-lib: introduce TRASHTMP_DIRECTORY and test_get_temp
+      test-lib: make test_when_finished fully functional
+      Makefile.sh: add dependency lines for awk scripts
+      awk/ref_match.awk: minor optimizations and typo fixes
+      test-lib-functions.sh: initialize empty $test_tick
+      test-lib-functions.sh: test_commit: ignore more invalid tag names
+      test-lib: change default author and committer names
+      test-lib-functions-tg: tg_test_create_branches does it all
+      t8000: add tests for broken git mailinfo -b
+      hooks/pre-commit.sh: remove superfluous trailing ';'
+      all: unset ksh errors
+      test-lib.sh: correct typographical error in comment
+      all: unset and unalias zsh traps
+      tg.sh: update/add some comments
+      test-lib-functions: add wc wrapper
+      tests: renumber t0001 and t0002
+      test-lib-main: bless use of $color for debug output
+      test-lib: improve test_cmp_rev utility function
+      test-lib: introduce test_clear_when_finished
+      t/t0003-testlib-git.sh: add tests for git utility functions
+      awk/ref_match.awk: minor optimizations
+      testlib: allow "test_plan'?'"
+      t2000: test hook and merge setup happens
+      testlib: add an example for test_pause
+      testlib-tg: add tg_test_setup_topgit function
+      t2020: test bare mode hook restrictions
+      t2010: basic hook sanity checking tests
+      t2030: test hook sequestration
+      t0001: add test for broken awk implementation
+      t0001: test for awk pattern {m[,[n]]} support
+      awk: don't mock mawk
+      gnomake.sh: move Makefile.sh utility functions to separate file
+      tg.sh: add internal command --awk-path
+      ref_match.awk: add dupesok knob
+      ref_match.awk: correctly match multiple patterns
+      t1300: test ref_match.awk functionality
+      t0001: add POSIX awk ENVIRON and POSIX tr NUL tests
+      Makefile: always clear .SUFFIXES before setting it
+      test-lib-functions.sh: make test_expect_code work with set -e
+      t1310: test ref_prefixes.awk functionality
+      tg.sh: add fatal function
+      pre-commit.sh: complain about everything
+      tg: refactor remote top-bases sniff out code
+      t2020: include more commands in setup checks
+      tg.sh: allow --top-bases to work for remotes
+      tg: document and tolerate "bare branches"
+      tg-info.sh: support --dependencies for the pedantically challenged
+      README: add missing verbiage to correct grammatical error
+      tg.sh: do not do hook or merge setup in a bare repository
+      tg: call ensure_work_tree where needed
+      test-lib-functions.sh: add test_diff that uses git diff --no-index
+      tg: find added lines missing final \n
+      .topdeps: tolerate missing \n on last line
+      tg-export.sh: minor correction and efficiency
+      tg-create.sh: fix code typo
+      aggregate-results.sh: purge expr and show all failures
+      tg-export: understand more ranges and purge expr
+      ref_prepare.awk: improve default headbase for multi-level remotes
+      ref_prepare.awk: remove refs file on request even if not read
+      tg-create: require format.signoff for active sob line
+      tg-info.sh: show a message when the remote base is missing
+      testlib: pimp out test_plan
+      gnomake: suppress unwanted gratuitous "Entering directory ..." lines
+      ChangeLog: start one
+      t0001: add export unset works test
+      tg.sh: make sure GIT_OBJECT_DIRECTORY is never set to ""
+      testlib: quiet verbose only sanity
+      tg-create.sh: turn template &lt;patch description&gt; into comment
+      tg.sh: implement full GIT_ALTERNATE_OBJECT_DIRECTORIES quoting rule
+      Makefile.mak: create a tgx bin-wrapper
+      testlib: make --run implicitly activate --quiet without --no-quiet
+      t1080: add miscellaneous tg.sh tests
+      tg-create.sh: with --no-deps (aka --base) allow any committish
+      help: improve formatting of plain text and fix typo
+      t2100: test tg create branch creation
+      t2100: add some --no-commit tests
+      tg-create: support new --no-update option
+      tg-create.sh: strip leading spaces off --topmsg argument
+      tg-create: align -n with Git and improve --no-edit
+      t2110: test tg create --topmsg, --no-edit and friends
+      tg-update.sh: improve --base message handling
+      testlib: allow die function to accept a message
+      t5000: add tg update --base tests
+      tg.sh: make sure tg_tmp_dir is not a frankenpath
+      testlib: suppress superfluous messages from rm
+      tg: always pass the correct empty blob to awk
+      ref_prepare.awk: support arbitrary blob checking
+      tg.sh: add support for --make-empty-blob
+      test-lib-functions-tg: tg_test_create_branches really does do it all
+      topgit_{deps,msg}_prepare.awk: provide missing blob action
+      Makefile.mak: help tg wrapper find itself
+      tg--awksome.sh: create empty blob on demand
+      tg: bare more functionality
+      t4000: add bare branch sanity checks
+      t/Makefile.mak: suppress superfluous messages from rm
+      testlib: improve test target handling
+      testlib: quick reference and other doc updates
+      tg-summary.sh: always show all with no options or arguments
+      topgit_recurse.awk: include excess visit counts
+      tg-summary: append ^ to rdeps-once branches with elided deps
+      tg-summary: show annihilated with -v -v -l
+      tg-summary: introduce --with-related option
+      t4100: add several summary tests
+      tg-summary: use run_awk_topgit_msg for all messages
+      tg-summary: the last of the great speed-ups
+      tg.sh: use correct remote branch list for recurse_deps_internal
+      tg: provide global --pager (-p) option
+      tg.sh: make needs_update return 1 for out-of-date remote
+      tg.sh: enhance needs_update_check to check branch itself
+      testlib: improve test_merge utility function
+      helper/needs_update_check.sh: allow test scripts access
+      tg.sh: improve needs_update_check remote base handling
+      t4200: test the out-of-date checking code
+      topgit_deps.awk: scrutinize incoming branch names
+      tg: disambiguate refs/heads/refs/remotes/&lt;name&gt;/&lt;branch&gt;
+      tg-export.sh: construct playground before trying to use it
+      tg-export.sh: contravene collapse collisions
+      tests: require proper POSIX tr NUL behavior
+      tg-summary.sh: allow -v and -l options to bundle
+      t8200: test export subject stripping behaviors
+      test-lib-main.sh: compute TRASH_DIRECTORY differently
+      tg: avoid bogus missing status for solitary branches
+      topgit_msg.awk: allow extracting multiple headers
+      topgit_msg.awk: mostly avoid outputting blank lines
+      tg-info.sh: switch to nicer subject formatting
+      tg-export.sh: support --quilt --force and tidy up usage
+      create-html-usage.pl: unwrap multi-line usage lines
+      help: polish up the plain text help a bit
+      testlib: support TESTLIB_TEST_TAP_ONLY for sanity
+      testlib: warn if there's no TG-TEST-SETTINGS file
+      make: remake TG-BUILD-SETTINGS and TG-TEST-SETTINGS on config mods
+      tg-export: add subject [...] handling modes
+      tg--awksome.sh: make run_awk_topmsg_header see the truth
+      tg-revert.sh: correct missing reftype in damaged tag message
+      tg.sh: make sure noalt_setup takes effect when it should
+      t4100: shake up one of the .topmsg subjects a bit
+      hooks/pre-commit: stop using cat_file -i
+      tg--awksome.sh: -tm= for topmsg_header and correct comments
+      tg-info.sh: make full use of run_awk_topmsg_header
+      tg: add missing --tgish-only argument
+      tg-summary.sh: overhaul it all
+      tg.sh: fully enable caching as designed
+      tg-revert.sh: minor optimizations
+      tg.sh: add is_empty_dir function
+      tg-export.sh: allow --quilt export to pre-existing empty dir
+      topgit_msg: expose bare branches
+      testlib-tg: add tg_test_create_tag utility function
+      test-lib-main.sh: promote test_done messages to TAP status
+      tg: add wayback machine
+      topgit.html: clean up the generated XHTML
+      tg export: no need for merge or hook setup
+      README-TESTLIB-TG: fix typo
+      tg-export: wayback to older patch sets
+      ChangeLog: topgit-0.19.8 release
+      t8400: export tests for all three modes with remotes
+</code></pre></div>
+
+<h1 id="_topgit-0_19_7_-_awesome_acceleration_">TopGit-0.19.7 - Awesome Acceleration</h1>
+
+<h2 id="_2017-04-06_">2017-04-06</h2>
+
+<h2 id="_awking_awesome_acceleration__">Awking Awesome Acceleration!</h2>
+
+<p>It was supposed to be such a quick and simple update, surely it
+would be done in no time at all.  And then it started growing...</p>
+
+<p><strong>THE BIG AWKING CHANGE</strong></p>
+
+<p>By moving the .topdeps traversal code into awk (strictly POSIX awk), everything
+has become stupendously faster.  For example "tg summary --verbose --list" is
+now nearly instant ("--verbose" is new and includes the subjects in the list).</p>
+
+<p>The sole remaining bottlenecks are the git commands; generally checking for
+some kind of branch containment (similar to "git branch --contains") or
+performing actual merge operations themselves.</p>
+
+<p>The results of branch containment checks continue to be cached and auto-updated
+on an as-needed bases, but now with index-only merging support there's likely
+little, if any, more water left to be squeezed out of the performance stone.</p>
+
+<p><strong>NEW COMMAND</strong></p>
+
+<p>"tg contains" (the original driver for this set of updates) shows what
+TopGit branch a commit logically belongs to.   For example, after finding
+something with "git log -S", passing the result to "tg contains" will show
+which TopGit branch (if any) that commit logically belongs to (and where
+any "fix" should therefore end up).</p>
+
+<p><strong>POSIX MAKE INSTALLS</strong></p>
+
+<p>While the tests still require gnumake, the build and installation now require
+only a POSIX compatible make (and POSIX compatible utilities).</p>
+
+<p><strong>UNIFIED "NEXT" AND "PREV" MEANINGS</strong></p>
+
+<ul>
+<li><p>The "tg prev" and "tg next" commands now show you exactly where the
+corresponding "tg checkout next" and "tg checkout prev" will take you.</p></li>
+<li><p>"tg info" understands new "--deps" and "--dependents" options if that's
+what was really wanted in the first place.</p></li>
+<li><p>A new "NAVIGATION" section has been added to the documentation with
+copious explanations and pictures explaining exactly what "next" and
+"prev" really are, where the alternate "push", "pop", "child" and "parent"
+terms come from and how to see the full patch series list or check it
+out using "tg info --series" or "tg checkout --series" (yup those are
+new too).</p></li>
+<li><p>Along with this overhaul, "tg checkout", "tg next" and "tg prev" got
+a few new options.  And, notabley, "tg checkout n" and "tg checkout p"
+are shortcuts for "tg checkout next" and "tg checkout prev" respectively
+(to use something else just employ the new "topgit.alias.*" functionality).</p></li>
+</ul>
+
+<p><strong>OTHER UPDATES</strong></p>
+
+<p>Not necessarily a comprehensive list here, but these are notable.</p>
+
+<ul>
+<li><p>Fixed a 0.19.6 bug when "tg update" was returning to a detached HEAD
+(If you never ran "tg update" with a detached HEAD you'd not see the bug)</p></li>
+<li><p>Using TopGit with "git worktree add" repositories should work better now</p></li>
+<li><p>"topgit.alias.<em>" now works for "tg" like "alias.</em>" works for "git"</p></li>
+<li><p>"tg summary" has a new column showing "needs merge" branches
+(these are the ones with changes that are causing others to be out-of-date)</p></li>
+<li><p>Both "tg create" and "tg update" now take a "--base" option (aka --no-deps
+for "tg create"), to simplify "[BASE]" TopGit branch setup and maintenance</p></li>
+<li><p>"tg update" now automatically just keeps going and going if "rerere.enabled"
+is true and "rerere" was able to resolve all merge conflicts</p></li>
+<li><p>tg checkout will pass along --ignore-other-worktrees (aka --iow), --force
+(aka -f), --quiet (aka -q) and/or --merge (aka -m) to git checkout now</p></li>
+<li><p>The "--heads" option now works as originally intended in various places</p></li>
+<li><p>"tg patch" can add a missing "From:" header to its output patch with --from
+("git am" really, really, really doesn't like patches without "From:" lines)</p></li>
+<li><p>"tg" can now be used on read-only repositories!  The temporary trees some
+operations need now end up in an "alternate" object store that's removed
+when the command completes and while this temporary location is inside
+TopGit's temporary directory, that now auto-relocates elsewhere if the
+repository is read-only.  Obviously, "tg" commands that make changes still
+won't work on a read-only repository.  :)</p></li>
+<li><p>The ".topfiles" (i.e. .topdeps and .topmsg) are now kept out of the bases
+when merging updates from dependencies into the base.  They are not
+logically part of the base and this keeps the bases cleaner.  "tg create"
+now also makes sure the initial base has no ".topdeps" or ".topmsg" either
+which nicely cleans up the ugly diffs of one TopGit branch's .topfiles
+against another's in "git log -p" output.</p></li>
+<li><p>Merging remote branch updates into the local branch no longer quietly
+discards .topmsg and/or .topdeps changes from the remote branch version
+(previously they might have been picked up or might have been discarded)</p></li>
+<li><p>"tg log" now supports "--compact" and "--command=&lt;cmd>" to use something
+other than plain "log" to show the log</p></li>
+<li><p>A new "--no-pager" global option for all "tg" commands works like Git's</p></li>
+<li><p>"tg tag" allows the first parent of a consolidation commit (if needed) to be
+explicitly selected</p></li>
+</ul>
+
+<div class="_markdown-code-bt"><pre style="display:none"></pre><pre><code>Kyle J. McKay (116):
+      tg.sh: next version is 0.19.7
+      tg.sh: st[atus] --help
+      Makefile: support V=1
+      test-lib-main.sh: when $HARNESS_ACTIVE use exit 0
+      tg status: show upstream info and implement verbose
+      tg.sh: verify_topgit_branch correctly for 'HEAD' on checked out base
+      tg: improve multiple worktree support
+      tg status: behave reasonably in a bare repository
+      tests: support building and using helpers
+      tests: add recurse_deps_internal helper
+      tg.sh: add v_verify_topgit_branch function
+      tg-checkout.sh: pass along a --force option to git checkout
+      summary/revert: make --heads DWIM and add alternative
+      tg-info.sh: make --heads work as intended
+      t/helper/branch_needs_update.sh: needs_update testing helper
+      tg-contains.sh: new command to show containing TopGit branch(es)
+      tg-contains.sh: be cognizant of annihilated branches
+      tg-info.sh: show dependents with --verbose
+      tg-summary.sh: include new '*' "needs merge" column
+      tg.sh: allow --top-bases to work outside a git dir
+      tg.sh: add topgit.alias.* support
+      tg-migrate-bases.sh: handle HEAD symrefs
+      helpers: make -u option actually work and fix a usage typo
+      test-lib-functions-tg.sh: introduce TopGit-specific test functions library
+      testlib: add TEST_HELPER_DIRECTORY and some doc updates
+      tg.sh: recurse_deps provide _dep_has_remote and early termination
+      tg: avoid tree turds
+      tg.sh: fallback to tmp dir outside .git
+      tg.sh: quote problem alternate directory paths
+      tg: avoid "not a valid object name" messages
+      tg.sh: allow pretty_tree to accept any treeish ref
+      tg-create.sh: create bases without .top* files
+      tg-update.sh: after simple merge failure keep simple merges disabled
+      tg-update.sh: improve .topdeps and .topmsg merge handling
+      tg--index-merge-one-file.sh: be more or less --aggressive
+      tg: refactor diff added lines extractor
+      tg-update: automatically set up newly picked up remote deps
+      tg-update.sh: repeat update when new dependencies picked up
+      tg-update.sh: warn when a new non-existing dependency gets merged
+      pre-commit.sh: limit hook's auto_create_local_remote activity
+      Replace "tg-migrate-bases.sh: handle HEAD symrefs"
+      tg-create.sh: use --base to create a [BASE] branch
+      tg-update.sh: introduce --base mode
+      tg-log.sh: omit --no-merges option for [BASE] branches
+      tg-log.sh: support --compact and --command=&lt;name&gt; options
+      Makefile: expand @AWK_PATH@ and @SHELL_PATH@ everywhere
+      tg: the great LC_ALL=C out
+      tg-create.sh: make "@" work properly as alias for HEAD
+      tg: consolidate contained_by
+      tg.sh: fix tg update --abort and clarify --stop
+      tg: support --exec-path option
+      t1200: add tests for index-merge-one-file merge-index helper
+      tg: support $tgdisplayac for --abort/--continue display
+      tg: replace $tg with tg() and export TG_EXPLICIT_REMOTE
+      tg-update.sh: behave when --stop|--skip|--continue used out of update
+      tg.sh: avoid multiple rev-parse --show-cdup calls
+      tg-update.sh: give progress messages some structure
+      tg: add missing --no-pager option
+      tg.sh: include bad ref in ref_exists_rev failure message
+      tg.sh: avoid schizophrenic caching
+      tg.sh: use --no-deref when returning to a detached HEAD
+      tg.sh: make checkout_symref_full -f really -f
+      tg-update.sh: remove special case and allow auto rerere continue
+      tg-update.sh: --aggressive optimizations
+      tg.sh: add ensure_clean_topfiles
+      tg-create.sh: make sure creation does not lose .topdeps or .topmsg
+      tg-create.sh: prevent existing "clean" .topfiles from aborting creation
+      tg-create.sh: word creation using "base" not "$topbases/"
+      tg.sh: minor branch_needs_update efficiency
+      Awking Awesome Acceleration!
+      tg.sh: awksome accelerate recurse_deps_internal
+      tg.sh: awksome accelerate non_annihilated_branches
+      tg: add navigate_deps function and helper
+      tg-summary.sh: awksome accelerate --heads
+      tg.sh: preload .ref cache
+      tg-info.sh: awksome accelerate --heads
+      tg.sh: accelerate find_leaves a bit
+      tg-summary.sh: miscellaneous small improvements
+      tg-summary.sh: awksome accelerate --list --verbosely
+      tg.sh: allow recurse_deps to pass options into run_awk_topgit_recurse
+      tg-summary.sh: support --rdeps-once and --rdeps-full
+      tg.sh: I hate bash bugs
+      tg-patch.sh: get all awked up on --from
+      tg-info.sh: introduce --series[=&lt;head&gt;] option
+      tg-tag.sh: allow choosing a consolidation commit's first parent
+      README: add an explicit TopGit alias example
+      tg-checkout: push previous parent child terms aside to make next pop
+      tg.sh: support global --no-pager option
+      tg: awksome accelerate top-bases computation
+      tg: awksome accelerate list_deps by banishing it
+      tg-export.sh: use $_dep_annihilated not branch_annihilated function
+      tg-checkout: awking awesome --series of overhauls
+      tg-annihilate.sh: do not use `tg prev` or `tg next`
+      tg-info.sh: support --deps and --dependents options
+      tg: previous to next overhaul
+      tg-update.sh: automatically set rerere.autoUpdate by default
+      tg-info.sh: with --series=&lt;name&gt; HEAD may be detached
+      t/Makefile: provide GNU make required hint
+      t/Makefile: clean TG-TEST-SETTINGS too
+      t/Makefile: nicety for test target aggregation when no results
+      t/Makefile: compute TG-TEST-SETTINGS differently
+      Makefile: switch to gnomake system
+      Makefile: add dependencies
+      t/helper/recurse_deps_internal: more correctly parse args
+      tg: provide some debugging help with TG_DEBUG
+      topgit: fully qualify more refs
+      tg: alternatively not so much leaking
+      tg-checkout.sh: pass on -q and -m to git
+      tg-annihilate.sh: autostash and support --stash and --no-stash
+      tg-delete.sh: autostash and support --stash and --no-stash
+      tg-annihilate.sh: allow a name to be specified
+      tg-update.sh: watch out for sneaky blobs
+      tg-update.sh: word merge messages using "base" not "$topbases/"
+      README: update to match current tg create behavior
+      tg.sh: allow recursive tg invocations to reuse temporary dir
+      tg.sh: create the ref cache dir hierarchy more efficiently
+</code></pre></div>
+
+<h1 id="_topgit-0_19_6_">TopGit-0.19.6</h1>
+
+<h2 id="_2017-03-05_">2017-03-05</h2>
+
+<p>Small bug fix release</p>
+
+<ul>
+<li><p>When an octopus merge fails suppress simple merges for all of
+the affected heads not just the failing ones because if one of them
+needs to use a recursive merge to be successful then the rest need
+to also use that logic to avoid unexpected merge results.</p></li>
+<li><p>The pre-loaded commit message when using tg create with multiple
+dependencies now survives the base merge again (regression fix)
+and the pre-loaded message is now suppressed for all but '[PATCH]'
+TopGit branches.</p></li>
+<li><p>The tg update process can now return to any non-unborn HEAD.</p></li>
+<li><p>The tg patch output will now survive passing through diff-highlight
+without being corrupted (workaround for diff-highlight bug).</p></li>
+<li><p>If tg create would fail when it goes to checkout the first dependency
+then it will now fail right away before prompting for any messages.</p></li>
+<li><p>Special characters (including spaces) in the repository's path no longer
+cause problems with the TopGit cache (mostly a regression fix).</p></li>
+<li><p>Some more tests have been added as well as minor testing framework
+improvements.</p></li>
+<li><p>The TopGit-specific index-only merge strategies are now described in
+full in the README file (accessible via <code>tg help tg</code> or <code>tg help -w tg</code>).</p></li>
+</ul>
+
+<p>Kyle J. McKay (19):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  tg.sh: next version is 0.19.6
+  tg-create.sh: preserve pre-loaded message during update
+  t: remove "tg-" from test file names
+  README: add merge strategy information
+  tg-update.sh: suppress "automatic" merges on failed octopus
+  tg-update.sh: allow detached return
+  tg-create.sh: only preload "[PATCH]" commit msgs
+  tg-patch.sh: add blank line before footer
+  tg-create.sh: abort early if initial checkout would fail
+  rename: t1001 -&gt; t1000
+  tg.sh: avoid problems with special chars in repo path
+  tg.sh: refactor switch_to_base into checkout_symref_full
+  tg.sh: allow checkout_symref_full to accept a hash
+  tg-update.sh: allow returning to arbitrary HEADs
+  t1100: test tg migrate-bases command
+  test-lib.sh: make sure exported variables get cached
+  test-lib*.sh: set GIT_CEILING_DIRECTORIES
+  t0000: verify that git rev-parse --git-dir fails
+  t*.sh: remove GIT_CEILING_DIRECTORIES settings
+</code></pre></div>
+
+<h1 id="_topgit-0_19_5_">TopGit-0.19.5</h1>
+
+<h2 id="_2017-02-15_">2017-02-15</h2>
+
+<p>Small bug fix and update release</p>
+
+<p>The <code>git rev-parse --git-common-dir</code> command is broken when run in
+a subdirectory of the top level of a normal Git checkout.  This is
+now worked around by cd'ing to the top level before using it.</p>
+
+<p>The tg base command now understands the standard <code>--short</code>,
+<code>--short=n</code> and <code>--no-short</code> options to control the number of hash
+digits shown.</p>
+
+<p>The subcommand <code>-h</code> or <code>--help</code> options can now be used outside of
+a Git repository.</p>
+
+<p>An initial batch of tests has been added that cover the common global
+tg options and setup (and the broken rev-parse --git-common-dir issue).</p>
+
+<p>Kyle J. McKay (17):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  tg.sh: next version is 0.19.5
+  README: fix typo
+  tg-base.sh: understand --short[=n] and --no-short options
+  tg-create.sh: remove mention of --continue
+  tg.sh: work around broken git rev-parse --git-common-dir
+  tg.sh: allow -h or --help subcommands to work w/o repository
+  t/README: establish test numbering conventions
+  t1001: add basic option tests
+  tg.sh: prevent the `tg base` command from causing merge setup to happen
+  test-lib-main.sh: avoid chmod ""
+  t1010: test that help works anywhere
+  test-lib-functions.sh: make test_create_repo use --quiet
+  t1020: test proper tg --top-bases operation
+  t1030: test tg -C option used multiple times
+  t1040: test proper operation of -r and -u options
+  t1050: test tg status output
+  t1060: test mergesetup configuration and broken --git-common-dir
+</code></pre></div>
+
+<h1 id="_topgit-0_19_4_-_octopuses_">TopGit-0.19.4 - Octopuses</h1>
+
+<h2 id="_2017-02-14_">2017-02-14</h2>
+
+<h2 id="_there_be_octopuses_here__">There be octopuses here!</h2>
+
+<p>tg update now prefers to perform index-only merges where possible
+and will now make octopus merges when only simple in-index merge
+resolution can be accomplished.  It now also uses a --continue
+mechanism rather than the prior subshell mechanism for conflict
+resolution and supports multiple explicit branch names without the
+<code>-a</code> option.</p>
+
+<p>The tg annihilate, tg create and tg depend add (which now allows
+multiple dependencies to be added at once) all run <code>tg update</code>
+under the hood as the final step so they too can end up creating
+an octopus merge.</p>
+
+<p>A new <code>tg status</code> command has been added to show the current state
+of any pending tg operation that's awaiting user action (along
+with a helpful list of the correct commands to use to
+continue/abort the action).</p>
+
+<h2 id="_just_a_few_tiny_updates_">Just a few tiny updates</h2>
+
+<p>Other than already mentioned in the above section, the <code>tg tag</code>
+command has a new <code>--tree</code> option to force a particular tree to be
+used in the tag.</p>
+
+<p>The <code>tg revert</code> command now understands the standard <code>--short=n</code>,
+<code>--no-short</code> and <code>--short</code> options when showing the contents of a
+TopGit tag as well as the new <code>--hash</code> option to only show the
+hash (lets it work similarly to the <code>git rev-parse --verify</code>
+command to extract hashes from a TopGit tag).</p>
+
+<p>The <code>tg revert</code> command will now accept a bare hash value when
+reverting if it's the hash of a TopGit tag.</p>
+
+<p>The <code>tg summary</code> command has a convenient <code>--heads-only</code> option
+that limits the output to independent heads only.</p>
+
+<p>The <code>tg info</code> command has a new <code>--leaves</code> option to show the
+leaves of the TopGit portion of the graph which is extremely
+helpful when determining what the correct commit to rebase onto
+should be when creating a linearized patch output (it should be
+the single line output by <code>tg info --leaves</code> -- bad news if more
+than one line comes out).</p>
+
+<p>Like Git, TopGit will now accept <code>@</code> for <code>HEAD</code>.</p>
+
+<h2 id="_correctness_cleanup_git_accomodations_and_minor_bug_fixes_">Correctness, cleanup, git accomodations and minor bug fixes</h2>
+
+<p>Some sh-is-bash bugs have been accomodated, the <code>-r</code> option should
+now really be usable with <code>tg create</code> (it's now properly parsed),
+any branch names passed to <code>tg update</code> using the <code>-a</code> option
+should now be honored again (broken since 0.18.0), multiple <code>-b</code>
+options to the <code>tg export --quilt</code> command now work, the <code>tg
+revert</code> command will now detach your HEAD if it modifies the ref a
+symbolic-ref HEAD points to, the topgit.autostash boolean now
+defaults to true if not set -- it will save your butt so better
+it's on by default and a few Git idiosyncracies are now better
+accomodated (early detection of no valid ident and supplying
+--allow-unrelated-histories to git merge for v2.9.0+, multiple
+work trees since v2.5.0, core.hooksPath since v2.9.0).</p>
+
+<p>Git version 1.8.5 or later is now required.  It has actually been
+required since 0.19.0 but was not being checked for.  The reason
+is the use of the cat-file --batch-check command and its new
+<code>%(rest)</code> format -- there really isn't any good alternative for it
+and Git 1.8.5 was released over three years ago at this point (and
+Git versions prior to 2.4.11 have known security issues and really
+should be avoided anyhow).</p>
+
+<p>With this release, hopefully all ref ambiguity and quoting issues
+have been resolved and any valid Git branch name should now be
+useable as a TopGit branch name.</p>
+
+<h2 id="_new_top-bases_location_">New Top-Bases Location</h2>
+
+<p>TopGit now allows the top-bases refs to be stored under refs/heads
+(as they are really branches) rather than bare refs/.  The new
+<code>tg migrate-bases</code> command (and associated help) talk about this
+and there's a new preference <code>topgit.top-bases</code> (can be set to
+"refs" or "heads" or left unset for auto) and new <code>tg --top-bases</code>
+option to show the value for the current repository.</p>
+
+<p>The default is still to store the top-bases in the same refs/
+location as always but starting with release 0.20.0 the default
+will change to the new location.  All commands should now,
+howevver, accomodate either location (but you cannot mix and
+match, it's one or the other) automatically detecting whatever is
+in use in the repository by default.</p>
+
+<h2 id="_testing_framework_">Testing Framework</h2>
+
+<p>There is a new testing framework (adopted from Git but modified)
+now present in the "t/" subdirectory.  Currently it only tests the
+testing framework but more tests will be added in the future.</p>
+
+<p>Kyle J. McKay (128):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  tg.sh: next version is 0.19.4
+  hooks/pre-commit.sh: run grep with LC_ALL=C
+  tg-create.sh: fix parsing of -r branch option
+  tg.sh: update version comparison code
+  tg-create: add some --quiet options
+  tg.sh: require Git 1.8.5 or later
+  tg-annihilate: minor optimization and cleanup
+  bashbug: workaround bash bug set -e exit failure
+  tg-rebase.sh: correct more "git rebase" messages
+  tg-rebase.sh: stop the --auto-continue if no progress
+  tg: better accomodate user.useConfigOnly=true
+  tg: avoid echo option misinterpretation
+  tg: supply --allow-unrelated-histories option to git merge
+  tg-annihilate: delay all updates until the end
+  tg-patch: do not show "depends on:" if the list is empty
+  tg.sh: add make_empty_commit function
+  tg-revert.sh: detach HEAD before reverting its symref
+  tg.sh: restore non_annihilated_branches support for args
+  tg-tag.sh: add --shell to git for-each-ref and eval
+  tg: replace top-bases with "$topbases" and avoid unquoted refs
+  tg: remove unnecessary trailing '\' line continuation characters
+  tg: replace `...` with $(...)
+  tg.sh: remove wc_l function
+  tg-update.sh: default topgit.autostash to true
+  tg-export.sh: validate and accept multiple -b options
+  tg-delete.sh: make a -f -f HEAD detach nicer
+  tg: add bin-wrappers/tg to run uninstalled tg
+  tg: add testing framework
+  Makefile: switch from TG-PREFIX to TG-BUILD-SETTINGS
+  testlib: provide config settings to tests and use them
+  testlib: make test-lib-functions.sh pure functions
+  test-lib.sh: move to test-lib-main.sh
+  testlib: make test-lib-main.sh pure functions
+  test-lib-main.sh: split initialization into generic and specific
+  test-lib-main.sh: minor efficiencies
+  testlib: cache generic test setup for multiple test runs
+  test-lib-main.sh: do not run any tput commands with --no-color
+  test-lib-functions.sh: use '%s\n' instead of "%s\n"
+  test-lib-{main,functions}.sh: eliminate use of expr
+  t/Makefile: make test target work as well as prove
+  test-lib-functions.sh: replace egrep with grep -E
+  tg.sh: use command -v instead of which
+  testlib: show failing filename and line number on failures
+  testlib: move tee and special func defs into functions
+  testlib: improve lazy prereq cache eval
+  testlib: alter color handling
+  test-lib-main.sh: use say_tap and say_color_tap for TAP output
+  testlib: find the test library more robustly
+  test-lib-main.sh: introduce TESTLIB_TEST_NO_SUBSHELL
+  testlib: allow a test script of '-'
+  testlib: empty tests fail plus improved lint
+  test-lib-functions.sh: make test_must_fail work properly
+  t0001: add basic testlib tests
+  test-lib-main.sh: let --color enable color output
+  testlib: never hide error failures
+  testlib: more efficiencies and correctness
+  tg: case cleanup
+  tg-revert.sh: do not show "no change" lines
+  tg-revert.sh: accept hash names when reverting
+  tg-tag.sh: when using -g on tgstash show "commit" message
+  tg.sh: switch to more efficient vcmp
+  tg-revert.sh: convert any top-bases in TOPGIT REFS
+  tg.sh: auto-detect proper value for topbases
+  tg: purge use of basename, dirname and touch
+  tg: minor subshell efficiencies
+  tg.sh: make sure the hooks directory exists
+  tg: case $topbases before heads
+  tg-revert.sh: do reverse topbases conversion if necessary
+  tg-update.sh: optimize recursion
+  tg: use --count with rev-list
+  tg: retire use of fgrep
+  tg-revert.sh: accept list --short=n, --no-short and --short options
+  tg: refactor quotearg function
+  tg-revert.sh: support new --hash option
+  tg-update.sh: merge into base all at once
+  tg.sh: new --top-bases option to show refs/$topbases
+  README: add lots more docs
+  tg.sh: avoid modifying a symbolic link pre-commit hook
+  tg-update.sh: reduce number of checkouts slightly
+  tg-update.sh: perform index-only merges whenever possible
+  tg-{revert,update}.sh: quiet confusing auto stash messages
+  tg: move $tab and $lf defs into tg.sh
+  tg-update.sh: there be octopuses here!
+  tg.sh: allow @ to be used instead of HEAD
+  tg-summary.sh: default to --with-deps when sensible
+  tg-annihilate.sh: suppress `tg update` with --no-update
+  tg-create.sh: show `tg create --continue` to continue
+  tg-update.sh: allow multiple branch names
+  Makefile: use $(commands_in) instead of $(wildcard ...)
+  tg-tag.sh: clean up usage message assignment
+  tg-tag.sh: allow "anonymous" stashes
+  tg-update.sh: rename --skip to --skip-missing
+  tg: introduce "tg status" command
+  tg: accomodate multiple git worktrees
+  tg.sh: make ensure_clean_tree also ensure clean state
+  tg-remote.sh: handle new bases location better
+  tg-annihilate.sh: ensure_clean_tree &amp; undetach HEAD
+  tg-summary.sh: skip annihilated branches
+  tg-push.sh: restore "-a" functionality
+  tg-update.sh: abolish subshells!
+  tg-annihilate.sh: run a single tg update command
+  tg-depend.sh: allow adding multiple dependencies
+  tg-depend.sh: expunge use of tsort
+  tg-create.sh: use tg update to merge extra dependencies
+  tg-create.sh: handle -r with new bases
+  tg-info.sh: report correct status for new bases location
+  README: fine tune update process description
+  tg-summary.sh: handle new top-bases location
+  tg.sh: handle remote bases in new location
+  tg-tag.sh: with --tree=treeish set tag's tree
+  tg--index-merge-one-file.sh: add rudimentary -h help
+  tg-migrate-bases.sh: migrate top-bases to new location
+  tg.sh: respect core.hooksPath mostly
+  Makefile: define PROGRAMS variable
+  tg.sh: support tg status --exit-code
+  tg-summary.sh: add --heads-only option
+  tg-info.sh: new --leaves option
+  tg-remote.sh: handle new bases location
+  README: add a REQUIREMENTS section
+  README: explain what tg log does
+  test-lib-main.sh: allow --expensive as --long-tests alias
+  test-lib-main.sh: allow --xtrace long option name for -x
+  test-lib-main.sh: keep same exit code with --tee
+  test-lib-main.sh: with --verbose-log allow --verbose-only=... and -x
+  test-lib-main.sh: add test_plan function
+  test-lib-functions.sh: make test_copy_bytes use dd
+  test-lib-functions.sh: implement LASTOK prerequisite
+  README*: add testing library documentation
+</code></pre></div>
+
+<h1 id="_topgit-0_19_3_">TopGit-0.19.3</h1>
+
+<h2 id="_2016-02-29_">2016-02-29</h2>
+
+<p>Minor TopGit update with less tg update spew and some typo fixes</p>
+
+<p>Kyle J. McKay (4):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  tg.sh: next version is 0.19.3
+  README: fix various typos
+  tg-update.sh: clarify some update information messages
+  tg-update.sh: reduce git merge spew
+</code></pre></div>
+
+<h1 id="_topgit-0_19_2_">TopGit-0.19.2</h1>
+
+<h2 id="_2016-02-17_">2016-02-17</h2>
+
+<p>Minor TopGit update with improved POSIX compatibility and recursion protection.</p>
+
+<p>Kyle J. McKay (3):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  tg.sh: next version is 0.19.2
+  tg.sh: make basename/dirname use POSIX friendly
+  tg.sh: prevent dependency loops during recurse_deps
+</code></pre></div>
+
+<h1 id="_topgit-0_19_1_">TopGit-0.19.1</h1>
+
+<h2 id="_2015-12-02_">2015-12-02</h2>
+
+<p>Minor TopGit fixes, efficiency improvements and branch/tag disambiguation.</p>
+
+<p>Kyle J. McKay (10):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  tg.sh: use --count instead of wc -l for rev-list counting
+  tg.sh: measure_branch: accomodate full ref names
+  tg-info.sh: pass full ref names to measure_branch
+  tg.sh: next version is 0.19.1
+  tg-tag.sh: exclude non-symbolic refs from TOPGIT REFS
+  tg-update.sh: use fully-qualified ref name with git merge
+  tg.sh: output out-of-date remote branch on its own line
+  tg.sh: measure_branch: allow extra heads
+  tg-info.sh: report correct commit count when base is out-of-date
+  tg-tag.sh: allow --stash to be used with --drop, --clear and --delete
+</code></pre></div>
+
+<h1 id="_topgit-0_19_-_undo_at_last_">TopGit-0.19 - Undo At Last</h1>
+
+<h2 id="_2015-11-20_">2015-11-20</h2>
+
+<p>A major TopGit update.</p>
+
+<p>Major new commands include <code>tg tag</code> and <code>tg revert</code>.  When combined,
+<code>tg tag</code> and <code>tg revert</code> can provide a kind of <code>tg update</code> undo.
+See the new "NO UNDO" section in the README.  A new <code>tg rebase</code>
+command is also included to provide a <code>git rebase --auto-continue</code>
+functionality.  The use of <code>tg create</code> has been greatly streamlined
+and it learned several new options to specify <code>.topmsg</code> content.
+Furthermore, TopGit branches with no dependencies (an empty <code>.topdeps</code>
+file) are now officially supported with the new <code>tg create</code> <code>--no-deps</code>
+option.</p>
+
+<p>New with this release TopGit attempts to keep commits that change
+<code>.topdeps</code> and/or <code>.topmsg</code> separate from other changes.  See the
+new "SEQUESTRATION" section in the README for details.</p>
+
+<p>The <code>tg summary</code> command learned several new options most notably
+the <code>--heads</code> option which can be combined with <code>--rdeps</code> (as
+<code>tg summary --rdeps --heads</code>).</p>
+
+<p>The <code>tg</code> command learned to accept <code>-c &lt;name&gt;=&lt;value&gt;</code> options to
+be passed through to any git commands that are run.</p>
+
+<p>The <code>tg delete</code> command learned to detach your HEAD (thereby allowing
+deletion of the HEAD branch) with <code>-f -f</code>.</p>
+
+<p>The <code>tg info</code> command learned a new <code>--heads</code> option to tell which
+of the <code>tg summary --heads</code> the specified branch is contained in.</p>
+
+<p>The <code>tg update</code> command learned <code>--stash</code> and <code>--no-stash</code> and to
+pay attention to the config value of <code>topgit.autostash</code> (see the
+new "NO UNDO" section in the README for details).</p>
+
+<p>The <code>tg checkout</code> command implicitly understands to 'goto' when
+the word 'goto' is omitted and the argument is not another subcommand.</p>
+
+<p>SHELL_PATH can now be set in <code>config.mak</code> to specify a POSIX shell
+other than /bin/sh to use with the installed tg commands.</p>
+
+<p>The README has been expanded somewhat and now contains an alphabetical
+list of all subcommands in the USAGE section which become links
+when the <code>topgit.html</code> file is generated.  Furthermore, the non-html
+version used for <code>tg help tg</code> now contains the same usage lines the
+html version does.  A new "CONVENTIONS" section is also included
+to explain the three different kinds of TopGit branches commonly
+used ("patch", "base" and "stage").</p>
+
+<p>Various bug fixes are included.  <code>tg export --linearize</code> will no
+longer abort prematurely when faced with branches that do not share
+a common base somewhere in their ancestry.  Pre-existing pre-commit
+hooks are no longer assumed to use <code>#!/bin/sh</code> as their interpreter.
+When output is not being paged an extra <code>cat</code> process is no longer
+run.</p>
+
+<p>A regression (since 0.18) and bug fix (when using older bash) for
+the pre-commit hook are included.</p>
+
+<p>A Git compatibility update to set LESS to '-FRX' instead of '-FRSX'
+to match Git behavior since v2.1.0 is also included.</p>
+
+<p>Kyle J. McKay (94):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  tg.sh: next version is 0.18.1
+  tg-tag.sh: new TopGit "tag" command
+  tg.sh: avoid merge setup when unnecessary
+  tg.sh: add support for recurse_deps_exclude
+  tg-tag.sh: speed up tagging of multiple branches
+  tg-tag.sh: complain with --all and no TopGit branches
+  tg-tag.sh: use unambiguous ref abbreviation in --reflog output
+  tg-tag.sh: colorize reflog output
+  tg-tag.sh: support new options --reflog-message and --no-type
+  tg-tag.sh: improve reflog messages
+  tg-tag.sh: default to --reflog-msg --stash for --reflog with no tag
+  tg.sh: set LESS to -FRX by default instead of -FRSX
+  tg-rebase.sh: new TopGit rebase command
+  tg.sh: allow -c &lt;name&gt;=&lt;value&gt; options to be passed to git
+  pre-commit.sh: use fully-qualified ref with ref_exists
+  pre-commit.sh: exit on error even with older bash
+  tg-export.sh: do not abort --linearize early
+  tg.sh: move run_editor into tg.sh so it can be reused
+  README: correct some awkward grammar
+  Makefile: allow SHELL_PATH to specify the POSIX shell
+  tg: avoid shift when $# -eq 0
+  tg.sh: do not assume a pre-existing pre-commit hook uses #!/bin/sh
+  tg-tag.sh: use configured hash abbreviation length
+  tg-tag.sh: add some DWIM parsing &lt;tagname&gt;
+  tg*.sh: disambiguate git rev-parse arguments
+  tg-tag.sh: support --quiet (aka -q) option
+  tg-revert: new tg revert command
+  tg-create: support new options and behavior
+  tg-create.sh: implement new options and semantics
+  tg.sh: set up tgnosequester in initial_setup
+  tg-import.sh: overhaul to allow continuing and support new tg create
+  tg.sh: move nullsha definition into tg.sh for reusability
+  tg-depend.sh: reformat dependency add message
+  hooks/pre-commit.sh: overhaul and sequester TopGit files
+  tg: refactor paging functions to eliminate "cat" process
+  tg: avoid unnecessary setup for strftime function
+  tg-summary: add --deps-only option
+  tg-update.sh: --all is now an alias for -a
+  tg: make sure we're really working with commits
+  tg-create.sh: support new --no-deps option
+  tg.sh: add err function
+  tg-checkout.sh: make "goto" optional
+  README: add command summary list with links
+  tg-create.sh: switch from warn to err
+  tg-create.sh: ensure_clean_tree for non-remote setup
+  tg.sh: fix recurse_deps pre-order traversal with remotes enabled
+  tg-update.sh: eliminate two unnecessary uses of cut
+  tg: improve merge messages
+  Makefile: add install-doc target
+  tg-summary.sh: support new --heads option
+  tg: include usage lines in `tg help tg` output
+  tg-summary.sh: support --tgish-only for parity
+  tg-create.sh: support --topmsg and --topmsg-file options
+  tg: stop symbolic-ref whining
+  tg-revert.sh: quiet auto-stash error when no TopGit branches exist
+  tg-revert.sh: properly handle nested tags
+  tg-tag.sh: avoid unnecessary consolidation commit
+  tg-tag.sh: make --walk-reflogs be alias for -g
+  tg-push.sh: handle explicit HEAD argument better
+  tg-info.sh: support new --heads option
+  README: mention using tg tag + tg revert to transfer TopGit branches
+  tg-update.sh: add autostash support
+  tg-create.sh: relax --no-deps checking
+  tg-delete.sh: double -f will delete your HEAD
+  tg-create.sh: support --quiet option
+  tg: check result codes from tg create and git commit
+  tg-tag.sh: accept --commit-message as alias for --no-reflog-message
+  tg-create.sh: maybe allow non-clean tree
+  tg-create.sh: allow HEAD as an alias for HEAD's symref
+  README: explicitly mention utility of tg summary --rdeps --heads
+  tg-summary.sh: support --with-deps option
+  README: add SEQUESTRATION section detailing new behavior
+  tg-tag.sh: guarantee a reflog for refs/tgstash
+  README: add section about rewriting commits
+  README: add a "NO UNDO" section
+  tg-create.sh: use [BASE] instead of [PATCH] for --no-deps
+  tg.sh: make -f option to verify_topgit_branch truly silent
+  README: add "CONVENTIONS" section
+  tg.sh: next version is 0.19
+  tg-revert.sh: guarantee a reflog for refs/tgstash
+  tg-tag.sh: robustify [;_)] out-of-date ref handling
+  tg-tag.sh: restore speed after robustification [;_)]
+  tg-tag.sh: implement --drop, --clear and --delete options
+  tg-tag.sh: allow non-symbolic refs to influence parents
+  tg-create.sh: refuse to create a branch named after a tag
+  tg-depend.sh: work properly in unclean tree
+  tg: always use refs/heads/$name when $name is a TopGit branch
+  tg-create.sh: use ensure_clean_tree only when absolutely necessary
+  tg-create.sh: with --no-deps work on unborn branch
+  README: add minor updates and clarifications
+  README: add "SPEED AND CACHING" section
+  tg-depend.sh: new options and better dirty worktree support
+  tg-update.sh: do not stash on recursive invocations
+  tg-stash.sh: use correct tag stash branch name
+</code></pre></div>
+
+<h1 id="_topgit-0_18_-_speedy_snail_">TopGit-0.18 - Speedy Snail</h1>
+
+<h2 id="_2015-10-16_">2015-10-16</h2>
+
+<p>The focus of this release is speed.</p>
+
+<p>Through addition of a $GIT_DIR/tg-cache directory many tg operations have
+been significantly sped up.  Running <code>tg summary</code> will cause the cache to
+be updated.</p>
+
+<p>A few other items slipped in.  <code>tg summary</code> can now take more than one
+branch name to list just those.  <code>tg summary --rdeps</code> now, correctly,
+includes non-tgish depedencies in its output again (regression since 0.14).
+Lastly, <code>tg summary</code> now accepts <code>--list</code> as an alias for <code>-t</code>.</p>
+
+<p>Kyle J. McKay (24):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  tg.sh: next version is 0.17.1
+  tg: exclude objecttype from for-each-ref output
+  README: fix typo
+  refs: always use fully-qualified refs
+  tg-summary.sh: speed up --rdeps a bit
+  tg.sh: implement .git/tg-cache to speed things up
+  tg-summary.sh: do not use empty $base_remote
+  tg.sh: use sed instead of awk for slight speed boost
+  tg.sh: improve overall caching and include .topdeps in tg-cache
+  tg-summary.sh: use correct test for 'No commits'
+  tg.sh: add branch_contains caching
+  tg.sh: implement .topmsg caching
+  tg.sh: implement branch_empty caching
+  tg.sh: next version is 0.18
+  tg.sh: avoid using stale information for non-read-only operations
+  tg.sh: provide cache management on/off functions
+  tg.sh: make create_ref_cache more friendly
+  tg-update.sh: restore speed
+  tg.sh: ref caching efficiency and correctness
+  tg.sh: include non-tgish deps in preorder traversal
+  tg.sh: include failed branch in verify_topgit_branch output
+  tg-summary.sh: allow more than one branch to be specified
+  tg-summary.sh: add --list as alias for -t
+  tg-push.sh: correct non-portable variable setting
+</code></pre></div>
+
+<h1 id="_topgit-0_17_">TopGit-0.17</h1>
+
+<h2 id="_2015-10-03_">2015-10-03</h2>
+
+<p>A polish and bug fix release.  Notably tg summary, tg info, tg update and
+anything else that needs to traverse the entire dependency graph should
+work much faster now when a large .topdeps dependency graph is involved.</p>
+
+<p>Other niceties like optional remote branch name for tg create -r (assumes
+its the same as the local name in that case), tg patch can now pass along
+arbitrary options to git diff-tree in order to better inspect the potential
+patch.  Also the temporary directory used in .git should always be removed
+now, tg export --collapse creates unique committer timestamps on the commits
+it synthesizes so any git rebase run on the result has a stable ordering
+with respect to the TopGit .topdeps dependency tree and finally tg create
+preloads a suggested commit message.</p>
+
+<p>The tg summary command also got some love and --deps can now work on a
+single branch, using --rdeps now changes the default from all branches to
+the current branch and lastly one or more branches can be excluded from
+tg summary's output.</p>
+
+<p>Kyle J. McKay (17):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  tg.sh: change incorrect 'continue' into correct 'return'
+  tg.sh: speed up recurse_deps_internal
+  tg-checkout.sh: avoid trap and put temp files in $tg_tmp_dir
+  tg.sh: make sure temporary directory is removed on signal
+  tg-create: suggest a commit message
+  tg-export.sh: make synthesized commits have unique timestamps
+  tg-summary.sh: default to HEAD for --rdeps but allow --all
+  tg-summary.sh: support --exclude option
+  tg-create.sh: make remote branch name optional
+  README: correct hint for producing conflict-free patch sets
+  README: encourage use of git rerere
+  tg-patch.sh: allow git diff-tree options to be passed through
+  tg-export.sh: call rerere again after shell exit
+  Set version to 0.17
+  scripts: use more portable export
+  style: remove C-like ';' statement terminators
+</code></pre></div>
+
+<h1 id="_topgit-0_16_">TopGit-0.16</h1>
+
+<h2 id="_2015-06-25_">2015-06-25</h2>
+
+<p>Primarily a bug fix release, but two minor features did
+creep in.  A global <code>-u</code> option is now supported to pretend
+that topgit.remote is not set.  Both tg patch and tg export
+now accept <code>--binary</code> to enable producing Git binary patches.</p>
+
+<p>Notable fixes make tg work properly from non top-level Git
+working directories, make tg export work properly with
+--force and with a tgish first depedency, enable ref logs
+for top-bases when core.logallrefupdates is true and honor
+the Git core.pager and pager.diff settings (so that something
+like contrib/diff-highlight works properly).</p>
+
+<p>Kyle J. McKay (14):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  tg: add support for new -u global option
+  tg-export: fix --linearize with a tgish first dep
+  tg: tolerate missing .topdeps better
+  tg.sh: make get_tree_w work from non toplevel
+  tg: activate ref logs for top-bases when requested
+  Set version to 0.16
+  tg-patch: support --binary option
+  tg: respect core.pager and pager.xxx settings
+  tg-export: clarify sub-shell instructions for conflict resolution
+  tg-export: work properly with empty .topdeps file
+  README: mention export --collapse + git format-patch
+  tg-import: include '[PATCH]' in .topmsg subject
+  tg-export: make --force actually work with --collapse
+  tg: unset GIT_DIR when -C option encountered
+</code></pre></div>
+
+<h1 id="_topgit-0_15_1_">TopGit-0.15.1</h1>
+
+<h2 id="_2015-04-20_">2015-04-20</h2>
+
+<p>Correct a problem preventing continuing a <code>tg update</code>
+successfully with <code>exit</code> after a failed merge has been
+resolved and the failed merge occurred on a base.</p>
+
+<p>Kyle J. McKay (2):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  tg-update: handle a conflict when merging a base
+  Set version to 0.15.1
+</code></pre></div>
+
+<h1 id="_topgit-0_15_">TopGit-0.15</h1>
+
+<h2 id="_2015-04-14_">2015-04-14</h2>
+
+<p>Add support for tg push --force and using "HEAD" as a
+branch name shortcut if it's a symbolic ref to a TopGit-
+controlled branch.  Also make tg log try to DWIM with
+its arguments.</p>
+
+<p>Also some minor maintenance updates.</p>
+
+<p>Kyle J. McKay (14):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  tg.sh: fix typos in comments
+  Set version to 0.15
+  tg.sh: do not display superfluous path info
+  tg.sh: set gitcdopt if -C &lt;dir&gt; was used
+  tg: display the correct command to restart TopGit
+  tg: allow HEAD as a branch name if it's a symref
+  tg: --force and -f options for push etc.
+  Makefile: allow 'make doc' to make the html docs
+  tg.sh: update recurse_deps_internal docs
+  tg-log: attempt to DWIM with arguments
+  Use $tg or $tgname everywhere
+  tg.sh: remove ${...:-} silliness
+  tg: add missing '[...]' to a few usage lines
+  Makefile: make sure topgit.html updates when out of date
+</code></pre></div>
+
+<h1 id="_topgit-0_14_">TopGit-0.14</h1>
+
+<h2 id="_2015-03-31_">2015-03-31</h2>
+
+<p>Add support for -C &lt;dir> global option and correct the
+ordering of --rdeps output.  And a few typo fixes.</p>
+
+<p>Kyle J. McKay (7):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  README: fix typo
+  tg-summary.sh: fix typo
+  tg.sh: support recurse_preorder traversal option
+  tg-summary.sh: correct ordering of --rdeps output
+  tg.sh: improve pre-subcommand option parsing and support -C
+  README: update help for global options and remote
+  Set version to 0.14
+</code></pre></div>
+
+<h1 id="_topgit-0_13_2_">TopGit-0.13.2</h1>
+
+<h2 id="_2015-03-19_">2015-03-19</h2>
+
+<p>Another minor bug fix release.</p>
+
+<p>Kyle J. McKay (2):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  Set version to 0.13.2
+  tg.sh: avoid inappropriate setup when included from hook
+</code></pre></div>
+
+<h1 id="_topgit-0_13_1_">TopGit-0.13.1</h1>
+
+<h2>2015-03-19</h2>
+
+<p>Minor bug fix release.</p>
+
+<p>Kyle J. McKay (3):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  Set version to 0.13.1
+  tg.sh: avoid running pre-commit hook multiple times
+  README: fix typos
+</code></pre></div>
+
+<h1 id="_topgit-0_13_">TopGit-0.13</h1>
+
+<h2 id="_2015-03-13_">2015-03-13</h2>
+
+<p>This release consists of mostly maintenance updates.  However <code>tg summary</code>
+learned an <code>--rdeps</code> option and support for a single branch name.  And
+<code>tg update</code> learned a <code>--skip</code> option.</p>
+
+<p>Kyle J. McKay (18):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  topgit.html: include the usage lines in the generated .html
+  tg-remote: skip invalid top-bases when populating
+  tg: compensate for leading spaces in wc output
+  tg-info: tolerate missing dependencies better
+  README: update the help for tg annihilate
+  tg: do not drop missing_deps while running recurse_deps
+  tg: do not use non-portable echo -n
+  Set version to 0.13
+  tg-summary: add support for --rdeps and single branch output
+  tg-info: update help for info and fix plural form for 0
+  tg: output the correct chain when a dependency is missing
+  tg-info: properly handle showing unmerged remotes
+  tg: silently ignore a missing .topdeps and treat it as empty
+  README: tweak the help for help
+  whitespace: clean up various whitespace issues
+  tg-update: add support for --skip option to handle missing dependencies
+  tg: use the name tg was invoked under when spawning sub commands
+  subshell: use $SHELL to create a subshell if available
+</code></pre></div>
+
+<p>Robin Green (1):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  Create info directory if it does not already exist
+</code></pre></div>
+
+<h1 id="_topgit-0_12_">TopGit-0.12</h1>
+
+<h2 id="_2014-11-03_">2014-11-03</h2>
+
+<p>This is primarily a maintenance release, however a few odds and ends managed
+to slip in.  When installing with DESTDIR the precheck is skipped.  You can
+now get help on the help command.  There's a new version command to display
+the version.  And finally the help command takes a new -w option to display
+the help in a browser if available.</p>
+
+<p>Kyle J. McKay (11):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  Correct the name of .gitattributes
+  .gitattributes: export-ignore .mailmap
+  Belatedly set version to 0.11
+  tg.sh: add a version command
+  Makefile: skip precheck if DESTDIR set
+  help: make tg help tg work
+  Makefile: make "tg help help" work
+  tg: add support for tg help -w command
+  Makefile: add some helpful rules for non-GNU makers
+  Set version to 0.12
+  docs: minor updates including a source repository link
+</code></pre></div>
+
+<h1 id="_topgit-0_11_">TopGit-0.11</h1>
+
+<h2 id="_2014-07-17_">2014-07-17</h2>
+
+<p>This release attempts to collect known fixes for any outstanding issues.
+In particular, TopGit no longer attempts to use mkfifo when paging so it
+should now work fine on systems without a working mkfifo command.</p>
+
+<p>One enhancement slipped in:</p>
+
+<ul>
+<li>new tg-export --force option</li>
+</ul>
+
+<p>Kyle J. McKay (5):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  tg.sh: add a pair of missing quotes around @cmddir@
+  paging: improve paging code
+  tg-import.sh: fix typo
+  README: add a README.rst symbolic link to README
+  tg.sh: add more quotes in Git version checking code
+</code></pre></div>
+
+<p>Tay Ray Chuan (1):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  tg-export --collapse | --linearize to existing branch proceeds with --force
+</code></pre></div>
+
+<h1 id="_topgit-0_10_">TopGit-0.10</h1>
+
+<h2 id="_2014-04-23_">2014-04-23</h2>
+
+<p>This release contains primarily bug fixes.  In particular, TopGit should now
+work properly with only a POSIX /bin/sh and POSIX utilities.</p>
+
+<p>However there are a few enhancements, including:</p>
+
+<ul>
+<li>new tg-checkout command</li>
+<li>new tg-annihilate command</li>
+<li>new tg-push --all option</li>
+<li>new tg-export quilt --all option</li>
+</ul>
+
+<p>Andrey Borzenkov (1):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  bash-completion: fix update) and ... in command list
+</code></pre></div>
+
+<p>Jiang Xin (5):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  No stop to edit for the new merge behavior of git
+  push: add --all to push all tg branches to remote server
+  Bash completion bugfix: git-core's completion changed __git_find_subcommand to __git_find_on_cmdline
+  export: add --all option for --quilt to export all branches
+  remote: prune stale remote branch when update
+</code></pre></div>
+
+<p>Kyle J. McKay (6):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  README: clean up formatting
+  POSIX portability
+  Remove *.sh 'local' bashism
+  Build improvments
+  Make tg -r remote ... work
+  Fix precheck test
+</code></pre></div>
+
+<p>Per Cederqvist (3):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  Create the "tg annihilate" command.
+  Fix "tg base -h" and generalize "tg base".
+  Added 'tg checkout'.
+</code></pre></div>
+
+<p>Robin Green (19):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  tg-push: push all in one go
+  Added .mailmap
+  Added git version check (runtime &amp; build time)
+  Correct required git version
+  Makefile: Use 'git describe' to get a precise TopGit version if possible
+  INSTALL: Add more third-party packages
+  Centralise annihilated branch checking
+  README: Fix typo
+  update: Ensure the tree is clean first
+  Improved error messages for unclean working directory or index
+  Recursion fixes
+  update: Make abort really abort in the recursive case
+  push: Fill in, and correct, the documentation
+  Only check tg-ish branches for annihilation
+  Fix bug caused by lack of local variables in Bourne Shell (yuck)
+  export: Again, only check for annihilation if a branch is tgish
+  checkout: make it work after branch annihilation
+  annihilate: Propagate old dependencies to any children
+  prev: omit annihilated branches, like next does
+</code></pre></div>
+
+<p>Thomas Schwinge (1):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  tg-annihilate: Pass --no-verify when committing.
+</code></pre></div>
+
+<h1 id="_topgit-0_8_">TopGit-0.8</h1>
+
+<h2 id="_2009-09-23_">2009-09-23</h2>
+
+<p>The highlight of this release is a new command tg push that has less
+annoyances than the old way to push topgit branches.  Thanks to Marc
+Weber for initial coding and Bert Wesarg for some polishing.</p>
+
+<p>Other than that there are some bugfixes.</p>
+
+<p>Bert Wesarg (5):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  tg-push: remove useless warning about missing bases for non-tgish branches
+  tg-push: prevent handing branches more than once to git-push
+  tg-push: handle non-tgish branches
+  help: use pager
+  tg-push: add bash completion
+</code></pre></div>
+
+<p>Ilpo Järvinen (1):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  tg-update: fix user visible typo in info msg
+</code></pre></div>
+
+<p>Jon Ringle (1):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  Fix tg export --quilt --numbered w/ &gt; 8 patches
+</code></pre></div>
+
+<p>Marc Weber (1):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  tg-push: new command pushing a tgish branch
+</code></pre></div>
+
+<p>Uwe Kleine-König (13):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  Pass -- to diff-tree for branch/filename disambiguation
+  Fix merge failure handling in tg export
+  Call git-rerere after a failing merge as git-merge does
+  Add GPLv2 and description for S-o-b
+  hooks/pre-commit.sh: don't wail on detached head for missing .top* files
+  don't use return when being sourced
+  hooks/pre-commit.sh: don't stop commits on non-topgit branches
+  hooks/pre-commit.sh: fix bashism
+  depend: don't disallow adding a dependency on a non-TopGit-branch
+  remove test for git send-email
+  recurse_deps: if no_remotes is set don't recurse into remote deps
+  tg-remote: don't add push specs but warn about existing ones.
+  bump version number to 0.8
+</code></pre></div>
+
+<h1 id="_topgit-0_7_">TopGit-0.7</h1>
+
+<h2 id="_2009-03-05_">2009-03-05</h2>
+
+<p>This is mainly a bugfix release that fixes some (of my) annoyances.</p>
+
+<p>A highlight is a new export method (--linearize) that might be more suitable to
+create a branch for feeding upstream.</p>
+
+<p>Uwe Kleine-König (10):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  [TOPGIT] limit rev-list in branch_contains to a single rev
+  [TOPGIT] allow working with annihilated branches
+  [TOPGIT] make tg remote idempotent
+  [TOPGIT] make creating a commit from a topgit branch a function
+  [TOPGIT] implement linearize export method
+  Don't throw away already started base on resumed create.
+  Add documentation for tg export --linearize
+  Merge branch 'upstream' of git.debian.org:/git/collab-maint/topgit
+  Fix typo s/emmail/email/
+  bump version number to 0.7
+</code></pre></div>
+
+<h1 id="_topgit-0_6_">TopGit-0.6</h1>
+
+<h2 id="_2009-03-03_">2009-03-03</h2>
+
+<p>Actually this is not a real release, I just tag because a mad duck has bumped
+the version number. :-)</p>
+
+<p>For completeness, here comes the shortlog:</p>
+
+<p>Bert Wesarg (1):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  tg-summary: -t and --graphviz are mutual exclusive
+</code></pre></div>
+
+<p>Jonas Fonseca (1):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  README: spelling fixes
+</code></pre></div>
+
+<p>Kirill Smelkov (5):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  tg-completion: complete options for `tg summary`
+  tg-completion: complete options for `tg remote`
+  Implement setup_pager just like in git
+  tg-patch: fix pagination
+  tg-patch: add support for generating patches against worktree and index
+</code></pre></div>
+
+<p>Marc Weber (1):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  Pass -- to rev-list for branch/filename disambiguation
+</code></pre></div>
+
+<p>Uwe Kleine-König (5):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  tg-export: implement skipping empty patches for quilt mode
+  tg export (collapse): implement skipping empty patches
+  tg export (quilt): Implement flattening patch paths
+  tg export (quilt): Implement numbering the patches
+  make tg remote idempotent
+</code></pre></div>
+
+<p>martin f. krafft (14):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  ignore tg-depend build files
+  remove +x bit from tg-depend
+  Make sure gitignore patterns are not recursive
+  add ignore patterns for quilt and debian build
+  Change tg help exit code to 0
+  Check for cmddir earlier
+  Print help output when no command is given
+  Require an argument to tg -r
+  Print help message when command is not proper
+  Note that do_help is used when short messages might be wanted
+  Add Vim modelines for consistent spacing
+  Check for git-send-email and die if not found
+  put tg version into a variable at the top
+  bump version number to 0.6
+</code></pre></div>
+
+<h1 id="_topgit-0_5_">TopGit-0.5</h1>
+
+<h2 id="_2008-11-17_">2008-11-17</h2>
+
+<p>This release features a number of fixes and enhancements, including</p>
+
+<ul>
+<li>Jonas' bash completion,</li>
+<li>the tg-summary -t option (output just branch names),</li>
+<li>tg-summary --graphviz to create dot graphs</li>
+<li>tg-import -s to name commits and -d to specify base dependencies explicitly,·</li>
+<li>tg-mail -r to generate an In-Reply-To header</li>
+</ul>
+
+<p>Antonio Ospite (2):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  TopGit: small Makefile nitpichink
+  TopGit: Force adding .topdeps on tg-depend
+</code></pre></div>
+
+<p>Jonas Fonseca (3):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  Add bash completion script for TopGit
+  depend: Fix help listing
+  Complete depend subcommand
+</code></pre></div>
+
+<p>Matt McDonald (2):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  tg depend: Allow adding deps from a subdir inside the repo.
+  Make sure $root_dir does not have a trailing slash
+</code></pre></div>
+
+<p>Petr Baudis (17):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  README: Add warning about editing .topdeps manually
+  tg depend: Even more robust subcommand handling
+  tg summary -t: Very quick mode, only branch names
+  tg-completion: Use tg summary -t for __tg_topics()
+  tg mail: Fix $header string construction
+  tg import -s: Import single commit using well-defined name
+  tg import -d: Explicitly specify base dependency of the created branches
+  tg import -s: Whitespace fix
+  tg import: Construct actually proper .topmsg file
+  tg import: More graceful conflicts handling
+  tg update: Fix bogus advice on failed base update
+  tg update: Always checkout head, even if we didn't update base further
+  tg mail -r MSGID: Generate In-reply-to header
+  tg export: Clarify usage
+  README: lever -&gt; level (spotted by jikos)
+  tg summary --graphviz: Dot-suitable dependency graph
+  README: tg depend rm TODO (insp. by Jonas)
+</code></pre></div>
+
+<p>martin f. krafft (3):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  tg-mail: do not use arrays, which are bashisms
+  tg-export: no current branch check with -b
+  Update version in tg script to 0.5
+</code></pre></div>
+
+<h1 id="_topgit-0_4_">TopGit-0.4</h1>
+
+<h2 id="_2008-09-25_">2008-09-25</h2>
+
+<p>This is TopGit v0.4, continuing its mission of practical usability.
+I have managed to somehow use this to actually manage a rather large
+and non-trivial system of git-gui patches, recently submitted to git@.
+(I send out the mail series using tg export --quilt and quilt mail
+so far though, and I'm actually finding that quite convenient.)</p>
+
+<p>The nicest thing about this release is Kirill's new 'tg mail' command,
+'tg export --quilt -b' to create quilt series from arbitrary set of
+topic branches and 'tg depend add', which has actually quite trivial
+implementation, though. Then there's the usual bunch of small
+enhancements and fixes.</p>
+
+<p>Kirill Smelkov (3):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  tg help: &lt;something&gt;: improve readability
+  tg import: fix + make more robust
+  tg mail: new command for mailing patches
+</code></pre></div>
+
+<p>Petr Baudis (19):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  tg.sh: Typo fix (incanation -&gt; incantation)
+  .gitignore: Add tg-import, tg-remote
+  Makefile: Changing Makefile means executables need to be regenerated too
+  tg import: Require clean working tree and index
+  tg import: Check out new files as we go
+  tg delete: Allow branch delete if we aren't on symbolic HEAD
+  tg remote README: Add 'git push --all' caveat warning
+  tg info: Carry over missing Subject line in topmsg
+  tg info, tg patch: Work on top-base HEAD too
+  Ignore vim swp files
+  tg mail: Tidyup
+  tg mail: Simplify array usage
+  tg export: Fix exporting remote-based branches
+  tg delete: Fix spurious output
+  tg depend add: Add dependency
+  tg update: Fix resume message
+  tg mail -s SEND_EMAIL_ARGS: Pass arguments to git send-email
+  tg export: With quilt driver, accept explicit list of branches
+  TopGit-0.4
+</code></pre></div>
+
+<p>Uwe Kleine-König (1):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  Use git-mailinfo to extract author informations from .topmsg
+</code></pre></div>
+
+<h1 id="_topgit-0_3_">TopGit-0.3</h1>
+
+<h2 id="_2008-09-10_">2008-09-10</h2>
+
+<p>After awfully long delay, here comes v0.3 of TopGit - we hopefully start
+to approach some kind of practical usability by now.</p>
+
+<p>Aside of few minor changes, the major point of this release is remotes
+handling; you can elevate any remote to a TopGit-tracked status using
+'tg remote', then git fetch / push will haul around the TopGit bases
+as well, and 'tg update' can update your local branches based on
+the remote ones. Each repository has one "default" TopGit remote and
+the local branches are supposed to reflect this one; that is the remote
+'tg update' and all the other commands consider by default. Normally,
+this remote is the last one you called 'tg remote --populate' on, but
+you can change it in .git/config or switch it for a particular tg call
+using the 'tg -r REMOTE command' parameter.</p>
+
+<p>The other major improvement is new 'tg import' command by Aneesh Kumar
+that lets you transform a series of commits to a topic branch sequence.
+I decided not to consider the 'tg depend' work by Jan Nieuwenhuiz for this
+release yet, since it will probably take me a bit of time yet to fully
+understand his approach; so far, I have an uneasy feel about it.</p>
+
+<p>Note that this release, as usual, received only very light testing - please
+come back with any bugs you find. If someone would feel like adding at least
+a simple testsuite, that would be really nice.</p>
+
+<p>Aneesh Kumar K.V (1):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  topgit: Implement tg-import
+</code></pre></div>
+
+<p>Bert Wesarg (1):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  Makefile: Use $(wildcard) for commands_in
+</code></pre></div>
+
+<p>David Brown (1):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  Force adding the .topmsg and .topdep files.
+</code></pre></div>
+
+<p>Jan Nieuwenhuizen (1):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  TOPGIT: [PATCH] Use standard prefix and DESTDIR rather than explain
+</code></pre></div>
+
+<p>Jonathan Nieder (2):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  supply template argument to mktemp
+  tg-info: fix sed typo
+</code></pre></div>
+
+<p>Petr Baudis (35):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  tg-export: Ensure we don't overwrite a branch by git update-ref
+  tg create: Set up refs/top-bases/ after conflict resolution
+  README: Sketch of my current ideas on remotes handling
+  tg summary: Fix confusing variable name
+  tg remote: New command
+  tg-update.sh: Better explain base update
+  Factor out rev-parse --verify calls to new ref_exists() function
+  tg.sh: Set $base_remote to topgit.remote config value
+  recurse_deps+branch_needs_update(): Deal with remote branches
+  tg update: Support updating from remote branches
+  has_remote(): Introduce to check if branch has remote counterpart
+  tg info: Show information about remote branches
+  tg info: Asterisk-prefix 'out-of-band' warnings
+  tg summary: Show info about remote mates
+  tg summary: 'L' denotes that push will update remote mate
+  tg info: Note if local head is ahead of remote mate
+  tg summary: Mark current branch with '&gt;'
+  tg -r REMOTE: Support for switching base remote
+  tg summary: Fix spurious errors on tg-inconsistent remotes
+  Fix recursive tg calls: Pass tg parameters through properly
+  Account for direct-tg arguments in Usage strings
+  tg import: Better description
+  tg import: Standard script header
+  tg import: Standard options parsing
+  tg import: Remove tg_ prefixes from functions
+  tg import: Change default prefix from tp/ to t/
+  README: Add synopsis for working with remotes
+  tg create -r BRANCH: Create branch based on a remote one
+  tg import -p PREFIX: Custom prefix instead of t/
+  tg import: Fix up process_commit() progress reporting
+  branch_contains(): More explicit call to git rev-list
+  tg import: Make the progress reporting stand out more
+  Merge branch 'tg-import'
+  README: Remove stale TODO
+  TopGit-0.3
+</code></pre></div>
+
+<p>martin f. krafft (2):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  Add tg-export to gitignore
+  Add various todos/wishlists
+</code></pre></div>
+
+<h1 id="_topgit-0_2_">TopGit-0.2</h1>
+
+<h2 id="_2008-08-12_">2008-08-12</h2>
+
+<p>This is v0.2 of TopGit; we are steady on our way to v1.0! ;-)
+This version features changed usage of tg create, new tg export command
+that can export your patch queue either to a Git branch or Quilt series,
+a huge amount of bugfixes, and improved documentation infrastructure.</p>
+
+<p>Thanks go to Bert Wesarg, Russel Steicke and Antonio Ospite for their
+patches - please keep them coming - and to martin f. krafft for
+the testing, ideas and presentation to fellow Debian packagers.</p>
+
+<p>Antonio Ospite (1):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  tg.sh: Add -h, --help aliases for the help command
+</code></pre></div>
+
+<p>Bert Wesarg (7):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  tg-create.sh: fix help string
+  tg-create.sh: Introduce topgit.subjectprefix config option
+  tg-info: pretty print dependencies
+  tg.sh: Runtime tg-* command check
+  tg.sh: Check for read permissions of help files
+  Makefile: mkdir $(bindir)
+  tg.sh: it's info/attributes not info/gitattributes
+</code></pre></div>
+
+<p>Petr Baudis (33):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  README: Fix synopsis of resuming tg create
+  README: Two TODOs for tg summary
+  README: TODO for tg depend
+  README: TODO for tg tidy
+  tg.sh: setup_hook(): Test existence instead of -x
+  tg-info.sh: Fix list of &gt;1 dependencies
+  tg-patch.sh: Bring deplist format in sync with tg info
+  tg-info.sh: Show missing dependencies (needs_update() enhancement)
+  tg-update.sh: Abort on missing dependencies
+  needs_update(): Return non-zero if update is required
+  tg-summary.sh: Mark branches with missing dependencies by '\!'
+  tg-summary.sh: Fix nonempty indicator misalignment
+  tg-summary.sh: Clean up printing status columns
+  README: TODO tg tidy -&gt; tg collapse
+  tg-create.sh: Change usage (-d -&gt; arguments)
+  README: Mark future tg patch features as TODO clearly
+  tg-create.sh: Introduce topgit.{to,cc,bcc} config options
+  needs_update(): Fix $missing_deps passing
+  tg-create.sh: Pre-fill [PATCH] line with patch name
+  create-help.sh: Fix 'tg update' generated help text
+  needs_update(): Split to recurse_deps() and branch_needs_update() helpers
+  recurse_deps(): _-prefix $depsfile
+  measure_branch(): Use _bname instead of _name local variable
+  branch_needs_update(): Fox branch_contains call: $1 -&gt; $_name
+  recurse_deps(): Call itself, not needs_update(), recursively
+  tg-export: New command for cleaning up history
+  tg.sh: Avoid use of non-SUS 'echo -e'
+  README: tg collapse is already implemented (as tg export)
+  tg export: Really remove TopGit metadata files when exporting
+  tg update: Do not use ${:n:m} substitution (bash extension)
+  tg export: Support --quilt for exporting to quilt series
+  tg export: Print progress messages _before_ the action
+  TopGit-0.2
+</code></pre></div>
+
+<p>Russell Steicke (3):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  Check for pre-commit hook existence.
+  Make "tg help cmd" print cmd help
+  Pretty print the help creation commands in Makefile.
+</code></pre></div>
+
+<h1 id="_topgit-0_1_-_the_saga_begins_">TopGit-0.1 - The Saga Begins</h1>
+
+<h2 id="_2008-08-03_">2008-08-03</h2>
+
+<p>topgit-0.1: Initial release</p>
+</div>
+</body>
+</html>
