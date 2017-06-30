@@ -4,7 +4,7 @@ test_description='test export subject handling'
 
 . ./test-lib.sh
 
-test_plan 40
+test_plan 44
 
 tmp="$(test_get_temp commit)" || die
 
@@ -550,6 +550,57 @@ test_expect_success 'topgit mode base sp' '
 	test z"$subj" = z"[BASE ] just a patch sp"
 '
 
+test_expect_success 'topgit mode release' '
+	tg_test_create_branches <<-EOT &&
+		t/release [RELEASE] just a patch
+		:
+
+		+t/release commit on release
+		:::t/release
+	EOT
+	git checkout -f t/release &&
+	tg export -s patch e/release &&
+	subj="$(getsubj e/release)" &&
+	test z"$subj" = z"[RELEASE] just a patch" &&
+	tg export --force e/release &&
+	subj="$(getsubj e/release)" &&
+	test z"$subj" = z"just a patch"
+'
+
+test_expect_success 'topgit mode pfx release' '
+	tg_test_create_branches <<-EOT &&
+		t/pfxrelease [PRELEASE] just a pfxrelease
+		:
+
+		+t/pfxrelease commit on pfxrelease
+		:::t/pfxrelease
+	EOT
+	git checkout -f t/pfxrelease &&
+	tg export e/pfxrelease &&
+	subj="$(getsubj e/pfxrelease)" &&
+	test z"$subj" = z"[PRELEASE] just a pfxrelease" &&
+	tg -c topgit.subjectprefix=p export --force -s patch e/pfxrelease &&
+	subj="$(getsubj e/pfxrelease)" &&
+	test z"$subj" = z"[PRELEASE] just a pfxrelease" &&
+	tg -c topgit.subjectprefix=p export --force e/pfxrelease &&
+	subj="$(getsubj e/pfxrelease)" &&
+	test z"$subj" = z"just a pfxrelease"
+'
+
+test_expect_success 'topgit mode release sp' '
+	tg_test_create_branches <<-EOT &&
+		t/releasesp [RELEASE ] just a release sp
+		:
+
+		+t/releasesp commit on releasesp
+		:::t/releasesp
+	EOT
+	git checkout -f t/releasesp &&
+	tg export e/releasesp &&
+	subj="$(getsubj e/releasesp)" &&
+	test z"$subj" = z"[RELEASE ] just a release sp"
+'
+
 test_expect_success 'topgit mode root' '
 	tg_test_create_branches <<-EOT &&
 		t/root [ROOT] just a patch
@@ -641,6 +692,20 @@ test_expect_success 'topgit mode not a base' '
 	tg export e/bnap &&
 	subj="$(getsubj e/bnap)" &&
 	test z"$subj" = z"[BASF] not a base"
+'
+
+test_expect_success 'topgit mode not a release' '
+	tg_test_create_branches <<-EOT &&
+		t/bnar [RELEASF] not a release
+		:
+
+		+t/bnar commit on bnar
+		:::t/bnar
+	EOT
+	git checkout -f t/bnar &&
+	tg export e/bnar &&
+	subj="$(getsubj e/bnar)" &&
+	test z"$subj" = z"[RELEASF] not a release"
 '
 
 test_expect_success 'topgit mode not a root' '

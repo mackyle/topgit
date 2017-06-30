@@ -1632,6 +1632,7 @@ tg export
 	like the ``patch`` mode will only strip the first square brackets tag
 	(if there is one) provided it's a TopGit-known tag (the ``patch``
 	variation will only strip a PATCH tag but still just the first one).
+	Note that TopGit does understand ``[RELEASE]`` in ``topgit`` mode.
 	With ``trim`` (aka ``ws``) internal runs of spaces/tabs are converted
 	to a single space, but no square brackets tags are removed.  The ``ws``
 	mode should generally be preferred instead of using ``keep`` mode.
@@ -2674,7 +2675,9 @@ GLOSSARY
 		convention these TopGit branches do not actually contain
 		any changes and their ``.topdeps`` files are empty.  They
 		are used to control a base dependency that another set of
-		branches depends on.
+		branches depends on.  Sometimes these are named ``[RELEASE]``
+		instead because the base dependency they represent is actually
+		the formal release of something.
 
 	TopGit ``[STAGE]`` branch
 		A TopGit branch whose subject starts with ``[STAGE]``.  By

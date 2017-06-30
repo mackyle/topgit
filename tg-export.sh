@@ -195,14 +195,14 @@ create_tg_commit()
 				    tolower(substr($0, 1, (lp = 1 + length(prefix)))) == "[" tolower(prefix) &&
 				    index($0, "]")) {
 					if (substr($0, 1 + lp, 1) == " ") ++lp
-					lead = tolower(substr($0, 1 + lp, 6))
+					lead = tolower(substr($0, 1 + lp, 8))
 					if (lead ~ /^patch/ || (mode == "topgit" &&
-					    lead ~ /^(base|root|stage)\]/))
+					    lead ~ /^(base|root|stage|release)\]/))
 						$0 = "[" substr($0, 1 + lp)
 				}
 				if (!sub(/^\[[Pp][Aa][Tt][Cc][Hh][^]]*\][ \t]*/, "") &&
 				    mode == "topgit")
-					sub(/^\[([Bb][Aa][Ss][Ee]|[Rr][Oo][Oo][Tt]|[Ss][Tt][Aa][Gg][Ee])\][ \t]*/, "")
+					sub(/^\[([Bb][Aa][Ss][Ee]|[Rr][Oo][Oo][Tt]|[Ss][Tt][Aa][Gg][Ee]|[Rr][Ee][Ll][Ee][Aa][Ss][Ee])\][ \t]*/, "")
 			}
 			print
 			exit
