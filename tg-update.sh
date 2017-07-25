@@ -925,6 +925,7 @@ update_branch_internal() {
 	if [ -s "$_depcheck" ]; then
 		<"$_depcheck" \
 			sed 's/ [^ ]* *$//' | # last is $_update_name
+			sed 's/\(^\| \):\([^ ]*\)/\1\2/g' | # strip ':' prefix
 			sed 's/.* \([^ ]*\)$/+\1/' | # only immediate dependencies
 			sed 's/^\([^+]\)/-\1/' | # now each line is +branch or -branch (+ == recurse)
 			>"$_depcheck.ideps" \
