@@ -1150,10 +1150,10 @@ update_branch_internal() {
 						# helpfully check to see if there's such a remote branch
 						_rntgb=
 						! ref_exists "refs/remotes/$base_remote/$newdep" || _rntgb=1
-						# maybe a locking local orphan base too
+						# maybe a blocking local orphan base too
 						_blocked=
 						if [ -n "$_rntgb" ] &&
-						   ref_exists "refs/remotes/$base_remote/${topbases#heads/}$newdep" &&
+						   ref_exists "refs/remotes/$base_remote/${topbases#heads/}/$newdep" &&
 						   ref_exists "refs/$topbases/$newdep"
 						then
 							_blocked=1
