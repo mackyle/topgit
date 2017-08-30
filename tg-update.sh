@@ -923,10 +923,14 @@ update_branch_internal() {
 	# allow automatic simple merges by default until a failure occurs
 	no_auto=
 	if [ -s "$_depcheck" ]; then
-		<"$_depcheck" \
-			sed 's/ [^ ]* *$//' | # last is $_update_name
-			sed 's/.* \([^ ]*\)$/+\1/' | # only immediate dependencies
-			sed 's/^\([^+]\)/-\1/' | # now each line is +branch or -branch (+ == recurse)
+		# (1) last word is $_update_name, remove it
+		# (2) keep only immediate dependencies of a chain adding a leading '+'
+		# (3) one-level deep dependencies get a '-' prefix instead
+		<"$_depcheck" sed \
+			-e 's/ [^ ]* *$//;        # (1)' \
+			-e 's/.* \([^ ]*\)$/+\1/; # (2)' \
+			-e 's/^\([^+]\)/-\1/;     # (3)' |
+			# now each line is +branch or -branch (+ == recurse)
 			>"$_depcheck.ideps" \
 			uniq -s 1 # fold branch lines; + always comes before - and thus wins within uniq
 
