@@ -961,16 +961,17 @@ update_branch_internal() {
 		while read -r dep; do
 			dep="${dep#?}"
 			case "$dep" in
-			"refs"/*)
-				set -- "$@" "$dep"
-				case "$dep" in
+			:*)
+				d="${dep#?}"
+				set -- "$@" "$d"
+				case "$d" in
 				"refs/heads"/*)
-					d="${dep#refs/heads/}"
+					d="${d#refs/heads/}"
 					deplist="${deplist:+$deplist }$d"
 					deplines="$deplines$d$lf"
 					;;
 				*)
-					d="${dep#refs/}"
+					d="${d#refs/}"
 					deplist="${deplist:+$deplist }$d"
 					deplines="$deplines$d$lf"
 					;;

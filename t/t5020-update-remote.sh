@@ -125,7 +125,7 @@ test_expect_success 'remote level 2 dep' '
 	git diff --exit-code newbeta:beta~1.t stage:beta~1.t
 '
 
-test_expect_failure 'remote level 1 base' '
+test_expect_success 'remote level 1 base' '
 	cp -pR pristine level1base &&
 	cd level1base &&
 	git symbolic-ref HEAD "$(tg --top-bases -r)/t/patch1" &&
@@ -144,7 +144,7 @@ test_expect_failure 'remote level 1 base' '
 	git diff --exit-code newrelease:release~1.t stage:release~1.t
 '
 
-test_expect_failure 'remote level 2 base' '
+test_expect_success 'remote level 2 base' '
 	cp -pR pristine level2base &&
 	cd level2base &&
 	git symbolic-ref HEAD "$(tg --top-bases -r)/t/patch2" &&
@@ -163,7 +163,7 @@ test_expect_failure 'remote level 2 base' '
 	git diff --exit-code newrelease:release~1.t stage:release~1.t
 '
 
-test_expect_failure 'remote intermediate base' '
+test_expect_success 'remote intermediate base' '
 	cp -pR pristine intbase &&
 	cd intbase &&
 	git symbolic-ref HEAD "$(tg --top-bases -r)/t/int" &&
@@ -182,7 +182,7 @@ test_expect_failure 'remote intermediate base' '
 	git diff --exit-code newbeta:beta~1.t stage:beta~1.t
 '
 
-test_expect_failure 'remote stage base' '
+test_expect_success 'remote stage base' '
 	cp -pR pristine stagebase &&
 	cd stagebase &&
 	git symbolic-ref HEAD "$(tg --top-bases -r)/stage" &&
