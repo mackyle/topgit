@@ -5,7 +5,7 @@
 # All rights reserved.
 # GPLv2
 
-TG_VERSION="0.19.9.PRE"
+TG_VERSION="0.19.9"
 
 # Update in Makefile if you add any code that requires a newer version of git
 GIT_MINIMUM_VERSION="@mingitver@"
