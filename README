@@ -400,7 +400,7 @@ machine.  Simply add a global ``-w <tgtag>`` option to the command.
 This functionality can be extremely useful for quickly examing/querying a
 previous state recorded some time ago with a `tg tag`_.
 
-As the wayback machine uses a separate caching area, except initial operations
+As the wayback machine uses a separate caching area, expect initial operations
 to be less speedy, but repeated wayback operations on the same wayback tag
 should happen at normal speed.
 
@@ -694,7 +694,7 @@ typo is noticed, it's okay to ammend/rebase to fix that provided neither
 ``tg update`` nor ``tg create`` has already been used to cause some other ref
 to be able to reach the commit with the typo.
 
-If an amend or rerwite is done anyway even though the commit with the typo is
+If an amend or rewrite is done anyway even though the commit with the typo is
 reachable from some other ref, the typo won't really be removed.  What will
 happen instead is that the new version without the typo will ultimately be
 merged into the other ref(s) (at ``tg update`` time) likely causing a conflict
@@ -928,7 +928,7 @@ tg create
 	The commit message can be changed with the ``-m`` (or ``--message``) or
 	``-F`` (or ``--file``) option.  The automatic commit can be suppressed
 	by using the ``--no-ccmmit`` (or ``-n``) option.  Running the editor on
-	the new ``.topmsg`` file can be suppressed by using ```--no-edit``
+	the new ``.topmsg`` file can be suppressed by using ``--no-edit``
 	(which does *NOT* suppress the automatic commit unless ``--no-commit``
 	is also given) or by providing an explicit value for the new
 	``.topmsg`` file using the ``--topmsg`` or ``--topmsg-file`` option.
@@ -1149,8 +1149,8 @@ tg info
 
 	With ``--series`` the list of TopGit branches in the order they would
 	be linearized into a patch series is shown along with the description
-	of each branch.  If branch name passed to ``tg info`` is not the last
-	branch in the series a marker column will be provided to quickly
+	of each branch.  If the branch name passed to ``tg info`` is not the
+	last branch in the series a marker column will be provided to quickly
 	locate it in the list.  This same option can be used with `tg checkout`_.
 
 	Some patches shown in the list may not actually end up introducing any
@@ -1564,7 +1564,7 @@ tg checkout
 	supply it, all the available topic branches are listed and you
 	can select one of them.
 
-	Normally, the ``next`` and ``prev`` commands moves one step in
+	Normally, the ``next`` and ``prev`` commands move one step in
 	the dependency graph of the topic branches.  The ``-a`` option
 	causes them (and their aliases) to move as far as possible.
 	That is, ``tg checkout next -a`` moves to a topic branch that
@@ -2127,7 +2127,7 @@ tg shell
 	`tg tag`_.  However, it may also have a ``:`` prefixed to it to
 	indicate that it should prune (making it into a "pruning wayback tag").
 	Use of a "pruning wayback tag" results in a repository that contains
-	excludsively those refs listed in the specified tag.  Otherwise the
+	exclusively those refs listed in the specified tag.  Otherwise the
 	wayback repository will just revert those refs while keeping the others
 	untouched (the default behavior).
 
@@ -2156,7 +2156,7 @@ tg shell
 	
 	Override and/or bypass this safety protection at your own peril!
 	Especially *do not run* the ``git prune`` plumbing command in the
-	wayback repository!  If you do so (or bypass any of the other safties)
+	wayback repository!  If you do so (or bypass any of the other safeties)
 	be prepared for corruption and loss of data in the repository.
 	Just *don't do that* in the first place!
 
@@ -2478,7 +2478,7 @@ TECHNICAL
 ---------
 
 A familiarity with the terms in the GLOSSARY_ is helpful for understanding the
-content of this sections.  See also the IMPLEMENTATION_ section.
+content of this section.  See also the IMPLEMENTATION_ section.
 
 The Update Process
 ~~~~~~~~~~~~~~~~~~
@@ -2532,7 +2532,7 @@ file and the ``git read-tree -m --aggressive`` command possibly assisted by
 the ``git merge-index`` and ``git merge-file`` commands.  This combination may
 be repeated more than once to perform an octopus in-index merge.  If this
 fails, the files are checked out and a normal ``git merge`` three-way merge is
-performed (possily multiple times).  If the normal ``git merge`` fails then
+performed (possibly multiple times).  If the normal ``git merge`` fails then
 user intervention is required to resolve the merge conflict(s) and continue.
 
 Since the ``tg annihilate``, ``tg create`` and ``tg depend add`` commands may
@@ -2582,13 +2582,13 @@ GLOSSARY
 	.topmsg
 		Version-controlled file stored at the root level of each
 		TopGit branch that contains the patch header for a TopGit
-		branch.  See also IMPLEMENTATION_;
+		branch.  See also IMPLEMENTATION_.
 
 	.topdeps
 		Version-controlled file stored at the root level of each
 		TopGit branch that lists the branch's dependencies one per
 		line omitting the leading ``refs/heads/`` part.  See also
-		IMPLEMENTATION_;
+		IMPLEMENTATION_.
 
 	branch containment
 		Given two Git commit identifiers (e.g. hashes) C1 and C2,
