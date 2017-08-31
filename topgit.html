@@ -2046,6 +2046,7 @@ freshly created commits.  There are five possible modes:</p>
 like the <tt class="docutils literal">patch</tt> mode will only strip the first square brackets tag
 (if there is one) provided it's a TopGit-known tag (the <tt class="docutils literal">patch</tt>
 variation will only strip a PATCH tag but still just the first one).
+Note that TopGit does understand <tt class="docutils literal">[RELEASE]</tt> in <tt class="docutils literal">topgit</tt> mode.
 With <tt class="docutils literal">trim</tt> (aka <tt class="docutils literal">ws</tt>) internal runs of spaces/tabs are converted
 to a single space, but no square brackets tags are removed.  The <tt class="docutils literal">ws</tt>
 mode should generally be preferred instead of using <tt class="docutils literal">keep</tt> mode.
@@ -3069,7 +3070,9 @@ dependency (i.e. their <tt class="docutils literal">.topdeps</tt> files are neve
 convention these TopGit branches do not actually contain
 any changes and their <tt class="docutils literal">.topdeps</tt> files are empty.  They
 are used to control a base dependency that another set of
-branches depends on.</dd>
+branches depends on.  Sometimes these are named <tt class="docutils literal">[RELEASE]</tt>
+instead because the base dependency they represent is actually
+the formal release of something.</dd>
 <dt>TopGit <tt class="docutils literal">[STAGE]</tt> branch</dt>
 <dd>A TopGit branch whose subject starts with <tt class="docutils literal">[STAGE]</tt>.  By
 convention these TopGit branches do not actually contain any
