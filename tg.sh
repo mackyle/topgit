@@ -2200,7 +2200,7 @@ activate_wayback_machine()
 	default = nothing
 	followTags = true
 [alias]
-	wayback-updates = fetch --force --no-tags --dry-run wayback refs/*:refs/*
+	wayback-updates = fetch -u --force --no-tags --dry-run wayback refs/*:refs/*
 " >"$tg_wayback_dir/.git/config"
 	cat "$git_dir/HEAD" >"$tg_wayback_dir/.git/HEAD"
 	case "$1" in ":"?*);;*)
