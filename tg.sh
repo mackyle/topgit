@@ -1513,6 +1513,10 @@ do_help()
 		_www=1
 		shift
 	fi
+	if [ "$1" = "st" ]; then
+		shift
+		set -- "status" "$@"
+	fi
 	if [ -z "$1" ] ; then
 		# This is currently invoked in all kinds of circumstances,
 		# including when the user made a usage error. Should we end up
