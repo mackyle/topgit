@@ -34,7 +34,7 @@ elements:
   1. A "shebang" line `#!/bin/sh` as the first line
   2. A non-empty assignment to the `test_description` variable
   3. A line sourcing the test library with `. ./test-lib.sh`
-  4. An optional call to the `test_plan` function if you're nice
+  4. A (barely optional) call to the `test_plan` function if you're nice
   5. One or more calls to `test_expect_...`/`test_tolerate_...` functions
   6. A call to the `test_done` function
 
@@ -76,11 +76,12 @@ telling the TAP processor to expect two test result lines.
 The TAP protocol allows this line to be output either _before all_ or
 _after all_ of the test result lines.  Calling `test_plan` causes it to be
 output before, omitting the `test_plan` line causes it to be output after (when
-the `test_done` function is called).
+the `test_done` function is called along with a warning).
 
 If you are nice and can count you include a `test_plan` call so that the TAP
 harness can output a decent progress display for test scripts with a lot of
 subtests in them.  If you are not so nice (or just plain lazy) you don't.
+(If the number of subtests truly varies there's an option for that as well.)
 
 
 test_expect_success
@@ -207,9 +208,9 @@ into a separate function and call that from the single-quoted test "script" or
 use the special "-" script.
 
 Anything moved into an external function will not appear in the log of any
-failures (sometimes this is a good thing to keep the log more succinct.  It
+failures (sometimes this is a good thing to keep the log more succinct).  It
 may make sense for "uninteresting" parts of the test "script" to be placed into
-external functions anyway for this reason).
+external functions anyway for this reason.
 
 However, when there is a confounding quotation issue but the lines in question
 really do belong in the log of any failures the special "-" script can be used
@@ -313,11 +314,28 @@ This will not work as expected:
 While it _will_ succeed in Git's version of the testing library, it will fail
 by default in this one because each test is "eval"'d in a subshell by default.
 
-This also means the `test_when_finished` function normally does not work either
-(although that may eventually be corrected).
+Ordinarily this would also mean the `test_when_finished` function would not
+work either.  However, the `test_when_finished` function takes great pains to
+save the re-quoted arguments to a temporary script and execute that AFTER the
+subshell has exited.  There's still a "gotcha" with this though because,
+obviously, the temporary script cannot refer to any variables set within the
+subshell as the subshell will have already exited.  This usually does not
+present that much of a problem in practice and it _does_ work from within
+nested subshells (to any depth) which the Git version does not.
+
+For example, this alteration will make the above work:
+
+    test_expect_success 'first' '
+        : it works &&
+	test_when_finished itworked=1
+    '
+
+    test_expect_success 'check' '
+        test "$itworked" = "1"
+    '
 
 To make it so that the first test can affect the environment of the test script
-the `TESTLIB_TEST_NO_SUBSHELL` variable can be set like so:
+directly, the `TESTLIB_TEST_NO_SUBSHELL` variable can be set like so:
 
     TESTLIB_TEST_NO_SUBSHELL=1
     test_expect_success 'first' '
@@ -336,8 +354,26 @@ needs to modify the environment of the test script (the "check" subtest just
 reads it but does not modify it).
 
 Setting `TESTLIB_TEST_NO_SUBSHELL` also allows the `test_when_finished`
-function to work (assuming it's used in a context where it would otherwise have
-worked).
+function to access variables from within the subshell (assuming it's used in
+a context where it would otherwise have worked).
+
+For example, this use of `test_when_finished` requires "no subshell" to work:
+
+    TESTLIB_TEST_NO_SUBSHELL=1
+    test_expect_success 'first' '
+	test_when_finished "itworked=\$resultval" &&
+        : it works &&
+	resultval=1
+    '
+    unset TESTLIB_TEST_NO_SUBSHELL
+
+    test_expect_success 'check' '
+        test "$itworked" = "1"
+    '
+
+Without the "no subshell" setting when the temporary `test_when_finished`
+script gets executed the value of `resultval` would already have been discarded
+thereby causing the following subtest to fail.
 
 Avoid setting the `TESTLIB_TEST_NO_SUBSHELL` if at all possible because
 allowing subtests to affect the environment of the test script itself can
@@ -354,13 +390,14 @@ first place.
 The test script runs in its very own trash directory.  If you really, really,
 really (but not just "really, really" ;) need to communicate information from
 inside one of the subtest "eval" scripts back out, have it write the
-information into a temporary file in the current directory.
+information into a temporary file in the current directory.  For small tidbits
+of information just use the `test_when_finished` function instead.
 
 Sometimes just a "flag" is enough so simply creating a file and then testing
-for its existence will do.  The same cross-subtest contamination problem is
-possible with this mechanism as well.  It's best to treat each subtest as a
-black box into which information flows but only a single "ok" or "not ok" comes
-back out.
+for its existence or using `test_when_finished` to set a variable will do.
+The same cross-subtest contamination problem is possible with this mechanism as
+well.  It's best to treat each subtest as a black box into which information
+flows but only a single "ok" or "not ok" comes back out.
 
 If all that's needed is to check whether or not the previous subtest succeeded
 then the `LASTOK` prerequisite may be used as described in the next section.
