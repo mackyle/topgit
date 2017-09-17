@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 
 # create-html-usage.pl -- insert usage lines into README
-# Cpoyright (C) 2015 Kyle J. McKay.  All rights reserved.
+# Cpoyright (C) 2015,2017 Kyle J. McKay.  All rights reserved.
 # License GPLv2 or, at your option, any later version.
 
 use strict;
@@ -54,7 +54,7 @@ my $tab = ' ' x 8;
 while (my $line = <>) {
 	chomp $line;
 	1 while $line =~ s/\t+/" " x (($+[0] - $-[0]) * 8 - $-[0] % 8)/e;
-	$line =~ s'^``(.*)``$'wrap(78, 4, $1)'e if $textmode;
+	$line =~ s'^``([^``\n].*)``$'wrap(78, 4, $1)'e if $textmode;
 	$line =~ s'^(\s*):`(.+?)`_:'"$1$2  "'e if $textmode;
 	$line =~ s'^(\s*):(\w+?)_?:'"$1$2"'e if $textmode;
 	if (defined($last)) {
