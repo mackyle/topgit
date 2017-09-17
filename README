@@ -2494,7 +2494,7 @@ are taken:
 	   before proceeding (yup, this is a recursive process).
 
 	3) Each of the branch's direct dependencies (i.e. they are listed in
-	   the branch's ``.topdes`` file) that was updated in the previous
+	   the branch's ``.topdeps`` file) that was updated in the previous
 	   step is now merged into the branch's corresponding base.  If a
 	   remote is involved, and the branch's corresponding base does NOT
 	   contain the remote branch's corresponding base that remote base is
@@ -2502,14 +2502,15 @@ are taken:
 	   the first item merged into the branch's base).
 
 	4) If the branch has a corresponding remote branch and the branch
-	   does not already contain it, it's merged into the branch's base
-	   (which was possibly already updated in step (3) to contain the
-	   remote branch's base but not the remote branch itself) on a detached
-	   HEAD.  Yup, this step can be a bit confusing and no, the updated
-	   base from step (3) has not yet been merged into the branch itself
-	   yet either.  If there is no remote branch this step does not apply.
-	   Using a detached HEAD allows the remote branch to be merged into the
-	   contents of the base without actually perturbing the base's ref.
+	   does not already contain it, the branch's base (which was possibly
+	   already updated in step (3) to contain the remote branch's base but
+	   not the remote branch itself) is merged into the remote branch on a
+	   detached HEAD.  Yup, this step can be a bit confusing and no, the
+	   updated base from step (3) has not yet been merged into the branch
+	   itself yet either.  If there is no remote branch this step does not
+	   apply.  Using a detached HEAD allows the contents of the base to be
+	   merged into the remote branch without actually perturbing the base's
+	   or remote branch's refs.
 
 	5) If there is a remote branch present then use the result of step (4)
 	   otherwise use the branch's base and merge that into the branch
