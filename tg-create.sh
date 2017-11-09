@@ -147,11 +147,11 @@ while [ $# -gt 0 ]; do case "$1" in
 		;;
 esac; shift; done
 ensure_work_tree
-[ $# -gt 0 -o -z "$rname" ] || set -- "$rname"
+[ $# -gt 0 ] || [ -z "$rname" ] || set -- "$rname"
 if [ $# -gt 0 ]; then
 	name="$1"
 	shift
-	if [ -z "$remote" -a "$1" = "-r" ]; then
+	if [ -z "$remote" ] && [ "$1" = "-r" ]; then
 		remote=1
 		shift;
 		rname="$1"
@@ -159,13 +159,13 @@ if [ $# -gt 0 ]; then
 	fi
 fi
 [ -n "$name" ] || { err "no branch name given"; usage 1; }
-[ -z "$remote" -o -n "$rname" ] || rname="$name"
-[ -z "$remote" -o -z "$msg$msgfile$topmsg$topmsgfile$nocommit$noupdate$nodeps" ] || { err "-r may not be combined with other options"; usage 1; }
-[ $# -eq 0 -o -z "$remote" ] || { err "deps not allowed with -r"; usage 1; }
-[ $# -le 1 -o -z "$nodeps" ] || { err "--base (aka --no-deps) allows at most one <dep>"; usage 1; }
+[ -z "$remote" ] || [ -n "$rname" ] || rname="$name"
+[ -z "$remote" ] || [ -z "$msg$msgfile$topmsg$topmsgfile$nocommit$noupdate$nodeps" ] || { err "-r may not be combined with other options"; usage 1; }
+[ $# -eq 0 ] || [ -z "$remote" ] || { err "deps not allowed with -r"; usage 1; }
+[ $# -le 1 ] || [ -z "$nodeps" ] || { err "--base (aka --no-deps) allows at most one <dep>"; usage 1; }
 [ "$nocommit$noupdate" != "11" ] || die "--no-commit and --no-update are mutually exclusive options"
-[ -z "$msg" -o -z "$msgfile" ] || die "only one -F or -m option is allowed"
-[ "$msgfile" != "-" -o "$topmsgfile" != "-" ] || { err "--message-file and --topmsg-file may not both be '-'"; usage 1; }
+[ -z "$msg" ] || [ -z "$msgfile" ] || die "only one -F or -m option is allowed"
+[ "$msgfile" != "-" ] || [ "$topmsgfile" != "-" ] || { err "--message-file and --topmsg-file may not both be '-'"; usage 1; }
 
 ## Fast-track creating branches based on remote ones
 

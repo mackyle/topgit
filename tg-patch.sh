@@ -199,7 +199,7 @@ else
 		git diff-tree -p --stat --summary ${binary:+--binary} "$@" $b_tree $t_tree
 	else
 		cmd="git diff-tree -p --stat --summary ${binary:+--binary}"
-		while [ $# -gt 0 -a "$1" != "--" ]; do
+		while [ $# -gt 0 ] && [ "$1" != "--" ]; do
 			cmd="$cmd $(quotearg "$1")"
 			shift
 		done

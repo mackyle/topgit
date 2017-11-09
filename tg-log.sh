@@ -57,7 +57,7 @@ if [ -z "$hasdd" ]; then
 	git $logcmd --first-parent $nomerges "$@" "refs/$topbases/$name".."$name"
 else
 	cmd='git $logcmd --first-parent $nomerges'
-	while [ $# -gt 0 -a "$1" != "--" ]; do
+	while [ $# -gt 0 ] && [ "$1" != "--" ]; do
 		cmd="$cmd $(quotearg "$1")"
 		shift
 	done

@@ -237,18 +237,18 @@ while [ $# -gt 0 ]; do case "$1" in
 esac; shift; done
 
 [ "$stash$anonymous" != "11" ] || usage 1
-[ -z "$stash$anonymous" -o -n "$reflog$drop$clear$delete" ] || { outofdateok=1; force=1; defnoedit=1; }
+[ -z "$stash$anonymous" ] || [ -n "$reflog$drop$clear$delete" ] || { outofdateok=1; force=1; defnoedit=1; }
 [ -n "$noedit" ] || noedit="$defnoedit"
 [ "$noedit" != "0" ] || noedit=
-[ -z "$reflog" -o -z "$drop$clear$delete$signed$keyid$force$msg$msgfile$noedit$treeish$refsonly$outofdateok" ] || usage 1
-[ -n "$reflog" -o -z "$setreflogmsg$notype$maxcount" ] || usage 1
-[ -z "$drop$clear$delete" -o -z "$setreflogmsg$notype$maxcount$signed$keyid$force$msg$msgfile$noedit$treeish$refsonly$outofdateok" ] || usage 1
-[ -z "$reflog$drop$clear$delete" -o "$reflog$drop$clear$delete" = "1" ] || usage 1
+[ -z "$reflog" ] || [ -z "$drop$clear$delete$signed$keyid$force$msg$msgfile$noedit$treeish$refsonly$outofdateok" ] || usage 1
+[ -n "$reflog" ] || [ -z "$setreflogmsg$notype$maxcount" ] || usage 1
+[ -z "$drop$clear$delete" ] || [ -z "$setreflogmsg$notype$maxcount$signed$keyid$force$msg$msgfile$noedit$treeish$refsonly$outofdateok" ] || usage 1
+[ -z "$reflog$drop$clear$delete" ] || [ "$reflog$drop$clear$delete" = "1" ] || usage 1
 [ -z "$maxcount" ] || is_numeric "$maxcount" || die "invalid count: $maxcount"
 [ -z "$maxcount" ] || [ $maxcount -gt 0 ] || die "invalid count: $maxcount"
-[ -z "$msg" -o -z "$msgfile" ] || die "only one -F or -m option is allowed."
+[ -z "$msg" ] || [ -z "$msgfile" ] || die "only one -F or -m option is allowed."
 [ -z "$refsonly" ] || set -- refs..only "$@"
-[ $# -gt 0 -o -z "$reflog" ] || set -- --stash
+[ $# -gt 0 ] || [ -z "$reflog" ] || set -- --stash
 [ -n "$1" ] || { echo "Tag name required" >&2; usage 1; }
 tagname="$1"
 shift
@@ -289,7 +289,7 @@ reftype=tag
 case "$refname" in refs/tags/*) tagname="${refname#refs/tags/}";; *) reftype=ref; tagname="$refname"; esac
 logbase="$git_common_dir"
 [ "$refname" != "HEAD" ] || logbase="$git_dir"
-[ -z "$reflog$drop$clear$delete" -o $# -eq 0 ] || usage 1
+[ -z "$reflog$drop$clear$delete" ] || [ $# -eq 0 ] || usage 1
 if [ -n "$drop$clear$delete" ]; then
 	if [ -n "$sfx" ]; then
 		[ -z "$clear$delete" ] || die "invalid ref name ($sfx suffix not allowed): $refname"
@@ -317,7 +317,7 @@ if [ -n "$drop$clear$delete" ]; then
 	fi
 fi
 if [ -n "$reflog" ]; then
-	[ "$refname" = "refs/tgstash" -o -n "$setreflogmsg" ] || reflogmsg=1
+	[ "$refname" = "refs/tgstash" ] || [ -n "$setreflogmsg" ] || reflogmsg=1
 	git rev-parse --verify --quiet "$refname" -- >/dev/null ||
 	die "no such ref: $refname"
 	[ -s "$logbase/logs/$refname" ] ||
@@ -356,9 +356,9 @@ if [ -n "$reflog" ]; then
 				es="${es# }"
 				obj="$(git rev-parse --verify --quiet --short "$newrev" --)"
 				extra=
-				[ "$type" = "tag" -o -n "$notype" ] ||
+				[ "$type" = "tag" ] || [ -n "$notype" ] ||
 				extra="$hashcolor($metacolor$type$resetcolor$hashcolor)$resetcolor "
-				if [ -z "$reflogmsg" -o -z "$msg" ]; then
+				if [ -z "$reflogmsg" ] || [ -z "$msg" ]; then
 					objmsg=
 					if [ "$type" = "tag" ]; then
 						objmsg="$(git cat-file tag "$obj" |
@@ -388,7 +388,7 @@ if [ -n "$reflog" ]; then
 	page output
 	exit 0
 fi
-[ -z "$signed" -o "$reftype" = "tag" ] || die "signed tags must be under refs/tags"
+[ -z "$signed" ] || [ "$reftype" = "tag" ] || die "signed tags must be under refs/tags"
 [ $# -gt 0 ] || set -- $defbranch
 all=
 if [ $# -eq 1 ] && [ "$1" = "--all" ]; then
@@ -396,7 +396,7 @@ if [ $# -eq 1 ] && [ "$1" = "--all" ]; then
 	outofdateok=1
 	all=1
 	if [ $# -eq 0 ]; then
-		if [ "$quiet" -gt 0 -a -n "$noneok" ]; then
+		if [ "$quiet" -gt 0 ] && [ -n "$noneok" ]; then
 			exit 0
 		else
 			die "no TopGit branches found"
@@ -420,10 +420,10 @@ for arg in "$@"; do
 			die "not a commit-ish: ${arg#?}"
 	esac
 done
-while read -r obj typ ref && [ -n "$obj" -a -n "$typ" ]; do
-	[ -n "$ref" -o "$typ" != "missing" ] || die "no such ref: ${obj%???}"
+while read -r obj typ ref && [ -n "$obj" ] && [ -n "$typ" ]; do
+	[ -n "$ref" ] || [ "$typ" != "missing" ] || die "no such ref: ${obj%???}"
 	case " $ignore " in *" $ref "*) continue; esac
-	if [ "$typ" != "commit" -a "$typ" != "tag" ]; then
+	if [ "$typ" != "commit" ] && [ "$typ" != "tag" ]; then
 		[ -n "$anyrefok" ] || die "not a committish (is a '$typ') ref: $ref"
 		[ "$quiet" -ge 2 ] || warn "ignoring non-committish (is a '$typ') ref: $ref"
 		ignore="${ignore:+$ignore }$ref"
@@ -696,7 +696,7 @@ if [ -z "$tagtarget" ]; then
 fi
 
 init_reflog "$refname"
-if [ "$reftype" = "tag" -a -n "$signed" ]; then
+if [ "$reftype" = "tag" ] && [ -n "$signed" ]; then
 	[ "$quiet" -eq 0 ] || exec >/dev/null
 	git tag -F "$git_dir/TGTAG_FINALMSG" ${signed:+-s} ${force:+-f} \
 		${keyid:+-u} ${keyid} "$tagname" "$tagtarget"
@@ -727,6 +727,6 @@ else
 		;;
 	esac
 	git update-ref -m "$updmsg" "$refname" "$newtag"
-	[ -z "$old" -o "$quiet" -gt 0 ] || printf "Updated $reftype '%s' (was %s)\n" "$tagname" "$old"
+	[ -z "$old" ] || [ "$quiet" -gt 0 ] || printf "Updated $reftype '%s' (was %s)\n" "$tagname" "$old"
 fi
 rm -f "$git_dir/TAG_EDITMSG" "$git_dir/TGTAG_FINALMSG"

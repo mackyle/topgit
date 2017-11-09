@@ -100,11 +100,11 @@ while [ $# -gt 0 ]; do case "$1" in
 esac; shift; done
 [ -z "$exclude" ] || exclude="$exclude "
 
-[ -z "$list$short$hashonly" -o -z "$force$interact$dryrun$nodeps$nostash" ] || usage 1
-[ -z "$force$interact$dryrun" -o -z "$list$short$hashonly$deps$rdeps" ] || usage 1
-[ -z "$deps" -o -z "$rdeps" ] || usage 1
+[ -z "$list$short$hashonly" ] || [ -z "$force$interact$dryrun$nodeps$nostash" ] || usage 1
+[ -z "$force$interact$dryrun" ] || [ -z "$list$short$hashonly$deps$rdeps" ] || usage 1
+[ -z "$deps" ] || [ -z "$rdeps" ] || usage 1
 [ -n "$list$force$interact$dryrun" ] || list=1
-[ -z "$list" -o -n "$short" ] || if [ -n "$hashonly" ]; then short="--no-short"; else short="--short"; fi
+[ -z "$list" ] || [ -n "$short" ] || if [ -n "$hashonly" ]; then short="--no-short"; else short="--short"; fi
 [ -n "$1" ] || { echo "Tag name required" >&2; usage 1; }
 tagname="$1"
 shift
@@ -114,7 +114,7 @@ if [ "$1" = "--topgit-heads" ]; then
 	headstopgit=1
 	set -- "--heads" "$@"
 fi
-[ -n "$list" -o "$1" != "--heads" ] || usage 1
+[ -n "$list" ] || [ "$1" != "--heads" ] || usage 1
 [ "$tagname" != "--stash" ] || tagname=refs/tgstash
 case "$tagname" in --stash"@{"*"}")
 	strip="${tagname#--stash??}"
@@ -212,9 +212,9 @@ show_heads()
 	fi
 }
 
-[ $# -ne 0 -o -z "$rdeps$deps" ] || { set -- --heads; headstopgit=1; }
-[ $# -ne 1 -o -z "$deps" -o "$1" != "--heads" ] || { deps=; set --; }
-if [ $# -eq 1 -a "$1" = "--heads" ]; then
+[ $# -ne 0 ] || [ -z "$rdeps$deps" ] || { set -- --heads; headstopgit=1; }
+[ $# -ne 1 ] || [ -z "$deps" ] || [ "$1" != "--heads" ] || { deps=; set --; }
+if [ $# -eq 1 ] && [ "$1" = "--heads" ]; then
 	set -- $(show_heads)
 fi
 
@@ -239,7 +239,7 @@ for b; do
 	ref_exists "$rn" || die "not present in tag data (try --list): $rn"
 	case " $refs " in *" $rn "*);;*)
 		refs="${refs:+$refs }$rn"
-		if [ -z "$list" ] && [ -z "$nodeps" -o -z "$exp" ] && is_tgish "$rn"; then
+		if [ -z "$list" ] && { [ -z "$nodeps" ] || [ -z "$exp" ]; } && is_tgish "$rn"; then
 			case "$rn" in
 			refs/"$topbases"/*)
 				refs="$refs refs/heads/${rn#refs/$topbases/}"
@@ -256,7 +256,7 @@ show_dep() {
 	case "$exclude" in *" refs/heads/$_dep "*) return; esac
 	case " $seen_deps " in *" $_dep "*) return 0; esac
 	seen_deps="${seen_deps:+$seen_deps }$_dep"
-	[ -z "$tgish" -o -n "$_dep_is_tgish" ] || return 0
+	[ -z "$tgish" ] || [ -n "$_dep_is_tgish" ] || return 0
 	printf 'refs/heads/%s\n' "$_dep"
 	[ -z "$_dep_is_tgish" ] ||
 	printf 'refs/%s/%s\n' "$topbases" "$_dep"
@@ -286,7 +286,7 @@ show_deps()
 show_rdep()
 {
 	case "$exclude" in *" refs/heads/$_dep "*) return; esac
-	[ -z "$tgish" -o -n "$_dep_is_tgish" ] || return 0
+	[ -z "$tgish" ] || [ -n "$_dep_is_tgish" ] || return 0
 	if [ -n "$hashonly" ]; then
 		printf '%s %s\n' "$_depchain" "$(ref_exists_rev_short "refs/heads/$_dep" $short)"
 	else
@@ -377,7 +377,7 @@ get_short() {
 	git rev-parse --verify --quiet --short "$1" --
 }
 
-if [ -n "$nodeps" -o -z "$refs" ]; then
+if [ -n "$nodeps" ] || [ -z "$refs" ]; then
 	while read -r name rev; do
 		case "$exclude" in *" $name "*) continue; esac
 		[ -z "$refs" ] || case " $refs " in *" $name "*);;*) continue; esac
@@ -412,7 +412,7 @@ EOT
 	mv -f "$insn"+ "$insn"
 	[ -s "$insn" ] || die "nothing to do"
 	while read -r op hash ref; do
-		[ "$op" = "r" -o "$op" = "revert" ] ||
+		[ "$op" = "r" ] || [ "$op" = "revert" ] ||
 		die "invalid op in instruction: $op $hash $ref"
 		case "$ref" in refs/?*);;*)
 			die "invalid ref in instruction: $op $hash $ref"
@@ -422,10 +422,10 @@ EOT
 	done <"$insn"
 fi
 msg="tgrevert: $reftype $tagname ($(( $(wc -l <"$insn") )) command(s))"
-[ -n "$dryrun" -o -n "$nostash" ] || tg tag -q -q --none-ok -m "$msg" --stash || die "requested --stash failed"
+[ -n "$dryrun" ] || [ -n "$nostash" ] || tg tag -q -q --none-ok -m "$msg" --stash || die "requested --stash failed"
 refwidth="$(git config --get --int core.abbrev 2>/dev/null)" || :
 [ -n "$refwidth" ] || refwidth=7
-[ $refwidth -ge 4 -a $refwidth -le 40 ] || refwidth=7
+[ $refwidth -ge 4 ] && [ $refwidth -le 40 ] || refwidth=7
 nullref="$(printf '%.*s' $refwidth "$nullsha")"
 notewidth=$(( $refwidth + 4 + $refwidth ))
 srh=
@@ -435,7 +435,7 @@ while read -r name rev; do
 	orig="$(git rev-parse --verify --quiet "$name" --)" || :
 	init_reflog "$name"
 	if [ "$rev" != "$orig" ]; then
-		[ -z "$dryrun" -a -n "$quiet" ] ||
+		[ -z "$dryrun" ] && [ -n "$quiet" ] ||
 		origsh="$(git rev-parse --verify --short --quiet "$name" --)" || :
 		if [ -z "$dryrun" ]; then
 			if [ -n "$srh" ] && [ "$srh" = "$name" ]; then
@@ -447,7 +447,7 @@ while read -r name rev; do
 			fi
 			git update-ref -m "$msg" "$name" "$rev"
 		fi
-		if [ -n "$dryrun" -o -z "$quiet" ]; then
+		if [ -n "$dryrun" ] || [ -z "$quiet" ]; then
 			revsh="$(git rev-parse --verify --short --quiet "$rev" --)" || :
 			if [ -n "$origsh" ]; then
 				hdr=' '
@@ -460,7 +460,7 @@ while read -r name rev; do
 			fi
 		fi
 	else
-		: #[ -z "$dryrun" -a -n "$quiet" ] || printf "* %-*s  %s\n" $notewidth "[no change]" "$name"
+		: #[ -z "$dryrun" ] && [ -n "$quiet" ] || printf "* %-*s  %s\n" $notewidth "[no change]" "$name"
 	fi
 done
 

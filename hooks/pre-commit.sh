@@ -83,7 +83,7 @@ v_check_topfile()
 	}
 
 	# check for positive size
-	[ -n "$_zerook" -o "$_size" -gt 0 ] || {
+	[ -n "$_zerook" ] || [ "$_size" -gt 0 ] || {
 		eval "$_var="'"$_file has empty (i.e. 0) size"'
 		return 3
 	}
@@ -125,7 +125,7 @@ while read -r status fn; do case "$fn" in
 esac; done <<-EOT
 	$(git diff-index --cached --name-status "$headtree" | grep -e "^$prefix\\.topdeps\$" -e "^$prefix\\.topmsg\$")
 EOT
-[ -n "$changedeps" -o -n "$changemsg" ] || exit 0
+[ -n "$changedeps" ] || [ -n "$changemsg" ] || exit 0
 
 check_cycle_name()
 {
@@ -197,7 +197,7 @@ prefix="100[0-9][0-9][0-9] $octet20 0$tab"
 newtree="$(GIT_INDEX_FILE="$tg_index" git write-tree)"
 rm -f "$tg_index"
 files=
-if [ -n "$changedeps" -a -n "$changemsg" ]; then
+if [ -n "$changedeps" ] && [ -n "$changemsg" ]; then
 	files=".topdeps and .topmsg"
 elif [ -n "$changedeps" ]; then
 	files=".topdeps"

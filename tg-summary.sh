@@ -91,7 +91,7 @@ while [ -n "$1" ]; do
 		exclude="$exclude ${1#--exclude=}";;
 	--exclude)
 		shift
-		[ -n "$1" -a "$1" != "--all" ] || die "--exclude requires a branch name"
+		[ -n "$1" ] && [ "$1" != "--all" ] || die "--exclude requires a branch name"
 		exclude="$exclude $1";;
 	-*)
 		usage;;
@@ -113,14 +113,14 @@ if [ "$1" = "--all" ]; then
 	doingall=1
 fi
 [ "$heads$rdeps" != "11" ] || head=
-[ $# -ne 0 -o -z "$head" ] || set -- "$head"
-[ -z "$defwithdeps" ] || [ $# -ne 1 ] || [ z"$1" != z"HEAD" -a z"$1" != z"@" ] || defwithdeps=2
+[ $# -ne 0 ] || [ -z "$head" ] || set -- "$head"
+[ -z "$defwithdeps" ] || [ $# -ne 1 ] || { [ z"$1" != z"HEAD" ] && [ z"$1" != z"@" ]; } || defwithdeps=2
 
 [ "$terse$heads$headsonly$graphviz$sort$deps$depsonly" = "" ] ||
 	[ "$terse$heads$headsonly$graphviz$sort$deps$depsonly$rdeps" = "1" ] ||
-	[ "$terse$heads$headsonly$graphviz$sort$deps$depsonly$rdeps" = "11" -a "$heads$rdeps" = "11" ] ||
+	{ [ "$terse$heads$headsonly$graphviz$sort$deps$depsonly$rdeps" = "11" ] && [ "$heads$rdeps" = "11" ]; } ||
 	die "mutually exclusive options given"
-[ -z "$withdeps" -o -z "$rdeps$depsonly$heads$headsonly" ] ||
+[ -z "$withdeps" ] || [ -z "$rdeps$depsonly$heads$headsonly" ] ||
 	die "mutually exclusive options given"
 
 for b; do
@@ -177,7 +177,7 @@ show_heads()
     fi
 }
 
-if [ -n "$heads" -a -z "$rdeps" ]; then
+if [ -n "$heads" ] && [ -z "$rdeps" ]; then
 	show_heads
 	exit 0
 fi
@@ -337,7 +337,7 @@ process_branch()
 		branch_contains "refs/$topbases/$name" "refs/remotes/$base_remote/${topbases#heads/}/$name" &&
 		branch_contains "refs/heads/$name" "refs/remotes/$base_remote/$name"
 	} || rem_update='R'
-	[ "$remote" != 'r' -o "$rem_update" = 'R' ] || {
+	[ "$remote" != 'r' ] || [ "$rem_update" = 'R' ] || {
 		branch_contains "refs/remotes/$base_remote/$name" "refs/heads/$name" 2>/dev/null
 	} || rem_update='L'
 	needs_update_check "$name"

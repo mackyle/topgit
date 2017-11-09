@@ -164,7 +164,7 @@ vcmp()
 	while
 		vcmp_a_="${1%%.*}"
 		vcmp_b_="${3%%.*}"
-		[ "z$vcmp_a_" != "z" -o "z$vcmp_b_" != "z" ]
+		[ "z$vcmp_a_" != "z" ] || [ "z$vcmp_b_" != "z" ]
 	do
 		if [ "${vcmp_a_:-0}" -lt "${vcmp_b_:-0}" ]; then
 			unset_ vcmp_a_ vcmp_b_
@@ -493,7 +493,7 @@ setup_hook()
 	fi
 	# Prepare incantation
 	hook_chain=
-	if [ -s "$git_hooks_dir/$1" -a -x "$git_hooks_dir/$1" ]; then
+	if [ -s "$git_hooks_dir/$1" ] && [ -x "$git_hooks_dir/$1" ]; then
 		hook_call="$hook_call"' || exit $?'
 		if [ -L "$git_hooks_dir/$1" ] || ! sed -n 1p <"$git_hooks_dir/$1" | grep -Fqx "#!@SHELL_PATH@"; then
 			chain_num=
@@ -573,7 +573,7 @@ branch_contains()
 	_revb2="$(ref_exists_rev "$2")" || return 0
 	if [ -s "$tg_cache_dir/$1/.bc/$2/.d" ]; then
 		if read _result _rev_matchb1 _rev_matchb2 &&
-			[ "$_revb1" = "$_rev_matchb1" -a "$_revb2" = "$_rev_matchb2" ]; then
+			[ "$_revb1" = "$_rev_matchb1" ] && [ "$_revb2" = "$_rev_matchb2" ]; then
 			return $_result
 		fi <"$tg_cache_dir/$1/.bc/$2/.d"
 	fi
@@ -588,7 +588,7 @@ branch_contains()
 
 create_ref_dirs()
 {
-	[ ! -s "$tg_tmp_dir/tg~ref-dirs-created" -a -s "$tg_ref_cache" ] || return 0
+	[ ! -s "$tg_tmp_dir/tg~ref-dirs-created" ] && [ -s "$tg_ref_cache" ] || return 0
 	mkdir -p "$tg_tmp_dir/cached/refs"
 	awk '{x = $1; sub(/^refs\//, "", x); if (x != "") print x}' <"$tg_ref_cache" | tr '\n' '\0' | {
 		cd "$tg_tmp_dir/cached/refs" &&
@@ -609,7 +609,7 @@ create_ref_dirs()
 # If the first argument is non-empty, stores "1" there if this call created the cache
 v_create_ref_cache()
 {
-	[ -n "$tg_ref_cache" -a ! -s "$tg_ref_cache" ] || return 0
+	[ -n "$tg_ref_cache" ] && ! [ -s "$tg_ref_cache" ] || return 0
 	_remotespec=
 	[ -z "$base_remote" ] || _remotespec="refs/remotes/$base_remote"
 	[ -z "$1" ] || eval "$1=1"
@@ -620,7 +620,7 @@ v_create_ref_cache()
 
 remove_ref_cache()
 {
-	[ -n "$tg_ref_cache" -a -s "$tg_ref_cache" ] || return 0
+	[ -n "$tg_ref_cache" ] && [ -s "$tg_ref_cache" ] || return 0
 	>"$tg_ref_cache"
 	>"$tg_ref_cache_br"
 	>"$tg_ref_cache_rbr"
@@ -632,7 +632,7 @@ remove_ref_cache()
 rev_parse()
 {
 	rev_parse_code_=1
-	if [ -n "$tg_ref_cache" -a -s "$tg_ref_cache" ]; then
+	if [ -n "$tg_ref_cache" ] && [ -s "$tg_ref_cache" ]; then
 		rev_parse_code_=0
 		awk -v r="$1" 'BEGIN {e=1}; $1 == r {print $2; e=0; exit}; END {exit e}' <"$tg_ref_cache" ||
 		rev_parse_code_=$?
@@ -752,7 +752,7 @@ v_verify_topgit_branch()
 {
 	if [ "$2" = "HEAD" ] || [ "$2" = "@" ]; then
 		_verifyname="$(git symbolic-ref HEAD 2>/dev/null)" || :
-		[ -n "$_verifyname" -o "$3" = "-f" ] || die "HEAD is not a symbolic ref"
+		[ -n "$_verifyname" ] || [ "$3" = "-f" ] || die "HEAD is not a symbolic ref"
 		case "$_verifyname" in refs/"$topbases"/*|refs/heads/*);;*)
 			[ "$3" != "-f" ] || return 1
 			die "HEAD is not a symbolic ref to the refs/heads namespace"
@@ -805,7 +805,7 @@ branch_annihilated()
 	_result_rev=
 	_result_rev_base=
 	{ read -r _result _result_rev _result_rev_base <"$tg_cache_dir/refs/heads/$_branch_name/.ann"; } 2>/dev/null || :
-	[ -z "$_result" -o "$_result_rev" != "$_rev" -o "$_result_rev_base" != "$_rev_base" ] || return $_result
+	[ -z "$_result" ] || [ "$_result_rev" != "$_rev" ] || [ "$_result_rev_base" != "$_rev_base" ] || return $_result
 
 	# use the merge base in case the base is ahead.
 	mb="$(git merge-base "$_rev_base" "$_rev" 2>/dev/null)"
@@ -1398,7 +1398,7 @@ branch_empty()
 		_result=
 		_result_rev=
 		{ read -r _result _result_rev <"$tg_cache_dir/refs/heads/$1/.mt"; } 2>/dev/null || :
-		[ -z "$_result" -o "$_result_rev" != "$_rev" ] || return $_result
+		[ -z "$_result" ] || [ "$_result_rev" != "$_rev" ] || return $_result
 		_result=0
 		[ "$(pretty_tree -t "$1" -b)" = "$(pretty_tree -t "$1" $2)" ] || _result=$?
 		[ -d "$tg_cache_dir/refs/heads/$1" ] || mkdir -p "$tg_cache_dir/refs/heads/$1" 2>/dev/null
@@ -1544,7 +1544,7 @@ do_help()
 			"[-c <name>=<val>] [--[no-]pager|-p] [-w [:]<tgtag>] ($cmds) ..."
 		echo "   Or: $tgname help [-w] [<command>]"
 		echo "Use \"$tgdisplaydir$tgname help tg\" for overview of TopGit"
-	elif [ -r "$TG_INST_CMDDIR"/tg-$1 -o -r "$TG_INST_SHAREDIR/tg-$1.txt" ] ; then
+	elif [ -r "$TG_INST_CMDDIR"/tg-$1 ] || [ -r "$TG_INST_SHAREDIR/tg-$1.txt" ] ; then
 		if [ -n "$_www" ]; then
 			nohtml=
 			if ! [ -r "$TG_INST_SHAREDIR/topgit.html" ]; then
@@ -2596,7 +2596,7 @@ else
 		export GIT_PAGER_IN_USE TG_PAGER_IN_USE
 	fi
 
-	[ -n "$cmd" -o $# -lt 1 ] || { cmd="$1"; shift; }
+	[ -n "$cmd" ] || [ $# -lt 1 ] || { cmd="$1"; shift; }
 
 	## Dispatch
 

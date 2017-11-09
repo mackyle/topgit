@@ -179,7 +179,7 @@ fi
 # without "-P" or "-L" a relative dirname may be returned
 whats_the_dir() {
 	# determine "$1"'s directory and store it into the var name passed as "$2"
-	if [ "z$1" = "z-P" -o "z$1" = "z-L" ]; then
+	if [ "z$1" = "z-P" ] || [ "z$1" = "z-L" ]; then
 		if [ "z$2" = "z--" ]; then
 			set -- "$3" "$4" "$1"
 		else
@@ -199,7 +199,7 @@ whats_the_dir() {
 	if [ "z$3" != "z" ] && [ -d "$1" ] &&
 	   ! case "$1" in [!/]*|*"/./"*|*"/."|*"/../"*|*"/..") ! :; esac; then
 		[ "z$3" = "z-P" ] || set -- "$1" "$2"
-		if [ "z$3" = "z" -a \( "z$1" = "z." -o "z$1" = "z$PWD" \) ]; then
+		if [ "z$3" = "z" ] && { [ "z$1" = "z." ] || [ "z$1" = "z$PWD" ]; }; then
 			set -- "$PWD" "$2"
 		else
 			set -- "$(cd "$1" && pwd $3)" "$2"

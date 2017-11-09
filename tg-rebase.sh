@@ -29,7 +29,7 @@ if [ -n "$optcontinue" ]; then
 		exit 1
 	fi
 fi
-if [ -z "$optmerge" -a -z "$optcontinue" ]; then
+if [ -z "$optmerge" ] && [ -z "$optcontinue" ]; then
     cat <<EOT >&2
 ${tgname:-tg} rebase is intended as a drop-in replacement for git rebase -m.
 Either add the -m (or --merge) option to the command line or use git rebase

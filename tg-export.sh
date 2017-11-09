@@ -61,7 +61,7 @@ while [ -n "$1" ]; do
 		if [ "$val" = "--strip" ]; then
 			strip=true
 			stripval=9999
-		elif [ -n "$val" -a "x$(echol "$val" | sed -e 's/[0-9]//g')" = "x" ]; then
+		elif [ -n "$val" ] && [ "${val#*[!0-9]}" = "$val" ]; then
 			strip=true
 			stripval=$val
 		else
