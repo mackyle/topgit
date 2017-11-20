@@ -590,9 +590,10 @@ create_ref_dirs()
 {
 	[ ! -s "$tg_tmp_dir/tg~ref-dirs-created" ] && [ -s "$tg_ref_cache" ] || return 0
 	mkdir -p "$tg_tmp_dir/cached/refs"
-	awk '{x = $1; sub(/^refs\//, "", x); if (x != "") print x}' <"$tg_ref_cache" | tr '\n' '\0' | {
+	awk '{x=$1; sub(/^refs\//,"",x); if (x != "") {gsub(/[^A-Za-z0-9\/_.+-]/,"\\\\&",x); print x;}}' <"$tg_ref_cache" |
+	{
 		cd "$tg_tmp_dir/cached/refs" &&
-		xargs -0 mkdir -p
+		xargs mkdir -p
 	}
 	awk -v p="$tg_tmp_dir/cached/" '
 		NF == 2 &&

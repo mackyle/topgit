@@ -115,4 +115,4 @@ LIST
 EOT
 
 # remove multiple occurrences of the same branch
-sort -u "$_listfile" | xargs git push $dry_run $force "$remote"
+sort -u "$_listfile" | sed 's,[^A-Za-z0-9/_.+-],\\&,g' | xargs git push $dry_run $force "$remote"
