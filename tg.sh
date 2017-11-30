@@ -1672,8 +1672,8 @@ do_status()
 			if [ -n "$upref" ]; then
 				uprefpart=" ... ${upref#$abbrev/remotes/}"
 				mbase="$(git merge-base HEAD "$upref")" || :
-				ahead="$(git rev-list --count HEAD ${mbase:+--not $mbase})" || ahead=0
-				behind="$(git rev-list --count "$upref" ${mbase:+--not $mbase})" || behind=0
+				ahead="$(git rev-list --count HEAD ${mbase:+--not} $mbase)" || ahead=0
+				behind="$(git rev-list --count "$upref" ${mbase:+--not} $mbase)" || behind=0
 				[ "$ahead$behind" = "00" ] || uprefpart="$uprefpart ["
 				[ "$ahead" = "0" ] || uprefpart="${uprefpart}ahead $ahead"
 				[ "$ahead" = "0" ] || [ "$behind" = "0" ] || uprefpart="$uprefpart, "

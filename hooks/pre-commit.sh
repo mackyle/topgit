@@ -204,7 +204,7 @@ elif [ -n "$changedeps" ]; then
 else
 	files=".topmsg"
 fi
-newcommit="$(git commit-tree -m "tg: $mode $files" ${headrev:+-p $headrev} "$newtree")"
+newcommit="$(git commit-tree -m "tg: $mode $files" ${headrev:+-p} ${headrev:+"$headrev"} "$newtree")"
 git update-ref -m "tg: sequester $files changes into their own preliminary commit" HEAD "$newcommit"
 warn "sequestered $files changes into their own preliminary commit"
 info "run the same \`git commit\` command again to commit the remaining changes" >&2
