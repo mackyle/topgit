@@ -454,7 +454,7 @@ run_awk_topgit_msg()
 # "<branch_name>" is always required because it's used in the output message
 # whenever the "Subject:" header line is not present (for whatever reason)
 #
-run_awk_require "topgit_msg"
+run_awk_require "topgit_msg_prepare" "topgit_msg"
 run_awk_topmsg_header()
 {
 	_usestdin=
