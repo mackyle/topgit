@@ -116,7 +116,7 @@ if [ -n "$dashdash" ]; then
 	esac
 else
 	[ $# -gt 0 ] || set -- "1"
-	[ $# -eq 1 ] || usage 1 "next/previos permits no more than one argument"
+	[ $# -eq 1 ] || usage 1 "next/previous permits no more than one argument"
 	case "$1" in
 		-a|--all)
 			[ -z "$branch" ] || usage 1 "--branch not allowed in --all mode"
