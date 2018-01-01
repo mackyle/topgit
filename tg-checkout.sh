@@ -78,7 +78,12 @@ while [ $# -gt 0 ]; do case "$1" in
 		break
 		;;
 esac; shift; done
-[ $# -ne 0 ] || [ -n "$dashdash" ] || set -- "next" # deprecated "next" alias
+[ $# -ne 0 ] || [ -n "$dashdash" ] || {
+	# deprecated "next" alias
+	warn "support for \"tg checkout\" with no argument will soon be removed"
+	warn "please switch to equivalent \"tg checkout +\" to avoid breakage"
+	set -- "+"
+}
 [ $# -gt 0 ] || usage 1
 pinstep=
 [ -n "$dashdash" ] || {
