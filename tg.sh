@@ -1,7 +1,7 @@
 #!/bin/sh
 # TopGit - A different patch queue manager
 # Copyright (C) 2008 Petr Baudis <pasky@suse.cz>
-# Copyright (C) 2014-2017 Kyle J. McKay <mackyle@gmail.com>
+# Copyright (C) 2014-2018 Kyle J. McKay <mackyle@gmail.com>
 # All rights reserved.
 # GPLv2
 

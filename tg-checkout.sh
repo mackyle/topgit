@@ -1,7 +1,7 @@
 #!/bin/sh
 # TopGit - A different patch queue manager
 # Copyright (C) 2013 Per Cederqvist <ceder@lysator.liu.se>
-# Copyright (C) 2015,2017 Kyle J. McKay <mackyle@gmail.com>
+# Copyright (C) 2015,2017,2018 Kyle J. McKay <mackyle@gmail.com>
 # All rights reserved.
 # GPLv2
 
@@ -68,6 +68,9 @@ while [ $# -gt 0 ]; do case "$1" in
 		dashdash=1
 		break
 		;;
+	-[0-9]*)
+		break
+		;;
 	-?*)
 		usage 1 "Unknown option: $1"
 		;;
@@ -77,13 +80,21 @@ while [ $# -gt 0 ]; do case "$1" in
 esac; shift; done
 [ $# -ne 0 ] || [ -n "$dashdash" ] || set -- "next" # deprecated "next" alias
 [ $# -gt 0 ] || usage 1
-[ -n "$dashdash" ] ||
-case "$1" in
-	n|next|push|child)		shift;;
-	p|prev|previous|pop|parent|..)	reverse=1; shift;;
-	-*)				usage 1;;
-	*)				dashdash=1;;
-esac
+pinstep=
+[ -n "$dashdash" ] || {
+	case "$1" in +[0-9]*|-[0-9]*)
+		arg="$1"
+		shift
+		set -- "${arg%%[0-9]*}" "${arg#?}" "$@"
+		pinstep=1
+	esac
+	case "$1" in
+		+|n|next|push|child)			shift;;
+		-|p|prev|previous|pop|parent|..)	reverse=1; shift;;
+		-*)					usage 1;;
+		*)					dashdash=1;;
+	esac
+}
 
 choices="$(get_temp choices)"
 desc=
@@ -115,11 +126,11 @@ else
 		[1-9]*)
 			[ "$1" = "${1%%[!0-9]*}" ] || usage 1 "invalid next/previous step count"
 			v_verify_topgit_branch branch "${branch:-HEAD}"
-			navigate_deps -t -s="$1" ${reverse:+-r} "$branch" >"$choices" || exit
+			navigate_deps -t -s="$1" ${reverse:+-r} ${pinstep:+-k} "$branch" >"$choices" || exit
 			pl="s" dir="next"
-			[ "$steps" != 1 ] || pl=
+			[ "$1" != 1 ] || pl=
 			[ -z "$reverse" ] || dir="previous"
-			no_branch_found="No $dir TopGit branch(es) found $steps$pl away"
+			no_branch_found="No $dir TopGit branch(es) found $1 step$pl away"
 			;;
 		*)
 			usage 1 "invalid next/previous movement; must be --all or positive number"

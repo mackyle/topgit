@@ -1515,13 +1515,16 @@ tg checkout
 				is not ``-a``, ``--all``, ``-h``, ``--help``,
 				``goto``, ``--``, ``n``, ``next``, ``push``,
 				``child``, ``p``, ``prev``, ``previous``,
-				``pop``, ``parent`` or ``..``.
+				``pop``, ``parent``, ``+``, ``-`` or ``..``.
 
 	    ``tg checkout [goto] [--] --series[=<head>]``
 				Check out a topic branch that belongs to
 				the current (or ``<head>``) patch series.
 				A list with descriptions (``tg info --series``)
 				will be shown to choose from if more than one.
+
+	    ``tg checkout + [<steps>]``
+				An alias for ``next``.
 
 	    ``tg checkout push [<steps>]``
 				An alias for ``next``.
@@ -1531,6 +1534,9 @@ tg checkout
 
 	    ``tg checkout``
 				Semi-deprecated alias for ``next``.
+
+	    ``tg checkout - [<steps>]``
+				An alias for ``prev``.
 
 	    ``tg checkout pop [<steps>]``
 				An alias for ``prev``.
