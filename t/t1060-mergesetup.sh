@@ -9,7 +9,7 @@ the "mergesetup".
 Make sure it works properly in a top-level as well as subdirectory.
 It probably should not work in a bare repo but it does so test that too.
 
-The Git 2.5+ worktree stuff also throughs a wrench into things.
+The Git 2.5+ worktree stuff also throws a wrench into things.
 '
 
 TEST_NO_CREATE_REPO=1
