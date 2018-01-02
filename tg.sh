@@ -73,6 +73,7 @@ exec_lc_all_c()
 # any Git translations will still appear for Git commands
 awk()	{ exec_lc_all_c awk @AWK_PATH@	"$@"; }
 cat()	{ exec_lc_all_c cat cat		"$@"; }
+cmp()	{ exec_lc_all_c cmp cmp		"$@"; }
 cut()	{ exec_lc_all_c cut cut		"$@"; }
 find()	{ exec_lc_all_c find find	"$@"; }
 grep()	{ exec_lc_all_c grep grep	"$@"; }
@@ -1920,6 +1921,53 @@ setup_git_dir_is_bare()
 	fi
 }
 
+git_hooks_pat_list="\
+[a]pplypatch-ms[g] [p]re-applypatc[h] [p]ost-applypatc[h] [p]re-commi[t] \
+[p]repare-commit-ms[g] [c]ommit-ms[g] [p]ost-commi[t] [p]re-rebas[e] \
+[p]ost-checkou[t] [p]ost-merg[e] [p]re-pus[h] [p]re-receiv[e] [u]pdat[e] \
+[p]ost-receiv[e] [p]ost-updat[e] [p]ush-to-checkou[t] [p]re-auto-g[c] \
+[p]ost-rewrit[e]"
+
+# git_hooks_dir must already be set to the value of core.hooksPath which
+# exists and is an absolute path.  The first and only argument is the
+# "pwd -P" of the $git_hooks_dir directory.  If the core.hooksPath setting
+# appears to be "friendly" attempt to alter it to be an absolute path to
+# "$git_common_dir/hooks" instead.  A "friendly" core.hooksPath setting
+# points to a directory for which "$git_common_dir/hooks" already has
+# entries which are symbolic links to the same core.hooksPath items.
+# There's no POSIX readlink utility, but there is a 'cmp -s' utility so we
+# use that instead to check.  Also the "friendly" core.hooksPath must be
+# something that's recognizable as belonging to a "friendly".
+maybe_adjust_friendly_hooks_path()
+{
+	case "$1" in */_global/hooks);;*) return 0; esac
+	[ -n "$1" ] && [ -d "$1" ] && [ -d "$git_common_dir/hooks" ] || return 0
+	[ -w "$git_common_dir" ] || return 0
+	! [ -e "$git_common_dir/config" ] || {
+	[ -f "$git_common_dir/config" ] && [ -w "$git_common_dir/config" ]
+	} || return 0
+	oktoswitch=1
+	for ghook in $(cd "$1" && eval "echo $git_hooks_pat_list"); do
+		case "$ghook" in "["*) continue; esac
+		[ -x "$1/$ghook" ] &&
+		[ -f "$1/$ghook" ] || continue
+		[ -x "$git_common_dir/hooks/$ghook" ] &&
+		[ -f "$git_common_dir/hooks/$ghook" ] &&
+		cmp -s "$1/$ghook" "$git_common_dir/hooks/$ghook" || {
+			oktoswitch=
+			break
+		}
+	done
+	if [ -n "$oktoswitch" ]; then
+		# a known "friendly" was detected and the hooks match;
+		# go ahead and silently switch the path
+		! git config core.hooksPath "$git_common_dir/hooks" >/dev/null 2>&1 ||
+		git_hooks_dir="$git_common_dir/hooks"
+	fi
+	unset_ oktoswitch
+	return 0
+}
+
 setup_git_dirs()
 {
 	[ -n "$git_dir" ] || git_dir="$(git rev-parse --git-dir)"
@@ -1943,7 +1991,20 @@ setup_git_dirs()
 	if vcmp "$git_version" '>=' "2.9" && gchp="$(git config --path --get core.hooksPath 2>/dev/null)" && [ -n "$gchp" ]; then
 		case "$gchp" in
 			/[!/]*)
-				git_hooks_dir="$gchp"
+				if [ -d "$gchp" ]; then
+					# if core.hooksPath is just another name for
+					# $git_common_dir/hooks, keep referring to it
+					# by $git_common_dir/hooks
+					abscdh="$(cd "$git_common_dir" && pwd -P)/hooks"
+					abshpd="$(cd "$gchp" && pwd -P)"
+					if [ "$abshpd" != "$abscdh" ]; then
+						git_hooks_dir="$gchp"
+						maybe_adjust_friendly_hooks_path "$abshpd"
+					fi
+					unset_ abscdh abshpd
+				else
+					[ -n "$1" ] || warn "ignoring non-existent core.hooksPath: $gchp"
+				fi
 				;;
 			*)
 				[ -n "$1" ] || warn "ignoring non-absolute core.hooksPath: $gchp"
