@@ -10,7 +10,7 @@ if vcmp "$git_version" '>=' "2.9"; then
         test_set_prereq GIT_2_9
 fi
 
-test_plan 14
+test_plan 16
 
 write_dummy_script() {
 	write_script "$@" <<\EOT
@@ -29,6 +29,10 @@ matches() {
 
 do_mergesetup() {
         test_might_fail tg -C "$1" update no-such-branch-name 2>&1
+}
+
+do_status() {
+        test_might_fail tg -C "$1" status 2>&1
 }
 
 test_expect_success 'setup' '
@@ -134,7 +138,7 @@ friendly="r3 r4"
 
 for repo in r?; do
 case " $friendly " in *" $repo "*);;*) continue; esac
-test_expect_success GIT_2_9 '"friendly" hookspath '"$repo" '
+test_expect_success GIT_2_9 'adjusted "friendly" hookspath '"$repo" '
 	test_config -C $repo core.hooksPath "" &&
 	bad= &&
 	for gpath in _global/hooks globhookdir; do
@@ -144,6 +148,26 @@ test_expect_success GIT_2_9 '"friendly" hookspath '"$repo" '
 		newcp="$(git -C $repo config core.hooksPath)" &&
 		test "$PWD/$gpath" != "$newcp" &&
 		test "$(cd "$PWD/$repo/.git/hooks" && pwd -P)" = "$(cd "$newcp" && pwd -P)" &&
+		! matches "$result" "*\" warning: \"*" || {
+			bad=1 &&
+			break
+		}
+	done &&
+	test -z "$bad"
+'
+done
+
+for repo in r?; do
+case " $friendly " in *" $repo "*);;*) continue; esac
+test_expect_success GIT_2_9 'unadjusted "friendly" hookspath '"$repo" '
+	test_config -C $repo core.hooksPath "" &&
+	bad= &&
+	for gpath in _global/hooks globhookdir; do
+		rm -f "$gpath/pre-commit" &&
+		git -C $repo config core.hooksPath "$PWD/$gpath" &&
+		result="$(set +vx && do_status $repo)" &&
+		newcp="$(git -C $repo config core.hooksPath)" &&
+		test "$PWD/$gpath" = "$newcp" &&
 		! matches "$result" "*\" warning: \"*" || {
 			bad=1 &&
 			break

@@ -486,6 +486,7 @@ setup_hook()
 {
 	setup_git_dir_is_bare
 	[ -z "$git_dir_is_bare" ] || return 0
+	setup_git_hooks_dir
 	tgname="${0##*/}"
 	hook_call="\"\$(\"$tgname\" --hooks-path)\"/$1 \"\$@\""
 	if [ -f "$git_hooks_dir/$1" ] && grep -Fq "$hook_call" "$git_hooks_dir/$1"; then
@@ -1912,6 +1913,7 @@ v_get_show_cdup()
 	[ -z "$1" ] || eval "$1="'"$git_cdup_result"'
 }
 
+git_dir_is_bare_setup=
 setup_git_dir_is_bare()
 {
 	if [ -z "$git_dir_is_bare_setup" ]; then
@@ -1968,25 +1970,10 @@ maybe_adjust_friendly_hooks_path()
 	return 0
 }
 
-setup_git_dirs()
+git_hooks_dir=
+setup_git_hooks_dir()
 {
-	[ -n "$git_dir" ] || git_dir="$(git rev-parse --git-dir)"
-	if [ -n "$git_dir" ] && [ -d "$git_dir" ]; then
-		git_dir="$(cd "$git_dir" && pwd)"
-	fi
-	if [ -z "$git_common_dir" ]; then
-		if vcmp "$git_version" '>=' "2.5"; then
-			# rev-parse --git-common-dir is broken and may give
-			# an incorrect result unless the current directory is
-			# already set to the top level directory
-			v_get_show_cdup
-			git_common_dir="$(cd "./$git_cdup_result" && cd "$(git rev-parse --git-common-dir)" && pwd)"
-		else
-			git_common_dir="$git_dir"
-		fi
-	fi
-	[ -n "$git_dir" ] && [ -n "$git_common_dir" ] &&
-	[ -d "$git_dir" ] && [ -d "$git_common_dir" ] || die "Not a git repository"
+	[ -z "$git_hooks_dir" ] || return 0
 	git_hooks_dir="$git_common_dir/hooks"
 	if vcmp "$git_version" '>=' "2.9" && gchp="$(git config --path --get core.hooksPath 2>/dev/null)" && [ -n "$gchp" ]; then
 		case "$gchp" in
@@ -2012,6 +1999,27 @@ setup_git_dirs()
 		esac
 		unset_ gchp
 	fi
+}
+
+setup_git_dirs()
+{
+	[ -n "$git_dir" ] || git_dir="$(git rev-parse --git-dir)"
+	if [ -n "$git_dir" ] && [ -d "$git_dir" ]; then
+		git_dir="$(cd "$git_dir" && pwd)"
+	fi
+	if [ -z "$git_common_dir" ]; then
+		if vcmp "$git_version" '>=' "2.5"; then
+			# rev-parse --git-common-dir is broken and may give
+			# an incorrect result unless the current directory is
+			# already set to the top level directory
+			v_get_show_cdup
+			git_common_dir="$(cd "./$git_cdup_result" && cd "$(git rev-parse --git-common-dir)" && pwd)"
+		else
+			git_common_dir="$git_dir"
+		fi
+	fi
+	[ -n "$git_dir" ] && [ -n "$git_common_dir" ] &&
+	[ -d "$git_dir" ] && [ -d "$git_common_dir" ] || die "Not a git repository"
 }
 
 basic_setup_remote()
