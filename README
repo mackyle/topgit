@@ -308,7 +308,7 @@ gets updated as well as providing a branch that shows in ``tg summary`` output
 and participates in ``tg remote --populate`` setup.
 
 Occasionally the functionality of a "base" branch is needed but it may not
-be possible to add any `.topdeps` or `.topmsg` files to the desired branch
+be possible to add any ``.topdeps`` or ``.topmsg`` files to the desired branch
 (perhaps it's externally controlled).  `BARE BRANCHES`_ can be used in this
 case, but while TopGit allows them it deliberately does not provide assistance
 in setting them up.
@@ -2166,8 +2166,8 @@ tg shell
 	be prepared for corruption and loss of data in the repository.
 	Just *don't do that* in the first place!
 
-	Using `git wayback-tag` will show the tag used to enter the wayback
-	machine.  Using `git wayback-updates` will show ref changes that have
+	Using ``git wayback-tag`` will show the tag used to enter the wayback
+	machine.  Using ``git wayback-updates`` will show ref changes that have
 	occurred since the wayback tag was created (it will not show refs that
 	have since been created unless a pruning wayback tag was used).
 	Finally, ``git wayback-repository`` will show the home repository but
@@ -2644,8 +2644,8 @@ GLOSSARY
 		the TopGit branch is prefixed to the result.
 
 	TopGit bare branch
-		A Git branch whose tree does NOT contain any `.topdeps` or
-		`.topmsg` entries at the top-level of the tree.  It *does*
+		A Git branch whose tree does NOT contain any ``.topdeps`` or
+		``.topmsg`` entries at the top-level of the tree.  It *does*
 		always have an associated "TopGit base" ref (otherwise it would
 		not be a "TopGit" branch).  See also `BARE BRANCHES`_.
 
