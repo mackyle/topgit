@@ -1268,3 +1268,7 @@ info "Returning to ${current#refs/heads/}..."
 checkout_symref_full "$current"
 ! [ -f "$git_dir/TGMERGE_MSG" ] || [ -e "$git_dir/MERGE_MSG" ] ||
 	mv -f "$git_dir/TGMERGE_MSG" "$git_dir/MERGE_MSG" || :
+ec=$?
+tmpdir_cleanup || :
+git gc --auto || :
+exit $ec

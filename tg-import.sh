@@ -2,7 +2,7 @@
 # TopGit - A different patch queue manager
 # Copyright (C) 2008 Petr Baudis <pasky@suse.cz>
 # Copyright (C) 2008 Aneesh Kumar K.V <aneesh.kumar@linux.vnet.ibm.com>
-# Copyright (C) 2015,2017 Kyle J. McKay <mackyle@gmail.com>
+# Copyright (C) 2015,2017,2018 Kyle J. McKay <mackyle@gmail.com>
 # All rights reserved.
 # GPLv2
 
@@ -197,3 +197,7 @@ for revpair in $ranges; do
 	}
 	test $? -eq 0
 done
+ec=$?
+tmpdir_cleanup || :
+git gc --auto || :
+exit $ec
