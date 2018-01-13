@@ -2850,6 +2850,7 @@ else
 			[ -z "$_use_ref_cache" ] || v_create_ref_cache
 
 			fullcmd="${tgname:-tg} $cmd $*"
+			fullcmd="${fullcmd% }"
 			if [ z"$forcepager" = z"1" ]; then
 				page '. "$TG_INST_CMDDIR"/tg-$isutil$cmd' "$@"
 			else
