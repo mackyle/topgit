@@ -14,7 +14,7 @@ test_plan 15
 
 # required working
 
-test_expect_success 'POSIX tr to NUL processing' '
+test_tolerate_failure 'POSIX tr to NUL processing' '
 	printf "1x2x3x" | tr "x" "\\000" >lines3z &&
 	val="$(xargs -0 <lines3z printf "%s\n" | wc -l)" &&
 	test $val -eq 3
