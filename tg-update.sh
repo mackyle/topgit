@@ -1,7 +1,7 @@
 #!/bin/sh
 # TopGit - A different patch queue manager
 # Copyright (C) Petr Baudis <pasky@suse.cz>  2008
-# Copyright (C) Kyle J. McKay <mackyle@gmail.com>  2015,2016,2017
+# Copyright (C) Kyle J. McKay <mackyle@gmail.com>  2015,2016,2017,2018
 # All rights reserved.
 # GPLv2
 
@@ -385,6 +385,13 @@ if [ -z "$restored" ]; then
 			done
 		}
 		clean_names $names
+		if [ "$namecnt" -eq 1 ]; then
+			case "$fullcmd" in *" @"|*" HEAD")
+				namecnt=0
+				fullcmd="${fullcmd% *}"
+			esac
+		fi
+		[ "$namecnt" -ne 0 ] || fullcmd="$fullcmd $names"
 	fi
 	ensure_clean_tree
 fi
