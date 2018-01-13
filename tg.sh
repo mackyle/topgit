@@ -2049,6 +2049,11 @@ basic_setup()
 	oldbases="$topbases"
 }
 
+tmpdir_cleanup()
+{
+	test -z "$tg_tmp_dir" || ! test -d "$tg_tmp_dir" || ${TG_DEBUG:+echo} rm -rf "$tg_tmp_dir" >&2 || :
+}
+
 tmpdir_setup()
 {
 	[ -z "$tg_tmp_dir" ] || return 0
@@ -2057,7 +2062,7 @@ tmpdir_setup()
 		tg_tmp_dir="$TG_TMPDIR"
 	else
 		tg_tmp_dir=
-		TRAPEXIT_='${TG_DEBUG:+echo} rm -rf "$tg_tmp_dir" >&2'
+		TRAPEXIT_='tmpdir_cleanup'
 		trap 'trapexit_ 129' HUP
 		trap 'trapexit_ 130' INT
 		trap 'trapexit_ 131' QUIT
