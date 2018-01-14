@@ -1,7 +1,7 @@
 #!/bin/sh
 # TopGit - A different patch queue manager
 # Copyright (C) Petr Baudis <pasky@suse.cz>  2008
-# Copyright (C) Kyle J. McKay <mackyle@gmail.com>  2015,2016,2017
+# Copyright (C) Kyle J. McKay <mackyle@gmail.com>  2015,2016,2017,2018
 # All rights reserved.
 # GPLv2
 
@@ -230,10 +230,11 @@ if [ -n "$rdeps" ]; then
 			if ($1 == "1" || NF < 5) next
 			xvisits = $4
 			dep = $5
+			if ($6 != "") haschild[$6] = 1
 			sub(/^[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+/, "")
 			gsub(/ [^ ]+/, "  ")
 			xtra = ""
-			if (elided && xvisits > 0) xtra="^"
+			if (elided && xvisits > 0 && haschild[dep]) xtra="^"
 			print $0 dep xtra
 		}'
 	done
