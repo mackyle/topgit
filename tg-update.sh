@@ -592,8 +592,10 @@ git_topmerge()
 	thetree="$(git write-tree)" || die "git write-tree failed"
 	# avoid an extra "already up-to-date" commit (can't happen if _mt though)
 	origtree=
-	[ -n "$_mt" ] || origtree="$(git rev-parse --quiet --verify "$_ours^{tree}" --)" &&
-		[ -n "$origtree" ] || die "git rev-parse failed"
+	[ -n "$_mt" ] || {
+		origtree="$(git rev-parse --quiet --verify "$_ours^{tree}" --)" &&
+		[ -n "$origtree" ]
+	} || die "git rev-parse failed"
 	if [ "$origtree" != "$thetree" ] || ! contained_by "$_theirs" "$_ours"; then
 		thecommit="$(git commit-tree -p "$_ours" -p "$_theirs" -m "$_msg" "$thetree")" &&
 		[ -n "$thecommit" ] || die "git commit-tree failed"
