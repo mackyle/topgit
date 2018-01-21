@@ -327,7 +327,7 @@ Variables
     `test-lib.sh` script.  Other than checking for non-empty, there are no
     requirements for the value.  It is only used by the `-h`|`--help` options
     (which are parsed when `test-lib.sh` is sourced).  The only formatting
-    that occurse before it's output is that leading and trailing blank lines
+    that occurs before it is output is that leading and trailing blank lines
     are trimmed off.  Recommended format is like a Git check in comment with
     one summary line and then any optional body separated from the summary
     line by one blank line if present.  Ideally it should explain enough about
