@@ -88,7 +88,7 @@ tg $(commands_out) $(utils_out) $(hooks_out) $(helpers_out): Makefile Makefile.m
 		-e 's#@SHELL_PATH@#$(SHELL_PATH_SQ)#g' \
 		-e 's#@AWK_PATH@#$(AWK_PATH_SQ)#g' \
 		$(version_arg) \
-		"$@.sh" >"$@+" && \
+		<"$@.sh" >"$@+" && \
 	chmod +x "$@+" && \
 	mv "$@+" "$@"
 
@@ -96,7 +96,7 @@ tg--awksome: $(awk_out)
 $(awk_out): Makefile TG-BUILD-SETTINGS
 	$(QSED)sed \
 		-e '1s|#!.*/awk|#!$(AWK_PREFIX)$(AWK_PATH_SQ)|' \
-		"$@.awk" >"$@+" && \
+		<"$@.awk" >"$@+" && \
 	chmod +x "$@+" && \
 	mv "$@+" "$@"
 
