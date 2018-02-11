@@ -43,7 +43,7 @@
 #   3. it says "two" above, so don't do this, but if the blob hash of
 #      a different .topdeps file is given its contents will be used as though
 #      it had been the branch's .topdeps file in the first place (only for
-#      annihildated and branches without one though)
+#      annihilated and branches without one though)
 #
 # If missing is non-empty AND it gets used AND misscmd is non-empty AND no
 # "blob check ?" line was seen for missing then misscmd will be run the FIRST
@@ -54,7 +54,7 @@
 #
 #   <blob_hash_of_.topdeps_file> <TopGit_branch_name>
 #
-# which should then be feed to:
+# which should then be fed to:
 #
 #   git cat-file --batch='%(objecttype) %(objectsize) %(rest)' | tr '\0' '\27'
 #

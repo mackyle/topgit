@@ -52,7 +52,7 @@
 #   3. it says "two" above, so don't do this, but if the blob hash of
 #      a different .topmsg file is given its contents will be used as though
 #      it had been the branch's .topmsg file in the first place (only for
-#      annihildated/empty and branches without one though)
+#      annihilated/empty and branches without one though)
 #
 # If missing is non-empty AND it gets used AND misscmd is non-empty AND no
 # "blob check ?" line was seen for missing then misscmd will be run the FIRST
