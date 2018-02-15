@@ -115,7 +115,7 @@ NF == 4 && $4 == ":" && $3 != "" && $2 != "missing" && $1 != "" {
 	}
 	if (brfile) print $3 >brfile
 	if (missing != "" && ahcd[2] != "blob") {
-		ahcd[1] = missing "^{}"
+		ahcd[1] = missing
 		ahcd[2] = "blob"
 		domissing()
 	}

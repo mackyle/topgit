@@ -163,7 +163,7 @@ NF == 4 && $4 == ":" && $3 != "" && $2 != "missing" && $1 != "" {
 			else
 				K = 1
 		}
-		ahcm[1] = missing "^{}"
+		ahcm[1] = missing
 		ahcm[2] = "blob"
 		domissing()
 	}
