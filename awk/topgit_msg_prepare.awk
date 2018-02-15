@@ -108,6 +108,7 @@ BEGIN {
 		delay=1
 	}
 	FS = " "
+	if (missing != "" && missing !~ /:/) missing = missing "^{blob}"
 }
 
 NF == 4 && $4 == "?" && $3 = "check" && $2 = "blob" && $1 != "" {
