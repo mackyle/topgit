@@ -108,18 +108,19 @@ BEGIN {
 		delay=1
 	}
 	FS = " "
+	missblob = missing
 	if (missing != "" && missing !~ /:/) missing = missing "^{blob}"
 }
 
-NF == 4 && $4 == "?" && $3 = "check" && $2 = "blob" && $1 != "" {
+NF == 4 && $4 == "?" && $3 == "check" && $2 == "blob" && $1 != "" {
 	check[$1] = "blob"
 	next
 }
 
 function domissing() {
-	if (misscmd == "" || missing in check) return
+	if (misscmd == "" || missblob in check) return
 	system(misscmd)
-	check[missing] = ""
+	check[missblob] = ""
 }
 
 NF == 4 && $4 == ":" && $3 != "" && $2 != "missing" && $1 != "" {
