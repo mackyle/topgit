@@ -145,11 +145,9 @@ NF == 4 && $4 == ":" && $3 != "" && $2 != "missing" && $1 != "" {
 	K = 0
 	if (abct[1] == ahct[1]) {
 		if (anfile) print $3 >anfile
-		if (!withan || missing == "") {
-			if (!want || missing == "") {
-				if (withan && brfile) print $3 >brfile
-				next
-			}
+		if (!want || missing == "") {
+			if (withan && brfile) print $3 >brfile
+			next
 		}
 		ahcm[1] = missing
 		ahcm[2] = "blob"
