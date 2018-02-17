@@ -6,7 +6,7 @@ TEST_NO_CREATE_REPO=1
 
 . ./test-lib.sh
 
-test_plan 14
+test_plan 21
 
 has_tg_setup() {
 	test -s "${1:-.}/.git/info/attributes" &&
@@ -46,6 +46,9 @@ test_expect_success 'setup_ours' '
 	rm -rf r1
 '
 
+tgshell="$PWD/tgsh"
+>"$tgshell" || die
+
 test_expect_success 'setup_hook pre-commit' '
 	test_create_repo r2 &&
 	test ! -e r2/.git/hooks/pre-commit &&
@@ -53,13 +56,120 @@ test_expect_success 'setup_hook pre-commit' '
 	cd r2 && setup_hook "pre-commit" && cd .. &&
 	test -f r2/.git/hooks/pre-commit &&
 	test -x r2/.git/hooks/pre-commit &&
-	sed -n 1p <r2/.git/hooks/pre-commit | grep -q "^#!" &&
+	test ! -e r2/.git/hooks/pre-commit-chain &&
+	sed -n 1p <r2/.git/hooks/pre-commit | tee "$tgshell" | grep -q "^#!" &&
 	grep -F -q "${0##*/}" r2/.git/hooks/pre-commit &&
 	grep -F -q "/pre-commit" r2/.git/hooks/pre-commit &&
 	test $(wc -l <r2/.git/hooks/pre-commit) -eq 2 &&
 	test ! -e r2/.git/info/attributes &&
 	test_must_fail git -C r2 config merge.ours.name &&
 	test_must_fail git -C r2 config merge.ours.driver &&
+	rm -rf r2
+'
+
+read -r tgshellbin <"$tgshell" || die
+write_script dummy.sh "${tgshellbin#??}" <<-EOT || die
+	echo "dummy.sh here"
+EOT
+
+test_expect_success LASTOK 'setup_hook pre-commit edits matching shell once' '
+	rm -rf r2 && test_create_repo r2 &&
+	test ! -e r2/.git/hooks/pre-commit &&
+	mkdir -p r2/.git/hooks &&
+	cat "$tgshell" >r2/.git/hooks/pre-commit &&
+	echo "echo editme" >>r2/.git/hooks/pre-commit &&
+	chmod a+x r2/.git/hooks/pre-commit &&
+	tg_test_include -C r2 &&
+	cd r2 && setup_hook "pre-commit" && cd .. &&
+	test -f r2/.git/hooks/pre-commit &&
+	test -x r2/.git/hooks/pre-commit &&
+	test ! -e r2/.git/hooks/pre-commit-chain &&
+	lines=$(wc -l <r2/.git/hooks/pre-commit) &&
+	test ${lines:-0} -gt 2 &&
+	cd r2 && setup_hook "pre-commit" && cd .. &&
+	lines2=$(wc -l <r2/.git/hooks/pre-commit) &&
+	test "$lines" = "$lines2" &&
+	rm -rf r2
+'
+
+test_expect_success 'setup_hook pre-commit chains symlink' '
+	rm -rf r2 && test_create_repo r2 &&
+	test ! -e r2/.git/hooks/pre-commit &&
+	mkdir -p r2/.git/hooks &&
+	ln -s ../../../dummy.sh r2/.git/hooks/pre-commit &&
+	tg_test_include -C r2 &&
+	cd r2 && setup_hook "pre-commit" && cd .. &&
+	test -f r2/.git/hooks/pre-commit &&
+	test -x r2/.git/hooks/pre-commit &&
+	test -e r2/.git/hooks/pre-commit-chain &&
+	rm -rf r2
+'
+
+test_expect_success 'setup_hook pre-commit chains dead symlink' '
+	rm -rf r2 && test_create_repo r2 &&
+	test ! -e r2/.git/hooks/pre-commit &&
+	mkdir -p r2/.git/hooks &&
+	ln -s ../../../dummy-no-such.sh r2/.git/hooks/pre-commit &&
+	tg_test_include -C r2 &&
+	cd r2 && setup_hook "pre-commit" && cd .. &&
+	test -f r2/.git/hooks/pre-commit &&
+	test -x r2/.git/hooks/pre-commit &&
+	{ test -e r2/.git/hooks/pre-commit-chain || test -L r2/.git/hooks/pre-commit-chain; } &&
+	rm -rf r2
+'
+
+test_expect_success 'setup_hook pre-commit chains multply-linked' '
+	rm -rf r2 && test_create_repo r2 &&
+	test ! -e r2/.git/hooks/pre-commit &&
+	mkdir -p r2/.git/hooks &&
+	ln dummy.sh r2/.git/hooks/pre-commit &&
+	tg_test_include -C r2 &&
+	cd r2 && setup_hook "pre-commit" && cd .. &&
+	test -f r2/.git/hooks/pre-commit &&
+	test -x r2/.git/hooks/pre-commit &&
+	test -e r2/.git/hooks/pre-commit-chain &&
+	rm -rf r2
+'
+
+test_expect_success 'setup_hook pre-commit chains non-executable' '
+	rm -rf r2 && test_create_repo r2 &&
+	test ! -e r2/.git/hooks/pre-commit &&
+	mkdir -p r2/.git/hooks &&
+	cp -p dummy.sh r2/.git/hooks/pre-commit &&
+	chmod a-x r2/.git/hooks/pre-commit &&
+	tg_test_include -C r2 &&
+	cd r2 && setup_hook "pre-commit" && cd .. &&
+	test -f r2/.git/hooks/pre-commit &&
+	test -x r2/.git/hooks/pre-commit &&
+	test -e r2/.git/hooks/pre-commit-chain &&
+	rm -rf r2
+'
+
+test_expect_success 'setup_hook pre-commit chains non-writable' '
+	rm -rf r2 && test_create_repo r2 &&
+	test ! -e r2/.git/hooks/pre-commit &&
+	mkdir -p r2/.git/hooks &&
+	cp -p dummy.sh r2/.git/hooks/pre-commit &&
+	chmod a-w r2/.git/hooks/pre-commit &&
+	tg_test_include -C r2 &&
+	cd r2 && setup_hook "pre-commit" && cd .. &&
+	test -f r2/.git/hooks/pre-commit &&
+	test -x r2/.git/hooks/pre-commit &&
+	test -e r2/.git/hooks/pre-commit-chain &&
+	rm -rf r2
+'
+
+test_expect_success 'setup_hook pre-commit chains non-readable' '
+	rm -rf r2 && test_create_repo r2 &&
+	test ! -e r2/.git/hooks/pre-commit &&
+	mkdir -p r2/.git/hooks &&
+	cp -p dummy.sh r2/.git/hooks/pre-commit &&
+	chmod a-r r2/.git/hooks/pre-commit &&
+	tg_test_include -C r2 &&
+	cd r2 && setup_hook "pre-commit" && cd .. &&
+	test -f r2/.git/hooks/pre-commit &&
+	test -x r2/.git/hooks/pre-commit &&
+	test -e r2/.git/hooks/pre-commit-chain &&
 	rm -rf r2
 '
 

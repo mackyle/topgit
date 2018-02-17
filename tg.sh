@@ -481,6 +481,15 @@ auto_create_local_remote()
 	info "topic branch '$1' automatically set up from remote '$base_remote'"
 }
 
+is_writable_hook()
+{
+	if [ -n "$1" ] && [ -e "$1" ] && [ ! -L "$1" ] && [ -f "$1" ] && [ -r "$1" ] && [ -w "$1" ] && [ -x "$1" ]; then
+		hook_links="$(ls -ld "$1" 2>/dev/null | awk '{print $2}')" || :
+		[ "$hook_links" != "1" ] || return 0
+	fi
+	return 1
+}
+
 # setup_hook NAME
 setup_hook()
 {
@@ -495,11 +504,14 @@ setup_hook()
 	fi
 	# Prepare incantation
 	hook_chain=
-	if [ -s "$git_hooks_dir/$1" ] && [ -x "$git_hooks_dir/$1" ]; then
+	if [ -e "$git_hooks_dir/$1" ] || [ -L "$git_hooks_dir/$1" ]; then
 		hook_call="$hook_call"' || exit $?'
-		if [ -L "$git_hooks_dir/$1" ] || ! sed -n 1p <"$git_hooks_dir/$1" | grep -Fqx "#!@SHELL_PATH@"; then
+		if
+			! is_writable_hook "$git_hooks_dir/$1" ||
+			! sed -n 1p <"$git_hooks_dir/$1" | grep -Fqx "#!@SHELL_PATH@"
+		then
 			chain_num=
-			while [ -e "$git_hooks_dir/$1-chain$chain_num" ]; do
+			while [ -e "$git_hooks_dir/$1-chain$chain_num" ] || [ -L "$git_hooks_dir/$1-chain$chain_num" ]; do
 				chain_num=$(( $chain_num + 1 ))
 			done
 			mv -f "$git_hooks_dir/$1" "$git_hooks_dir/$1-chain$chain_num"
@@ -516,7 +528,9 @@ setup_hook()
 		echol "#!@SHELL_PATH@"
 		echol "$hook_call"
 		if [ -n "$hook_chain" ]; then
-			echol "exec \"\$0-chain$chain_num\" \"\$@\""
+			echol "test -f \"\$0-chain$chain_num\" &&"
+			echol "test -x \"\$0-chain$chain_num\" &&"
+			echol "exec \"\$0-chain$chain_num\" \"\$@\" || :"
 		else
 			[ ! -s "$git_hooks_dir/$1" ] || cat "$git_hooks_dir/$1"
 		fi
