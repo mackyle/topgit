@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8" />
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-<title>TopGit-0.19.9 - Regression Relief</title>
+<title>TopGit-0.19.10 - Pedantically POSIX</title>
 <style type="text/css">
 /* <![CDATA[ */
 
 /* Markdown.pl fancy style sheet
-** Copyright (C) 2017 Kyle J. McKay.
+** Copyright (C) 2017,2018 Kyle J. McKay.
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -50,6 +50,15 @@ div._markdown-code-bt > pre > code, div._markdown-code > pre > code {
 	padding: 0.5em 0;
 	border-top: thin dotted;
 	border-bottom: thin dotted;
+}
+
+table._markdown-table {
+	margin-bottom: 0.5em;
+}
+table._markdown-table, table._markdown-table th, table._markdown-table td {
+	border-collapse: collapse;
+	border-spacing: 0;
+	border: thin solid;
 }
 
 ol._markdown-ol {
@@ -174,6 +183,66 @@ li._markdown-checkbox-on > span:first-child + span:before {
 <body style="text-align:center">
 <div style="display:inline-block;text-align:left;max-width:42pc">
 <!-- git-changelog-smudge.pl -\-smudge -\- ChangeLog -->
+
+<h1 id="_topgit-0_19_10_-_pedantically_posix_">TopGit-0.19.10 - Pedantically POSIX</h1>
+
+<h2 id="_2018-02-17_">2018-02-17</h2>
+
+<p><em>Reminder</em></p>
+
+<blockquote>
+  <p>TopGit 0.19.4 (2017-02-14) introduced support for a new top-bases location
+     under heads.  This new location will become the default as of the TopGit
+     0.20.0 release.  The current location under refs will continue to be
+     supported in the future.  See <code>tg help migrate-bases</code> for more details.</p>
+</blockquote>
+
+<p>Minor nits and updates, but nothing earth shattering.  Some "deprecated"
+POSIX syntax has been removed and there are now over 1000 individual tests in
+the test suite!</p>
+
+<div class="_markdown-code-bt"><pre style="display:none"></pre><pre><code>Kyle J. McKay (40):
+      tg.sh: next version is 0.19.10
+      README: correct various typographical errors
+      tg.sh: add '-u' option to wayback-updates alias
+      tg.sh: make "tg help st" work
+      README-WRITING-TESTS: update test_plan and test_when_finished info
+      create-html-usage.pl: do not strip ````` lines
+      README: correct "The Update Process" description
+      t1330: test topgit_branches.awk functionality
+      *.sh: purge use of test '-a' and '-o' ops
+      tg: eliminate use of xargs -0
+      tg.sh/pre-commit.sh: do not rely on word-splitting inside braces
+      tg--awksome.sh: run_awk_topmsg_header requires topgit_msg_prepare
+      tg-checkout.sh: allow +[n] and -[n] aliases
+      tg-checkout.sh: fix typo
+      tg-checkout.sh: warn about future removal of bare "tg checkout"
+      t1060-mergesetup.sh: fix typo in comment
+      tg: improve handling of configured core.hooksPath
+      tg.sh: completely ignore hooksPath until setup_hook
+      README: remedy incorrect formatting instructions
+      tg.sh: avoid trailing space in fullcmd
+      tg-update.sh: include real branch in fullcmd
+      t0001: tolerate failure involving xargs -0
+      tg.sh: move tmpdir cleanup into its own function
+      tg: tickle gc --auto when appropriate
+      tg-update.sh: add missing '{' ... '}' around &amp;&amp; || logic
+      t5050: test bug fixed by recent logic correction
+      tg-summary.sh: omit superfluous rdeps-once trailing '^'
+      .gitattributes: mark some files as eol=lf
+      Makefile.mak: sed from stdin to stdout
+      README-TESTLIB: vanquish yet another typo
+      spelling: annihildated is not a word
+      topgit_*_prepare.awk: do not append ^{} to missing
+      topgit_*_prepare.awk: carefully append ^{blob} to missing
+      topgit_*_prepare.awk: do not incorrectly spawn misscmd
+      topgit_msg_prepare.awk: make withan=1 withmt=0 work
+      t1340: test topgit_msg_prepare.awk functionality
+      t1350: test topgit_deps_prepare.awk functionality
+      tg.sh: setup_hook even more carefully
+      topgit_deps.awk: strip trailing \r off .topdeps lines
+      topgit: version 0.19.10
+</code></pre></div>
 
 <h1 id="_topgit-0_19_9_-_regression_relief_">TopGit-0.19.9 - Regression Relief</h1>
 
@@ -1615,6 +1684,121 @@ work properly with only a POSIX /bin/sh and POSIX utilities.</p>
 <p>Thomas Schwinge (1):</p>
 
 <div class="_markdown-code"><pre style="display:none"></pre><pre><code>  tg-annihilate: Pass --no-verify when committing.
+</code></pre></div>
+
+<h1 id="_topgit-0_9_">TopGit-0.9</h1>
+
+<h2 id="_2013-03-09_">2013-03-09</h2>
+
+<p>If you are upgrading from the HEAD of the old TopGit repository,
+all of and only the patches by Robin Green, Andrey Borzenkov and
+Heiko Hund are new compared to that revision.</p>
+
+<p>Andrey Borzenkov (13):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  tg-create: let format.signoff control adding of Signed-off-by
+  tg.sh: check for removed branch in branch_annihilated
+  tg-export.sh: support tag objects as parent
+  tg-update: add -a support for all branches
+  tg-update: clarify that there could be multiple PATTERNs
+  tg-update: strip refs/top-bases/ from PATTERNs just in case
+  tg-delete: simplistic check for dependency on deleted branch
+  README: really update documentation
+  tg-update: document variables
+  tg: fix recursing with missing dependencies
+  tg-update: allow skipping branch if recursion fails
+  tg-update: correctly return error for missing deps
+  tg-update: check for detached state of current branch
+</code></pre></div>
+
+<p>Bert Wesarg (21):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  Let tg-update take a branch parameter
+  tg-remote: use default remote if none is given
+  put die() messages to stderr
+  tg-log: short cut to git log
+  README: move note about shortcomings of using --first-parent from tg base to tg log
+  tg.sh: simplify cat_file
+  hooks/pre-commit: check .top* files in the to-be-commited tree
+  hooks/pre-commit: check for cycles in dependencies
+  hooks/pre-commit: check .topdeps for valid branches
+  hooks/pre-commit: check for deps repetitions
+  tg-files: list files changed by the topic branch
+  provide a global temporary directory
+  cat_file: take -i/-w parameters
+  tg-export: use pretty_tree -b for base
+  tg-files: simplify arg checking and add sanity check for -i/-w
+  branch_empty: use pretty_tree and therefore respect -i/-w
+  tg-patch: use pretty_tree and diff-tree to generate the patch
+  list_deps: accept -i/-w
+  tg-summary: accept -i/-w
+  tg-mail: accept -i/-w
+  tg-prev/tg-next: commands to explore dependencies
+</code></pre></div>
+
+<p>Carsten Hey (1):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  Don't call pre-commit hook if tg is not installed
+</code></pre></div>
+
+<p>Heiko Hund (1):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  --strip option for tg export
+</code></pre></div>
+
+<p>Michal Sojka (1):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  Make 'tg patch' work in subdirectories
+</code></pre></div>
+
+<p>Olaf Dabrunz (1):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  Add pointer about the problems regarding tg depend rm to README
+</code></pre></div>
+
+<p>Per Cederqvist (10):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  Implemented "tg summary --sort".
+  Added the --deps option to "tg summary".
+  Don't implement the usage message of tg depend more than once
+  Ignore Emacs auto-save files
+  Add "tg base" that prints the base version.
+  Generalize subcommand selection in "tg depend"
+  Refactor tg summary
+  Do basic error checking in "tg depend add"
+  Implement "tg summary --deps" as a shell function.
+  Indicate the current branch in "tg summary --graphviz"
+</code></pre></div>
+
+<p>Robin Green (5):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  Make tg help work in any directory
+  README: Fix obsolete references to git push
+  INSTALL: Added installation instructions
+  Documentation cleanup
+  Bumped version to 0.9; last minute doc changes
+</code></pre></div>
+
+<p>Thomas Schwinge (3):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  tg-push: Filter out plain SHA1s from being pushed.
+  tg-mail: Properly quote argument to --in-reply-to
+  tg-delete: Handle the case where the branch has been removed already, but the base is still left.
+</code></pre></div>
+
+<p>Uwe Kleine-König (5):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  tg mail: document config setting to prevent unintended mass mail sending
+  tg patch: treat all files as ascii
+  Order .gitignore alphabetically
+  Fix pretty_tree to work in a subdirectory
+  README: clearify note describing short-comings of tg log
+</code></pre></div>
+
+<p>martin f. krafft (2):</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>  deal with single quotes in from/to headers
+  quote $LESS in case it includes spaces
 </code></pre></div>
 
 <h1 id="_topgit-0_8_">TopGit-0.8</h1>

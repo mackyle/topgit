@@ -670,7 +670,7 @@ provides more explicit control over when a common base for a set of patches
 gets updated as well as providing a branch that shows in <tt class="docutils literal">tg summary</tt> output
 and participates in <tt class="docutils literal">tg remote <span class="pre">--populate</span></tt> setup.</p>
 <p>Occasionally the functionality of a &quot;base&quot; branch is needed but it may not
-be possible to add any <cite>.topdeps</cite> or <cite>.topmsg</cite> files to the desired branch
+be possible to add any <tt class="docutils literal">.topdeps</tt> or <tt class="docutils literal">.topmsg</tt> files to the desired branch
 (perhaps it's externally controlled).  <a class="reference internal" href="#bare-branches">BARE BRANCHES</a> can be used in this
 case, but while TopGit allows them it deliberately does not provide assistance
 in setting them up.</p>
@@ -741,7 +741,7 @@ the <tt class="docutils literal"><span class="pre">-i</span></tt> or <tt class="
 machine.  Simply add a global <tt class="docutils literal"><span class="pre">-w</span> &lt;tgtag&gt;</tt> option to the command.</p>
 <p>This functionality can be extremely useful for quickly examing/querying a
 previous state recorded some time ago with a <a class="reference internal" href="#tg-tag">tg tag</a>.</p>
-<p>As the wayback machine uses a separate caching area, except initial operations
+<p>As the wayback machine uses a separate caching area, expect initial operations
 to be less speedy, but repeated wayback operations on the same wayback tag
 should happen at normal speed.</p>
 <p>One new command exists expressly for use with the wayback machine.</p>
@@ -1004,7 +1004,7 @@ right so it's not recommended.</p>
 typo is noticed, it's okay to ammend/rebase to fix that provided neither
 <tt class="docutils literal">tg update</tt> nor <tt class="docutils literal">tg create</tt> has already been used to cause some other ref
 to be able to reach the commit with the typo.</p>
-<p>If an amend or rerwite is done anyway even though the commit with the typo is
+<p>If an amend or rewrite is done anyway even though the commit with the typo is
 reachable from some other ref, the typo won't really be removed.  What will
 happen instead is that the new version without the typo will ultimately be
 merged into the other ref(s) (at <tt class="docutils literal">tg update</tt> time) likely causing a conflict
@@ -1263,7 +1263,7 @@ $ tg help -w tg
 <h2>tg status</h2>
 <blockquote>
 <div class="line-block">
-<div class="line"><tt class="docutils literal">tg status</tt></div>
+<div class="line"><tt class="docutils literal">tg st[atus] <span class="pre">[-v]</span> <span class="pre">[--exit-code]</span></tt></div>
 </div>
 <p>Our sophisticated status facility.  Similar to Git's status command
 but shows any in-progress update that's awaiting a merge resolution
@@ -1294,7 +1294,7 @@ automatically with a suitable default commit message.</p>
 <p>The commit message can be changed with the <tt class="docutils literal"><span class="pre">-m</span></tt> (or <tt class="docutils literal"><span class="pre">--message</span></tt>) or
 <tt class="docutils literal"><span class="pre">-F</span></tt> (or <tt class="docutils literal"><span class="pre">--file</span></tt>) option.  The automatic commit can be suppressed
 by using the <tt class="docutils literal"><span class="pre">--no-ccmmit</span></tt> (or <tt class="docutils literal"><span class="pre">-n</span></tt>) option.  Running the editor on
-the new <tt class="docutils literal">.topmsg</tt> file can be suppressed by using <tt class="docutils literal"><span class="pre">`--no-edit</span></tt>
+the new <tt class="docutils literal">.topmsg</tt> file can be suppressed by using <tt class="docutils literal"><span class="pre">--no-edit</span></tt>
 (which does <em>NOT</em> suppress the automatic commit unless <tt class="docutils literal"><span class="pre">--no-commit</span></tt>
 is also given) or by providing an explicit value for the new
 <tt class="docutils literal">.topmsg</tt> file using the <tt class="docutils literal"><span class="pre">--topmsg</span></tt> or <tt class="docutils literal"><span class="pre">--topmsg-file</span></tt> option.
@@ -1524,8 +1524,8 @@ TopGit topic branch (including its recursive dependencies) when exactly
 one line is output by <tt class="docutils literal">tg info <span class="pre">--leaves</span> <span class="pre">&lt;topic-branch&gt;</span></tt>.</p>
 <p>With <tt class="docutils literal"><span class="pre">--series</span></tt> the list of TopGit branches in the order they would
 be linearized into a patch series is shown along with the description
-of each branch.  If branch name passed to <tt class="docutils literal">tg info</tt> is not the last
-branch in the series a marker column will be provided to quickly
+of each branch.  If the branch name passed to <tt class="docutils literal">tg info</tt> is not the
+last branch in the series a marker column will be provided to quickly
 locate it in the list.  This same option can be used with <a class="reference internal" href="#tg-checkout">tg checkout</a>.</p>
 <p>Some patches shown in the list may not actually end up introducing any
 changes if exported and be therefore end up being omitted.  The <tt class="docutils literal">0</tt>
@@ -1927,18 +1927,22 @@ all the topic branches.  Both <tt class="docutils literal">goto</tt> and
 is not <tt class="docutils literal"><span class="pre">-a</span></tt>, <tt class="docutils literal"><span class="pre">--all</span></tt>, <tt class="docutils literal"><span class="pre">-h</span></tt>, <tt class="docutils literal"><span class="pre">--help</span></tt>,
 <tt class="docutils literal">goto</tt>, <tt class="docutils literal"><span class="pre">--</span></tt>, <tt class="docutils literal">n</tt>, <tt class="docutils literal">next</tt>, <tt class="docutils literal">push</tt>,
 <tt class="docutils literal">child</tt>, <tt class="docutils literal">p</tt>, <tt class="docutils literal">prev</tt>, <tt class="docutils literal">previous</tt>,
-<tt class="docutils literal">pop</tt>, <tt class="docutils literal">parent</tt> or <tt class="docutils literal">..</tt>.</dd>
+<tt class="docutils literal">pop</tt>, <tt class="docutils literal">parent</tt>, <tt class="docutils literal">+</tt>, <tt class="docutils literal">-</tt> or <tt class="docutils literal">..</tt>.</dd>
 <dt><tt class="docutils literal">tg checkout [goto] <span class="pre">[--]</span> <span class="pre">--series[=&lt;head&gt;]</span></tt></dt>
 <dd>Check out a topic branch that belongs to
 the current (or <tt class="docutils literal">&lt;head&gt;</tt>) patch series.
 A list with descriptions (<tt class="docutils literal">tg info <span class="pre">--series</span></tt>)
 will be shown to choose from if more than one.</dd>
+<dt><tt class="docutils literal">tg checkout + [&lt;steps&gt;]</tt></dt>
+<dd>An alias for <tt class="docutils literal">next</tt>.</dd>
 <dt><tt class="docutils literal">tg checkout push [&lt;steps&gt;]</tt></dt>
 <dd>An alias for <tt class="docutils literal">next</tt>.</dd>
 <dt><tt class="docutils literal">tg checkout child [&lt;steps&gt;]</tt></dt>
 <dd>Deprecated alias for <tt class="docutils literal">next</tt>.</dd>
 <dt><tt class="docutils literal">tg checkout</tt></dt>
 <dd>Semi-deprecated alias for <tt class="docutils literal">next</tt>.</dd>
+<dt><tt class="docutils literal">tg checkout - [&lt;steps&gt;]</tt></dt>
+<dd>An alias for <tt class="docutils literal">prev</tt>.</dd>
 <dt><tt class="docutils literal">tg checkout pop [&lt;steps&gt;]</tt></dt>
 <dd>An alias for <tt class="docutils literal">prev</tt>.</dd>
 <dt><tt class="docutils literal">tg checkout parent [&lt;steps&gt;]</tt></dt>
@@ -1964,7 +1968,7 @@ the <tt class="docutils literal">git checkout</tt> command.</p>
 <p>The <tt class="docutils literal">&lt;pattern&gt;</tt> of <tt class="docutils literal">tg checkout goto</tt> is optional.  If you don't
 supply it, all the available topic branches are listed and you
 can select one of them.</p>
-<p>Normally, the <tt class="docutils literal">next</tt> and <tt class="docutils literal">prev</tt> commands moves one step in
+<p>Normally, the <tt class="docutils literal">next</tt> and <tt class="docutils literal">prev</tt> commands move one step in
 the dependency graph of the topic branches.  The <tt class="docutils literal"><span class="pre">-a</span></tt> option
 causes them (and their aliases) to move as far as possible.
 That is, <tt class="docutils literal">tg checkout next <span class="pre">-a</span></tt> moves to a topic branch that
@@ -2527,7 +2531,7 @@ used to get a shell with no wayback ref changes).</p>
 <a class="reference internal" href="#tg-tag">tg tag</a>.  However, it may also have a <tt class="docutils literal">:</tt> prefixed to it to
 indicate that it should prune (making it into a &quot;pruning wayback tag&quot;).
 Use of a &quot;pruning wayback tag&quot; results in a repository that contains
-excludsively those refs listed in the specified tag.  Otherwise the
+exclusively those refs listed in the specified tag.  Otherwise the
 wayback repository will just revert those refs while keeping the others
 untouched (the default behavior).</p>
 <p>The <a class="reference internal" href="#wayback-machine">wayback machine</a> activates as normal for the specified
@@ -2552,11 +2556,11 @@ within the wayback repository will be suppressed to avoid accidents
 (i.e. no auto gc will run and &quot;gc&quot; commands will complain and not run).</p>
 <p>Override and/or bypass this safety protection at your own peril!
 Especially <em>do not run</em> the <tt class="docutils literal">git prune</tt> plumbing command in the
-wayback repository!  If you do so (or bypass any of the other safties)
+wayback repository!  If you do so (or bypass any of the other safeties)
 be prepared for corruption and loss of data in the repository.
 Just <em>don't do that</em> in the first place!</p>
-<p>Using <cite>git wayback-tag</cite> will show the tag used to enter the wayback
-machine.  Using <cite>git wayback-updates</cite> will show ref changes that have
+<p>Using <tt class="docutils literal">git <span class="pre">wayback-tag</span></tt> will show the tag used to enter the wayback
+machine.  Using <tt class="docutils literal">git <span class="pre">wayback-updates</span></tt> will show ref changes that have
 occurred since the wayback tag was created (it will not show refs that
 have since been created unless a pruning wayback tag was used).
 Finally, <tt class="docutils literal">git <span class="pre">wayback-repository</span></tt> will show the home repository but
@@ -2877,7 +2881,7 @@ about possible makefile variable settings as well.</p>
 <div class="section" id="technical">
 <h1>TECHNICAL</h1>
 <p>A familiarity with the terms in the <a class="reference internal" href="#glossary">GLOSSARY</a> is helpful for understanding the
-content of this sections.  See also the <a class="reference internal" href="#implementation">IMPLEMENTATION</a> section.</p>
+content of this section.  See also the <a class="reference internal" href="#implementation">IMPLEMENTATION</a> section.</p>
 <div class="section" id="the-update-process">
 <h2>The Update Process</h2>
 <p>When a branch is &quot;updated&quot; using the <tt class="docutils literal">tg update</tt> command the following steps
@@ -2890,21 +2894,22 @@ are checked to see which ones are <em>out-of-date</em>.  See <a class="reference
 the branch's <tt class="docutils literal">.topdeps</tt> file) which is out of date is updated
 before proceeding (yup, this is a recursive process).</li>
 <li>Each of the branch's direct dependencies (i.e. they are listed in
-the branch's <tt class="docutils literal">.topdes</tt> file) that was updated in the previous
+the branch's <tt class="docutils literal">.topdeps</tt> file) that was updated in the previous
 step is now merged into the branch's corresponding base.  If a
 remote is involved, and the branch's corresponding base does NOT
 contain the remote branch's corresponding base that remote base is
 also merged into the branch's base at this time as well (it will be
 the first item merged into the branch's base).</li>
 <li>If the branch has a corresponding remote branch and the branch
-does not already contain it, it's merged into the branch's base
-(which was possibly already updated in step (3) to contain the
-remote branch's base but not the remote branch itself) on a detached
-HEAD.  Yup, this step can be a bit confusing and no, the updated
-base from step (3) has not yet been merged into the branch itself
-yet either.  If there is no remote branch this step does not apply.
-Using a detached HEAD allows the remote branch to be merged into the
-contents of the base without actually perturbing the base's ref.</li>
+does not already contain it, the branch's base (which was possibly
+already updated in step (3) to contain the remote branch's base but
+not the remote branch itself) is merged into the remote branch on a
+detached HEAD.  Yup, this step can be a bit confusing and no, the
+updated base from step (3) has not yet been merged into the branch
+itself yet either.  If there is no remote branch this step does not
+apply.  Using a detached HEAD allows the contents of the base to be
+merged into the remote branch without actually perturbing the base's
+or remote branch's refs.</li>
 <li>If there is a remote branch present then use the result of step (4)
 otherwise use the branch's base and merge that into the branch
 itself.</li>
@@ -2925,7 +2930,7 @@ file and the <tt class="docutils literal">git <span class="pre">read-tree</span>
 the <tt class="docutils literal">git <span class="pre">merge-index</span></tt> and <tt class="docutils literal">git <span class="pre">merge-file</span></tt> commands.  This combination may
 be repeated more than once to perform an octopus in-index merge.  If this
 fails, the files are checked out and a normal <tt class="docutils literal">git merge</tt> three-way merge is
-performed (possily multiple times).  If the normal <tt class="docutils literal">git merge</tt> fails then
+performed (possibly multiple times).  If the normal <tt class="docutils literal">git merge</tt> fails then
 user intervention is required to resolve the merge conflict(s) and continue.</p>
 <p>Since the <tt class="docutils literal">tg annihilate</tt>, <tt class="docutils literal">tg create</tt> and <tt class="docutils literal">tg depend add</tt> commands may
 end up running the <tt class="docutils literal">tg update</tt> machinery behind the scenes to complete their
@@ -2990,12 +2995,12 @@ is commonly seen in the wild.</p>
 <dt>.topmsg</dt>
 <dd>Version-controlled file stored at the root level of each
 TopGit branch that contains the patch header for a TopGit
-branch.  See also <a class="reference internal" href="#implementation">IMPLEMENTATION</a>;</dd>
+branch.  See also <a class="reference internal" href="#implementation">IMPLEMENTATION</a>.</dd>
 <dt>.topdeps</dt>
 <dd>Version-controlled file stored at the root level of each
 TopGit branch that lists the branch's dependencies one per
 line omitting the leading <tt class="docutils literal">refs/heads/</tt> part.  See also
-<a class="reference internal" href="#implementation">IMPLEMENTATION</a>;</dd>
+<a class="reference internal" href="#implementation">IMPLEMENTATION</a>.</dd>
 <dt>branch containment</dt>
 <dd>Given two Git commit identifiers (e.g. hashes) C1 and C2,
 commit C1 &quot;contains&quot; commit C2 if either they are the same
@@ -3037,8 +3042,8 @@ that any <tt class="docutils literal">.topdeps</tt> and/or <tt class="docutils l
 from the result and the contents of the <tt class="docutils literal">.topmsg</tt> file from
 the TopGit branch is prefixed to the result.</dd>
 <dt>TopGit bare branch</dt>
-<dd>A Git branch whose tree does NOT contain any <cite>.topdeps</cite> or
-<cite>.topmsg</cite> entries at the top-level of the tree.  It <em>does</em>
+<dd>A Git branch whose tree does NOT contain any <tt class="docutils literal">.topdeps</tt> or
+<tt class="docutils literal">.topmsg</tt> entries at the top-level of the tree.  It <em>does</em>
 always have an associated &quot;TopGit base&quot; ref (otherwise it would
 not be a &quot;TopGit&quot; branch).  See also <a class="reference internal" href="#bare-branches">BARE BRANCHES</a>.</dd>
 <dt>bare branch</dt>
