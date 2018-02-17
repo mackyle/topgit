@@ -140,6 +140,7 @@ NF == 3 && $2 != "missing" && $1 != "" && $2 ~ /^[0-9]+$/ && validbr($3) {
 	err = 0
 	while (curlen < datalen && (err = getline) > 0) {
 		curlen += length($0) + 1
+		sub(/\r$/, "", $1)
 		if (NF != 1 || $1 == "" || !validbr($1)) continue
 		if (!isann && !ann[$1] && included($1) && wanted($1)) {
 			if (rev)
