@@ -80,6 +80,8 @@ test_expect_success LASTOK 'setup_hook pre-commit edits matching shell once' '
 	echo "echo editme" >>r2/.git/hooks/pre-commit &&
 	chmod a+x r2/.git/hooks/pre-commit &&
 	tg_test_include -C r2 &&
+	# kludge here for some broken ancient sh implementations
+	sane_unset -f cat &&
 	cd r2 && setup_hook "pre-commit" && cd .. &&
 	test -f r2/.git/hooks/pre-commit &&
 	test -x r2/.git/hooks/pre-commit &&
