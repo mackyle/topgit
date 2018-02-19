@@ -2793,7 +2793,9 @@ THIRD-PARTY SOFTWARE
 
 The following software understands TopGit branches:
 
-* `magit <http://magit.github.io/>`_ -- a git mode for emacs
+* `Magit <https://github.com/magit/magit>`_ - a git mode for emacs
+  with the `Magit TopGit mode <https://github.com/greenrd/magit-topgit>`_
+  that may, perhaps, be a bit outdated.
 
 IMPORTANT: Magit requires its topgit mode to be enabled first, as
 described in its documentation, in the "Activating extensions"
