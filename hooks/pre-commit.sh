@@ -105,8 +105,8 @@ em=0 && v_check_topfile msg2 "$tree" ".topmsg"    || em=$?
 changedeps=
 changemsg=
 mode=modify
-headrev="$(git rev-parse --quiet --verify HEAD -- || :)"
-tab="$(printf '\t.')" && tab="${tab%?}"
+headrev="$(git rev-parse --quiet --verify HEAD --)" || :
+tab="	" # one tab in there
 prefix="[A-Z][0-9]*$tab"
 if [ -n "$headrev" ]; then
 	headtree="$headrev^{tree}"
