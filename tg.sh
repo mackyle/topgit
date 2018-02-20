@@ -1190,7 +1190,7 @@ find_leaves()
 	recurse_preorder=
 	seen_leaf_refs=
 	seen_leaf_revs=
-	while read _ismissing _istgish _isleaf _dep _name _deppath; do
+	while read _ismissing _istgish _isleaf _xvsts _dep _name _deppath; do
 		[ "$_isleaf" = "1" ] && [ "$_ismissing" = "0" ] || continue
 		if [ "$_istgish" != "0" ]; then
 			fulldep="refs/$topbases/$_dep"
