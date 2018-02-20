@@ -340,7 +340,11 @@ if [ -n "$list" ]; then
 	if [ -z "$deps$rdeps" ]; then
 		# accelerate showing everything in full
 		if [ -z "$refs$exclude" ] && [ z"$short" = z"--no-short" ]; then
-			<"$trf" sed -n 's/^\([^ ][^ ]*\) \([^ ][^ ]*\)$/\2 \1/p'
+			if [ -n "$hashonly" ]; then
+				<"$trf" sed -n 's/^[^ ][^ ]* \([^ ][^ ]*\)$/\1/p'
+			else
+				<"$trf" sed -n 's/^\([^ ][^ ]*\) \([^ ][^ ]*\)$/\2 \1/p'
+			fi
 			exit
 		fi
 		while read -r name rev; do

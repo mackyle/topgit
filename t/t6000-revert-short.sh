@@ -45,8 +45,11 @@ if [ -n "$hastmpdir" ]; then
 	TG_TMPDIR="$PWD/tgtmpdir" && export TG_TMPDIR || die
 fi
 
-test_expect_failure SETUP 'full length hash only'"${hastmpdir:+ (persistent temp dir)}" '
+test_expect_success SETUP 'full length hash only'"${hastmpdir:+ (persistent temp dir)}" '
 	printf "%s\n" "$hashlen" "$hashlen" "$hashlen" "$hashlen" "$hashlen" "$hashlen" >expected &&
+	tg revert --list --no-short t/tag >list &&
+	awklen <list >actual &&
+	test_must_fail test_cmp actual expected &&
 	tg revert --list --hash t/tag >list &&
 	awklen <list >actual &&
 	test_cmp actual expected
