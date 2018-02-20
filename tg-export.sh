@@ -27,12 +27,12 @@ forceoutput=
 checkout_opt=-b
 output=
 driver=collapse
-flatten=false
-numbered=false
-strip=false
+flatten=
+numbered=
+strip=
 stripval=0
 smode=
-allbranches=false
+allbranches=
 binary=
 pl=
 
@@ -44,26 +44,26 @@ while [ -n "$1" ]; do
 	-h|--help)
 		usage;;
 	-a|--all)
-		allbranches=true;;
+		allbranches=1;;
 	-b)
 		branches="${branches:+$branches }$1"; shift;;
 	--force)
 		forceoutput=1;;
 	--flatten)
-		flatten=true;;
+		flatten=1;;
 	--binary)
 		binary=1;;
 	--numbered)
-		flatten=true
-		numbered=true;;
+		flatten=1
+		numbered=1;;
 	--strip*)
 		val=${arg#*=}
 		if [ "$val" = "--strip" ]; then
-			strip=true
+			strip=1
 			stripval=9999
 		elif [ -n "$val" ] && [ "${val#*[!0-9]}" = "$val" ]; then
-			strip=true
-			stripval=$val
+			strip=1
+			stripval="$val"
 		else
 			die "invalid parameter $arg"
 		fi;;
@@ -100,22 +100,22 @@ fi
 [ -z "$branches" ] || [ "$driver" = "quilt" ] ||
 	die "-b works only with the quilt driver"
 
-[ "$driver" = "quilt" ] || ! "$numbered" ||
+[ "$driver" = "quilt" ] || [ -z "$numbered" ] ||
 	die "--numbered works only with the quilt driver"
 
-[ "$driver" = "quilt" ] || ! "$flatten" ||
+[ "$driver" = "quilt" ] || [ -z "$flatten" ] ||
 	die "--flatten works only with the quilt driver"
 
 [ "$driver" = "quilt" ] || [ -z "$binary" ] ||
 	die "--binary works only with the quilt driver"
 
-[ "$driver" = "quilt" ] || ! "$strip" ||
+[ "$driver" = "quilt" ] || [ -z "$strip" ] ||
 	die "--strip works only with the quilt driver"
 
-[ "$driver" = "quilt" ] || ! "$allbranches" ||
+[ "$driver" = "quilt" ] || [ -z "$allbranches" ] ||
 	die "--all works only with the quilt driver"
 
-[ -z "$branches" ] || ! "$allbranches" ||
+[ -z "$branches" ] || [ -z "$allbranches" ] ||
 	die "-b conflicts with the --all option"
 
 if [ "$driver" = "linearize" ]; then
@@ -127,7 +127,7 @@ if [ "$driver" = "linearize" ]; then
 	fi
 fi
 
-if [ -z "$branches" ] && ! "$allbranches"; then
+if [ -z "$branches" ] && [ -z "$allbranches" ]; then
 	# this check is only needed when no branches have been passed
 	name="$(verify_topgit_branch HEAD)"
 fi
@@ -313,12 +313,12 @@ quilt()
 
 	_dep_tmp=$_dep
 
-	if "$strip"; then
-		i=$stripval
+	if [ -n "$strip" ]; then
+		i="$stripval"
 		while [ "$i" -gt 0 ]; do
 			[ "$_dep_tmp" = "${_dep_tmp#*/}" ] && break
 			_dep_tmp=${_dep_tmp#*/}
-			i=$((i - 1))
+			i="$(( $i - 1 ))"
 		done
 	fi
 
@@ -328,7 +328,7 @@ quilt()
 	dn="${dn%/*}/"
 	[ "x$dn" = "x./" ] && dn=""
 
-	if "$flatten" && [ "$dn" ]; then
+	if [ -n "$flatten" ] && [ "$dn" ]; then
 		bn="$(echo "$_dep_tmp.diff" | sed -e 's#_#__#g' -e 's#/#_#g')"
 		dn=""
 	fi
@@ -346,7 +346,7 @@ quilt()
 	if branch_empty "$_dep"; then
 		echo "Skip empty patch $_dep"
 	else
-		if "$numbered"; then
+		if [ -n "$numbered" ]; then
 			number="$(echo $(($(cat "$playground/^number" 2>/dev/null) + 1)))"
 			bn="$(printf "%04u-$bn" $number)"
 			echo "$number" >"$playground/^number"
@@ -466,7 +466,7 @@ driver()
 
 # Call driver on all the branches - this will happen
 # in topological order.
-if "$allbranches" ; then
+if [ -n "$allbranches" ]; then
 	_dep_is_tgish=1
 	non_annihilated_branches |
 		while read _dep; do

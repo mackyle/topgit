@@ -4,26 +4,26 @@
 
 ## Parse options
 
-recurse_deps=true
-tgish_deps_only=false
+recurse_deps=1
+tgish_deps_only=
 dry_run=
 force=
-push_all=false
+push_all=
 branches=
 
 while [ -n "$1" ]; do
 	arg="$1"; shift
 	case "$arg" in
 	--no-deps)
-		recurse_deps=false;;
+		recurse_deps=;;
 	--dry-run)
 		dry_run=--dry-run;;
 	-f|--force)
 		force=--force;;
 	--tgish-only)
-		tgish_deps_only=true;;
+		tgish_deps_only=1;;
 	-a|--all)
-		push_all=true;;
+		push_all=1;;
 	-h|--help)
 		echo "Usage: ${tgname:-tg} [...] push [--dry-run] [--force] [--no-deps] [--tgish-only] [-r <remote>] [-a | --all | <branch>...]"
 		exit 0;;
@@ -46,7 +46,7 @@ if [ -z "$remote" ]; then
 fi
 
 if [ -z "$branches" ]; then
-	if $push_all; then
+	if [ -n "$push_all" ]; then
 		branches="$(non_annihilated_branches | paste -s -d " " -)"
 	else
 		branches="$(verify_topgit_branch HEAD)"
@@ -83,7 +83,7 @@ push_branch()
 	[ -z "$_dep_missing" ] || return 0
 
 	# if so desired omit non tgish deps
-	$tgish_deps_only && [ -z "$_dep_is_tgish" ] && return 0
+	[ -n "$tgish_deps_only" ] && [ -z "$_dep_is_tgish" ] && return 0
 
 	# filter out plain SHA1s.  These don't need to be pushed explicitly as
 	# the patches that depend on the sha1 have it already in their ancestry.
@@ -106,7 +106,7 @@ while read name && [ -n "$name" ]; do
 	push_branch "$name"
 
 	# deps but only if branch is tgish
-	$recurse_deps && [ -n "$_dep_is_tgish" ] &&
+	[ -n "$recurse_deps" ] && [ -n "$_dep_is_tgish" ] &&
 		recurse_deps push_branch "$name"
 done <<EOT
 $(sed 'y/ /\n/' <<LIST
