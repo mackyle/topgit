@@ -83,11 +83,11 @@ push_branch()
 	[ -z "$_dep_missing" ] || return 0
 
 	# if so desired omit non tgish deps
-	[ -n "$tgish_deps_only" ] && [ -z "$_dep_is_tgish" ] && return 0
+	[ -z "$tgish_deps_only" ] || [ -n "$_dep_is_tgish" ] || return 0
 
 	# filter out plain SHA1s.  These don't need to be pushed explicitly as
 	# the patches that depend on the sha1 have it already in their ancestry.
-	is_sha1 "$_dep" && return 0
+	! is_sha1 "$_dep" || return 0
 
 	echol "$_dep" >> "$_listfile"
 	[ -z "$_dep_is_tgish" ] ||
@@ -106,7 +106,7 @@ while read name && [ -n "$name" ]; do
 	push_branch "$name"
 
 	# deps but only if branch is tgish
-	[ -n "$recurse_deps" ] && [ -n "$_dep_is_tgish" ] &&
+	[ -z "$recurse_deps" ] || [ -z "$_dep_is_tgish" ] ||
 		recurse_deps push_branch "$name"
 done <<EOT
 $(sed 'y/ /\n/' <<LIST

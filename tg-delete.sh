@@ -1,7 +1,7 @@
 #!/bin/sh
 # TopGit - A different patch queue manager
 # Copyright (C) 2008 Petr Baudis <pasky@suse.cz>
-# Copyright (C) 2017 Kyle J. McKay <mackyle@gmail.com>
+# Copyright (C) 2017,2018 Kyle J. McKay <mackyle@gmail.com>
 # All rights reserved
 # License GPLv2
 
@@ -56,8 +56,8 @@ baserev="$(git rev-parse --verify "refs/$topbases/$name^0" -- 2>/dev/null)" ||
 [ -z "$force" ] && { branch_empty "$name" || die "branch is non-empty: $name"; }
 
 # Quick'n'dirty check whether branch is required
-[ -z "$force" ] && { tg summary --tgish-only --deps | cut -d ' ' -f2- | tr ' ' '\n' | grep -Fxq -- "$name" &&
-	die "some branch depends on $name"; }
+[ -n "$force" ] || ! tg summary --tgish-only --deps | cut -d ' ' -f2- | tr ' ' '\n' | grep -Fxq -- "$name" ||
+	die "some branch depends on $name"
 
 ensure_ident_available
 

@@ -335,7 +335,7 @@ make_mtblob() {
 	git_temp_alt_odb_cmd hash-object -t blob -w --stdin </dev/null >/dev/null 2>&1
 }
 # short-circuit this for speed
-[ $# -eq 1 ] && [ "$1" = "--make-empty-blob" ] && { make_mtblob || :; exit 0; }
+[ $# -ne 1 ] || [ "$1" != "--make-empty-blob" ] || { make_mtblob || :; exit 0; }
 
 # get tree for the committed topic (second arg)
 # store result in variable named by first arg
