@@ -272,7 +272,7 @@ if [ -n "$terse" ]; then
 	exit 0
 fi
 
-curname="$(strip_ref "$(git symbolic-ref -q HEAD)")" || :
+v_strip_ref curname "$(git symbolic-ref -q HEAD)"
 
 if [ -n "$graphviz" ]; then
 	printf '%s\n\n' \

@@ -227,6 +227,17 @@ create_tg_commit()
 	unset GIT_COMMITTER_DATE
 }
 
+v_get_p_arg_list()
+{
+	_vname="$1"
+	shift
+	eval "$_vname="
+	while [ $# -gt 0 ]; do
+		[ -z "$1" ] || eval "$_vname=\"\${$_vname:+\$$_vname }-p \$1\""
+		shift
+	done
+}
+
 # collapsed_commit NAME
 # Produce a collapsed commit of branch NAME.
 collapsed_commit()
@@ -242,20 +253,22 @@ collapsed_commit()
 		while read -r p; do git rev-parse --quiet --verify "$p^0" -- || :; done)"
 	if [ $(( $(cat "$playground/$name^parents" 2>/dev/null | wc -l) )) -gt 1 ]; then
 		# Produce a merge commit first
+		v_pretty_tree prtytree "$name" -b
+		v_get_p_arg_list plist $parent
 		parent="$({
 			echo "TopGit-driven merge of branches:"
 			echo
 			cut -f 2 "$playground/$name^parents"
 		} | GIT_AUTHOR_DATE="$nowsecs $nowtzoff" \
 			GIT_COMMITTER_DATE="$nowsecs $nowtzoff" \
-			git commit-tree "$(pretty_tree "$name" -b)" \
-			$(for p in $parent; do echo "-p $p"; done))"
+			git commit-tree "$prtytree" $plist)"
 	fi
 
 	if branch_empty "$name"; then
 		echol "$parent"
 	else
-		create_tg_commit "$name" "$(pretty_tree "$name")" "$parent"
+		v_pretty_tree prtytree "$name"
+		create_tg_commit "$name" "$prtytree" "$parent"
 	fi
 
 	echol "$name" >>"$playground/^ticker"
@@ -381,7 +394,9 @@ linearize()
 	else
 		retmerge=0
 
-		git merge-recursive "$(pretty_tree "$_dep" -b)" -- HEAD "$(pretty_tree "$_dep")" || retmerge="$?"
+		v_pretty_tree _deptree "$_dep"
+		v_pretty_tree _depbasetree "$_dep" -b
+		git merge-recursive "$_depbasetree" -- HEAD "$_deptree" || retmerge="$?"
 
 		if test "x$retmerge" != "x0"; then
 			git rerere
@@ -495,7 +510,8 @@ elif [ "$driver" = "linearize" ]; then
 	[ -z "$wayback_push" ] || git -c "remote.wayback.url=$wayback_push" push -q ${forceoutput:+--force} wayback "refs/heads/$output:refs/heads/$output"
 
 	echol "$name"
-	if test $(git rev-parse --verify "$(pretty_tree "$name")^{tree}" --) != $(git rev-parse --verify "HEAD^{tree}" --); then
+	v_pretty_tree nametree "$name"
+	if test $(git rev-parse --verify "$nametree^{tree}" --) != $(git rev-parse --verify "HEAD^{tree}" --); then
 		echo "Warning: Exported result doesn't match"
 		echo "tg-head=$(git rev-parse --verify "refs/heads/$name" --), exported=$(git rev-parse --verify "HEAD" --)"
 		#git diff $head HEAD

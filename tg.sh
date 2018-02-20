@@ -337,80 +337,90 @@ make_mtblob() {
 # short-circuit this for speed
 [ $# -eq 1 ] && [ "$1" = "--make-empty-blob" ] && { make_mtblob || :; exit 0; }
 
-# get tree for the committed topic
-get_tree_()
+# get tree for the committed topic (second arg)
+# store result in variable named by first arg
+v_get_tree_()
 {
-	echo "refs/heads/$1"
+	eval "$1="'"refs/heads/$2"'
 }
 
-# get tree for the base
-get_tree_b()
+# get tree for the base (second arg)
+# store result in variable named by first arg
+v_get_tree_b()
 {
-	echo "refs/$topbases/$1"
+	eval "$1="'"refs/$topbases/$2"'
 }
 
 # get tree for the index
-get_tree_i()
+# store result in variable named by first arg
+v_get_tree_i()
 {
-	git_write_tree
+	eval "$1="'"$(git_write_tree)"'
 }
 
 # get tree for the worktree
-get_tree_w()
+# store result in variable named by first arg
+v_get_tree_w()
 {
-	i_tree=$(git_write_tree)
-	(
+	eval "$1="'"$(
+		i_tree="$(git_write_tree)"
 		# the file for --index-output needs to sit next to the
 		# current index file
 		cd "$root_dir"
 		: ${GIT_INDEX_FILE:="$git_dir/index"}
 		TMP_INDEX="$(mktemp "${GIT_INDEX_FILE}-tg.XXXXXX")"
-		git read-tree -m $i_tree --index-output="$TMP_INDEX" &&
+		git read-tree -m "$i_tree" --index-output="$TMP_INDEX" &&
 		GIT_INDEX_FILE="$TMP_INDEX" &&
 		export GIT_INDEX_FILE &&
 		git diff --name-only -z HEAD |
 			git update-index -z --add --remove --stdin &&
 		git_write_tree &&
 		rm -f "$TMP_INDEX"
-	)
+	)"'
 }
 
-# get tree for arbitrary ref
-get_tree_r()
+# get tree for arbitrary ref (second arg)
+# store result in variable named by first arg
+v_get_tree_r()
 {
-	echo "$1"
+	eval "$1="'"$2"'
 }
 
-# strip_ref "$(git symbolic-ref HEAD)"
+# v_strip_ref answer "$(git symbolic-ref HEAD)"
 # Output will have a leading refs/heads/ or refs/$topbases/ stripped if present
-strip_ref()
+# store result in variable named by first arg
+v_strip_ref()
 {
-	case "$1" in
+	case "$2" in
 		refs/"$topbases"/*)
-			echol "${1#refs/$topbases/}"
+			eval "$1="'"${2#refs/$topbases/}"'
 			;;
 		refs/heads/*)
-			echol "${1#refs/heads/}"
+			eval "$1="'"${2#refs/heads/}"'
 			;;
 		*)
-			echol "$1"
+			eval "$1="'"$2"'
 	esac
 }
 
-# pretty_tree [-t] NAME [-b | -i | -w | -r]
+# v_pretty_tree answer [-t] NAME [-b | -i | -w | -r]
 # Output tree ID of a cleaned-up tree without tg's artifacts.
 # NAME will be ignored for -i and -w, but needs to be present
 # With -r NAME must be a full ref name to a treeish (it's used as-is)
 # If -t is used the tree is written into the alternate temporary objects area
-pretty_tree()
+# store result in variable named by first arg
+v_pretty_tree()
 {
+	_vname="$1"
+	shift
 	use_alt_temp_odb=
 	[ "$1" != "-t" ] || { shift; use_alt_temp_odb=1; }
-	name="$1"
-	source="${2#?}"
-	git ls-tree --full-tree "$(get_tree_$source "$name")" |
-		sed -ne '/	\.top.*$/!p' |
+	eval "v_get_tree_${2#?}" _tree '"$1"'
+	eval "$_vname=\"\$(
+		git ls-tree --full-tree \"\$_tree\" |
+		sed -ne '/	\.top.*\$/!p' |
 		git_mktree
+	)\""
 }
 
 # return an empty-tree root commit -- date is either passed in or current
@@ -562,7 +572,10 @@ measure_branch()
 {
 	_bname="$1"; _base="$2"
 	shift; shift
-	[ -n "$_base" ] || _base="refs/$topbases/$(strip_ref "$_bname")"
+	if [ -z "$_base" ]; then
+		v_strip_ref _base "$_bname"
+		_base="refs/$topbases/$_base"
+	fi
 	# The caller should've verified $name is valid
 	_commits="$(git rev-list --count "$_bname" "$@" ^"$_base" --)"
 	_nmcommits="$(git rev-list --count --no-merges "$_bname" "$@" ^"$_base" --)"
@@ -1435,12 +1448,16 @@ branch_empty()
 		{ read -r _result _result_rev <"$tg_cache_dir/refs/heads/$1/.mt"; } 2>/dev/null || :
 		[ -z "$_result" ] || [ "$_result_rev" != "$_rev" ] || return $_result
 		_result=0
-		[ "$(pretty_tree -t "$1" -b)" = "$(pretty_tree -t "$1" $2)" ] || _result=$?
+		v_pretty_tree _pretty1 -t "$1" -b
+		v_pretty_tree _pretty2 -t "$1" $2
+		[ "$_pretty1" = "$_pretty2" ] || _result=$?
 		[ -d "$tg_cache_dir/refs/heads/$1" ] || mkdir -p "$tg_cache_dir/refs/heads/$1" 2>/dev/null
 		[ ! -d "$tg_cache_dir/refs/heads/$1" ] || echo $_result $_rev >"$tg_cache_dir/refs/heads/$1/.mt"
 		return $_result
 	else
-		[ "$(pretty_tree -t "$1" -b)" = "$(pretty_tree -t "$1" $2)" ]
+		v_pretty_tree _pretty1 -t "$1" -b
+		v_pretty_tree _pretty2 -t "$1" $2
+		[ "$_pretty1" = "$_pretty2" ]
 	fi
 }
 

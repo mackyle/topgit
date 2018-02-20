@@ -32,7 +32,8 @@ while [ -n "$1" ]; do
 		shift
 		;;
 	*)
-		branches="${branches:+$branches }$(strip_ref "$arg")";;
+		v_strip_ref arg "$arg"
+		branches="${branches:+$branches }$arg";;
 	esac
 done
 

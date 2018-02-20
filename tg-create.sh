@@ -455,7 +455,7 @@ if [ -n "$unborn" ]; then
 	[ "refs/heads/$name" = "$unborn" ] || git checkout $iowopt -b "$name"
 else
 	basetree="$(git rev-parse --verify "HEAD^{tree}" --)" && [ -n "$basetree" ] || die "HEAD disappeared"
-	baseptree="$(pretty_tree "HEAD" -r)" || die "pretty_tree HEAD -r (via git mktree) failed"
+	v_pretty_tree baseptree "HEAD" -r || die "v_pretty_tree ... HEAD -r (via git mktree) failed"
 	if [ "$basetree" != "$baseptree" ]; then
 		bmsg="tg create $name base"
 		basecommit="$(git commit-tree -p "HEAD" -m "$bmsg" "$baseptree")" || die "git commit-tree failed"

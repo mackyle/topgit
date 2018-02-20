@@ -40,8 +40,8 @@ fi
 
 [ -z "$head_from" ] || ensure_work_tree
 
-b_tree=$(pretty_tree -t "$name" -b)
-t_tree=$(pretty_tree -t "$name" $head_from)
+v_pretty_tree b_tree -t "$name" -b
+v_pretty_tree t_tree -t "$name" $head_from
 
 git diff-tree --name-only -r $b_tree $t_tree
 

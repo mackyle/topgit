@@ -185,8 +185,8 @@ if [ "$result" = "67" ]; then
 fi
 [ "${result:-0}" = "0" ] || exit "$result"
 
-b_tree=$(pretty_tree -t "$name" -b)
-t_tree=$(pretty_tree -t "$name" $head_from)
+v_pretty_tree b_tree -t "$name" -b
+v_pretty_tree t_tree -t "$name" $head_from
 
 if [ $b_tree = $t_tree ]; then
 	echo "No changes."

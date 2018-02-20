@@ -260,7 +260,8 @@ if [ -n "$isactive" ] || [ -n "$isactiveopt" ]; then
 		# assume user fixed it
 		# we could be left on a detached HEAD if we were resolving
 		# a conflict while merging a base in, fix it with a checkout
-		git checkout -q $iowopt "$(strip_ref "$name")"
+		v_strip_ref bname "$name"
+		git checkout -q $iowopt "$bname"
 		;;
 	*)
 		do_status
@@ -335,7 +336,8 @@ if [ -z "$restored" ]; then
 				[ "$namecnt" != "2" ] || name2="$arg"
 				names="${names:+$names }$arg"
 			else
-				pattern="${pattern:+$pattern }refs/$topbases/$(strip_ref "$arg")"
+				v_strip_ref arg "$arg"
+				pattern="${pattern:+$pattern }refs/$topbases/$arg"
 			fi
 			;;
 		esac
@@ -348,7 +350,8 @@ if [ -z "$restored" ]; then
 			[ "$namecnt" != "2" ] || name2="$1"
 			names="${names:+$names }$*"
 		else
-			pattern="${pattern:+$pattern }refs/$topbases/$(strip_ref "$1")"
+			v_strip_ref arg "$1"
+			pattern="${pattern:+$pattern }refs/$topbases/$arg"
 		fi
 		shift
 	done
