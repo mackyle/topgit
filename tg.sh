@@ -645,6 +645,19 @@ remove_ref_cache()
 	>"$tg_ref_cache_dep"
 }
 
+core_abbrev_val=
+core_abbrev_is_setup=
+v_get_core_abbrev()
+{
+	if [ -z "$core_abbrev_is_setup" ]; then
+		core_abbrev_val="$(git config --int --get core.abbrev 2>/dev/null)" || :
+		: "${core_abbrev_val:=7}"
+		[ "$core_abbrev_val" -ge 4 ] || core_abbrev_val=4
+		core_abbrev_is_setup=1
+	fi
+	eval "$1="'"$core_abbrev_val"'
+}
+
 # setting tg_ref_cache_only to non-empty will force non-$tg_ref_cache lookups to fail
 rev_parse()
 {
@@ -700,11 +713,16 @@ ref_exists_rev_short()
 		*)
 			die "ref_exists_rev_short requires fully-qualified ref name"
 	esac
+	if [ "${2:---short}" = "--short" ]; then
+		v_get_core_abbrev _shortval
+		set -- "$1" "--short=$_shortval"
+	fi
 	[ -n "$tg_read_only" ] || { git rev-parse --quiet --verify ${2:---short} "$1^0" -- 2>/dev/null; return; }
 	_result=
 	_result_rev=
-	{ read -r _result _result_rev <"$tg_tmp_dir/cached/$1/.rfs"; } 2>/dev/null || :
-	[ -z "$_result" ] || { printf '%s' "$_result_rev"; return $_result; }
+	_result_arg=
+	{ read -r _result _result_rev _result_arg <"$tg_tmp_dir/cached/$1/.rfs"; } 2>/dev/null || :
+	[ -z "$_result" ] || [ "${_result_arg:-missing}" != "${2:---short}" ] || { printf '%s' "$_result_rev"; return $_result; }
 	_result=0
 	_result_rev="$(rev_parse "$1")" || _result=$?
 	if [ $_result -eq 0 ]; then
@@ -713,7 +731,7 @@ ref_exists_rev_short()
 	fi
 	[ -d "$tg_tmp_dir/cached/$1" ] || mkdir -p "$tg_tmp_dir/cached/$1" 2>/dev/null
 	[ ! -d "$tg_tmp_dir/cached/$1" ] ||
-	echo $_result $_result_rev >"$tg_tmp_dir/cached/$1/.rfs" 2>/dev/null || :
+	echo $_result $_result_rev "${2:---short}" >"$tg_tmp_dir/cached/$1/.rfs" 2>/dev/null || :
 	printf '%s' "$_result_rev"
 	return $_result
 }
@@ -2227,6 +2245,7 @@ initial_setup()
 	tmpdir_setup
 	unset_ TG_TMPDIR
 	cachedir_setup
+	v_get_core_abbrev _dummy
 
 	# the wayback machine directory serves as its own "altodb"
 	[ -n "$wayback" ] || altodb_setup

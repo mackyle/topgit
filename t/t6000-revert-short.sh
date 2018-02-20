@@ -69,9 +69,7 @@ test_expect_success SETUP 'full length rdeps hash only'"${hastmpdir:+ (persisten
 '
 
 for len in 16 17 18 19 20; do
-expecting=test_expect_success
-[ -z "$hastmpdir" ] || expecting=test_expect_failure
-$expecting SETUP "length $len rdeps hash only${hastmpdir:+ (persistent temp dir)}" '
+test_expect_success SETUP "length $len rdeps hash only${hastmpdir:+ (persistent temp dir)}" '
 	printf "%s\n" '"\"$len\" \"$len\" \"$len\" \"$len\" \"$len\""' >expected &&
 	tg revert --list --hash --rdeps --short='"\"$len\""' t/tag >list &&
 	awklen <list >actual &&
