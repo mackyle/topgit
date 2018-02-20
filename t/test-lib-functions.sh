@@ -337,11 +337,14 @@ test_ensure_temp_dir_ "test_run_lazy_prereq_" "prereq-test-dir" &&
 }
 
 test_have_prereq() {
-	# prerequisites can be concatenated with ','
-	save_IFS=$IFS
-	IFS=,
+	# prerequisites can be concatenated with ',' or whitespace
+	save_IFS="$IFS"
+	_tab='	'
+	_nl='
+'
+	IFS=", $_tab$_nl"
 	set -- $*
-	IFS=$save_IFS
+	IFS="$save_IFS"
 
 	total_prereq=0
 	ok_prereq=0
@@ -410,8 +413,8 @@ test_have_prereq() {
 }
 
 test_declared_prereq() {
-	case ",$test_prereq," in
-	*,$1,*)
+	case " $test_prereq " in
+	*" $1 "*)
 		return 0
 		;;
 	esac
@@ -420,15 +423,26 @@ test_declared_prereq() {
 
 test_verify_prereq() {
 	test -z "$test_prereq" ||
-	test "x$test_prereq" = "x${test_prereq#*[!A-Z0-9_,!]}" ||
+	test "x$test_prereq" = "x${test_prereq#*[!A-Z0-9_ !]}" ||
 	error "bug in the test script: '$test_prereq' does not look like a prereq"
+}
+
+_test_set_test_prereq() {
+	save_IFS="$IFS"
+	_tab='	'
+	_nl='
+'
+	IFS=", $_tab$_nl"
+	set -- $*
+	IFS="$save_IFS"
+	test_prereq="$*"
 }
 
 test_expect_failure_lno() {
 	callerlno="$1"
 	shift
 	test_start_
-	test "$#" = 3 && { test_prereq=$1; shift; } || test_prereq=
+	test "$#" = 3 && { _test_set_test_prereq "$1"; shift; } || test_prereq=
 	test "$#" = 2 ||
 	error "bug in the test script: not 2 or 3 parameters to test-expect-failure"
 	test_get_ "$2"
@@ -462,7 +476,7 @@ test_tolerate_failure_lno() {
 	callerlno="$1"
 	shift
 	test_start_
-	test "$#" = 3 && { test_prereq=$1; shift; } || test_prereq=
+	test "$#" = 3 && { _test_set_test_prereq "$1"; shift; } || test_prereq=
 	test "$#" = 2 ||
 	error "bug in the test script: not 2 or 3 parameters to test-tolerate-failure"
 	test_get_ "$2"
@@ -494,7 +508,7 @@ test_expect_success_lno() {
 	callerlno="$1"
 	shift
 	test_start_
-	test "$#" = 3 && { test_prereq=$1; shift; } || test_prereq=
+	test "$#" = 3 && { _test_set_test_prereq "$1"; shift; } || test_prereq=
 	test "$#" = 2 ||
 	error "bug in the test script: not 2 or 3 parameters to test-expect-success"
 	test_get_ "$2"
@@ -532,7 +546,7 @@ alias test_expect_success='test_expect_success_lno "$LINENO"' >/dev/null 2>&1 ||
 test_external_lno() {
 	callerlno="$1"
 	shift
-	test "$#" = 4 && { test_prereq=$1; shift; } || test_prereq=
+	test "$#" = 4 && { _test_set_test_prereq "$1"; shift; } || test_prereq=
 	test "$#" = 3 ||
 	error >&5 "bug in the test script: not 3 or 4 parameters to test_external"
 	descr="$1"
