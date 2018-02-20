@@ -233,7 +233,7 @@ esac
 
 cat_depsmsg_internal()
 {
-	_rev="$(ref_exists_rev "refs/heads/$1")" || return 0
+	v_ref_exists_rev _rev "refs/heads/$1" || return 0
 	if [ -s "$tg_cache_dir/refs/heads/$1/.$2" ]; then
 		if read _rev_match && [ "$_rev" = "$_rev_match" ]; then
 			_line=
@@ -598,8 +598,8 @@ contained_by()
 # Whether B1 is a superset of B2.
 branch_contains()
 {
-	_revb1="$(ref_exists_rev "$1")" || return 0
-	_revb2="$(ref_exists_rev "$2")" || return 0
+	v_ref_exists_rev _revb1 "$1" || return 0
+	v_ref_exists_rev _revb2 "$2" || return 0
 	if [ -s "$tg_cache_dir/$1/.bc/$2/.d" ]; then
 		if read _result _rev_matchb1 _rev_matchb2 &&
 			[ "$_revb1" = "$_rev_matchb1" ] && [ "$_revb2" = "$_rev_matchb2" ]; then
@@ -684,68 +684,69 @@ rev_parse()
 	git rev-parse --quiet --verify "$1^0" -- 2>/dev/null
 }
 
-# ref_exists_rev REF
-# Whether REF is a valid ref name
+# v_ref_exists_rev answer REF
+# Whether REF (second arg) is a valid ref name
 # REF must be fully qualified and start with refs/heads/, refs/$topbases/
 # or, if $base_remote is set, refs/remotes/$base_remote/
 # Caches result if $tg_read_only and outputs HASH on success
-ref_exists_rev()
+# store result in variable named by first arg
+v_ref_exists_rev()
 {
-	case "$1" in
+	case "$2" in
 		refs/*)
 			;;
 		$octet20)
-			printf '%s' "$1"
+			eval "$1="'"$2"'
 			return;;
 		*)
-			die "ref_exists_rev requires fully-qualified ref name (given: $1)"
+			die "v_ref_exists_rev requires fully-qualified ref name (given: $2)"
 	esac
-	[ -n "$tg_read_only" ] || { git rev-parse --quiet --verify "$1^0" -- 2>/dev/null; return; }
+	[ -n "$tg_read_only" ] || { eval "$1="'"$(git rev-parse --quiet --verify "$2^0" -- 2>/dev/null)"'; return; }
 	_result=
 	_result_rev=
-	{ read -r _result _result_rev <"$tg_tmp_dir/cached/$1/.ref"; } 2>/dev/null || :
-	[ -z "$_result" ] || { printf '%s' "$_result_rev"; return $_result; }
+	{ read -r _result _result_rev <"$tg_tmp_dir/cached/$2/.ref"; } 2>/dev/null || :
+	[ -z "$_result" ] || { eval "$1="'"$_result_rev"'; return $_result; }
 	_result=0
-	_result_rev="$(rev_parse "$1")" || _result=$?
-	[ -d "$tg_tmp_dir/cached/$1" ] || mkdir -p "$tg_tmp_dir/cached/$1" 2>/dev/null
-	[ ! -d "$tg_tmp_dir/cached/$1" ] ||
-	echo $_result $_result_rev >"$tg_tmp_dir/cached/$1/.ref" 2>/dev/null || :
-	printf '%s' "$_result_rev"
+	_result_rev="$(rev_parse "$2")" || _result=$?
+	[ -d "$tg_tmp_dir/cached/$2" ] || mkdir -p "$tg_tmp_dir/cached/$2" 2>/dev/null
+	[ ! -d "$tg_tmp_dir/cached/$2" ] ||
+	echo $_result $_result_rev >"$tg_tmp_dir/cached/$2/.ref" 2>/dev/null || :
+	eval "$1="'"$_result_rev"'
 	return $_result
 }
 
-# Same as ref_exists_rev but output is abbreviated hash
-# Optional second argument defaults to --short but may be any --short=.../--no-short option
-ref_exists_rev_short()
+# Same as v_ref_exists_rev but output is abbreviated hash
+# Optional third argument defaults to --short but may be any --short=.../--no-short option
+v_ref_exists_rev_short()
 {
-	case "$1" in
+	case "$2" in
 		refs/*)
 			;;
 		$octet20)
 			;;
 		*)
-			die "ref_exists_rev_short requires fully-qualified ref name"
+			die "v_ref_exists_rev_short requires fully-qualified ref name (given: $2)"
 	esac
-	if [ "${2:---short}" = "--short" ]; then
+	if [ "${3:---short}" = "--short" ]; then
 		v_get_core_abbrev _shortval
-		set -- "$1" "--short=$_shortval"
+		set -- "$1" "$2" "--short=$_shortval"
 	fi
-	[ -n "$tg_read_only" ] || { git rev-parse --quiet --verify ${2:---short} "$1^0" -- 2>/dev/null; return; }
+	[ -n "$tg_read_only" ] || { eval "$1="'"$(git rev-parse --quiet --verify ${3:---short} "$2^0" -- 2>/dev/null)"'; return; }
 	_result=
 	_result_rev=
 	_result_arg=
-	{ read -r _result _result_rev _result_arg <"$tg_tmp_dir/cached/$1/.rfs"; } 2>/dev/null || :
-	[ -z "$_result" ] || [ "${_result_arg:-missing}" != "${2:---short}" ] || { printf '%s' "$_result_rev"; return $_result; }
+	{ read -r _result _result_rev _result_arg <"$tg_tmp_dir/cached/$2/.rfs"; } 2>/dev/null || :
+	[ -z "$_result" ] || [ "${_result_arg:-missing}" != "${3:---short}" ] || { eval "$1="'"$_result_rev"'; return $_result; }
 	_result=0
-	_result_rev="$(rev_parse "$1")" || _result=$?
+	_result_rev="$(rev_parse "$2")" || _result=$?
 	if [ $_result -eq 0 ]; then
-		_result_rev="$(git rev-parse --verify ${2:---short} --quiet "$_result_rev^0" --)"
+		_result_rev="$(git rev-parse --verify ${3:---short} --quiet "$_result_rev^0" --)"
 		_result=$?
 	fi
-	[ -d "$tg_tmp_dir/cached/$1" ] || mkdir -p "$tg_tmp_dir/cached/$1" 2>/dev/null
-	[ ! -d "$tg_tmp_dir/cached/$1" ] ||
-	echo $_result $_result_rev "${2:---short}" >"$tg_tmp_dir/cached/$1/.rfs" 2>/dev/null || :
-	printf '%s' "$_result_rev"
+	[ -d "$tg_tmp_dir/cached/$2" ] || mkdir -p "$tg_tmp_dir/cached/$2" 2>/dev/null
+	[ ! -d "$tg_tmp_dir/cached/$2" ] ||
+	echo $_result $_result_rev "${3:---short}" >"$tg_tmp_dir/cached/$2/.rfs" 2>/dev/null || :
+	eval "$1="'"$_result_rev"'
 	return $_result
 }
 
@@ -756,32 +757,33 @@ ref_exists_rev_short()
 # Caches result
 ref_exists()
 {
-	ref_exists_rev "$1" >/dev/null
+	v_ref_exists_rev _dummy "$1"
 }
 
-# rev_parse_tree REF
+# v_rev_parse_tree answer REF
 # Runs git rev-parse REF^{tree}
 # Caches result if $tg_read_only
-rev_parse_tree()
+# store result in variable named by first arg
+v_rev_parse_tree()
 {
-	[ -n "$tg_read_only" ] || { git rev-parse --verify "$1^{tree}" -- 2>/dev/null; return; }
-	if [ -f "$tg_tmp_dir/cached/$1/.rpt" ]; then
-		if IFS= read -r _result <"$tg_tmp_dir/cached/$1/.rpt"; then
-			printf '%s\n' "$_result"
+	[ -n "$tg_read_only" ] || { eval "$1="'"$(git rev-parse --verify "$2^{tree}" -- 2>/dev/null)"'; return; }
+	if [ -f "$tg_tmp_dir/cached/$2/.rpt" ]; then
+		if IFS= read -r _result <"$tg_tmp_dir/cached/$2/.rpt" && [ -n "$_result" ]; then
+			eval "$1="'"$_result"'
 			return 0
 		fi
 		return 1
 	fi
-	[ -d "$tg_tmp_dir/cached/$1" ] || mkdir -p "$tg_tmp_dir/cached/$1" 2>/dev/null || :
-	if [ -d "$tg_tmp_dir/cached/$1" ]; then
-		git rev-parse --verify "$1^{tree}" -- >"$tg_tmp_dir/cached/$1/.rpt" 2>/dev/null || :
-		if IFS= read -r _result <"$tg_tmp_dir/cached/$1/.rpt"; then
-			printf '%s\n' "$_result"
+	[ -d "$tg_tmp_dir/cached/$2" ] || mkdir -p "$tg_tmp_dir/cached/$2" 2>/dev/null || :
+	if [ -d "$tg_tmp_dir/cached/$2" ]; then
+		git rev-parse --verify "$2^{tree}" -- >"$tg_tmp_dir/cached/$2/.rpt" 2>/dev/null || :
+		if IFS= read -r _result <"$tg_tmp_dir/cached/$2/.rpt" && [ -n "$_result" ]; then
+			eval "$1="'"$_result"'
 			return 0
 		fi
 		return 1
 	fi
-	git rev-parse --verify "$1^{tree}" -- 2>/dev/null
+	eval "$1="'"$(git rev-parse --verify "$2^{tree}" -- 2>/dev/null)"'
 }
 
 # has_remote BRANCH
@@ -846,8 +848,10 @@ verify_topgit_branch()
 branch_annihilated()
 {
 	_branch_name="$1"
-	_rev="${2:-$(ref_exists_rev "refs/heads/$_branch_name")}"
-	_rev_base="${3:-$(ref_exists_rev "refs/$topbases/$_branch_name")}"
+	_rev="$2"
+	[ -n "$_rev" ] || v_ref_exists_rev _rev "refs/heads/$_branch_name"
+	_rev_base="$3"
+	[ -n "$_rev_base" ] || v_ref_exists_rev _rev_base "refs/$topbases/$_branch_name"
 
 	_result=
 	_result_rev=
@@ -856,10 +860,14 @@ branch_annihilated()
 	[ -z "$_result" ] || [ "$_result_rev" != "$_rev" ] || [ "$_result_rev_base" != "$_rev_base" ] || return $_result
 
 	# use the merge base in case the base is ahead.
-	mb="$(git merge-base "$_rev_base" "$_rev" 2>/dev/null)"
+	_mb="$(git merge-base "$_rev_base" "$_rev" 2>/dev/null)" || :
 
-	test -z "$mb" || test "$(rev_parse_tree "$mb")" = "$(rev_parse_tree "$_rev")"
-	_result=$?
+	_result=0
+	if [ -n "$_mb" ]; then
+		v_rev_parse_tree _mbtree "$_mb"
+		v_rev_parse_tree _revtree "$_rev"
+		test "$_mbtree" = "$_revtree" || _result=1
+	fi
 	[ -d "$tg_cache_dir/refs/heads/$_branch_name" ] || mkdir -p "$tg_cache_dir/refs/heads/$_branch_name" 2>/dev/null
 	[ ! -d "$tg_cache_dir/refs/heads/$_branch_name" ] ||
 	echo $_result $_rev $_rev_base >"$tg_cache_dir/refs/heads/$_branch_name/.ann" 2>/dev/null || :
@@ -1230,7 +1238,7 @@ find_leaves()
 		fi
 		case " $seen_leaf_refs " in *" $fulldep "*);;*)
 			seen_leaf_refs="${seen_leaf_refs:+$seen_leaf_refs }$fulldep"
-			if fullrev="$(ref_exists_rev "$fulldep")"; then
+			if v_ref_exists_rev fullrev "$fulldep"; then
 				case " $seen_leaf_revs " in *" $fullrev "*);;*)
 					seen_leaf_revs="${seen_leaf_revs:+$seen_leaf_revs }$fullrev"
 					# See if Git knows it by another name
@@ -1442,7 +1450,7 @@ needs_update_check()
 branch_empty()
 {
 	if [ -z "$2" ]; then
-		_rev="$(ref_exists_rev "refs/heads/$1")" || return 0
+		v_ref_exists_rev _rev "refs/heads/$1" || return 0
 		_result=
 		_result_rev=
 		{ read -r _result _result_rev <"$tg_cache_dir/refs/heads/$1/.mt"; } 2>/dev/null || :
@@ -2262,7 +2270,6 @@ initial_setup()
 	tmpdir_setup
 	unset_ TG_TMPDIR
 	cachedir_setup
-	v_get_core_abbrev _dummy
 
 	# the wayback machine directory serves as its own "altodb"
 	[ -n "$wayback" ] || altodb_setup

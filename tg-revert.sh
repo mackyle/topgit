@@ -287,10 +287,11 @@ show_rdep()
 {
 	case "$exclude" in *" refs/heads/$_dep "*) return; esac
 	[ -z "$tgish" ] || [ -n "$_dep_is_tgish" ] || return 0
+	v_ref_exists_rev_short _depshort "refs/heads/$_dep" $short
 	if [ -n "$hashonly" ]; then
-		printf '%s %s\n' "$_depchain" "$(ref_exists_rev_short "refs/heads/$_dep" $short)"
+		printf '%s %s\n' "$_depchain" "$_depshort"
 	else
-		printf '%s %s\n' "$_depchain" "$(ref_exists_rev_short "refs/heads/$_dep" $short)~$_dep"
+		printf '%s %s\n' "$_depchain" "${_depshort}~$_dep"
 	fi
 }
 
@@ -299,16 +300,18 @@ show_rdeps()
 	no_remotes=1
 	show_break=
 	seen_deps=
+	[ "$short" != "--short" ] || v_get_core_abbrev _dummy
 	while read _b && [ -n "$_b" ]; do
 		case "$exclude" in *" $_b "*) continue; esac
 		if ! is_tgish "$_b"; then
 			[ -z "$tgish" ] || continue
 			[ -z "$showbreak" ] || echo
 			showbreak=1
+			v_ref_exists_rev_short _bshort "refs/heads/$_b" $short
 			if [ -n "$hashonly" ]; then
-				printf '%s\n' "$(ref_exists_rev_short "refs/heads/$_b" $short)"
+				printf '%s\n' "$_bshort"
 			else
-				printf '%s\n' "$(ref_exists_rev_short "refs/heads/$_b" $short)~$_b"
+				printf '%s\n' "${_bshort}~$_b"
 			fi
 			continue
 		fi
@@ -318,11 +321,12 @@ show_rdeps()
 		seen_deps="$seen_deps $_b"
 		[ -z "$showbreak" ] || echo
 		showbreak=1
+		v_ref_exists_rev_short _bshort "refs/heads/$_b" $short
 		{
 			if [ -n "$hashonly" ]; then
-				printf '%s\n' "$(ref_exists_rev_short "refs/heads/$_b" $short)"
+				printf '%s\n' "$_bshort"
 			else
-				printf '%s\n' "$(ref_exists_rev_short "refs/heads/$_b" $short)~$_b"
+				printf '%s\n' "${_bshort}~$_b"
 			fi
 			recurse_preorder=1
 			recurse_deps show_rdep "$_b"

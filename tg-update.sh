@@ -59,7 +59,7 @@ do_base_mode()
 	fi
 	newrev="$(git rev-parse --verify "$2^0" --)" && [ -n "$newrev" ] ||
 		die "not a valid commit-ish: $2"
-	baserev="$(ref_exists_rev "refs/$topbases/$tgbranch")" && [ -n "$baserev" ] ||
+	v_ref_exists_rev baserev "refs/$topbases/$tgbranch" && [ -n "$baserev" ] ||
 		die "unable to get current base commit for branch '$tgbranch'"
 	if [ "$baserev" = "$newrev" ]; then
 		[ -n "$quiet" ] || echo "No change"
