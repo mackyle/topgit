@@ -49,7 +49,7 @@ if [ -z "$branches" ]; then
 	if [ -n "$push_all" ]; then
 		branches="$(non_annihilated_branches | paste -s -d " " -)"
 	else
-		branches="$(verify_topgit_branch HEAD)"
+		v_verify_topgit_branch branches HEAD
 	fi
 else
 	oldbranches="$branches"

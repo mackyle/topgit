@@ -831,16 +831,6 @@ v_verify_topgit_branch()
 	[ -z "$1" ] || eval "$1="'"$_verifyname"'
 }
 
-# Return the verified TopGit branch name or die with an error.
-# As a convenience, if HEAD or @ is given and HEAD is a symbolic ref to
-# refs/heads/... then ... will be verified instead.
-# if "$2" = "-f" (for fail) then return an error rather than dying.
-verify_topgit_branch()
-{
-	v_verify_topgit_branch _verifyname "$@" || return
-	printf '%s' "$_verifyname"
-}
-
 # Caches result
 # $1 = branch name (i.e. "t/foo/bar")
 # $2 = optional result of rev-parse "refs/heads/$1"

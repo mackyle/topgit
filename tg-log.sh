@@ -29,7 +29,7 @@ while [ -n "$1" ]; do
 	--command=?*)
 		logcmd="${arg#--command=}";;
 	-?*)
-		if test="$(verify_topgit_branch "$arg" -f)"; then
+		if v_verify_topgit_branch test "$arg" -f; then
 			[ -z "$name" ] || die "name already specified ($name)"
 			name="$arg"
 		else
@@ -42,7 +42,7 @@ while [ -n "$1" ]; do
 	shift
 done
 
-name="$(verify_topgit_branch "${name:-HEAD}")"
+v_verify_topgit_branch name "${name:-HEAD}"
 base_rev="$(git rev-parse --short --verify "refs/$topbases/$name^0" -- 2>/dev/null)" ||
 	die "not a TopGit-controlled branch"
 depcnt="$(git cat-file blob "refs/heads/$name:.topdeps" 2>/dev/null | awk 'END {print NR}')"

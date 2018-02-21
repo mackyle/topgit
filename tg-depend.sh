@@ -64,7 +64,7 @@ done
 unset oldnames
 
 # Check that we are on a TopGit branch.
-current_name="$(verify_topgit_branch HEAD)"
+v_verify_topgit_branch current_name HEAD
 
 check_cycle_name()
 {

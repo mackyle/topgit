@@ -30,7 +30,7 @@ head="${head#refs/heads/}"
 
 [ -n "$name" ] ||
 	name="${head:-HEAD}"
-name="$(verify_topgit_branch "$name")"
+v_verify_topgit_branch name "$name"
 base_rev="$(git rev-parse --short --verify "refs/$topbases/$name^0" -- 2>/dev/null)" ||
 	die "not a TopGit-controlled branch"
 

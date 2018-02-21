@@ -93,7 +93,7 @@ tg__include=1
 . "$tgbin"
 [ -z "$noremote" ] || base_remote=
 
-branch="$(verify_topgit_branch "${1:-HEAD}" -f)" || fatal "no such TopGit branch: ${1:-HEAD}"
+v_verify_topgit_branch branch "${1:-HEAD}" -f || fatal "no such TopGit branch: ${1:-HEAD}"
 shift
 set -- "$branch" "$@"
 

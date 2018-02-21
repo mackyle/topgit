@@ -380,7 +380,7 @@ if [ -z "$restored" ]; then
 		clean_names() {
 			names=
 			while [ $# -gt 0 ]; do
-				name="$(verify_topgit_branch "$1")"
+				v_verify_topgit_branch name "$1"
 				case " $names " in *" $name "*);;*)
 					names="${names:+$names }$name"
 				esac

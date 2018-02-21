@@ -29,7 +29,7 @@ while [ -n "$1" ]; do
 	esac
 done
 
-name="$(verify_topgit_branch "${name:-HEAD}")"
+v_verify_topgit_branch name "${name:-HEAD}"
 base_rev="$(git rev-parse --short --verify "refs/$topbases/$name^0" -- 2>/dev/null)" ||
 	die "not a TopGit-controlled branch"
 

@@ -125,7 +125,8 @@ fi
 
 for b; do
 	[ "$b" != "--all" ] || usage
-	branches="$branches $(verify_topgit_branch "$b")"
+	v_verify_topgit_branch b "$b"
+	branches="$branches $b"
 done
 
 get_branch_list()

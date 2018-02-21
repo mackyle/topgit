@@ -129,14 +129,15 @@ fi
 
 if [ -z "$branches" ] && [ -z "$allbranches" ]; then
 	# this check is only needed when no branches have been passed
-	name="$(verify_topgit_branch HEAD)"
+	v_verify_topgit_branch name HEAD
 fi
 
 if [ -n "$branches" ]; then
 	oldbranches="$branches"
 	branches=
 	while read bname && [ -n "$bname" ]; do
-		branches="${branches:+$branches }$(verify_topgit_branch "$bname")"
+		v_verify_topgit_branch bname "$bname"
+		branches="${branches:+$branches }$bname"
 	done <<-EOT
 	$(sed 'y/ /\n/' <<-LIST
 	$oldbranches
