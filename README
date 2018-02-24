@@ -1938,7 +1938,7 @@ tg tag
 	it is not already the sole commit needing to be tagged.  If ``--tree``
 	is NOT used, its tree will also be used instead of the empty tree for
 	any new consolidation commit if one is created.  Note that if
-	``--tree`` is given explicitly it's tree is always used but that does
+	``--tree`` is given explicitly its tree is always used but that does
 	not in any way affect the choice of first parent.  Beware that the
 	``~`` may need to be quoted to prevent the shell from misinterpreting
 	it into something else.
@@ -1988,7 +1988,8 @@ tg tag
 	The ``--drop`` option drops the specified reflog entry and requires the
 	given tagname to have an ``@{n}`` suffix where ``n`` is the reflog
 	entry number to be dropped.   This is really just a convenience option
-	that runs the appropriate ``git reflog delete`` command.
+	that runs the appropriate ``git reflog delete`` command.  Please note
+	that dropping the ...@{0} entry will usually modify the ref itself.
 
 	Note that when combined with ``tg revert``, a tag created by ``tg tag``
 	can be used to transfer TopGit branches.  Simply create the tag, push
