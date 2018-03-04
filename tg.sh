@@ -992,8 +992,10 @@ navigate_deps()
 # If no_remotes is non-empty, exclude remotes
 # If recurse_preorder is non-empty, do a preorder rather than postorder traversal
 # If with_top_level is non-empty, include the top-level that's normally omitted
+# If with_deps_opts is non-empty, always run_awk_topgit_deps with those extra opts
 # any branch names in the space-separated recurse_deps_exclude variable
 # are skipped (along with their dependencies)
+unset_ no_remotes recurse_preorder with_top_level with_deps_opts
 recurse_deps_internal()
 {
 	case " $recurse_deps_exclude " in *" $1 "*) return 0; esac
@@ -1037,9 +1039,9 @@ recurse_deps_internal()
 		run_awk_topgit_branches -n -h="refs/remotes/$base_remote" -r="$tmprfs" \
 			"refs/remotes/$base_remote/${topbases#heads/}" >"$tmptgrmtbr"
 	fi
-	depscmd="run_awk_topgit_deps -s${TG_DEBUG:+ -p=\"\$tg_ref_cache.pre\"}"
+	depscmd="run_awk_topgit_deps -s${with_deps_opts:+ $with_deps_opts}${TG_DEBUG:+ -p=\"\$tg_ref_cache.pre\"}"
 	depscmd="$depscmd"' -a="$tmpann" -b="$tmptgbr" -r="$tmprfs" "refs/$topbases"'
-	if [ -n "$userc" ]; then
+	if [ -z "$with_deps_opts" ] && [ -n "$userc" ]; then
 		if [ -n "$dorad" ]; then
 			eval "$depscmd" >"$tmpdep"
 		fi
@@ -1162,6 +1164,7 @@ ensure_ident_available()
 # If no_remotes is non-empty, exclude remotes
 # If recurse_preorder is non-empty, do a preorder rather than postorder traversal
 # If with_top_level is non-empty, include the top-level that's normally omitted
+# If with_deps_opts is non-empty, always run_awk_topgit_deps with those extra opts
 # any branch names in the space-separated recurse_deps_exclude variable
 # are skipped (along with their dependencies)
 recurse_deps()
@@ -1212,6 +1215,7 @@ recurse_deps()
 # duplicates are suppressed (by commit rev) and remotes are always ignored
 # if a leaf has an exact tag match that will be output
 # note that recurse_deps_exclude IS honored for this operation
+# if with_deps_opts is set it will take effect here
 find_leaves()
 {
 	no_remotes=1
@@ -1305,6 +1309,7 @@ branch_needs_update()
 # but think of it as non-zero status if any non-missing output lines produced)
 # If needs_update() hits missing dependencies, it will append
 # them to space-separated $missing_deps list and skip them.
+# if with_deps_opts is set it will take effect here
 needs_update()
 {
 	recurse_deps branch_needs_update "$1"
@@ -1365,6 +1370,8 @@ needs_update_check_clear()
 # needs_update_check_no_same also implies needs_update_check_no_self.
 #
 # The following whitespace-separated lists are updated with the results:
+#
+# if with_deps_opts is set it will take effect here
 #
 # The "no_remotes" setting is obeyed but remote names themselves will never
 # appear in any of the lists
