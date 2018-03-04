@@ -158,10 +158,12 @@ show_heads_independent()
 
 show_heads_topgit()
 {
+	[ -z "$head_from" ] || [ -n "$with_deps_opts" ] ||
+	v_get_tdopt with_deps_opts "$head_from"
 	if [ -n "$branches" ]; then
-		navigate_deps -s=-1 -1 -- "$branches" | sort
+		eval navigate_deps "$with_deps_opts" -s=-1 -1 -- '"$branches"' | sort
 	else
-		navigate_deps -s=-1
+		eval navigate_deps "$with_deps_opts" -s=-1
 	fi |
 	while read -r name; do
 		case "$exclude" in *" $name "*) continue; esac
@@ -186,6 +188,8 @@ fi
 # if $1 is non-empty, show the dep only (including self), not the edge (no self)
 show_deps()
 {
+	[ -z "$head_from" ] || [ -n "$with_deps_opts" ] ||
+	v_get_tdopt with_deps_opts "$head_from"
 	if [ -n "$branches" ]; then
 		edgenum=2
 		[ -z "$1" ] || edgenum=1
@@ -199,8 +203,7 @@ show_deps()
 		[ -z "$tg_read_only" ] || [ -z "$tg_ref_cache" ] || ! [ -s "$tg_ref_cache" ] ||
 		refslist="-r=\"$tg_ref_cache\""
 		tdopt=
-		v_get_tdopt tdopt "$head_from"
-		eval run_awk_topgit_deps "$refslist" "$tdopt" "${tgish:+-t}" \
+		eval run_awk_topgit_deps "$refslist" "$with_deps_opts" "${tgish:+-t}" \
 			"${1:+-s}" '-n -x="$exclude" "refs/$topbases"' "$cutcmd"
 	fi
 }
@@ -215,6 +218,7 @@ if [ -n "$rdeps" ]; then
 	recurse_preorder=1
 	recurse_deps_exclude="$exclude"
 	showbreak=
+	v_get_tdopt with_deps_opts "$head_from"
 	{
 		if [ -n "$heads" ]; then
 			show_heads
@@ -254,6 +258,7 @@ if [ -z "$doingall$terse$graphviz$sort$withdeps$branches" ]; then
 fi
 [ "$withdeps" != "0" ] || withdeps=
 if [ -n "$withdeps" ]; then
+	v_get_tdopt with_deps_opts "$head_from"
 	[ "$withdeps" != "2" ] || branches="$(show_heads_topgit | paste -d " " -s -)"
 	savetgish="$tgish"
 	tgish=1
@@ -266,9 +271,12 @@ if [ -n "$terse" ]; then
 	refslist=
 	[ -z "$tg_read_only" ] || [ -z "$tg_ref_cache" ] || ! [ -s "$tg_ref_cache" ] ||
 	refslist="-r=\"$tg_ref_cache\""
-	cmd="run_awk_topgit_msg --list"
-	[ $verbose -lt 2 ] || cmd="run_awk_topgit_msg -c -nokind"
-	[ $verbose -gt 0 ] || cmd="run_awk_topgit_branches -n"
+	cmd="run_awk_topgit_branches -n"
+	if [ $verbose -gt 0 ]; then
+		v_get_tmopt tm_opt "$head_from"
+		cmd="run_awk_topgit_msg --list${tm_opt:+ $tm_opt}"
+		[ $verbose -lt 2 ] || cmd="run_awk_topgit_msg -c -nokind${tm_opt:+ $tm_opt}"
+	fi
 	eval "$cmd" "$refslist" '-i="$branches" -x="$exclude" "refs/$topbases"'
 	exit 0
 fi
@@ -308,10 +316,12 @@ compute_ahead_list()
 	[ -z "$tg_read_only" ] || [ -z "$tg_ref_cache" ] || ! [ -s "$tg_ref_cache" ] ||
 	refslist="-r=\"$tg_ref_cache\""
 	msgsfile="$(get_temp msgslist)"
-	eval run_awk_topgit_msg -nokind "$refslist" '"refs/$topbases"' >"$msgsfile"
+	v_get_tmopt tm_opt "$head_from"
+	eval run_awk_topgit_msg "-nokind${tm_opt:+ $tm_opt}" "$refslist" '"refs/$topbases"' >"$msgsfile"
 	needs_update_check_clear
 	needs_update_check_no_same=1
 	[ -z "$branches" ] || [ -n "$withdeps" ] || return 0
+	v_get_tdopt with_deps_opts "$head_from"
 	[ -n "$withdeps" ] || origbranches="$(navigate_deps -s=-1 | paste -d ' ' -s -)"
 	for onehead in $origbranches; do
 		case "$exclude" in *" $onehead "*) continue; esac
