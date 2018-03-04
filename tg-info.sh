@@ -1,12 +1,12 @@
 #!/bin/sh
 # TopGit - A different patch queue manager
 # Copyright (C) Petr Baudis <pasky@suse.cz>  2008
-# Copyright (C) Kyle J. McKay <mackyle@gmail.com>  2015, 2016, 2017
+# Copyright (C) Kyle J. McKay <mackyle@gmail.com>  2015, 2016, 2017, 2018
 # GPLv2
 
 USAGE="\
-Usage: ${tgname:-tg} [...] info [--heads | --leaves | --series[=<head>]] [<name>]
-   Or: ${tgname:-tg} [...] info [--deps | --dependencies | --dependents] [<name>]"
+Usage: ${tgname:-tg} [...] info [-i | -w] [--heads | --leaves | --series[=<head>]] [<name>]
+   Or: ${tgname:-tg} [...] info [-i | -w] [--deps | --dependencies | --dependents] [<name>]"
 
 usage()
 {
@@ -28,10 +28,15 @@ dependents=
 series=
 serieshead=
 verbose=
+head_from=
 
 while [ $# -gt 0 ]; do case "$1" in
 	-h|--help)
 		usage
+		;;
+	-i|-w)
+		[ -z "$head_from" ] || die "-i and -w are mutually exclusive"
+		head_from="$1"
 		;;
 	--heads)
 		heads=1 datamode=1
@@ -82,17 +87,17 @@ process_dep()
 if [ -n "$heads" ]; then
 	no_remotes=1
 	base_remote=
-	verify="$name"
 	v_verify_topgit_branch tgbranch "${name:-HEAD}" -f || tgbranch=
-	[ -n "$tgbranch" ] || tgbranch="$(git cat-file blob HEAD:.topdeps 2>/dev/null | paste -d ' ' -s -)" || :
+	[ -n "$tgbranch" ] || tgbranch="$(cat_file HEAD:.topdeps $head_from 2>/dev/null | paste -d ' ' -s -)" || :
+	v_get_tdopt with_deps_opts "$head_from"
 	if [ -n "$tgbranch" ]; then
 		# faster version with known TopGit branch name(s)
-		navigate_deps -s=-1 -1 -- "$tgbranch" | sort
+		eval navigate_deps "$with_deps_opts" -s=-1 -1 -- '"$tgbranch"' | sort
 		exit 0
 	fi
-	hash="$(git rev-parse --verify --quiet "$verify^0" --)" || die "no such commit-ish: $name"
+	hash="$(git rev-parse --verify --quiet "${name:-HEAD}^0" --)" || die "no such commit-ish: ${name:-HEAD}"
 	depslist="$(get_temp depslist)"
-	tg summary --topgit-heads |
+	eval tg --no-pager summary $head_from --topgit-heads |
 	while read -r onetghead; do
 		printf '%s %s\n' "$onetghead" "$onetghead"
 		recurse_deps process_dep "$onetghead"
@@ -105,9 +110,10 @@ fi
 
 v_cntargs() { eval "$1=$(( $# - 1 ))"; }
 if [ -n "$series" ]; then
+	v_get_tdopt with_deps_opts "$head_from"
 	if [ -z "$serieshead" ]; then
 		v_verify_topgit_branch name "${name:-HEAD}"
-		heads="$(navigate_deps -s=-1 -1 -- "$name" | sort | paste -d ' ' -s -)" || heads="$name"
+		heads="$(eval navigate_deps "$with_deps_opts" -s=-1 -1 -- '"$name"' | sort | paste -d ' ' -s -)" || heads="$name"
 		v_cntargs headcnt $heads
 		if [ "$headcnt" -gt 1 ]; then
 			err "multiple heads found"
@@ -131,7 +137,8 @@ if [ -n "$series" ]; then
 	flagname=
 	[ -z "$name" ] || [ "$serieshead" = "$name" ] || flagname="$name"
 	output() {
-	eval run_awk_topgit_msg -n -nokind "$refslist" '"refs/$topbases"' |
+	v_get_tmopt tm_opt "$head_from"
+	eval run_awk_topgit_msg -n "-nokind${tm_opt:+ $tm_opt}" "$refslist" '"refs/$topbases"' |
 	join "$seriesf" - | sort -k2,2n | awk -v "flag=$flagname" '
 	{
 		bn = $1
@@ -150,13 +157,14 @@ fi
 v_verify_topgit_branch name "${name:-HEAD}"
 
 if [ -n "$leaves" ]; then
+	v_get_tdopt with_deps_opts "$head_from"
 	find_leaves "$name"
 	exit 0
 fi
 
 if [ -n "$deps$dependents" ]; then
 	alldeps="$(get_temp alldeps)"
-	tg --no-pager summary --tgish-only --deps >"$alldeps" || die "tg summary --deps failed"
+	tg --no-pager summary $head_from --tgish-only --deps >"$alldeps" || die "tg summary --deps failed"
 	if [ -n "$deps" ]; then
 		awk -v annb="$name" 'NF == 2 && $2 != "" && $1 == annb { print $2 }' <"$alldeps"
 	else
@@ -172,8 +180,11 @@ measure="$(measure_branch "refs/heads/$name" "$base_rev")"
 
 echo "Topic Branch: $name ($measure)"
 
+noskipiw=
+[ -z "$head_from" ] || ! v_verify_topgit_branch tghead HEAD -f || [ "$tghead" != "$name" ] || noskipiw=1
+[ -z "$noskipiw" ] || v_get_tmopt tm_opt "$head_from"
 read -r bkind subj <<EOT
-$(run_awk_topmsg_header -kind "$name")
+$(eval run_awk_topmsg_header "-kind${tm_opt:+ $tm_opt}" '"$name"')
 EOT
 [ "$bkind" = "3" ] || printf "Subject: %s\n" "$subj"
 
@@ -181,7 +192,7 @@ if [ "${verbose:-0}" -ge 1 ]; then
 	scratch="$(get_temp scratch)"
 	printf '%s\n' "$name" >"$scratch"
 	dependents="$(get_temp dependents_list)"
-	tg summary --tgish-only --deps | sort -k2,2 | join -1 2 - "$scratch" | cut -d ' ' -f 2 | sort -u >"$dependents"
+	tg --no-pager summary $head_from --tgish-only --deps | sort -k2,2 | join -1 2 - "$scratch" | cut -d ' ' -f 2 | sort -u >"$dependents"
 	if ! [ -s "$dependents" ]; then
 		echo "Dependents: [none]"
 	else
@@ -233,11 +244,12 @@ if has_remote "$name"; then
 		echo "* Local head is ahead of the remote head."
 fi
 
-git cat-file blob "$name:.topdeps" 2>/dev/null |
+cat_file "refs/heads/$name:.topdeps" ${noskipiw:+$head_from} 2>/dev/null |
 awk 'NR == 1 {print "Depends: " $0} NR != 1 {print "         " $0}'
 
 depcheck="$(get_temp tg-depcheck)"
 missing_deps=
+v_get_tdopt with_deps_opts "$head_from"
 needs_update "$name" >"$depcheck" || :
 if [ -n "$missing_deps" ]; then
 	echo "MISSING: $missing_deps"

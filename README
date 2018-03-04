@@ -1161,6 +1161,10 @@ tg info
 	basis for the ``tg next`` and ``tg prev`` operations with the first
 	patch shown being considered the first and so on up to the last.
 
+	Options:
+	  -i		Use TopGit metadata from the index instead of the branch
+	  -w		Use TopGit metadata from the working tree instead of the branch
+
 tg patch
 ~~~~~~~~
 	Generate a patch from the current or specified topic branch.
