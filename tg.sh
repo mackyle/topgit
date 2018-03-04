@@ -2800,7 +2800,7 @@ else
 			case "$cmd" in index-merge-one-file)
 				isutil="-"
 			esac
-			[ -r "$TG_INST_CMDDIR"/tg-$isutil$cmd ] || {
+			[ -r "$TG_INST_CMDDIR/tg-$isutil$cmd" ] || {
 				looplevel="$TG_ALIAS_DEPTH"
 				[ "${looplevel#[1-9]}" != "$looplevel" ] &&
 				[ "${looplevel%%[!0-9]*}" = "$looplevel" ] ||
