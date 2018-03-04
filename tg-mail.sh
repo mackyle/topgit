@@ -58,6 +58,4 @@ people=
 [ -n "$to" ] && people="$people --to '$to'"
 
 # NOTE: git-send-email handles cc itself
-eval git send-email $send_email_args "$people" "$patchfile"
-
-# vim:noet
+eval git send-email $send_email_args "$people" '"$patchfile"'
