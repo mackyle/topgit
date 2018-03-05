@@ -87,15 +87,30 @@ process_dep()
 if [ -n "$heads" ]; then
 	no_remotes=1
 	base_remote=
+	validate=
 	v_verify_topgit_branch tgbranch "${name:-HEAD}" -f || tgbranch=
-	[ -n "$tgbranch" ] || tgbranch="$(cat_file HEAD:.topdeps $head_from 2>/dev/null | paste -d ' ' -s -)" || :
+	[ -n "$tgbranch" ] || validate=1 tgbranch="$(cat_file HEAD:.topdeps $head_from 2>/dev/null | paste -d ' ' -s -)" || :
 	v_get_tdopt with_deps_opts "$head_from"
 	if [ -n "$tgbranch" ]; then
 		# faster version with known TopGit branch name(s)
-		eval navigate_deps "$with_deps_opts" -s=-1 -1 -- '"$tgbranch"' | sort
-		exit 0
+		[ -z "$validate" ] || validate="$(get_temp results)"
+		eval navigate_deps "$with_deps_opts" -s=-1 -1 -- '"$tgbranch"' | eval sort "${validate:+>\"\$validate\"}"
+		[ -n "$validate" ] || exit 0
 	fi
 	hash="$(git rev-parse --verify --quiet "${name:-HEAD}^0" --)" || die "no such commit-ish: ${name:-HEAD}"
+	if [ -n "$validate" ] && [ -n "$tgbranch" ] && [ -s "$validate" ]; then
+		# If we were on a detached (or non-TopGit) HEAD the shortcut might produce answers that
+		# do not actually contain the HEAD commit and which are meaningless for an orphan branch
+		# (hence the requirement that HEAD actually point to an existing commit to get here)
+		ansok=
+		while read -r abranch; do
+			contained_by "$hash" "refs/heads/$abranch" || continue
+			ansok=1
+			printf '%s\n' "$abranch"
+		done <"$validate"
+		[ -z "$ansok" ] || exit 0
+		# There might still be an answer, but not via the shortcut
+	fi
 	depslist="$(get_temp depslist)"
 	eval tg --no-pager summary $head_from --topgit-heads |
 	while read -r onetghead; do
