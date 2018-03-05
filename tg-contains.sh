@@ -120,6 +120,7 @@ remotewide=0
 [ -z "$remotes" ] || remoteb="$(get_temp remoteb)"
 while IFS= read -r branch && [ -n "$branch" ]; do
 	branch="${branch#??}"
+	case "$branch" in ""|*[" $tab"]*) continue; esac
 	if v_verify_topgit_branch "" "$branch" -f; then
 		[ -n "$annok" ] || ! branch_annihilated "$branch" || continue
 		if contained_by "$findrev" "refs/$topbases/$branch"; then
@@ -153,7 +154,7 @@ while IFS= read -r branch && [ -n "$branch" ]; do
 		printf '%s %s\n' "$depth" "remotes/$rremote/$rbranch" >>"$remoteb"
 	fi
 done <<EOT
-$(git branch ${remotes:+-a} --contains "$findrev")
+$(git branch --no-color ${remotes:+-a} --contains "$findrev")
 EOT
 [ -n "$localcnt$remotecnt" ] || exit 1
 [ -z "$localcnt" ] || [ ${verbose:-0} -le 0 ] || make_deps_list

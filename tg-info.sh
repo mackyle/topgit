@@ -102,7 +102,7 @@ if [ -n "$heads" ]; then
 		printf '%s %s\n' "$onetghead" "$onetghead"
 		recurse_deps process_dep "$onetghead"
 	done | sort -u >"$depslist"
-	git branch --no-color --contains "$hash" | cut -c 3- |
+	git branch --no-color --contains "$hash" | sed -n "s/^..//;/^[^ $tab][^ $tab]*\$/p" |
 	join -o 2.2 - "$depslist" |
 	sort -u
 	exit 0
