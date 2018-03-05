@@ -261,10 +261,25 @@ case "$tagname" in --stash"@{"*"}")
 esac
 refname="$tagname"
 sfx=
+sfxis0=
 case "$refname" in [!@]*"@{"*"}")
-	sfx="$refname"
-	refname="${refname%@*}"
-	sfx="${sfx#$refname}"
+	_pfx="@{"
+	_refonly="${refname%%"$_pfx"*}"
+	sfx="${refname#"$_refonly"}"
+	refname="$_refonly"
+	_numonly="${sfx#??}"
+	_numonly="${_numonly%?}"
+	[ "${_numonly#[0-9]}" != "$_numonly" ] && [ "${_numonly#*[!0-9]}" = "$_numonly" ] || die "invalid suffix: \"$sfx\""
+	if [ "${_numonly#*[!0]}" = "$_numonly" ]; then
+		# transform @{0000000} etc. into @{0}
+		sfx="@{0}"
+		sfxis0=1
+	else
+		# remove any leading zeros
+		_ld0="${_numonly%%[!0]*}"
+		[ -z "$_ld0" ] || _numonly="${_numonly#$_ld0}"
+		sfx="@{$_numonly}"
+	fi
 esac
 case "$refname" in HEAD|TG_STASH|refs/*);;*)
 	if reftest="$(git rev-parse --revs-only --symbolic-full-name "$refname" -- 2>/dev/null)" &&
@@ -311,7 +326,15 @@ if [ -n "$drop$clear$delete" ]; then
 		exit 0
 	else
 		old="$(git rev-parse --verify --short "$refname" --)" || exit 1
-		git reflog delete --rewrite --updateref "$refname" || die "reflog drop failed"
+		[ -z "$sfxis0" ] || ! git symbolic-ref -q "${refname%$sfx}" -- >/dev/null 2>&1 || sfxis0=
+		git reflog delete --rewrite ${sfxis0:+--updateref} "$refname" || die "reflog drop failed"
+		if [ -n "$sfxis0" ]; then
+			# check if we need to clean up
+			check="$(git rev-parse --verify --quiet "${refname%$sfx}" --)" || :
+			[ "${check#*[!0]}" != "$check" ] || check= # all 0's or empty is bad
+			# Git versions prior to 2.4.0 might need some clean up
+			[ -n "$check" ] || git update-ref -d "${refname%$sfx}" >/dev/null 2>&1 || :
+		fi
 		printf "Dropped $reftype '%s' reflog entry (was %s)\n" "$tagname" "$old"
 		exit 0
 	fi
