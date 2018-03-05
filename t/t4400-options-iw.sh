@@ -10,7 +10,7 @@ Specifically files, mail, next, patch, prev and summary subcommands.
 
 . ./test-lib.sh
 
-test_plan 36
+test_plan 64
 
 trim() {
 	_cmd="$1"
@@ -649,6 +649,484 @@ test_expect_success SETUP 'summary -w' '
  0 D t/secondary2 [PATCH] branch t/secondary2
 EOT
 	trim tg summary -w >actual &&
+	test_cmp actual expected
+'
+
+test_expect_success SETUP 'info' '
+	cat <<\EOT >expected &&
+Topic Branch: t/secondary (2/2 commits)
+Subject: [PATCH] branch t/secondary
+Base: 8f7ce5c9f088954c
+Depends: t/branch2
+Up-to-date.
+EOT
+	trim tg info >actual &&
+	test_cmp actual expected
+'
+
+test_expect_success SETUP 'info -i' '
+	cat <<\EOT >expected &&
+Topic Branch: t/secondary (2/2 commits)
+Subject: [PATCH] branch t/tertiary
+Base: 8f7ce5c9f088954c
+Depends: t/branch3
+Needs update from:
+ t/branch3 (2/2 commits)
+EOT
+	trim tg info -i >actual &&
+	test_cmp actual expected
+'
+
+test_expect_success SETUP 'info -w' '
+	cat <<\EOT >expected &&
+Topic Branch: t/secondary (2/2 commits)
+Subject: [PATCH] branch t/quaternary
+Base: 8f7ce5c9f088954c
+Depends: t/branch4
+ t/branch5
+Needs update from:
+ t/branch4 (2/2 commits)
+ t/branch5 (2/2 commits)
+EOT
+	trim tg info -w >actual &&
+	test_cmp actual expected
+'
+
+test_expect_success SETUP 'info -v' '
+	cat <<\EOT >expected &&
+Topic Branch: t/secondary (2/2 commits)
+Subject: [PATCH] branch t/secondary
+Dependents: t/secondary2
+Base: 8f7ce5c9f088954c
+Depends: t/branch2
+Up-to-date.
+EOT
+	trim tg info -v >actual &&
+	test_cmp actual expected
+'
+
+test_expect_success SETUP 'info -v -i' '
+	cat <<\EOT >expected &&
+Topic Branch: t/secondary (2/2 commits)
+Subject: [PATCH] branch t/tertiary
+Dependents: t/secondary2
+Base: 8f7ce5c9f088954c
+Depends: t/branch3
+Needs update from:
+ t/branch3 (2/2 commits)
+EOT
+	trim tg info -v -i >actual &&
+	test_cmp actual expected &&
+	cat <<\EOT >expected &&
+Topic Branch: t/branch3 (1/1 commit)
+Subject: [PATCH] branch t/branch3
+Dependents: t/secondary
+Base: 231a8797a3d0de74
+Depends: branch3
+Up-to-date.
+EOT
+	trim tg info -v -i t/branch3 >actual &&
+	test_cmp actual expected &&
+	cat <<\EOT >expected &&
+Topic Branch: t/branch2 (1/1 commit)
+Subject: [PATCH] branch t/branch2
+Dependents: [none]
+Base: 64ef3d8ae1560635
+Depends: branch2
+Up-to-date.
+EOT
+	trim tg info -v -i t/branch2 >actual &&
+	test_cmp actual expected
+'
+
+test_expect_success SETUP 'info -v -w' '
+	cat <<\EOT >expected &&
+Topic Branch: t/secondary (2/2 commits)
+Subject: [PATCH] branch t/quaternary
+Dependents: t/secondary2
+Base: 8f7ce5c9f088954c
+Depends: t/branch4
+ t/branch5
+Needs update from:
+ t/branch4 (2/2 commits)
+ t/branch5 (2/2 commits)
+EOT
+	trim tg info -v -w >actual &&
+	test_cmp actual expected &&
+	cat <<\EOT >expected &&
+Topic Branch: t/branch4 (1/1 commit)
+Subject: [PATCH] branch t/branch4
+Dependents: t/secondary
+Base: f6890848ee0253af
+Depends: branch4
+Up-to-date.
+EOT
+	trim tg info -v -w t/branch4 >actual &&
+	test_cmp actual expected &&
+	cat <<\EOT >expected &&
+Topic Branch: t/branch5 (1/1 commit)
+Subject: [PATCH] branch t/branch5
+Dependents: t/secondary
+Base: 261e548eac1f8d28
+Depends: branch5
+Up-to-date.
+EOT
+	trim tg info -v -w t/branch5 >actual &&
+	test_cmp actual expected &&
+	cat <<\EOT >expected &&
+Topic Branch: t/branch2 (1/1 commit)
+Subject: [PATCH] branch t/branch2
+Dependents: [none]
+Base: 64ef3d8ae1560635
+Depends: branch2
+Up-to-date.
+EOT
+	trim tg info -v -w t/branch2 >actual &&
+	test_cmp actual expected
+'
+
+test_expect_success SETUP 'info -v -v' '
+	cat <<\EOT >expected &&
+Topic Branch: t/secondary (2/2 commits)
+Subject: [PATCH] branch t/secondary
+Dependents: t/secondary2
+Base: 8f7ce5c9f088954c
+Depends: t/branch2
+Up-to-date.
+EOT
+	trim tg info -v -v >actual &&
+	test_cmp actual expected
+'
+
+test_expect_success SETUP 'info -v -v -i' '
+	cat <<\EOT >expected &&
+Topic Branch: t/secondary (2/2 commits)
+Subject: [PATCH] branch t/tertiary
+Dependents: t/secondary2
+Base: 8f7ce5c9f088954c
+Depends: t/branch3
+Needs update from:
+ t/branch3 (2/2 commits)
+EOT
+	trim tg info -v -v -i >actual &&
+	test_cmp actual expected &&
+	cat <<\EOT >expected &&
+Topic Branch: t/branch3 (1/1 commit)
+Subject: [PATCH] branch t/branch3
+Dependents: t/secondary [needs merge]
+Base: 231a8797a3d0de74
+Depends: branch3
+Up-to-date.
+EOT
+	trim tg info -v -v -i t/branch3 >actual &&
+	test_cmp actual expected &&
+	cat <<\EOT >expected &&
+Topic Branch: t/branch2 (1/1 commit)
+Subject: [PATCH] branch t/branch2
+Dependents: [none]
+Base: 64ef3d8ae1560635
+Depends: branch2
+Up-to-date.
+EOT
+	trim tg info -v -v -i t/branch2 >actual &&
+	test_cmp actual expected
+'
+
+test_expect_success SETUP 'info -v -v -w' '
+	cat <<\EOT >expected &&
+Topic Branch: t/secondary (2/2 commits)
+Subject: [PATCH] branch t/quaternary
+Dependents: t/secondary2
+Base: 8f7ce5c9f088954c
+Depends: t/branch4
+ t/branch5
+Needs update from:
+ t/branch4 (2/2 commits)
+ t/branch5 (2/2 commits)
+EOT
+	trim tg info -v -v -w >actual &&
+	test_cmp actual expected &&
+	cat <<\EOT >expected &&
+Topic Branch: t/branch4 (1/1 commit)
+Subject: [PATCH] branch t/branch4
+Dependents: t/secondary [needs merge]
+Base: f6890848ee0253af
+Depends: branch4
+Up-to-date.
+EOT
+	trim tg info -v -v -w t/branch4 >actual &&
+	test_cmp actual expected &&
+	cat <<\EOT >expected &&
+Topic Branch: t/branch5 (1/1 commit)
+Subject: [PATCH] branch t/branch5
+Dependents: t/secondary [needs merge]
+Base: 261e548eac1f8d28
+Depends: branch5
+Up-to-date.
+EOT
+	trim tg info -v -v -w t/branch5 >actual &&
+	test_cmp actual expected &&
+	cat <<\EOT >expected &&
+Topic Branch: t/branch2 (1/1 commit)
+Subject: [PATCH] branch t/branch2
+Dependents: [none]
+Base: 64ef3d8ae1560635
+Depends: branch2
+Up-to-date.
+EOT
+	trim tg info -v -v -w t/branch2 >actual &&
+	test_cmp actual expected
+'
+
+test_expect_success SETUP 'info --dependencies' '
+	cat <<-\EOT >expected &&
+		t/branch2
+	EOT
+	tg info --dependencies >actual &&
+	test_cmp actual expected
+'
+
+test_expect_success SETUP 'info --dependencies -i' '
+	cat <<-\EOT >expected &&
+		t/branch3
+	EOT
+	tg info --dependencies -i >actual &&
+	test_cmp actual expected
+'
+
+test_expect_success SETUP 'info --dependencies -w' '
+	cat <<-\EOT >expected &&
+		t/branch4
+		t/branch5
+	EOT
+	tg info --dependencies -w >actual &&
+	test_cmp actual expected
+'
+
+test_expect_success SETUP 'info --dependents' '
+	cat <<-\EOT >expected &&
+		t/secondary2
+	EOT
+	tg info --dependents >actual &&
+	test_cmp actual expected &&
+	cat <<-\EOT >expected &&
+		t/secondary
+	EOT
+	tg info --dependents t/branch2 >actual &&
+	test_cmp actual expected
+'
+
+test_expect_success SETUP 'info --dependents -i' '
+	cat <<-\EOT >expected &&
+		t/secondary2
+	EOT
+	tg info --dependents -i >actual &&
+	test_cmp actual expected &&
+	cat <<-\EOT >expected &&
+		t/secondary
+	EOT
+	tg info --dependents -i t/branch3 >actual &&
+	test_cmp actual expected &&
+	>expected &&
+	tg info --dependents -i t/branch2 >actual &&
+	test_cmp actual expected &&
+	tg info --dependents -i t/branch4 >actual &&
+	test_cmp actual expected &&
+	tg info --dependents -i t/branch5 >actual &&
+	test_cmp actual expected
+'
+
+test_expect_success SETUP 'info --dependents -w' '
+	cat <<-\EOT >expected &&
+		t/secondary2
+	EOT
+	tg info --dependents -w >actual &&
+	test_cmp actual expected &&
+	cat <<-\EOT >expected &&
+		t/secondary
+	EOT
+	tg info --dependents -w t/branch4 >actual &&
+	test_cmp actual expected &&
+	tg info --dependents -w t/branch5 >actual &&
+	test_cmp actual expected &&
+	>expected &&
+	tg info --dependents -w t/branch2 >actual &&
+	test_cmp actual expected &&
+	tg info --dependents -w t/branch3 >actual &&
+	test_cmp actual expected
+'
+
+test_expect_success SETUP 'info --series' '
+	cat <<\EOT >expected &&
+ t/branch2 [PATCH] branch t/branch2
+* t/secondary [PATCH] branch t/secondary
+ t/secondary2 [PATCH] branch t/secondary2
+EOT
+	trim tg info --series >actual &&
+	test_cmp actual expected
+'
+
+test_expect_success SETUP 'info --series -i' '
+	cat <<\EOT >expected &&
+ t/branch3 [PATCH] branch t/branch3
+* t/secondary [PATCH] branch t/tertiary
+ t/secondary2 [PATCH] branch t/secondary2
+EOT
+	trim tg info --series -i >actual &&
+	test_cmp actual expected
+'
+
+test_expect_success SETUP 'info --series -w' '
+	cat <<\EOT >expected &&
+ t/branch4 [PATCH] branch t/branch4
+ t/branch5 [PATCH] branch t/branch5
+* t/secondary [PATCH] branch t/quaternary
+ t/secondary2 [PATCH] branch t/secondary2
+EOT
+	trim tg info --series -w >actual &&
+	test_cmp actual expected
+'
+
+test_expect_success SETUP 'info --leaves' '
+	cat <<-\EOT >expected &&
+		refs/heads/branch2
+	EOT
+	tg info --leaves >actual &&
+	test_cmp actual expected
+'
+
+test_expect_success SETUP 'info --leaves -i' '
+	cat <<-\EOT >expected &&
+		refs/heads/branch3
+	EOT
+	tg info --leaves -i >actual &&
+	test_cmp actual expected
+'
+
+test_expect_success SETUP 'info --leaves -w' '
+	cat <<-\EOT >expected &&
+		refs/heads/branch4
+		refs/heads/branch5
+	EOT
+	tg info --leaves -w >actual &&
+	test_cmp actual expected
+'
+
+test_expect_success SETUP 'info --heads' '
+	cat <<-\EOT >expected &&
+		t/secondary2
+	EOT
+	tg info --heads >actual &&
+	test_cmp actual expected
+'
+
+test_expect_success SETUP 'info --heads -i' '
+	cat <<-\EOT >expected &&
+		t/secondary2
+	EOT
+	tg info --heads -i >actual &&
+	test_cmp actual expected &&
+	tg info --heads -i t/branch3 >actual &&
+	test_cmp actual expected &&
+	cat <<-\EOT >expected &&
+		t/branch2
+	EOT
+	tg info --heads -i t/branch2 >actual &&
+	cat <<-\EOT >expected &&
+		t/branch4
+	EOT
+	tg info --heads -i t/branch4 >actual &&
+	test_cmp actual expected &&
+	cat <<-\EOT >expected &&
+		t/branch5
+	EOT
+	tg info --heads -i t/branch5 >actual &&
+	test_cmp actual expected
+'
+
+test_expect_success SETUP 'info --heads -w' '
+	cat <<-\EOT >expected &&
+		t/secondary2
+	EOT
+	tg info --heads -w >actual &&
+	test_cmp actual expected &&
+	tg info --heads -w t/branch4 >actual &&
+	test_cmp actual expected &&
+	tg info --heads -w t/branch5 >actual &&
+	test_cmp actual expected &&
+	cat <<-\EOT >expected &&
+		t/branch2
+	EOT
+	tg info --heads -w t/branch2 >actual &&
+	test_cmp actual expected &&
+	cat <<-\EOT >expected &&
+		t/branch3
+	EOT
+	tg info --heads -w t/branch3 >actual &&
+	test_cmp actual expected
+'
+
+test_expect_success SETUP 'setup detached HEAD' '
+	git update-ref --no-deref HEAD HEAD^0 HEAD^0 &&
+	test_must_fail git symbolic-ref HEAD >/dev/null 2>&1 &&
+	test_when_finished test_set_prereq SETUP2
+'
+
+test_expect_success SETUP2 'detached info --heads' '
+	cat <<-\EOT >expected &&
+		t/secondary2
+	EOT
+	tg info --heads >actual &&
+	test_cmp actual expected
+'
+
+test_expect_success SETUP2 'detached info --heads -i' '
+	cat <<-\EOT >expected &&
+		t/secondary2
+	EOT
+	tg info --heads -i >actual &&
+	test_cmp actual expected &&
+	tg info --heads -i t/branch2 >actual &&
+	test_cmp actual expected &&
+	cat <<-\EOT >expected &&
+		t/branch3
+	EOT
+	tg info --heads -i t/branch3 >actual &&
+	test_cmp actual expected &&
+	cat <<-\EOT >expected &&
+		t/branch4
+	EOT
+	tg info --heads -i t/branch4 >actual &&
+	test_cmp actual expected &&
+	cat <<-\EOT >expected &&
+		t/branch5
+	EOT
+	tg info --heads -i t/branch5 >actual &&
+	test_cmp actual expected
+'
+
+test_expect_success SETUP2 'detached info --heads -w' '
+	cat <<-\EOT >expected &&
+		t/secondary2
+	EOT
+	tg info --heads -w >actual &&
+	test_cmp actual expected &&
+	tg info --heads -w t/branch2 >actual &&
+	test_cmp actual expected &&
+	cat <<-\EOT >expected &&
+		t/branch3
+	EOT
+	tg info --heads -w t/branch3 >actual &&
+	test_cmp actual expected &&
+	cat <<-\EOT >expected &&
+		t/branch4
+	EOT
+	tg info --heads -w t/branch4 >actual &&
+	test_cmp actual expected &&
+	cat <<-\EOT >expected &&
+		t/branch5
+	EOT
+	tg info --heads -w t/branch5 >actual &&
 	test_cmp actual expected
 '
 
