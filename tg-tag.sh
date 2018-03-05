@@ -1,6 +1,6 @@
 #!/bin/sh
 # TopGit tag command
-# Copyright (C) 2015,2017 Kyle J. McKay <mackyle@gmail.com>
+# Copyright (C) 2015,2017,2018 Kyle J. McKay <mackyle@gmail.com>
 # All rights reserved.
 # GPLv2
 
@@ -322,7 +322,8 @@ if [ -n "$reflog" ]; then
 	die "no such ref: $refname"
 	[ -s "$logbase/logs/$refname" ] ||
 	die "no reflog present for $reftype: $tagname"
-	showref="$(git rev-parse --revs-only --abbrev-ref=strict "$refname" --)"
+	showref="$refname"
+	[ "$refname" = "HEAD" ] || showref="$(git rev-parse --revs-only --abbrev-ref=strict "$refname" --)"
 	hashcolor=
 	resetcolor=
 	if git config --get-colorbool color.tgtag; then
