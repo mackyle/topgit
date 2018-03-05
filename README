@@ -1993,7 +1993,11 @@ tg tag
 	given tagname to have an ``@{n}`` suffix where ``n`` is the reflog
 	entry number to be dropped.   This is really just a convenience option
 	that runs the appropriate ``git reflog delete`` command.  Please note
-	that dropping the ...@{0} entry will usually modify the ref itself.
+	that dropping the ...@{0} entry may end up modifying the ref itself
+	although an attempt is made to drop ONLY the @{0} reflog entry and not
+	the ref itself.  If the reflog contains more than one entry and @{0}
+	is dropped, but the other entries all have invalid hash values then
+	the ref itself will actually likely end up being dropped too.
 
 	Note that when combined with ``tg revert``, a tag created by ``tg tag``
 	can be used to transfer TopGit branches.  Simply create the tag, push

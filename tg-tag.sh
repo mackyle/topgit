@@ -327,6 +327,12 @@ if [ -n "$drop$clear$delete" ]; then
 	else
 		old="$(git rev-parse --verify --short "$refname" --)" || exit 1
 		[ -z "$sfxis0" ] || ! git symbolic-ref -q "${refname%$sfx}" -- >/dev/null 2>&1 || sfxis0=
+		if [ -n "$sfxis0" ]; then
+			# avoid using --updateref if @{0} is the only entry (i.e. less than 2 lines in log)
+			[ -f "$logbase/logs/${refname%$sfx}" ] || die "no reflog found for: ${refname%$sfx}"
+			[ -s "$logbase/logs/${refname%$sfx}" ] || die "empty reflog found for: ${refname%$sfx}"
+			[ $(( $(wc -l <"$logbase/logs/${refname%$sfx}") )) -ge 2 ] || sfxis0=
+		fi
 		git reflog delete --rewrite ${sfxis0:+--updateref} "$refname" || die "reflog drop failed"
 		if [ -n "$sfxis0" ]; then
 			# check if we need to clean up
