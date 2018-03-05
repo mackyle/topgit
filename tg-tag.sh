@@ -331,6 +331,11 @@ if [ -n "$drop$clear$delete" ]; then
 			# avoid using --updateref if @{0} is the only entry (i.e. less than 2 lines in log)
 			[ -f "$logbase/logs/${refname%$sfx}" ] || die "no reflog found for: ${refname%$sfx}"
 			[ -s "$logbase/logs/${refname%$sfx}" ] || die "empty reflog found for: ${refname%$sfx}"
+			# attempt a "--stale-fix" before trying to remove and --updateref @{0}
+			# fortunately "--stale-fix" will not zap entries with a stale "from" hash
+			# provided the "--rewrite" option fixes it up in time
+			git reflog expire --expire=never --expire-unreachable=never --stale-fix --rewrite "${refname%$sfx}" >/dev/null 2>&1 || :
+			[ -s "$logbase/logs/${refname%$sfx}" ] || die "after --stale-fix, empty reflog found for: ${refname%$sfx}"
 			[ $(( $(wc -l <"$logbase/logs/${refname%$sfx}") )) -ge 2 ] || sfxis0=
 		fi
 		git reflog delete --rewrite ${sfxis0:+--updateref} "$refname" || die "reflog drop failed"
