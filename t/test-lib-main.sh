@@ -553,9 +553,9 @@ test_skip() {
 		to_skip=t
 
 		of_prereq=
-		if test "$missing_prereq" != "$test_prereq"
+		if test "$missing_prereq" != "$test_prereq_fmt"
 		then
-			of_prereq=" of $test_prereq"
+			of_prereq=" of $test_prereq_fmt"
 		fi
 		skipped_reason="missing $missing_prereq${of_prereq}"
 	fi

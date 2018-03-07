@@ -404,7 +404,7 @@ test_have_prereq() {
 			then
 				missing_prereq=$prerequisite
 			else
-				missing_prereq="$prerequisite,$missing_prereq"
+				missing_prereq="$missing_prereq, $prerequisite"
 			fi
 		esac
 	done
@@ -428,6 +428,7 @@ test_verify_prereq() {
 }
 
 _test_set_test_prereq() {
+	test_prereq_fmt=
 	save_IFS="$IFS"
 	_tab='	'
 	_nl='
@@ -436,6 +437,11 @@ _test_set_test_prereq() {
 	set -- $*
 	IFS="$save_IFS"
 	test_prereq="$*"
+	while test "$#" != "0"
+	do
+		test_prereq_fmt="${test_prereq_fmt:+$test_prereq_fmt, }$1"
+		shift
+	done
 }
 
 test_expect_failure_lno() {
