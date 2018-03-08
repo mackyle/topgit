@@ -281,6 +281,8 @@ case "$refname" in [!@]*"@{"*"}")
 		sfx="@{$_numonly}"
 	fi
 esac
+case "$refname" in [Hh][Ee][Aa][Dd]) refname="HEAD"; esac
+case "$refname" in [Tt][Gg]_[Ss][Tt][Aa][Ss][Hh]) refname="TG_STASH"; esac
 case "$refname" in HEAD|TG_STASH|refs/*);;*)
 	if reftest="$(git rev-parse --revs-only --symbolic-full-name "$refname" -- 2>/dev/null)" &&
 	   [ -n "$reftest" ]; then
@@ -307,13 +309,19 @@ logbase="$git_common_dir"
 [ -z "$reflog$drop$clear$delete" ] || [ $# -eq 0 ] || usage 1
 if [ -n "$drop$clear$delete" ]; then
 	if [ -n "$sfx" ]; then
-		[ -z "$clear$delete" ] || die "invalid ref name ($sfx suffix not allowed): $refname"
+		[ -z "$clear$delete" ] || die "invalid ref name ($sfx suffix not allowed, try --drop): $refname"
 	else
-		[ -z "$drop" ] || die "invalid reflog name (@{n} suffix required): $refname"
+		[ -z "$drop" ] || die "invalid reflog entry name (@{n} suffix required): $refname"
 	fi
 	old="$(git rev-parse --verify --quiet --short "${refname%$sfx}" --)" || die "no such ref: ${refname%$sfx}"
 	if [ -n "$delete" ]; then
-		git update-ref -d "$refname" || die "git update-ref -d failed"
+		case "$refname" in [Hh][Ee][Aa][Dd])
+			extra=
+			! symref="$(git symbolic-ref -q --short HEAD 2>/dev/null)" ||
+				extra=" (did you mean to delete \"$symref\"?)"
+			die "HEAD may not be deleted$extra"
+		esac
+		git update-ref --no-deref -d "$refname" || die "git update-ref --no-deref -d failed"
 		printf "Deleted $reftype '%s' (was %s)\n" "$tagname" "$old"
 		exit 0
 	elif [ -n "$clear" ]; then

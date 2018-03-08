@@ -1982,8 +1982,8 @@ tg tag
 	the tagname is omitted then ``--stash`` is assumed.
 
 	The ``--delete`` option is a convenience option that runs the
-	``git update-ref -d`` command on the specified tag removing it and its
-	reflog (if it has one).
+	``git update-ref --no-deref -d`` command on the specified tag removing
+	it and its reflog (if it has one).  Note that `HEAD` cannot be removed.
 
 	The ``--clear`` option clears all but the most recent (the ``@{0}``)
 	reflog entries from the reflog for the specified tag.  It's equivalent
