@@ -1996,7 +1996,7 @@ tg tag
 	even dropping the ...@{0} entry when it's the last entry of a
 	non-symbolic ref will NOT delete the ref itself (unless the ref was
 	already somehow set to an invalid object hash); but dropping @{0} of
-	a non-symbolic ref may have the side effect of removing any stale
+	a non-symbolic ref may have the side effect of removing some stale
 	reflog entries that were present in the reflog.
 
 	Note that when combined with ``tg revert``, a tag created by ``tg tag``

@@ -330,26 +330,26 @@ if [ -n "$drop$clear$delete" ]; then
 		if [ -n "$sfxis0" ]; then
 			[ -f "$logbase/logs/${refname%$sfx}" ] || die "no reflog found for: ${refname%$sfx}"
 			[ -s "$logbase/logs/${refname%$sfx}" ] || die "empty reflog found for: ${refname%$sfx}"
-			if [ $(( $(wc -l <"$logbase/logs/${refname%$sfx}") )) -lt 2 ]; then
+			# make sure @{1} is valid via pseudo stale-fix before using --updateref
+			cnt="$(( $(wc -l <"$logbase/logs/${refname%$sfx}") ))"
+			lastcnt=
+			at1=
+			while
 				# avoid using --updateref if @{0} is the only entry (i.e. less than 2 lines in log)
-				sfxis0=
-			else
-				if
-					# if @{1} is valid skip the expensive --stale-fix
-					at1="$(git rev-parse --verify --quiet "${refname%$sfx}@{1}" -- 2>/dev/null)" &&
-					test -n "$at1" &&
-					git rev-list --no-walk --objects "$at1" -- >/dev/null 2>&1
-				then
-					: # no need for --stale-fix because @{1} is valid
-				else
-					# attempt a "--stale-fix" before trying to remove and --updateref @{0}
-					# fortunately "--stale-fix" will not zap entries with a stale "from" hash
-					# provided the "--rewrite" option fixes it up in time
-					git reflog expire --expire=never --expire-unreachable=never --stale-fix --rewrite "${refname%$sfx}" >/dev/null 2>&1 || :
-					[ -s "$logbase/logs/${refname%$sfx}" ] || die "after --stale-fix, empty reflog found for: ${refname%$sfx}"
-					[ $(( $(wc -l <"$logbase/logs/${refname%$sfx}") )) -ge 2 ] || sfxis0=
-				fi
-			fi
+				[ $cnt -ge 2 ] && [ "$cnt" != "$lastcnt" ] &&
+				at1="$(git rev-parse --verify --quiet "${refname%$sfx}@{1}" -- 2>/dev/null)" &&
+				[ -n "$at1" ] &&
+				! git rev-list --no-walk --objects "$at1" -- >/dev/null 2>&1
+			do
+				# poor man's --stale-fix that's faster and actually works reliably
+				git reflog delete --rewrite "${refname%$sfx}@{1}" >/dev/null 2>&1 ||
+					die "pseudo stale-fix failed for broken ${refname%$sfx}@{1}"
+				lastcnt="$cnt"
+				at1=
+				cnt="$(( $(wc -l <"$logbase/logs/${refname%$sfx}") ))"
+			done
+			# avoid using --updateref if @{0} is the only entry (i.e. less than 2 lines in log)
+			[ -n "$at1" ] && [ $cnt -ge 2 ] || sfxis0=
 		fi
 		git reflog delete --rewrite ${sfxis0:+--updateref} "$refname" || die "reflog drop failed"
 		if [ -n "$sfxis0" ]; then
