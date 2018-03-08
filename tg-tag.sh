@@ -281,11 +281,39 @@ case "$refname" in [!@]*"@{"*"}")
 		sfx="@{$_numonly}"
 	fi
 esac
-case "$refname" in [Hh][Ee][Aa][Dd]) refname="HEAD"; esac
+
+v_resolve_full_name() {
+	# `git rev-parse --revs-only --symbolic-full-name` should do this
+	# but its behavior is inadequate in that it will not produce a result
+	# if the input is ambiguous even though `git rev-parse --verify` still
+	# will in that case.  Nasty.
+	# Besides, we really don't want to follow symbolic refs anyway and
+	# we would need to do that ourselves because `git rev-parse` does not
+	# have a `--no-deref` option like `git update-ref` does.  Ugly.
+
+	eval "$1="
+	_normref="$(git check-ref-format --normalize --allow-onelevel "$2" 2>/dev/null)" && [ -n "$_normref" ] || return 1
+	eval "$1="'"$_normref"'
+	git rev-parse --verify --quiet "$_normref" -- >/dev/null 2>&1 || return 0
+	case "$_normref" in refs/?*) return 0; esac
+	_found=
+	_rsuffix=
+	# see `git help revisions` for this DWIM list of interpretations
+	for _rprefix in "refs" "refs/tags" "refs/heads" "refs/remotes"; do
+		! git rev-parse --verify --quiet "$_rprefix/$_normref" -- >/dev/null 2>&1 || { _found=1; break; }
+	done
+	if [ -z "$_found" ]; then
+		_rsuffix="/HEAD"
+		! git rev-parse --verify --quiet "$_rprefix/$_normref$_rsuffix" -- >/dev/null 2>&1 || _found=1
+	fi
+	[ -z "$_found" ] || eval "$1="'"$_rprefix/$_normref$_rsuffix"'
+	return 0
+}
+
+case "$refname" in [Hh][Ee][Aa][Dd]|"@") refname="HEAD"; esac
 case "$refname" in [Tt][Gg]_[Ss][Tt][Aa][Ss][Hh]) refname="TG_STASH"; esac
 case "$refname" in HEAD|TG_STASH|refs/*);;*)
-	if reftest="$(git rev-parse --revs-only --symbolic-full-name "$refname" -- 2>/dev/null)" &&
-	   [ -n "$reftest" ]; then
+	if v_resolve_full_name reftest "$refname" && [ -n "$reftest" ]; then
 		if [ -n "$reflog$drop$clear$delete" ]; then
 			refname="$reftest"
 		else
