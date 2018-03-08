@@ -12,7 +12,7 @@ if vcmp "$git_version" '>=' "2.5"; then
         test_set_prereq "GIT_2_5"
 fi
 
-test_plan 40
+test_plan 44
 
 commit_empty_root() {
 	_gt="$(git mktree </dev/null)" &&
@@ -537,6 +537,13 @@ test_expect_success SETUP 'tag -g HEAD' '
 	test_cmp actual ../tgHEAD_main.log
 '
 
+test_expect_success SETUP 'tag -g --no-type HEAD' '
+	cd main &&
+	sed "s/(commit) //" <../tgHEAD_main.log >expected &&
+	tg tag -g --no-type HEAD >actual &&
+	test_cmp actual expected
+'
+
 cat <<\EOT >tgmaster.log || die
 === 2005-04-07 ===
 dd1016e3 15:20:13 (commit) master@{0}: file 7
@@ -553,6 +560,13 @@ test_expect_success SETUP 'tag -g master' '
 	cd main &&
 	tg tag -g master >actual &&
 	test_cmp actual ../tgmaster.log
+'
+
+test_expect_success SETUP 'tag -g --no-type master' '
+	cd main &&
+	sed "s/(commit) //" <../tgmaster.log >expected &&
+	tg tag -g --no-type master >actual &&
+	test_cmp actual expected
 '
 
 cat <<\EOT >tgHEAD_linked.log || die
@@ -575,6 +589,13 @@ test_expect_success 'SETUP GIT_2_5' 'tag -g HEAD [linked]' '
 	test_cmp actual ../tgHEAD_linked.log
 '
 
+test_expect_success 'SETUP GIT_2_5' 'tag -g --no-type HEAD [linked]' '
+	cd linked &&
+	sed "s/(commit) //" <../tgHEAD_linked.log >expected &&
+	tg tag -g --no-type HEAD >actual &&
+	test_cmp actual expected
+'
+
 cat <<\EOT >tglinked.log || die
 === 2005-04-07 ===
 04eea982 15:20:13 (commit) linked@{0}: file 1
@@ -595,6 +616,16 @@ test_expect_success 'SETUP GIT_2_5' 'tag -g linked' '
 	cd ../main &&
 	tg tag -g linked >actual &&
 	test_cmp actual ../tglinked.log
+'
+
+test_expect_success 'SETUP GIT_2_5' 'tag --no-type -g linked' '
+	cd linked &&
+	sed "s/(commit) //" <../tglinked.log >expected &&
+	tg tag -g --no-type linked >actual &&
+	test_cmp actual expected &&
+	cd ../main &&
+	tg tag -g --no-type linked >actual &&
+	test_cmp actual ../linked/expected
 '
 
 cat <<\EOT >tgHEAD_main_1.log || die
