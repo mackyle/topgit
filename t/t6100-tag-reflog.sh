@@ -12,7 +12,7 @@ if vcmp "$git_version" '>=' "2.5"; then
         test_set_prereq "GIT_2_5"
 fi
 
-test_plan 34
+test_plan 40
 
 commit_empty_root() {
 	_gt="$(git mktree </dev/null)" &&
@@ -32,6 +32,7 @@ test_expect_success 'setup main' '
 	test_create_repo main &&
 	cd main &&
 	git config core.abbrev 8 &&
+	git config log.decorate 0 &&
 	commit_empty_root "empty" &&
 	mtcommit="$(git rev-parse --verify HEAD)" && test -n "$mtcommit" &&
 	test_when_finished mtcommit="$mtcommit" &&
@@ -936,6 +937,111 @@ test_expect_success 'SETUP GIT_2_5' 'tag --drop detached HEAD@{0} [linked] all s
 	tg tag --drop HEAD@{0} &&
 	test_must_fail git rev-parse --verify --quiet HEAD@{0} -- >/dev/null &&
 	git rev-parse --verify HEAD -- >/dev/null
+'
+
+cat <<\EOT >tgHEAD_main_new || die
+=== 2005-04-07 ===
+c18fcef2 15:14:13 (commit) HEAD@{0}: allons master
+b63866e5 15:13:13 (commit) HEAD@{1}: to empty main
+c18fcef2 15:14:13 (commit) HEAD@{2}: file 1
+EOT
+
+test_expect_success SETUP 'rebuild HEAD log' '
+	cd main &&
+	test_tick &&
+	git update-ref -m "to empty main" HEAD "$mtcommit" HEAD &&
+	test_tick &&
+	git update-ref -m "allons master" HEAD master HEAD &&
+	tg tag -g HEAD >actual &&
+	test_cmp actual ../tgHEAD_main_new
+'
+
+cat <<\EOT >tgHEAD_linked_new || die
+=== 2005-04-07 ===
+04eea982 15:15:13 (commit) HEAD@{0}: HEAD back
+2849f113 15:14:13 (commit) HEAD@{1}: allons linked
+b63866e5 15:13:13 (commit) HEAD@{2}: to empty linked
+EOT
+
+test_expect_success 'SETUP GIT_2_5' 'rebuild HEAD log [linked]' '
+	cd linked &&
+	cur="$(git rev-parse --verify HEAD)" && test -n "$cur" &&
+	test_tick &&
+	git update-ref -m "to empty linked" HEAD "$mtcommit" HEAD &&
+	test_tick &&
+	git update-ref -m "allons linked" HEAD linked HEAD &&
+	test_tick &&
+	git update-ref -m "HEAD back" HEAD "$cur" &&
+	tg tag -g HEAD >actual &&
+	test_cmp actual ../tgHEAD_linked_new
+'
+
+cat <<\EOT >tgHEAD_main_cleared || die
+commit c18fcef2dd73f7969b45b108d061309b670c886c
+Reflog: HEAD@{0} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: allons master
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:14:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:14:13 2005 -0700
+
+    file 1
+EOT
+
+test_expect_success SETUP 'tag --clear HEAD' '
+	cd main &&
+	tg tag --clear HEAD &&
+	head -n 2 <../tgHEAD_main_new >expected &&
+	tg tag -g HEAD >actual &&
+	test_cmp actual expected &&
+	tg tag --clear HEAD &&
+	tg tag -g HEAD >actual &&
+	test_cmp actual expected &&
+	git log -g --pretty=fuller HEAD >actual &&
+	test_cmp actual ../tgHEAD_main_cleared
+'
+
+cat <<\EOT >tgHEAD_linked_cleared || die
+commit 04eea982f4572b35c7cbb6597f5d777661f15e60
+Reflog: HEAD@{0} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: HEAD back
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:20:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:20:13 2005 -0700
+
+    file 1
+EOT
+
+test_expect_success 'SETUP GIT_2_5' 'tag --clear HEAD [linked]' '
+	cd linked &&
+	tg tag --clear HEAD &&
+	head -n 2 <../tgHEAD_linked_new >expected &&
+	tg tag -g HEAD >actual &&
+	test_cmp actual expected &&
+	tg tag --clear HEAD &&
+	tg tag -g HEAD >actual &&
+	test_cmp actual expected &&
+	git log -g --pretty=fuller HEAD >actual &&
+	test_cmp actual ../tgHEAD_linked_cleared
+'
+
+test_expect_success 'SETUP GIT_2_5' 'tag --clear HEAD w/o log fails [linked]' '
+	cd linked &&
+	git rev-parse --verify HEAD@{0} >/dev/null -- &&
+	tg tag --clear HEAD &&
+	tg tag --drop HEAD@{0} &&
+	test_must_fail git rev-parse --verify HEAD@{0} -- &&
+	test_must_fail tg tag --clear HEAD
+'
+
+test_expect_success SETUP 'tag --clear HEAD w/o log fails' '
+	cd main &&
+	git rev-parse --verify HEAD@{0} >/dev/null -- &&
+	tg tag --clear HEAD &&
+	tg tag --drop HEAD@{0} &&
+	test_must_fail git rev-parse --verify HEAD@{0} -- &&
+	test_must_fail tg tag --clear HEAD
 '
 
 test_done
