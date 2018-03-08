@@ -328,15 +328,28 @@ if [ -n "$drop$clear$delete" ]; then
 		old="$(git rev-parse --verify --short "$refname" --)" || exit 1
 		[ -z "$sfxis0" ] || ! git symbolic-ref -q "${refname%$sfx}" -- >/dev/null 2>&1 || sfxis0=
 		if [ -n "$sfxis0" ]; then
-			# avoid using --updateref if @{0} is the only entry (i.e. less than 2 lines in log)
 			[ -f "$logbase/logs/${refname%$sfx}" ] || die "no reflog found for: ${refname%$sfx}"
 			[ -s "$logbase/logs/${refname%$sfx}" ] || die "empty reflog found for: ${refname%$sfx}"
-			# attempt a "--stale-fix" before trying to remove and --updateref @{0}
-			# fortunately "--stale-fix" will not zap entries with a stale "from" hash
-			# provided the "--rewrite" option fixes it up in time
-			git reflog expire --expire=never --expire-unreachable=never --stale-fix --rewrite "${refname%$sfx}" >/dev/null 2>&1 || :
-			[ -s "$logbase/logs/${refname%$sfx}" ] || die "after --stale-fix, empty reflog found for: ${refname%$sfx}"
-			[ $(( $(wc -l <"$logbase/logs/${refname%$sfx}") )) -ge 2 ] || sfxis0=
+			if [ $(( $(wc -l <"$logbase/logs/${refname%$sfx}") )) -lt 2 ]; then
+				# avoid using --updateref if @{0} is the only entry (i.e. less than 2 lines in log)
+				sfxis0=
+			else
+				if
+					# if @{1} is valid skip the expensive --stale-fix
+					at1="$(git rev-parse --verify --quiet "${refname%$sfx}@{1}" -- 2>/dev/null)" &&
+					test -n "$at1" &&
+					git rev-list --no-walk --objects "$at1" -- >/dev/null 2>&1
+				then
+					: # no need for --stale-fix because @{1} is valid
+				else
+					# attempt a "--stale-fix" before trying to remove and --updateref @{0}
+					# fortunately "--stale-fix" will not zap entries with a stale "from" hash
+					# provided the "--rewrite" option fixes it up in time
+					git reflog expire --expire=never --expire-unreachable=never --stale-fix --rewrite "${refname%$sfx}" >/dev/null 2>&1 || :
+					[ -s "$logbase/logs/${refname%$sfx}" ] || die "after --stale-fix, empty reflog found for: ${refname%$sfx}"
+					[ $(( $(wc -l <"$logbase/logs/${refname%$sfx}") )) -ge 2 ] || sfxis0=
+				fi
+			fi
 		fi
 		git reflog delete --rewrite ${sfxis0:+--updateref} "$refname" || die "reflog drop failed"
 		if [ -n "$sfxis0" ]; then
