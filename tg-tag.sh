@@ -303,7 +303,7 @@ refname="$refname$sfx"
 reftype=tag
 case "$refname" in refs/tags/*) tagname="${refname#refs/tags/}";; *) reftype=ref; tagname="$refname"; esac
 logbase="$git_common_dir"
-[ "$refname" != "HEAD" ] || logbase="$git_dir"
+[ "${refname%$sfx}" != "HEAD" ] || logbase="$git_dir"
 [ -z "$reflog$drop$clear$delete" ] || [ $# -eq 0 ] || usage 1
 if [ -n "$drop$clear$delete" ]; then
 	if [ -n "$sfx" ]; then
