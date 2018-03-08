@@ -320,7 +320,20 @@ if [ -n "$drop$clear$delete" ]; then
 		[ -f "$logbase/logs/$refname" ] || die "no reflog found for: $refname"
 		[ -s "$logbase/logs/$refname" ] || die "empty reflog found for: $refname"
 		cp -p "$logbase/logs/$refname" "$logbase/logs/$refname^-+" || die "cp failed"
-		sed -n '$p' <"$logbase/logs/$refname^-+" >"$logbase/logs/$refname" || die "reflog clear failed"
+		awk '
+			NF >= 5 { line[1] = $0 }
+			END {
+				if (1 in line) {
+					if (match(line[1], /^[0-9a-fA-F]+ /)) {
+						old = substr(line[1], 1, RLENGTH - 1)
+						rest = substr(line[1], RLENGTH)
+						gsub(/[0-9a-fA-F]/, "0", old)
+						line[1] = old rest
+					}
+					print line[1]
+				}
+			}
+		' <"$logbase/logs/$refname^-+" >"$logbase/logs/$refname" || die "reflog clear failed"
 		rm -f "$logbase/logs/$refname^-+"
 		printf "Cleared $reftype '%s' reflog to single @{0} entry\n" "$tagname"
 		exit 0
@@ -417,7 +430,7 @@ if [ -n "$reflog" ]; then
 					[ -z "$objmsg" ] || msg="$objmsg"
 				fi
 				read newdate newtime <<-EOT
-					$(strftime "%Y-%m-%d %H:%M:%S" "$es")
+					$(strftime "%Y-%m-%d %H:%M:%S" "$es" 2>/dev/null)
 				EOT
 				if [ "$lastdate" != "$newdate" ]; then
 					printf '%s=== %s ===%s\n' "$datecolor" "$newdate" "$resetcolor"
