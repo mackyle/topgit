@@ -430,7 +430,13 @@ EOT
 	done <"$insn"
 fi
 msg="tgrevert: $reftype $tagname ($(( $(wc -l <"$insn") )) command(s))"
-[ -n "$dryrun" ] || [ -n "$nostash" ] || tg tag -q -q --none-ok -m "$msg" --stash || die "requested --stash failed"
+if [ -z "$dryrun" ]; then
+	if [ -z "$nostash" ]; then
+		tg tag -q -q --allow-any --none-ok -m "$msg" --stash || die "requested --stash failed"
+	else
+		tg tag --allow-any --none-ok --anonymous || die "anonymous --stash failed"
+	fi
+fi
 refwidth="$(git config --get --int core.abbrev 2>/dev/null)" || :
 [ -n "$refwidth" ] || refwidth=7
 [ $refwidth -ge 4 ] && [ $refwidth -le 40 ] || refwidth=7
