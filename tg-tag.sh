@@ -366,6 +366,15 @@ if [ -n "$drop$clear$delete" ]; then
 				extra=" (did you mean to delete \"$symref\"?)"
 			die "HEAD may not be deleted$extra"
 		esac
+		if
+			srh="$(git symbolic-ref --quiet HEAD)" &&
+			[ -n "$srh" ] && [ "$srh" = "$refname" ]
+		then
+			orig="$(git rev-parse --verify --quiet "$refname^0" --)" || die "no such committish ref: $refname"
+			[ "$quiet" -gt 0 ] || warn "detaching HEAD to delete $refname"
+			git update-ref -m "tgtag: detach HEAD to delete $refname" --no-deref HEAD "$orig" || die "detach failed"
+			[ "$quiet" -gt 0 ] || warn "$(git --no-pager log -n 1 --format=format:'HEAD is now at %h... %s' HEAD)"
+		fi
 		git update-ref --no-deref -d "$refname" || die "git update-ref --no-deref -d failed"
 		printf "Deleted $reftype '%s' (was %s)\n" "$tagname" "$old"
 		exit 0

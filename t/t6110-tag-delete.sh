@@ -4,7 +4,7 @@ test_description='test tg tag --delete'
 
 . ./test-lib.sh
 
-test_plan 9
+test_plan 10
 
 test_expect_success 'no delete unborn HEAD' '
 	test_must_fail tg tag --delete HEAD &&
@@ -83,6 +83,50 @@ test_expect_success SETUP 'delete normal branch' '
 	git rev-parse --verify --quiet refs/heads/other -- >/dev/null &&
 	tg tag --delete refs/heads/other &&
 	test_must_fail git rev-parse --verify --quiet refs/heads/other -- >/dev/null
+'
+
+test_expect_success SETUP 'delete detaches HEAD symref' '
+	git rev-parse --verify --quiet master -- >/dev/null &&
+	test_must_fail git rev-parse --verify --quiet other >/dev/null 2>&1 &&
+
+	git update-ref refs/heads/other master &&
+	git rev-parse --verify --quiet other -- >/dev/null &&
+	git update-ref --no-deref HEAD master &&
+	git rev-parse --verify --quiet HEAD -- >/dev/null &&
+	tg tag --delete other &&
+	test_must_fail git rev-parse --verify --quiet other >/dev/null 2>&1 &&
+	git rev-parse --verify --quiet master -- >/dev/null &&
+	git rev-parse --verify --quiet HEAD -- >/dev/null &&
+
+	git update-ref refs/heads/other master &&
+	git rev-parse --verify --quiet other -- >/dev/null &&
+	git update-ref --no-deref HEAD other &&
+	git rev-parse --verify --quiet HEAD -- >/dev/null &&
+	tg tag --delete other &&
+	test_must_fail git rev-parse --verify --quiet other >/dev/null 2>&1 &&
+	git rev-parse --verify --quiet master -- >/dev/null &&
+	git rev-parse --verify --quiet HEAD -- >/dev/null &&
+
+	git update-ref refs/heads/other master &&
+	git rev-parse --verify --quiet other -- >/dev/null &&
+	git symbolic-ref HEAD refs/heads/master &&
+	git rev-parse --verify --quiet HEAD -- >/dev/null &&
+	tg tag --delete other &&
+	test_must_fail git rev-parse --verify --quiet other >/dev/null 2>&1 &&
+	git rev-parse --verify --quiet master -- >/dev/null &&
+	git rev-parse --verify --quiet HEAD -- >/dev/null &&
+
+	# those were all preludes, this is the real detach test here
+
+	git update-ref refs/heads/other master &&
+	git rev-parse --verify --quiet other -- >/dev/null &&
+	git symbolic-ref HEAD refs/heads/other &&
+	git rev-parse --verify --quiet HEAD -- >/dev/null &&
+	tg tag --delete other &&
+	test_must_fail git rev-parse --verify --quiet other >/dev/null 2>&1 &&
+	mrev="$(git rev-parse --verify --quiet master --)" && test -n "$mrev" &&
+	hrev="$(git rev-parse --verify --quiet HEAD --)" && test -n "$hrev" &&
+	test "$hrev" = "$mrev"
 '
 
 test_done
