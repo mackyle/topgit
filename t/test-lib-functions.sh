@@ -552,6 +552,7 @@ alias test_expect_success='test_expect_success_lno "$LINENO"' >/dev/null 2>&1 ||
 test_external_lno() {
 	callerlno="$1"
 	shift
+	test_count=$(($test_count+1))
 	test "$#" = 4 && { _test_set_test_prereq "$1"; shift; } || test_prereq=
 	test "$#" = 3 ||
 	error >&5 "bug in the test script: not 3 or 4 parameters to test_external"
@@ -612,6 +613,7 @@ test_external_without_stderr_lno() {
 	test -f "$stderr" || error "Internal error: $stderr disappeared."
 	descr="no stderr: $1"
 	shift
+	test_count=$(($test_count+1))
 	say >&3 "# expecting no stderr from previous command"
 	if test -n "$test_external_skipped" || test ! -s "$stderr"
 	then
