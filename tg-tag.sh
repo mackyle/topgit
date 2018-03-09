@@ -852,6 +852,7 @@ else
 		updmsg="$(printf '%s\n' "tgtag: $branches")"
 		;;
 	esac
+	[ "$refname" != "TG_STASH" ] || ! [ -s "$git_dir/TG_STASH" ] || mv -f "$git_dir/TG_STASH" "$git_dir/ORIG_TG_STASH" >/dev/null 2>&1 || :
 	git update-ref -m "$updmsg" "$refname" "$newtag"
 	[ -z "$old" ] || [ "$quiet" -gt 0 ] || printf "Updated $reftype '%s' (was %s)\n" "$tagname" "$old"
 fi

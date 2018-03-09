@@ -368,7 +368,10 @@ suddenly find yourself in an emergency "WHERE'S THE UNDO???" situation you
 It's only set if you've foolishly disabled autostash and it always overwrites
 the previous ``TG_STASH`` value if there was one (there's no reflog for it)
 and it will most likely *not* survive a ``git gc`` (even an automatic one) no
-matter what gc expiration values are used.
+matter what gc expiration values are used.  However, as a last gasp attempt
+to save your butt, a previously existing ``TG_STASH`` will first be renamed
+to ``ORIG_TG_STASH`` immediately before a new ``TG_STASH`` gets written
+(stepping on any previously existing ``ORIG_TG_STASH`` at that point).
 
 Note that the tags saved by ``tg tag --stash`` are stored in the
 ``refs/tgstash`` ref and its reflog.  Unfortunately, while Git is happy to
@@ -397,7 +400,7 @@ Any operations that are read-only and do not require working tree files (e.g.
 the ``-i`` or ``-w`` options of `tg patch`_) are allowed using the wayback
 machine.  Simply add a global ``-w <tgtag>`` option to the command.
 
-This functionality can be extremely useful for quickly examing/querying a
+This functionality can be extremely useful for quickly examining/querying a
 previous state recorded some time ago with a `tg tag`_.
 
 As the wayback machine uses a separate caching area, expect initial operations
