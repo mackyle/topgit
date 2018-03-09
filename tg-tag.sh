@@ -47,6 +47,7 @@ delete=
 drop=
 anonymous=
 treeish=
+sawall=
 
 is_numeric()
 {
@@ -194,7 +195,8 @@ while [ $# -gt 0 ]; do case "$1" in
 		break
 		;;
 	--all)
-		break
+		sawall=1
+		defbranch=--all
 		;;
 	--stash|--stash"@{"*"}")
 		if [ -n "$reflog" ]; then
@@ -206,6 +208,19 @@ while [ $# -gt 0 ]; do case "$1" in
 				set -- "$x2" "$x1" "$@"
 				continue
 			esac
+		else
+			if [ "$2" = "--all" ]; then
+				x1="$1"
+				shift
+				shift
+				set -- "$x1" "$@"
+				sawall=1
+			elif [ "$2" = "--" ]; then
+				x1="$1"
+				shift
+				shift
+				set -- "$x1" "$@"
+			fi
 		fi
 		stash=1
 		defbranch=--all
@@ -238,20 +253,22 @@ esac; shift; done
 
 [ "$stash$anonymous" != "11" ] || usage 1
 [ -z "$stash$anonymous" ] || [ -n "$reflog$drop$clear$delete" ] || { outofdateok=1; force=1; defnoedit=1; }
+[ -z "$sawall" ] || [ $# -gt 0 ] || { outofdateok=1; force=1; defnoedit=1; }
 [ -n "$noedit" ] || noedit="$defnoedit"
 [ "$noedit" != "0" ] || noedit=
-[ -z "$reflog" ] || [ -z "$drop$clear$delete$signed$keyid$force$msg$msgfile$noedit$treeish$refsonly$outofdateok" ] || usage 1
+[ -z "$reflog" ] || [ -z "$drop$clear$delete$signed$keyid$force$msg$msgfile$noedit$treeish$refsonly$outofdateok$sawall" ] || usage 1
 [ -n "$reflog" ] || [ -z "$setreflogmsg$notype$maxcount" ] || usage 1
-[ -z "$drop$clear$delete" ] || [ -z "$setreflogmsg$notype$maxcount$signed$keyid$force$msg$msgfile$noedit$treeish$refsonly$outofdateok" ] || usage 1
+[ -z "$drop$clear$delete" ] || [ -z "$setreflogmsg$notype$maxcount$signed$keyid$force$msg$msgfile$noedit$treeish$refsonly$outofdateok$sawall" ] || usage 1
 [ -z "$reflog$drop$clear$delete" ] || [ "$reflog$drop$clear$delete" = "1" ] || usage 1
 [ -z "$maxcount" ] || is_numeric "$maxcount" || die "invalid count: $maxcount"
 [ -z "$maxcount" ] || [ $maxcount -gt 0 ] || die "invalid count: $maxcount"
 [ -z "$msg" ] || [ -z "$msgfile" ] || die "only one -F or -m option is allowed."
 [ -z "$refsonly" ] || set -- refs..only "$@"
-[ $# -gt 0 ] || [ -z "$reflog" ] || set -- --stash
+[ $# -gt 0 ] || [ -z "$reflog$sawall" ] || set -- --stash
 [ -n "$1" ] || { echo "Tag name required" >&2; usage 1; }
 tagname="$1"
 shift
+[ -z "$sawall" ] || [ $# -eq 0 ] || die "branch names not allowed with --all"
 [ "$tagname" != "--stash" ] || tagname=refs/tgstash
 [ "$tagname" != "--anonymous" ] || tagname=TG_STASH
 case "$tagname" in --stash"@{"*"}")
@@ -489,14 +506,16 @@ fi
 [ $# -gt 0 ] || set -- $defbranch
 all=
 if [ $# -eq 1 ] && [ "$1" = "--all" ]; then
-	eval set -- $(git for-each-ref --shell --format="%(refname)" "refs/$topbases")
+	eval set -- $(git for-each-ref --shell --format="%(refname)" ${anyrefok:+"refs/heads"} "refs/$topbases")
 	outofdateok=1
 	all=1
 	if [ $# -eq 0 ]; then
 		if [ "$quiet" -gt 0 ] && [ -n "$noneok" ]; then
 			exit 0
 		else
-			die "no TopGit branches found"
+			onlytg=
+			[ -n "$anyrefok" ] || onlytg=" TopGit"
+			die "no$onlytg branches found"
 		fi
 	fi
 fi
@@ -544,6 +563,7 @@ EOT
 set -- $newlist
 for b; do
 	sfn="$b"
+	[ -n "$all" ] || [ "${b#-}" = "$b" ] || die "branch names starting with '-' must be fully qualified: $b"
 	[ -n "$all" ] ||
 	sfn="$(git rev-parse --revs-only --symbolic-full-name "$b" -- 2>/dev/null)" || :
 	[ -n "$sfn" ] || {
