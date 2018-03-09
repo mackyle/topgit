@@ -49,8 +49,8 @@ baserev="$(git rev-parse --verify "refs/$topbases/$name^0" -- 2>/dev/null)" ||
 ! headsym="$(git symbolic-ref -q HEAD)" || [ "$headsym" != "refs/heads/$name" ] || {
 	[ -n "$force" ] && [ "$force" -ge 2 ] || die "cannot delete your current branch"
 	warn "detaching HEAD to delete current branch"
-	git update-ref -m "tgdelete: detach HEAD to delete $name" --no-deref HEAD "$branchrev"
-	git --no-pager log -n 1 --format=format:'HEAD is now at %h... %s' HEAD
+	git update-ref -m "tgdelete: detach HEAD to delete $name" --no-deref HEAD "$branchrev" || die "detach failed"
+	warn "$(git --no-pager log -n 1 --format=format:'HEAD is now at %h... %s' HEAD)"
 }
 
 [ -z "$force" ] && { branch_empty "$name" || die "branch is non-empty: $name"; }

@@ -447,11 +447,11 @@ while read -r name rev; do
 		origsh="$(git rev-parse --verify --short --quiet "$name" --)" || :
 		if [ -z "$dryrun" ]; then
 			if [ -n "$srh" ] && [ "$srh" = "$name" ]; then
-				[ -n "$quiet" ] || echo "Detaching HEAD to revert $name"
+				[ -n "$quiet" ] || warn "detaching HEAD to revert $name"
 				detachat="$orig"
 				[ -n "$detachat" ] || detachat="$(make_empty_commit)"
-				git update-ref -m "tgrevert: detach HEAD to revert $name" --no-deref HEAD "$detachat"
-				[ -n "$quiet" ] || git --no-pager log -n 1 --format=format:'HEAD is now at %h... %s' HEAD
+				git update-ref -m "tgrevert: detach HEAD to revert $name" --no-deref HEAD "$detachat" || die "detach failed"
+				[ -n "$quiet" ] || warn "$(git --no-pager log -n 1 --format=format:'HEAD is now at %h... %s' HEAD)"
 			fi
 			git update-ref -m "$msg" "$name" "$rev"
 		fi
