@@ -2831,7 +2831,11 @@ else
 						export GIT_PREFIX
 					fi
 					cd "./$(git rev-parse --show-cdup 2>/dev/null)"
-					exec @SHELL_PATH@ -c "${tgalias#?} \"\$@\"" @SHELL_PATH@ "$@"
+					if [ $# -gt 0 ]; then
+						exec @SHELL_PATH@ -c "${tgalias#?} \"\$@\"" @SHELL_PATH@ "$@"
+					else
+						exec @SHELL_PATH@ -c "${tgalias#?}" @SHELL_PATH@
+					fi
 				else
 					eval 'exec "$tgbin"' "${wayback:+-w \"\$wayback\"}" "$tgalias" '"$@"'
 				fi
