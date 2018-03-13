@@ -2633,7 +2633,7 @@ else
 			forcepager=0
 			shift;;
 
-		--pager|-p)
+		--pager|-p|--paginate)
 			forcepager=1
 			shift;;
 
