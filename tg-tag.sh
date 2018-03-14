@@ -712,7 +712,7 @@ else
 	for b in $tgbranches; do
 		if ! needs_update "$b" >/dev/null; then
 			out_of_date=1
-			echo "branch not up-to-date: $b"
+			echo "branch not up-to-date: $b" >&2
 		fi
 	done
 fi
