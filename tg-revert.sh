@@ -455,7 +455,7 @@ srh=
 [ -n "$dryrun" ] || srh="$(git symbolic-ref --quiet HEAD)" || :
 cut -d ' ' -f 3 <"$insn" | sort -u -b -k1,1 | join - "$trf" |
 while read -r name rev; do
-	orig="$(git rev-parse --verify --quiet "$name" --)" || :
+	orig="$(git rev-parse --verify --quiet "$name^{}" --)" || :
 	init_reflog "$name"
 	if [ "$rev" != "$orig" ]; then
 		[ -z "$dryrun" ] && [ -n "$quiet" ] ||
