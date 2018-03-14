@@ -123,11 +123,20 @@ case "$tagname" in --stash"@{"*"}")
 esac
 refname="$tagname"
 case "$refname" in HEAD|refs/*);;*)
-	suffix="${refname%@*}"
-	suffix="${refname#$suffix}"
-	refname="${refname%$suffix}"
-	if reftest="$(git rev-parse --revs-only --symbolic-full-name "$refname" -- 2>/dev/null)" &&
-	   [ -n "$reftest" ]; then
+	_pfx="@{"
+	_refonly="${refname%%"$_pfx"*}"
+	suffix="${refname#"$_refonly"}"
+	refname="$_refonly"
+	if
+		{
+			reftest="$(git rev-parse --revs-only --symbolic-full-name "$refname" -- 2>/dev/null)" &&
+			[ -n "$reftest" ]
+		} ||
+		{
+			reftest="$(git rev-parse --revs-only --symbolic-full-name "refs/tags/$refname" -- 2>/dev/null)" &&
+			[ -n "$reftest" ]
+		}
+	then
 		refname="$reftest$suffix"
 	else
 		if hash="$(git rev-parse --quiet --verify "$refname$suffix")"; then
