@@ -430,6 +430,7 @@ TopGit supports various config settings:
 	:`tg create`_:          ``topgit.bcc`` default "Bcc:" value for create
 	:`tg create`_:          ``topgit.cc`` default "Cc:" value for create
 	:`tg patch`_:           ``topgit.from`` "From:" fixups by ``tg patch``
+	:`tg push`_:            ``topgit.pushRemote`` default push remote
 	:`REMOTE HANDLING`_:    ``topgit.remote`` TopGit's default remote
 	:SEQUESTRATION_:        ``topgit.sequester`` for sequestration control
 	:`tg update`_:          ``topgit.setAutoUpdate`` => ``rerere.autoUpdate``
@@ -1854,12 +1855,23 @@ tg push
 	dependencies will be pushed, and if ``--no-deps`` was specified,
 	no dependencies at all will be pushed.
 
+	All TopGit branches to be pushed must be up-to-date unless the
+	``--allow-outdated`` option is given.  Branches `are` checked against
+	the configured TopGit remote (``topgit.remote``) if it's set (as
+	modified by the global ``-u`` and ``-r <remote>`` options).
+
 	The ``--dry-run`` and ``--force`` options are passed directly to
 	``git push`` if given.
 
-	The remote may be specified with the ``-r`` option. If no remote
-	was specified, the configured default TopGit remote will be
-	used.
+	The push remote may be specified with the ``-r`` option. If no remote
+	was specified, the configured default TopGit push remote will be
+	used (``topgit.pushRemote``) or if that's unset the regular remote
+	(``topgit.remote``).
+
+	Use something like this to push to an ``origin`` remote when it's set
+	as ``topgit.remote`` while only checking for local out-of-dateness:
+
+	    ``tg -u push -r origin <optional-branch-names-here>``
 
 tg base
 ~~~~~~~

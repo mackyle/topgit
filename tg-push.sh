@@ -9,7 +9,9 @@ tgish_deps_only=
 dry_run=
 force=
 push_all=
+outofdateok=
 branches=
+remote=
 
 while [ -n "$1" ]; do
 	arg="$1"; shift
@@ -24,8 +26,10 @@ while [ -n "$1" ]; do
 		tgish_deps_only=1;;
 	-a|--all)
 		push_all=1;;
+	--allow-outdated)
+		outofdateok=1;;
 	-h|--help)
-		echo "Usage: ${tgname:-tg} [...] push [--dry-run] [--force] [--no-deps] [--tgish-only] [-r <remote>] [-a | --all | <branch>...]"
+		echo "Usage: ${tgname:-tg} [...] push [--dry-run] [--force] [--no-deps] [--tgish-only] [-r <pushRemote>] [-a | --all | <branch>...]"
 		exit 0;;
 	-r)
 		remote="$1"
@@ -36,13 +40,14 @@ while [ -n "$1" ]; do
 		branches="${branches:+$branches }$arg";;
 	esac
 done
+[ -z "$push_all" ] || [ -z "$branches" ] || die "branch names not allowed with --all"
+
+[ -n "$remote" ] || remote="$(git config topgit.pushremote 2>/dev/null)" || :
+[ -n "$remote" ] || remote="$base_remote"
 
 if [ -z "$remote" ]; then
-	remote="$base_remote"
-fi
-
-if [ -z "$remote" ]; then
-	die "no remote location given. Either use -r remote argument or set topgit.remote"
+	warn "either use -r <pushRemote> argument or set topgit.[push]remote"
+	die "no push remote location given"
 fi
 
 if [ -z "$branches" ]; then
@@ -55,17 +60,20 @@ else
 	oldbranches="$branches"
 	branches=
 	while read name && [ -n "$name" ]; do
-		if [ "$name" = "HEAD" ]; then
+		if [ "$name" = "HEAD" ] || [ "$name" = "@" ]; then
 			sr="$(git symbolic-ref --quiet HEAD)" || :
 			[ -n "$sr" ] || die "cannot push a detached HEAD"
 			case "$sr" in refs/heads/*);;*)
 				die "HEAD is a symref to other than refs/heads/..."
 			esac
-			branches="${branches:+$branches }${sr#refs/heads/}"
+			b="${sr#refs/heads/}"
 		else
 			ref_exists "refs/heads/$name" || die "no such ref: refs/heads/$name"
-			branches="${branches:+$branches }$name"
+			b="$name"
 		fi
+		case " $branches " in *" $b "*);;*)
+			branches="${branches:+$branches }$b"
+		esac
 	done <<-EOT
 	$(sed 'y/ /\n/' <<-LIST
 	$oldbranches
@@ -93,6 +101,15 @@ push_branch()
 	[ -z "$_dep_is_tgish" ] ||
 		echo "$topbases/$_dep" >> "$_listfile"
 }
+
+if [ -z "$outofdateok" ]; then
+	needs_update_check_clear
+	needs_update_check $branches
+	if [ -n "$needs_update_behind" ]; then
+		printf 'branch not up-to-date: %s\n' $needs_update_behind >&2
+		die "all branches to be pushed must be up-to-date (try --allow-outdated)"
+	fi
+fi
 
 no_remotes=1
 while read name && [ -n "$name" ]; do
