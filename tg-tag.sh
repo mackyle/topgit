@@ -528,7 +528,7 @@ if [ $# -eq 1 ] && [ "$1" = "--all" ]; then
 		fi
 	fi
 fi
-ensure_ident_available
+[ -n "$refsonly" ] || ensure_ident_available
 branches=
 allrefs=
 extrarefs=
