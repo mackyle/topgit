@@ -1724,7 +1724,7 @@ do_status()
 	if [ -n "$symref" ]; then
 		uprefpart=
 		if [ -n "$headrv" ]; then
-			upref="$(git rev-parse --symbolic-full-name @{upstream} 2>/dev/null)" || :
+			upref="$(git rev-parse --revs-only --symbolic-full-name @{upstream} -- 2>/dev/null)" || :
 			if [ -n "$upref" ]; then
 				uprefpart=" ... ${upref#$abbrev/remotes/}"
 				mbase="$(git merge-base HEAD "$upref")" || :
