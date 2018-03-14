@@ -573,9 +573,11 @@ set -- $newlist
 errtemp="$(get_temp errs)"
 for b; do
 	sfn="$b"
-	[ -n "$all" ] || [ "${b#-}" = "$b" ] || die "branch names starting with '-' must be fully qualified: $b"
-	[ -n "$all" ] ||
-	sfn="$(git rev-parse --revs-only --symbolic-full-name "$b" -- 2>"$errtemp")" || :
+	if [ -z "$all" ]; then
+		[ "${b#-}" = "$b" ] || die "branch names starting with '-' must be fully qualified: $b"
+		sfn="$(git rev-parse --revs-only --symbolic-full-name "$b" -- 2>"$errtemp")" || :
+		[ -n "$sfn" ] || ! [ -s "$errtemp" ] || sfn="$(git rev-parse --revs-only --symbolic-full-name "refs/heads/$b" -- 2>/dev/null)" || :
+	fi
 	[ -n "$sfn" ] || {
 		if [ -z "$anyrefok" ] || [ -s "$errtemp" ]; then
 			! [ -s "$errtemp" ] || tail -n 1 <"$errtemp" >&2

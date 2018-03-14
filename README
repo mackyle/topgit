@@ -1931,6 +1931,10 @@ tg tag
 	on the command line and each ref they depend on either directly or
 	indirectly.
 
+	Note that when specifying branch names, if a given name is ambiguous
+	but prefixing the branch name with ``refs/heads/`` successfully
+	disambiguates it, then that will be the interpretation used.
+
 	If more than one TopGit branch is given on the command line, a new
 	commit will be created that has an empty tree and all of the given
 	TopGit branches as parents and that commit will be tagged.  If a single
