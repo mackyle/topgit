@@ -570,13 +570,17 @@ done <<-EOT
 	:)
 EOT
 set -- $newlist
+errtemp="$(get_temp errs)"
 for b; do
 	sfn="$b"
 	[ -n "$all" ] || [ "${b#-}" = "$b" ] || die "branch names starting with '-' must be fully qualified: $b"
 	[ -n "$all" ] ||
-	sfn="$(git rev-parse --revs-only --symbolic-full-name "$b" -- 2>/dev/null)" || :
+	sfn="$(git rev-parse --revs-only --symbolic-full-name "$b" -- 2>"$errtemp")" || :
 	[ -n "$sfn" ] || {
-		[ -n "$anyrefok" ] || die "no such symbolic ref name: $b"
+		if [ -z "$anyrefok" ] || [ -s "$errtemp" ]; then
+			! [ -s "$errtemp" ] || tail -n 1 <"$errtemp" >&2
+			die "invalid symbolic ref name: $b"
+		fi
 		fullhash="$(git rev-parse --verify --quiet "$b" --)" || die "no such ref: $b"
 		case " $extrarefs " in *" $b "*);;*)
 			[ "$quiet" -ge 2 ] || warn "including non-symbolic ref only in parents calculation: $b"
