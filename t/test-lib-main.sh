@@ -910,8 +910,8 @@ export TESTLIB_DIRECTORY
 
 : "${SHELL_PATH:=/bin/sh}"
 : "${DIFF:=diff}"
-: "${GIT_PATH:=$(cmd_path git)}"
-: "${PERL_PATH:=$(cmd_path perl || :)}"
+[ "$GIT_PATH" = "/${GIT_PATH#?}" ] || GIT_PATH="$(cmd_path "${GIT_PATH:-git}")"
+[ "$PERL_PATH" = "/${PERL_PATH#?}" ] || PERL_PATH="$(cmd_path "${PERL_PATH:-perl}")"
 
 # Test the binaries we have just built.  The tests are kept in
 # t/ subdirectory and are run in 'trash directory' subdirectory.
