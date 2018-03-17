@@ -50,12 +50,9 @@ if [ -z "$remote" ]; then
 	die "no push remote location given"
 fi
 
-if [ -z "$branches" ]; then
-	if [ -n "$push_all" ]; then
-		branches="$(non_annihilated_branches | paste -s -d " " -)"
-	else
-		v_verify_topgit_branch branches HEAD
-	fi
+[ -n "$branches$push_all" ] || branches="HEAD"
+if [ -n "$push_all" ]; then
+	branches="$(non_annihilated_branches | paste -s -d " " -)"
 else
 	oldbranches="$branches"
 	branches=
@@ -66,6 +63,7 @@ else
 			case "$sr" in refs/heads/*);;*)
 				die "HEAD is a symref to other than refs/heads/..."
 			esac
+			ref_exists "$sr" || die "HEAD ($sr) is unborn"
 			b="${sr#refs/heads/}"
 		else
 			ref_exists "refs/heads/$name" || die "no such ref: refs/heads/$name"
@@ -97,9 +95,9 @@ push_branch()
 	# the patches that depend on the sha1 have it already in their ancestry.
 	! is_sha1 "$_dep" || return 0
 
-	echol "$_dep" >> "$_listfile"
+	echol "refs/heads/$_dep" >> "$_listfile"
 	[ -z "$_dep_is_tgish" ] ||
-		echo "$topbases/$_dep" >> "$_listfile"
+		echo "refs/$topbases/$_dep" >> "$_listfile"
 }
 
 if [ -z "$outofdateok" ]; then
@@ -131,6 +129,8 @@ $branches
 LIST
 )
 EOT
+
+[ -s "$_listfile" ] || die "nothing to push"
 
 # remove multiple occurrences of the same branch
 sort -u "$_listfile" | sed 's,[^A-Za-z0-9/_.+-],\\&,g' | xargs git push $dry_run $force "$remote"
