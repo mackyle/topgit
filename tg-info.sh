@@ -242,6 +242,7 @@ echo "Base: $base_rev"
 branch_contains "refs/heads/$name" "refs/$topbases/$name" ||
 	echo "* Base is newer than head! Please run \`$tgdisplay update\`."
 
+rhood=
 if has_remote "$name"; then
 	echo "Remote Mate: $base_remote/$name"
 	# has_remote only checks the single ref it's passed therefore
@@ -253,8 +254,10 @@ if has_remote "$name"; then
 	else
 		echo "* Remote base ($base_remote/${topbases#heads/}/$name) is missing."
 	fi
-	branch_contains "refs/heads/$name" "refs/remotes/$base_remote/$name" ||
+	branch_contains "refs/heads/$name" "refs/remotes/$base_remote/$name" || {
+		rhood=1
 		echo "* Local head is out of date wrt. the remote head."
+	}
 	branch_contains "refs/remotes/$base_remote/$name" "refs/heads/$name" ||
 		echo "* Local head is ahead of the remote head."
 fi
@@ -266,6 +269,7 @@ depcheck="$(get_temp tg-depcheck)"
 missing_deps=
 v_get_tdopt with_deps_opts "$head_from"
 needs_update "$name" >"$depcheck" || :
+[ -z "$rhood" ] || echo ":refs/remotes/$base_remote/$name $name" >>"$depcheck"
 if [ -n "$missing_deps" ]; then
 	echo "MISSING: $missing_deps"
 fi
@@ -293,7 +297,7 @@ if [ -s "$depcheck2" ]; then
 					;;
 			esac
 			printf '%s' "$dep "
-			[ -n "$chain" ] && printf '%s' "(<= $(echol "$chain" | sed 's/ / <= /')) "
+			[ -z "$chain" ] || printf '%s' "(<= $(echol "$chain" | sed 's/ / <= /')) "
 			printf '%s' "($(eval measure_branch '"$fulldep"' '"refs/heads/$name"' ${extradep:+\"\$extradep\"}))"
 			echo
 		done | sed 's/^/	/'
