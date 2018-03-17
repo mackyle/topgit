@@ -1862,8 +1862,13 @@ tg push
 	the configured TopGit remote (``topgit.remote``) if it's set (as
 	modified by the global ``-u`` and ``-r <remote>`` options).
 
-	The ``--dry-run`` and ``--force`` options are passed directly to
-	``git push`` if given.
+	The ``--dry-run``, ``--force``, ``--atomic``, ``--signed[=...]``,
+	``-4`` and ``-6`` options are passed through directly to ``git push``
+	if given.  Note that in the highly unlikely event that the branch names
+	of all the branches being pushed do not fit on a single command line,
+	multiple ``git push`` commands will be issued which would have the side
+	effect of rendering ``--atomic`` not so atomic and cause more than
+	one signature to be needed if ``--signed[=...]`` is used.
 
 	The push remote may be specified with the ``-r`` option. If no remote
 	was specified, the configured default TopGit push remote will be

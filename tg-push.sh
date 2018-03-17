@@ -12,6 +12,10 @@ push_all=
 outofdateok=
 branches=
 remote=
+signedopt=
+atomicopt=
+opt4=
+opt6=
 
 while [ -n "$1" ]; do
 	arg="$1"; shift
@@ -22,6 +26,14 @@ while [ -n "$1" ]; do
 		dry_run=--dry-run;;
 	-f|--force)
 		force=--force;;
+	--signed|--signed=*)
+		signedopt="$arg";;
+	--atomic)
+		atomicopt="$arg";;
+	-4|--ipv4)
+		opt4="$arg";;
+	-6|--ipv6)
+		opt6="$arg";;
 	--tgish-only)
 		tgish_deps_only=1;;
 	-a|--all)
@@ -133,4 +145,6 @@ EOT
 [ -s "$_listfile" ] || die "nothing to push"
 
 # remove multiple occurrences of the same branch
-sort -u "$_listfile" | sed 's,[^A-Za-z0-9/_.+-],\\&,g' | xargs git push $dry_run $force "$remote"
+sort -u "$_listfile" |
+sed 's,[^A-Za-z0-9/_.+-],\\&,g' |
+xargs git push $opt4 $opt6 $dry_run $force $atomicopt $signedopt "$remote"
