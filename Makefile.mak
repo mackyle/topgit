@@ -127,7 +127,7 @@ $(awk_out): Makefile TG-BUILD-SETTINGS
 	mv "$@+" "$@"
 
 bin-wrappers/tg : tg
-	$(QWRAPPER){ [ -d bin-wrappers ] || mkdir bin-wrappers; } && \
+	$(QWRAPPER){ [ -d bin-wrappers ] || mkdir -p bin-wrappers; } && \
 	echo '#!$(SHELL_PATH_SQ)' >"$@" && \
 	curdir="$$(pwd -P)" && \
 	echo "TG_INST_BINDIR='$$curdir' && export TG_INST_BINDIR" >>"$@" && \
@@ -139,7 +139,7 @@ bin-wrappers/tg : tg
 	chmod a+x "$@" "$@x"
 
 bin-wrappers/pre-commit : hooks/pre-commit
-	$(QWRAPPER){ [ -d bin-wrappers ] || mkdir bin-wrappers; } && \
+	$(QWRAPPER){ [ -d bin-wrappers ] || mkdir -p bin-wrappers; } && \
 	echo '#!$(SHELL_PATH_SQ)' >"$@" && \
 	curdir="$$(pwd -P)" && \
 	echo "TG_INST_BINDIR='$$curdir' && export TG_INST_BINDIR" >>"$@" && \
