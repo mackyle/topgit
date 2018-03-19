@@ -36,7 +36,7 @@ quotevar TEST_RESULTS_DIRECTORY TEST_RESULTS_DIRECTORY_SQ
 v_wildcard ALLT 't[0-9][0-9][0-9][0-9]-*.sh'
 v_sort ALLT $ALLT
 [ -n "$T" ] || T="$ALLT"
-[ -n "$LITTESTS" ] || LINTTESTS="$T"
+[ -n "$LINTTESTS" ] || LINTTESTS="$T"
 
 # Extra shell scripts to run through check-non-portable-shell.pl
 # These will ALWAYS be "checked" whenever the test-lint target is made
