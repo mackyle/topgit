@@ -10,7 +10,7 @@ Normally you can just do "make" followed by "make install", and that will
 install the tg program in your own ~/bin/ directory.  If you want to do a
 global install, you can do
 
-   # make prefix=/usr install ;# as root
+    make prefix=/usr install # as root
 
 (or prefix=/usr/local, of course).  Just like any program suite that uses
 $prefix, the built results have some paths encoded, which are derived from
@@ -20,9 +20,14 @@ The Makefile does not currently install the bash completion support in
 contrib/tg-completion.bash. Instructions for installing that file are at the
 top of that file.
 
-To install the html version of the help you need rst2html.py and then use
+To install the html version of the help you need rst2html and then use
 "make html" followed by "make install-html".  The same use of prefix=
-applies here as well.
+applies here as well.  Set RST2HTML to the location of the rst2html
+executabile if it's not named "rst2html" or not located in $PATH.  Also
+note that "make doc" and "make install-doc" will accomplish the same thing.
+
+The standard DESTDIR variable is supported to install to an intermediate
+location before moving to the final intended destination via some other means.
 
 The TopGit git repository can be found at: http://repo.or.cz/topgit/pro
 

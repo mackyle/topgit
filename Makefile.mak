@@ -2,6 +2,29 @@
 
 .POSIX:
 
+#
+## Makefile variables
+##
+## V        - set to 1 to get more verbose rule output
+##            Default is empty
+##            Any value other than empty or 0 will also activate verbose mode
+##
+## DESTDIR  - installation path prefix
+##            Default is empty
+##            The value is prefixed verbatim to the installation paths when
+##            using any of the "install" targets but is otherwise ignored.
+##            This allows the executables to be configured for one location
+##            but installed to an alternate location before being moved to
+##            their final location.  The executables will not work correctly
+##            until they are then relocated into their final location.
+##
+## RST2HTML - location of rst2html.py
+##            Default is "rst2html"
+##            Only required to `make doc` aka `make html` (i.e. topgit.html)
+##            If "rst2html" is not in $PATH this must be set
+##            in order to successfully `make doc` (or `make html`)
+#
+
 # Default target is all
 all:
 
@@ -33,6 +56,9 @@ AT = @
 Q_ = $(AT)
 Q_0 = $(Q_)
 Q = $(Q_$(V))
+QPOUND_ = $(AT)$(POUND)
+QPOUND_0 = $(QPOUND_)
+QPOUND = $(QPOUND_$(V))
 QSED_ = $(AT)echo "[SED] $@" &&
 QSED_0 = $(QSED_)
 QSED = $(QSED_$(V))
@@ -137,7 +163,10 @@ tg-tg.txt: README create-html-usage.pl $(commands_in)
 	$(QHELPTG)perl ./create-html-usage.pl --text < README > $@
 
 topgit.html: README create-html-usage.pl $(commands_in)
-	$(QHTMLTOPGIT)perl ./create-html-usage.pl < README | rst2html.py - $@ && \
+	$(Q)command -v "$${RST2HTML:-rst2html}" >/dev/null || \
+	{ echo "need $${RST2HTML:-rst2html} to make $@" >&2; exit 1; }
+	$(QPOUND)echo "# \$${RST2HTML:-rst2html} is \"$${RST2HTML:-rst2html}\""
+	$(QHTMLTOPGIT)perl ./create-html-usage.pl < README | "$${RST2HTML:-rst2html}" - $@ && \
 	perl -i -pe 's/&nbsp;/\&#160;/g' "$@"
 
 $(html_out): create-html.sh
