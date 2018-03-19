@@ -77,6 +77,28 @@ if [ "$1" = "--cache" ]; then
 	UNSET_VARS="VISUAL EMAIL LANGUAGE COLUMNS XDG_CONFIG_HOME GITPERLLIB \
 		CDPATH GREP_OPTIONS UNZIP TESTLIB_EXIT_OK last_verbose"
 
+	# Add most GIT_XXX vars (variation of code from test-lib-main.sh)
+	UNSET_VARS="$UNSET_VARS $("${PERL_PATH:-perl}" -e '
+			my @env = keys %ENV;
+			my $ok = join("|", qw(
+				TRACE
+				DEBUG
+				USE_LOOKUP
+				TEST
+				.*_TEST
+				MINIMUM_VERSION
+				PATH
+				PROVE
+				UNZIP
+				PERF_
+				CURL_VERBOSE
+				TRACE_CURL
+				CEILING_DIRECTORIES
+			));
+			my @vars = grep(/^GIT_/ && !/^GIT_($ok)/o, @env);
+			print join(" ", @vars);
+		')"
+
 	# strip off --cache
 	shift
 
@@ -123,28 +145,6 @@ if [ "$1" = "--cache" ]; then
 		rm -rf "$TRASH_DIRECTORY"
 		unset_ savepwd savehome TRASH_DIRECTORY TRASHTMP_DIRECTORY GNUPGHOME
 	fi
-
-	# Add most GIT_XXX vars (variation of code from test-lib-main.sh)
-	UNSET_VARS="$UNSET_VARS $("$PERL_PATH" -e '
-			my @env = keys %ENV;
-			my $ok = join("|", qw(
-				TRACE
-				DEBUG
-				USE_LOOKUP
-				TEST
-				.*_TEST
-				MINIMUM_VERSION
-				PATH
-				PROVE
-				UNZIP
-				PERF_
-				CURL_VERBOSE
-				TRACE_CURL
-				CEILING_DIRECTORIES
-			));
-			my @vars = grep(/^GIT_/ && !/^GIT_($ok)/o, @env);
-			print join(" ", @vars);
-		')"
 
 	# return true if variable name passed as the first argument is
 	# set even if to an empty value
