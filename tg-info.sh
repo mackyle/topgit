@@ -262,34 +262,42 @@ if has_remote "$name"; then
 		echo "* Local head is ahead of the remote head."
 fi
 
-anflag=
-[ "${verbose:-0}" -lt 2 ] || anflag=1
-depslist="$(get_temp topdeps)"
-cat_file "refs/heads/$name:.topdeps" ${noskipiw:+$head_from} >"$depslist" 2>/dev/null
-eval run_awk_topgit_msg "$tm_opt" '"refs/$topbases"' "$(awk -v p="refs/$topbases/" <"$depslist" '
-	function sq(x) {
-		gsub(/\047/, "\047\\\047\047", x)
-		return "\047" x "\047"
+# annihilated, empty and bare branches do not logically have any dependencies
+# but we might be about to commit on an empty branch and with -i or -w it could
+if
+	[ "$bkind" = "0" ] || [ "$bkind" = "1" ] || {
+		[ -n "$noskipiw" ] && [ -n "$head_from" ]
 	}
-	{sub(/\r$/, "")}
-	NF == 1 && $0 != "" && $0 !~ /[ \t\r\n*?:[^~\\]/ {printf "%s ", sq(p $0)}
-')" | awk -v an="$anflag" -v df="$depslist" '
-	NF >= 2 && $1 != "" && $2 ~ /^[0-4]$/ {bt[$1] = 0 + $2}
-	END {
-		prefix = "Depends: "
-		while ((e = (getline adep <df)) > 0) {
-			sub(/\r$/, "", adep)
-			if (adep == "" || adep ~ /[ \t\r\n*?:[^~\\]/) continue
-			if (!an && bt[adep] == 2) continue
-			suffix = ""
-			if (bt[adep] == 2) suffix = " (annihilated)"
-			print prefix adep suffix
-			prefix = "         "
+then
+	anflag=
+	[ "${verbose:-0}" -lt 2 ] || anflag=1
+	depslist="$(get_temp topdeps)"
+	cat_file "refs/heads/$name:.topdeps" ${noskipiw:+$head_from} >"$depslist" 2>/dev/null
+	eval run_awk_topgit_msg "$tm_opt" '"refs/$topbases"' "$(awk -v p="refs/$topbases/" <"$depslist" '
+		function sq(x) {
+			gsub(/\047/, "\047\\\047\047", x)
+			return "\047" x "\047"
 		}
-		close(df)
-		if (e < 0) exit 2;
-	}
-'
+		{sub(/\r$/, "")}
+		NF == 1 && $0 != "" && $0 !~ /[ \t\r\n*?:[^~\\]/ {printf "%s ", sq(p $0)}
+	')" | awk -v an="$anflag" -v df="$depslist" '
+		NF >= 2 && $1 != "" && $2 ~ /^[0-4]$/ {bt[$1] = 0 + $2}
+		END {
+			prefix = "Depends: "
+			while ((e = (getline adep <df)) > 0) {
+				sub(/\r$/, "", adep)
+				if (adep == "" || adep ~ /[ \t\r\n*?:[^~\\]/) continue
+				if (!an && bt[adep] == 2) continue
+				suffix = ""
+				if (bt[adep] == 2) suffix = " (annihilated)"
+				print prefix adep suffix
+				prefix = "         "
+			}
+			close(df)
+			if (e < 0) exit 2;
+		}
+	'
+fi
 
 depcheck="$(get_temp tg-depcheck)"
 missing_deps=
