@@ -4,6 +4,7 @@
 # creation to produce a "smudged" ChangeLog file containing the contents of the
 # annotated/signed tags listed below.
 
+topgit-0.19.11	# Speed Bump
 topgit-0.19.10	# Pedantically POSIX
 topgit-0.19.9	# Regression Relief
 topgit-0.19.8	# Wayback to POSIX Proficiency
