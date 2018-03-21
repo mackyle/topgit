@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-<title>TopGit-0.19.10 - Pedantically POSIX</title>
+<title>TopGit-0.19.11 - Speed Bump</title>
 <style type="text/css">
 /* <![CDATA[ */
 
@@ -183,6 +183,114 @@ li._markdown-checkbox-on > span:first-child + span:before {
 <body style="text-align:center">
 <div style="display:inline-block;text-align:left;max-width:42pc">
 <!-- git-changelog-smudge.pl -\-smudge -\- ChangeLog -->
+
+<h1 id="_topgit-0_19_11_-_speed_bump_">TopGit-0.19.11 - Speed Bump</h1>
+
+<h2 id="_2018-03-20_">2018-03-20</h2>
+
+<p><em>Reminder</em></p>
+
+<blockquote>
+  <p>TopGit 0.19.4 (2017-02-14) introduced support for a new top-bases location
+     under heads.  This new location will become the default as of the TopGit
+     0.20.0 release.  The current location under refs will continue to be
+     supported in the future.  See <code>tg help migrate-bases</code> for more details.</p>
+</blockquote>
+
+<p>A small speed bump most noticeable with <code>tg summary</code>, a few regression fixes,
+minor enhancements and more tests.</p>
+
+<h3 id="_enhancements_">Enhancements</h3>
+
+<ul>
+<li>Enormous reduction in subshell creation reaps a minor speedup</li>
+<li><code>tg info</code> now understands the <code>-i</code> and <code>-w</code> options</li>
+<li>Two stage anonymous stash by first moving old TG_STASH to ORIG_TG_STASH</li>
+<li><code>tg push</code> won't push out-of-date branches without <code>--allow-outdated</code></li>
+<li>The default push remote can be configured as <code>topgit.pushRemote</code></li>
+</ul>
+
+<h3 id="_corrections_">Corrections</h3>
+
+<ul>
+<li><code>tg info --leaves</code> works properly again (broken since 0.19.8)</li>
+<li>The <code>-i</code> and <code>-w</code> options now work as intended with <code>tg summary</code></li>
+</ul>
+
+<div class="_markdown-code-bt"><pre style="display:none"></pre><pre><code>Kyle J. McKay (72):
+    tg.sh: next version is 0.19.11
+    t2000: add kludge for ancient broken shells
+    README: update Magit links
+    test-lib-functions.sh: prereqs may use whitespace
+    tg: repair tg info --leaves regression
+    t6000: test tg revert --list with short hashes
+    tg.sh: refresh short ref cache as needed
+    tg-revert.sh: honor --hash when listing all refs
+    tg: reduce subshell creation phase I
+    tg: reduce subshell creation phase II
+    tg-{export,push}.sh: avoid using "true" and "false" for testing
+    tg: improve "set -e" friendliness
+    pre-commit.sh: minor efficiencies
+    tg: reduce subshell creation phase III
+    t1360: test topgit_msg.awk functionality
+    README: mention effect of tg tag --drop ...@{0}
+    tg-mail.sh: properly quote temp file name
+    tg.sh: quote alias test
+    tg.sh: provide for recurse_deps_internal run_awk_topgit_deps options
+    tg-summary.sh: restore correct -i and -w operation
+    t4400: test -i and -w informational options
+    tg-info: support -i and -w options
+    tg: sanitize `git branch --contains` output
+    tg-info.sh: validate non-TopGit committish shortcut answers
+    t4400: add tests for tg info -i/-w options
+    tg-tag.sh: show correct name in HEAD ref log displays
+    tg-tag.sh: only supply --updateref when dropping @{0}
+    tg-tag: when dropping @{0} avoid deleting the ref
+    tg-tag.sh: preserve ref when dropping @{0} reflog entry
+    test-lib: make prereqs list look nice
+    tg-tag: avoid --stale-fix if possible when --drop'ing
+    tg-tag: avoid unreliable --stale-fix entirely
+    tg-tag.sh: use correct git dir for linked HEAD
+    t6100: test tg tag reflog manipulations
+    tg-tag.sh: properly --clear reflogs
+    t6100: add tag --clear tests
+    tg-tag: never try to delete one's HEAD
+    tg-tag.sh: carefully resolve full ref names
+    t6110: test tg tag --delete
+    t6100: add --no-type tests
+    tg-tag.sh: improve parsing of --all option
+    tg-tag: detach HEAD before deleting its symref
+    tg: tidy up "detaching" messages
+    tg-revert.sh: don't forget to stash
+    tg-tag: last gasp save in ORIG_TG_STASH
+    test-lib-functions.sh: fix test_external test counts
+    test-lib-main.sh: check --run before prereqs
+    tg.sh: accept --paginate as --pager alias
+    tg.sh: mimic Git alias expansion more closely
+    tg-tag.sh: do not require ident with --refs
+    tg.sh: disambiguate @{upstream} for rev-parse
+    tg-revert.sh: try to tame rev-parse --symbolic-full-ref
+    tg-tag.sh: show ambiguous refname error
+    tg-tag: prefer refs/heads disambiguations
+    t6120: add tg tag and stash tests
+    tg-revert.sh: keep matching tags when reverting
+    tg-tag.sh: send "not up-to-date" message to STDERR
+    tg-push: check for out-of-dateness before pushing
+    README: minute wordsmithing
+    test-lib-main.sh: make sure GIT_PATH and PERL_PATH are absolute
+    tg-info.sh: show needed remote branch updates
+    tg-info: omit annihilated dependencies from list
+    tg-push.sh: improve branch name checks
+    tg-push: pass more options through to git push
+    install-html: allow RST2HTML to override rst2html
+    t/Makefile.sh: correct variable name
+    Makefile.mak: allow parallel bin-wrappers creation
+    test-lib.sh: fully construct UNSET_VARS before test-lib-main.sh
+    tg-info.sh: omit ignored dependencies
+    t7000: test tg push
+    tg-tag.sh: remove shell-confusing, unnecessary space
+    topgit: version 0.19.11
+</code></pre></div>
 
 <h1 id="_topgit-0_19_10_-_pedantically_posix_">TopGit-0.19.10 - Pedantically POSIX</h1>
 

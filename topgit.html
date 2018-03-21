@@ -717,7 +717,10 @@ suddenly find yourself in an emergency &quot;WHERE'S THE UNDO???&quot; situation
 It's only set if you've foolishly disabled autostash and it always overwrites
 the previous <tt class="docutils literal">TG_STASH</tt> value if there was one (there's no reflog for it)
 and it will most likely <em>not</em> survive a <tt class="docutils literal">git gc</tt> (even an automatic one) no
-matter what gc expiration values are used.</p>
+matter what gc expiration values are used.  However, as a last gasp attempt
+to save your butt, a previously existing <tt class="docutils literal">TG_STASH</tt> will first be renamed
+to <tt class="docutils literal">ORIG_TG_STASH</tt> immediately before a new <tt class="docutils literal">TG_STASH</tt> gets written
+(stepping on any previously existing <tt class="docutils literal">ORIG_TG_STASH</tt> at that point).</p>
 <p>Note that the tags saved by <tt class="docutils literal">tg tag <span class="pre">--stash</span></tt> are stored in the
 <tt class="docutils literal">refs/tgstash</tt> ref and its reflog.  Unfortunately, while Git is happy to
 maintain the reflog (once it's been enabled which <tt class="docutils literal">tg tag</tt> guarantees for
@@ -739,7 +742,7 @@ target tag was made will continue to exist in the &quot;wayback&quot; view of th
 <p>Any operations that are read-only and do not require working tree files (e.g.
 the <tt class="docutils literal"><span class="pre">-i</span></tt> or <tt class="docutils literal"><span class="pre">-w</span></tt> options of <a class="reference internal" href="#tg-patch">tg patch</a>) are allowed using the wayback
 machine.  Simply add a global <tt class="docutils literal"><span class="pre">-w</span> &lt;tgtag&gt;</tt> option to the command.</p>
-<p>This functionality can be extremely useful for quickly examing/querying a
+<p>This functionality can be extremely useful for quickly examining/querying a
 previous state recorded some time ago with a <a class="reference internal" href="#tg-tag">tg tag</a>.</p>
 <p>As the wayback machine uses a separate caching area, expect initial operations
 to be less speedy, but repeated wayback operations on the same wayback tag
@@ -773,6 +776,8 @@ thereby allowing it to persist, but the same warnings then apply as using the
 <tr class="field"><th class="field-name"><a class="reference internal" href="#tg-create">tg create</a>:</th><td class="field-body"><tt class="docutils literal">topgit.cc</tt> default &quot;Cc:&quot; value for create</td>
 </tr>
 <tr class="field"><th class="field-name"><a class="reference internal" href="#tg-patch">tg patch</a>:</th><td class="field-body"><tt class="docutils literal">topgit.from</tt> &quot;From:&quot; fixups by <tt class="docutils literal">tg patch</tt></td>
+</tr>
+<tr class="field"><th class="field-name"><a class="reference internal" href="#tg-push">tg push</a>:</th><td class="field-body"><tt class="docutils literal">topgit.pushRemote</tt> default push remote</td>
 </tr>
 <tr class="field"><th class="field-name" colspan="2"><a class="reference internal" href="#remote-handling">REMOTE HANDLING</a>:</th></tr>
 <tr class="field"><td>&#160;</td><td class="field-body"><tt class="docutils literal">topgit.remote</tt> TopGit's default remote</td>
@@ -1484,8 +1489,8 @@ normally performed <tt class="docutils literal">tg update</tt> will be suppresse
 <h2>tg info</h2>
 <blockquote>
 <div class="line-block">
-<div class="line"><tt class="docutils literal">tg <span class="pre">[...]</span> info <span class="pre">[--heads</span> | <span class="pre">--leaves</span> | <span class="pre">--series[=&lt;head&gt;]]</span> [&lt;name&gt;]</tt></div>
-<div class="line"><tt class="docutils literal">tg <span class="pre">[...]</span> info <span class="pre">[--deps</span> | <span class="pre">--dependencies</span> | <span class="pre">--dependents]</span> [&lt;name&gt;]</tt></div>
+<div class="line"><tt class="docutils literal">tg <span class="pre">[...]</span> info <span class="pre">[-i</span> | <span class="pre">-w]</span> <span class="pre">[--heads</span> | <span class="pre">--leaves</span> | <span class="pre">--series[=&lt;head&gt;]]</span> [&lt;name&gt;]</tt></div>
+<div class="line"><tt class="docutils literal">tg <span class="pre">[...]</span> info <span class="pre">[-i</span> | <span class="pre">-w]</span> <span class="pre">[--deps</span> | <span class="pre">--dependencies</span> | <span class="pre">--dependents]</span> [&lt;name&gt;]</tt></div>
 </div>
 <p>Show summary information about the current or specified topic
 branch.</p>
@@ -1495,7 +1500,9 @@ are non-merge commits (3).</p>
 <p>With <tt class="docutils literal"><span class="pre">--verbose</span></tt> (or <tt class="docutils literal"><span class="pre">-v</span></tt>) include a list of dependents (i.e. other
 branches that depend on this one).  Another <tt class="docutils literal"><span class="pre">--verbose</span></tt> annotates
 them with &quot;[needs merge]&quot; if the current tip of branch for which info
-is being shown has not yet been merged into the base of the dependent.</p>
+is being shown has not yet been merged into the base of the dependent.
+Two <tt class="docutils literal"><span class="pre">--verbose</span></tt> options also cause annihilated dependencies to be
+shown in the &quot;Depends:&quot; list.</p>
 <p>Alternatively, if <tt class="docutils literal"><span class="pre">--heads</span></tt> is used then which of the independent
 TopGit branch heads (as output by <tt class="docutils literal">tg summary <span class="pre">--topgit-heads</span></tt>)
 logically contains the specified commit (which may be any committish --
@@ -1528,11 +1535,27 @@ of each branch.  If the branch name passed to <tt class="docutils literal">tg in
 last branch in the series a marker column will be provided to quickly
 locate it in the list.  This same option can be used with <a class="reference internal" href="#tg-checkout">tg checkout</a>.</p>
 <p>Some patches shown in the list may not actually end up introducing any
-changes if exported and be therefore end up being omitted.  The <tt class="docutils literal">0</tt>
+changes if exported and will therefore end up being omitted.  The <tt class="docutils literal">0</tt>
 indicator in <tt class="docutils literal">tg summary</tt> output can help to identify some of these.</p>
 <p>The patches shown in the series in the order they are shown form the
 basis for the <tt class="docutils literal">tg next</tt> and <tt class="docutils literal">tg prev</tt> operations with the first
 patch shown being considered the first and so on up to the last.</p>
+<dl class="docutils">
+<dt>Options:</dt>
+<dd><table class="first last docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd><span class="option">-i</span></kbd></td>
+<td>Use TopGit metadata from the index instead of the branch</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-w</span></kbd></td>
+<td>Use TopGit metadata from the working tree instead of the branch</td></tr>
+</tbody>
+</table>
+</dd>
+</dl>
 </blockquote>
 </div>
 <div class="section" id="tg-patch">
@@ -2243,7 +2266,7 @@ the old value (i.e. be a fast-forward update).  This is for safety.</p>
 <h2>tg push</h2>
 <blockquote>
 <div class="line-block">
-<div class="line"><tt class="docutils literal">tg <span class="pre">[...]</span> push <span class="pre">[--dry-run]</span> <span class="pre">[--force]</span> <span class="pre">[--no-deps]</span> <span class="pre">[--tgish-only]</span> <span class="pre">[-r</span> &lt;remote&gt;] <span class="pre">[-a</span> | <span class="pre">--all</span> | <span class="pre">&lt;branch&gt;...]</span></tt></div>
+<div class="line"><tt class="docutils literal">tg <span class="pre">[...]</span> push <span class="pre">[--dry-run]</span> <span class="pre">[--force]</span> <span class="pre">[--no-deps]</span> <span class="pre">[--tgish-only]</span> <span class="pre">[-r</span> &lt;pushRemote&gt;] <span class="pre">[-a</span> | <span class="pre">--all</span> | <span class="pre">&lt;branch&gt;...]</span></tt></div>
 </div>
 <p>If <tt class="docutils literal"><span class="pre">-a</span></tt> or <tt class="docutils literal"><span class="pre">--all</span></tt> was specified, pushes all non-annihilated
 TopGit-controlled topic branches, to a remote repository.
@@ -2254,11 +2277,25 @@ non-TopGit-controlled) and bases pushed to it too.  If
 <tt class="docutils literal"><span class="pre">--tgish-only</span></tt> was specified, only TopGit-controlled
 dependencies will be pushed, and if <tt class="docutils literal"><span class="pre">--no-deps</span></tt> was specified,
 no dependencies at all will be pushed.</p>
-<p>The <tt class="docutils literal"><span class="pre">--dry-run</span></tt> and <tt class="docutils literal"><span class="pre">--force</span></tt> options are passed directly to
-<tt class="docutils literal">git push</tt> if given.</p>
-<p>The remote may be specified with the <tt class="docutils literal"><span class="pre">-r</span></tt> option. If no remote
-was specified, the configured default TopGit remote will be
-used.</p>
+<p>All TopGit branches to be pushed must be up-to-date unless the
+<tt class="docutils literal"><span class="pre">--allow-outdated</span></tt> option is given.  Branches <cite>are</cite> checked against
+the configured TopGit remote (<tt class="docutils literal">topgit.remote</tt>) if it's set (as
+modified by the global <tt class="docutils literal"><span class="pre">-u</span></tt> and <tt class="docutils literal"><span class="pre">-r</span> &lt;remote&gt;</tt> options).</p>
+<p>The <tt class="docutils literal"><span class="pre">--dry-run</span></tt>, <tt class="docutils literal"><span class="pre">--force</span></tt>, <tt class="docutils literal"><span class="pre">--atomic</span></tt>, <tt class="docutils literal"><span class="pre">--signed[=...]</span></tt>,
+<tt class="docutils literal"><span class="pre">-4</span></tt> and <tt class="docutils literal"><span class="pre">-6</span></tt> options are passed through directly to <tt class="docutils literal">git push</tt>
+if given.  Note that in the highly unlikely event that the branch names
+of all the branches being pushed do not fit on a single command line,
+multiple <tt class="docutils literal">git push</tt> commands will be issued which would have the side
+effect of rendering <tt class="docutils literal"><span class="pre">--atomic</span></tt> not so atomic and cause more than
+one signature to be needed if <tt class="docutils literal"><span class="pre">--signed[=...]</span></tt> is used.</p>
+<p>The push remote may be specified with the <tt class="docutils literal"><span class="pre">-r</span></tt> option. If no remote
+was specified, the configured default TopGit push remote will be
+used (<tt class="docutils literal">topgit.pushRemote</tt>) or if that's unset the regular remote
+(<tt class="docutils literal">topgit.remote</tt>).</p>
+<p>Use something like this to push to an <tt class="docutils literal">origin</tt> remote when it's set
+as <tt class="docutils literal">topgit.remote</tt> while only checking for local out-of-dateness:</p>
+<blockquote>
+<tt class="docutils literal">tg <span class="pre">-u</span> push <span class="pre">-r</span> origin <span class="pre">&lt;optional-branch-names-here&gt;</span></tt></blockquote>
 </blockquote>
 </div>
 <div class="section" id="tg-base">
@@ -2336,6 +2373,9 @@ lines surround one line per ref where the format of each line is
 full-hash SP ref-name.  A line will be included for each branch given
 on the command line and each ref they depend on either directly or
 indirectly.</p>
+<p>Note that when specifying branch names, if a given name is ambiguous
+but prefixing the branch name with <tt class="docutils literal">refs/heads/</tt> successfully
+disambiguates it, then that will be the interpretation used.</p>
 <p>If more than one TopGit branch is given on the command line, a new
 commit will be created that has an empty tree and all of the given
 TopGit branches as parents and that commit will be tagged.  If a single
@@ -2349,7 +2389,7 @@ the <tt class="docutils literal"><span class="pre">--tree</span></tt> option may
 it is not already the sole commit needing to be tagged.  If <tt class="docutils literal"><span class="pre">--tree</span></tt>
 is NOT used, its tree will also be used instead of the empty tree for
 any new consolidation commit if one is created.  Note that if
-<tt class="docutils literal"><span class="pre">--tree</span></tt> is given explicitly it's tree is always used but that does
+<tt class="docutils literal"><span class="pre">--tree</span></tt> is given explicitly its tree is always used but that does
 not in any way affect the choice of first parent.  Beware that the
 <tt class="docutils literal">~</tt> may need to be quoted to prevent the shell from misinterpreting
 it into something else.</p>
@@ -2383,15 +2423,20 @@ tags as well provided they have a reflog.</p>
 <p>The number of entries shown may be limited with the <tt class="docutils literal"><span class="pre">-n</span></tt> option.  If
 the tagname is omitted then <tt class="docutils literal"><span class="pre">--stash</span></tt> is assumed.</p>
 <p>The <tt class="docutils literal"><span class="pre">--delete</span></tt> option is a convenience option that runs the
-<tt class="docutils literal">git <span class="pre">update-ref</span> <span class="pre">-d</span></tt> command on the specified tag removing it and its
-reflog (if it has one).</p>
+<tt class="docutils literal">git <span class="pre">update-ref</span> <span class="pre">--no-deref</span> <span class="pre">-d</span></tt> command on the specified tag removing
+it and its reflog (if it has one).  Note that <cite>HEAD</cite> cannot be removed.</p>
 <p>The <tt class="docutils literal"><span class="pre">--clear</span></tt> option clears all but the most recent (the <tt class="docutils literal">&#64;{0}</tt>)
 reflog entries from the reflog for the specified tag.  It's equivalent
 to dropping all the higher numbered reflog entries.</p>
 <p>The <tt class="docutils literal"><span class="pre">--drop</span></tt> option drops the specified reflog entry and requires the
 given tagname to have an <tt class="docutils literal">&#64;{n}</tt> suffix where <tt class="docutils literal">n</tt> is the reflog
 entry number to be dropped.   This is really just a convenience option
-that runs the appropriate <tt class="docutils literal">git reflog delete</tt> command.</p>
+that runs the appropriate <tt class="docutils literal">git reflog delete</tt> command.  Note that
+even dropping the ...&#64;{0} entry when it's the last entry of a
+non-symbolic ref will NOT delete the ref itself (unless the ref was
+already somehow set to an invalid object hash); but dropping &#64;{0} of
+a non-symbolic ref may have the side effect of removing some stale
+reflog entries that were present in the reflog.</p>
 <p>Note that when combined with <tt class="docutils literal">tg revert</tt>, a tag created by <tt class="docutils literal">tg tag</tt>
 can be used to transfer TopGit branches.  Simply create the tag, push
 it somewhere and then have the recipient run <tt class="docutils literal">tg revert</tt> to recreate
@@ -3173,7 +3218,9 @@ topgit and its subcommands.</p>
 <h1>THIRD-PARTY SOFTWARE</h1>
 <p>The following software understands TopGit branches:</p>
 <ul class="simple">
-<li><a class="reference external" href="http://magit.github.io/">magit</a> -- a git mode for emacs</li>
+<li><a class="reference external" href="https://github.com/magit/magit">Magit</a> - a git mode for emacs
+with the <a class="reference external" href="https://github.com/greenrd/magit-topgit">Magit TopGit mode</a>
+that may, perhaps, be a bit outdated.</li>
 </ul>
 <p>IMPORTANT: Magit requires its topgit mode to be enabled first, as
 described in its documentation, in the &quot;Activating extensions&quot;
