@@ -781,7 +781,7 @@ EOT
 		die "there was a problem with the editor '$tg_editor'"
 	fi
 fi
-git stripspace ${stripcomments:+ --strip-comments} \
+git stripspace ${stripcomments:+--strip-comments} \
 	<"$git_dir/TAG_EDITMSG" >"$git_dir/TGTAG_FINALMSG"
 [ -s "$git_dir/TGTAG_FINALMSG" ] || die "no tag message?"
 echo "" >>"$git_dir/TGTAG_FINALMSG"
