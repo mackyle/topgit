@@ -2253,6 +2253,8 @@ initial_setup()
 	! vcmp "$git_version" '>=' "2.6" || gcfbopt="--buffer"
 	auhopt=
 	! vcmp "$git_version" '>=' "2.9" || auhopt="--allow-unrelated-histories"
+	crlopt=
+	! vcmp "$git_version" '>=' "2.10" || crlopt="--create-reflog"
 	v_get_show_cdup root_dir
 	root_dir="${root_dir:-.}"
 	logrefupdates="$(git config --bool core.logallrefupdates 2>/dev/null)" || :
@@ -2344,7 +2346,7 @@ activate_wayback_machine()
 	TG_OBJECT_DIRECTORY="$altodb" && export TG_OBJECT_DIRECTORY
 	if [ -n "${1#:}" ]; then
 		<"$tgwbr" sed 's/^\([^ ][^ ]*\) \([^ ][^ ]*\)$/update \2 \1/' |
-		git --git-dir="$tg_wayback_dir/.git" update-ref -m "wayback to $1" ${2:+--create-reflog} --stdin
+		git --git-dir="$tg_wayback_dir/.git" update-ref -m "wayback to $1" ${2:+$crlopt} --stdin
 	fi
 	if test -n "$2"; then
 		# extra setup for potential shell
