@@ -34,7 +34,7 @@ REQUIREMENTS
 
 TopGit is a collection of POSIX shell scripts so a POSIX-compliant shell is
 required along with some standard POSIX-compliant utilities (e.g. sed, awk,
-cat, etc.).  Git version 1.8.5 or later is also required.
+cat, etc.).  Git version 1.9.0 or later is also required.
 
 To use TopGit with linked working trees (the ``git worktree add`` command),
 at least Git version 2.5.0 (obviously, since that's when the ``git worktree``
