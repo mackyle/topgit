@@ -88,13 +88,13 @@ do_base_mode()
 		tg tag -q -q -m "$stashmsg" --stash "$tgbranch" &&
 		stashhash="$(git rev-parse --quiet --verify refs/tgstash --)" &&
 		[ -n "$stashhash" ] &&
-		[ "$(git cat-file -t "$stashhash" -- 2>/dev/null)" = "tag" ] ||
+		[ "$(git cat-file -t "$stashhash" 2>/dev/null)" = "tag" ] ||
 		die "requested --stash failed"
 	else
 		tg tag --anonymous "$tgbranch" &&
 		stashhash="$(git rev-parse --quiet --verify TG_STASH --)" &&
 		[ -n "$stashhash" ] &&
-		[ "$(git cat-file -t "$stashhash" -- 2>/dev/null)" = "tag" ] ||
+		[ "$(git cat-file -t "$stashhash" 2>/dev/null)" = "tag" ] ||
 		die "anonymous --stash failed"
 	fi
 
@@ -433,13 +433,13 @@ stash_now_if_requested() {
 		tg tag -q -q -m "$msg" --stash "$@"  &&
 		stashhash="$(git rev-parse --quiet --verify refs/tgstash --)" &&
 		[ -n "$stashhash" ] &&
-		[ "$(git cat-file -t "$stashhash" -- 2>/dev/null)" = "tag" ] ||
+		[ "$(git cat-file -t "$stashhash" 2>/dev/null)" = "tag" ] ||
 		die "requested --stash failed"
 	else
 		tg tag --anonymous "$@" &&
 		stashhash="$(git rev-parse --quiet --verify TG_STASH --)" &&
 		[ -n "$stashhash" ] &&
-		[ "$(git cat-file -t "$stashhash" -- 2>/dev/null)" = "tag" ] ||
+		[ "$(git cat-file -t "$stashhash" 2>/dev/null)" = "tag" ] ||
 		die "anonymous --stash failed"
 	fi
 	[ -z "$next_no_auto" ] || no_auto="$next_no_auto"

@@ -68,13 +68,13 @@ if [ -n "$stash" ]; then
 	tg tag -q -q -m "$stashmsg" --stash $name &&
 	stashhash="$(git rev-parse --quiet --verify refs/tgstash --)" &&
 	[ -n "$stashhash" ] &&
-	[ "$(git cat-file -t "$stashhash" -- 2>/dev/null)" = "tag" ] ||
+	[ "$(git cat-file -t "$stashhash" 2>/dev/null)" = "tag" ] ||
 	die "requested --stash failed"
 else
 	tg tag --anonymous $name &&
 	stashhash="$(git rev-parse --quiet --verify TG_STASH --)" &&
 	[ -n "$stashhash" ] &&
-	[ "$(git cat-file -t "$stashhash" -- 2>/dev/null)" = "tag" ] ||
+	[ "$(git cat-file -t "$stashhash" 2>/dev/null)" = "tag" ] ||
 	die "anonymous --stash failed"
 fi
 
