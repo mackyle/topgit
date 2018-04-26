@@ -22,7 +22,7 @@ defines() {
 	POUND="#"
 
 	# Update if you add any code that requires a newer version of git
-	: "${GIT_MINIMUM_VERSION:=1.9.0}"
+	: "${GIT_MINIMUM_VERSION:=1.9.2}"
 
 	# This avoids having this in no less than three different places!
 	TG_STATUS_HELP_USAGE="st[atus] [-v] [--exit-code]"
