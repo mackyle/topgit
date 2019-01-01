@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-<title>TopGit-0.19.11 - Speed Bump</title>
+<title>TopGit-0.19.12 - Compatibility Conundrum</title>
 <style type="text/css">
 /* <![CDATA[ */
 
@@ -184,6 +184,54 @@ li._markdown-checkbox-on > span:first-child + span:before {
 <div style="display:inline-block;text-align:left;max-width:42pc">
 <!-- git-changelog-smudge.pl -\-smudge -\- ChangeLog -->
 
+<h1 id="_topgit-0_19_12_-_compatibility_conundrum_">TopGit-0.19.12 - Compatibility Conundrum</h1>
+
+<h2 id="_2019-01-01_">2019-01-01</h2>
+
+<p><em>Reminder</em></p>
+
+<blockquote>
+  <p>TopGit 0.19.4 (2017-02-14) introduced support for a new top-bases location
+     under heads.  This new location will become the default as of the TopGit
+     0.20.0 release.  The current location under refs will continue to be
+     supported in the future.  See <code>tg help migrate-bases</code> for more details.</p>
+</blockquote>
+
+<p>Tiny tweaks to provide improved compatibility with various earlier Git
+versions.</p>
+
+<p>The minimum Git version required is now 1.9.2 (released 2014-04-09).  This
+reflects a bump up from a minimum of Git version 1.8.5 for two reasons:</p>
+
+<ol>
+<li>A feature (exclude pathspec magic) required for the 0.19.7 changes was
+actually introduced in Git 1.9.0 not Git 1.8.5 so the minimum version
+should have been updated to 1.9.0 at that point.</li>
+<li>A feature (<code>update-ref --stdin</code>) also required for the 0.19.7 update,
+which was actually introduced in Git 1.8.5, turns out not to work correctly
+until a bug fix for it was included in Git 1.9.2.</li>
+</ol>
+
+<p>There's no pressing need to pick up this update when running a Git version
+that is greater than or equal to 2.10.0.  Users of Git versions that are
+greater than or equal to 1.9.2 but less than 2.10.0 probably want this update.</p>
+
+<h3 id="_corrections_">Corrections</h3>
+
+<ul>
+<li>Don't use <code>--create-reflog</code> before Git 2.10.0 (which added it)</li>
+<li>Don't pass <code>--</code> to <code>git cat-file</code> as it's unnecessary and breaks Git &lt; 2.5</li>
+</ul>
+
+<div class="_markdown-code-bt"><pre style="display:none"></pre><pre><code>Kyle J. McKay (6):
+    tg.sh: next version is 0.19.12
+    tg: avoid passing '--' options terminator to git cat-file
+    tg.sh: require Git 1.9.0 or later
+    tg.sh: require Git 1.9.2 or later
+    tg.sh: omit --create-reflog option prior to Git version 2.10.0
+    topgit: version 0.19.12
+</code></pre></div>
+
 <h1 id="_topgit-0_19_11_-_speed_bump_">TopGit-0.19.11 - Speed Bump</h1>
 
 <h2 id="_2018-03-20_">2018-03-20</h2>
@@ -210,7 +258,7 @@ minor enhancements and more tests.</p>
 <li>The default push remote can be configured as <code>topgit.pushRemote</code></li>
 </ul>
 
-<h3 id="_corrections_">Corrections</h3>
+<h3>Corrections</h3>
 
 <ul>
 <li><code>tg info --leaves</code> works properly again (broken since 0.19.8)</li>
