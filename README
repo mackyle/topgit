@@ -130,7 +130,7 @@ Of course, TopGit is perhaps not the right tool for you:
 SYNOPSIS
 --------
 
-.. code-block:: sh
+.. code-block:: bash
 
 	## Create and evolve a topic branch
 	$ tg create t/gitweb/pathinfo-action
