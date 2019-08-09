@@ -130,9 +130,8 @@ Of course, TopGit is perhaps not the right tool for you:
 SYNOPSIS
 --------
 
-.. code-block:: bash
+Create and evolve a topic branch::
 
-	## Create and evolve a topic branch
 	$ tg create t/gitweb/pathinfo-action
 	tg: Automatically marking dependency on master
 	tg: Creating t/gitweb/pathinfo-action base from master...
@@ -141,15 +140,17 @@ SYNOPSIS
 	$ ..fix a mistake..
 	$ git commit
 
-	## Create another topic branch on top of the former one
+Create another topic branch on top of the former one::
+
 	$ tg create t/gitweb/nifty-links
 	tg: Automatically marking dependency on t/gitweb/pathinfo-action
 	tg: Creating t/gitweb/nifty-links base from t/gitweb/pathinfo-action...
 	$ ..hack..
 	$ git commit
 
-	## Create another topic branch on top of master and submit
-	## the resulting patch upstream
+Create another topic branch on top of master and submit
+the resulting patch upstream::
+
 	$ tg create t/revlist/author-fixed master
 	tg: Creating t/revlist/author-fixed base from master...
 	$ ..hack..
@@ -161,7 +162,8 @@ SYNOPSIS
 	Cc: gitster@pobox.com
 	Subject: [PATCH] Fix broken revlist --author when --fixed-string
 
-	## Create another topic branch depending on two others non-trivially
+Create another topic branch depending on two others non-trivially::
+
 	$ tg create t/whatever t/revlist/author-fixed t/gitweb/nifty-links
 	tg: Creating t/whatever base from t/revlist/author-fixed...
 	tg: Merging t/whatever base with t/gitweb/nifty-links...
@@ -176,8 +178,9 @@ SYNOPSIS
 	$ ..hack..
 	$ git commit
 
-	## Update a single topic branch and propagate the changes to
-	## a different one
+Update a single topic branch and propagate the changes to
+a different one::
+
 	$ git checkout t/gitweb/nifty-links
 	$ ..hack..
 	$ git commit
@@ -205,8 +208,9 @@ SYNOPSIS
 	$ git commit
 	$ tg update --continue
 
-	## Update a single topic branch and propagate the changes
-	## further through the dependency chain
+Update a single topic branch and propagate the changes
+further through the dependency chain::
+
 	$ git checkout t/gitweb/pathinfo-action
 	$ ..hack..
 	$ git commit
@@ -237,7 +241,8 @@ SYNOPSIS
 	tg: Updating base with t/gitweb/nifty-links changes...
 	tg: Updating t/whatever against new base...
 
-	## Clone a TopGit-controlled repository
+Clone a TopGit-controlled repository::
+
 	$ git clone URL repo
 	$ cd repo
 	$ tg remote --populate origin
@@ -245,12 +250,14 @@ SYNOPSIS
 	$ git fetch
 	$ tg update
 
-	## Add a TopGit remote to a repository and push to it
+Add a TopGit remote to a repository and push to it::
+
 	$ git remote add foo URL
 	$ tg remote foo
 	$ tg push -r foo
 
-	## Update from a non-default TopGit remote
+Update from a non-default TopGit remote::
+
 	$ git fetch foo
 	$ tg -r foo summary
 	$ tg -r foo update
