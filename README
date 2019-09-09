@@ -2292,7 +2292,7 @@ tg migrate-bases
 	Transition top-bases from old location to new location.
 
 	Beginning with TopGit release 0.19.4, TopGit has the ability to store
-	the top-bases refs in either the old ``ref/top-bases/...`` location or
+	the top-bases refs in either the old ``refs/top-bases/...`` location or
 	the new ``refs/heads/{top-bases}/...`` location.  Starting with TopGit
 	release 0.20.0, the default is the new location.
 
