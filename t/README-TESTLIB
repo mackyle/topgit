@@ -723,7 +723,7 @@ by using a `return` statement or, if `$TESTLIB_TEST_NO_SUBSHELL` is _NOT_ set
 
     If <prereqs> are present and unsatisfied an "ok # skip" line is output and
     the <script> is _not_ "eval"'d.  Otherwise, the <script> is "eval"'d and if
-    fails (exit code is _not_ 0) then this subtest outputs a "not ok # todo"
+    it fails (exit code is _not_ 0) then this subtest outputs a "not ok # todo"
     line.  If the script succeeds a "ok # todo" line is output which will
     ultimately produce some warnings and/or complaints about a "known breakage"
     vanishing or "todo passing".  See the `test_tolerate_failure` function to
@@ -733,7 +733,7 @@ by using a `return` statement or, if `$TESTLIB_TEST_NO_SUBSHELL` is _NOT_ set
 
     If <prereqs> are present and unsatisfied an "ok # skip" line is output and
     the <script> is _not_ "eval"'d.  Otherwise, the <script> is "eval"'d and if
-    fails (exit code is _not_ 0) then this subtest outputs a "not ok # todo"
+    it fails (exit code is _not_ 0) then this subtest outputs a "not ok # todo"
     line.  If the script succeeds a plain "ok" line is output (which avoids
     any complaints about "vanishing" breakages).  However, if the variable
     `TESTLIB_NO_TOLERATE` is non-empty all `test_tolerate_failure` calls are
@@ -742,7 +742,7 @@ by using a `return` statement or, if `$TESTLIB_TEST_NO_SUBSHELL` is _NOT_ set
 
     This function is useful for testing things that probably don't work the
     way they should but are reluctantly tolerated and if they do start working
-    better no fuss should be made about the test suddendly passing.
+    better no fuss should be made about the test suddenly passing.
 
     It's a nice way to document those "yes, we still have this ugly thing here
     that we wish we didn't" behaviors.  It can also be used to distinguish
@@ -781,7 +781,7 @@ by using a `return` statement or, if `$TESTLIB_TEST_NO_SUBSHELL` is _NOT_ set
     that is if the first `test_external` call is skipped then its state
     _does NOT change_ regardless of the outcome of the second "stderr"
     subtest check.  In addition, if the the `test_external` test is _not_
-    skipped then the `LASTOK` prerequisite is guarantted to only be true
+    skipped then the `LASTOK` prerequisite is guaranteed to only be true
     provided _both_ the `test_external` call suceeds _and_ no "stderr" output
     is generated.  In other words, it just does the right thing here so don't
     worry about it and go ahead and use it.
@@ -792,7 +792,7 @@ Standard Test Prerequisites
 
 The test result functions all take an optional first argument which is a comma
 and/or whitespace separated list of positive or negative (prefixed with `!`)
-prerequisites for the test to be run.  *All* off the listed prerequisites for
+prerequisites for the test to be run.  *All* of the listed prerequisites for
 each test _must_ be satisfied or it will be skipped.
 
 Additional prerequisites may be set using the `test_set_prereq` function but
@@ -870,7 +870,7 @@ there are a number of pre-defined prerequisites that may be tested:
 
 - `NOT_ROOT`
 
-    The `uid -u` command succeeded and returned a non-0 value.
+    The `id -u` command succeeded and returned a non-0 value.
 
 - `UTF8_NFD_TO_NFC`
 
@@ -1217,7 +1217,7 @@ available utility functions that are TopGit-specific.
     Spawn an interactive `$SHELL` to pause testing until it exits -- causes an
     error if used without `--verbose`.  Should be used for debugging only.
 
-    Something like this can be use to leave it in a script (although this is
+    Something like this can be used to leave it in a script (although this is
     not recommended):
 
         test_debug eval "want_no_verbose || test_pause"
