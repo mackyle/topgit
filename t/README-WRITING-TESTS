@@ -196,7 +196,7 @@ Instead the above is typically written like so:
 	blah blah blah
     '
 
-It's just as readble, just as efficient and should it fail every line in the
+It's just as readable, just as efficient and should it fail every line in the
 test "script" will appear in the log.
 
 A problem sometimes arises with the quoting.  If the test script itself involves
