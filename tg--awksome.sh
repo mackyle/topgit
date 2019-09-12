@@ -1,6 +1,6 @@
 #!/bin/sh
 # TopGit awk scripts and related utility functions
-# Copyright (C) 2017 Kyle J. McKay <mackyle@gmail.com>
+# Copyright (C) 2017,2019 Kyle J. McKay <mackyle@gmail.com>
 # All rights reserved.
 # License GPLv2
 
@@ -183,7 +183,7 @@ run_awk_ref_prefixes()
 #
 # Note that this function does NOT call get_temp
 #
-run_awk_require "ref_prepare" "topgit_branches"
+run_awk_require "ref_match" "ref_prepare" "topgit_branches"
 run_awk_topgit_branches()
 {
 	_ra_noann=
@@ -320,7 +320,7 @@ run_awk_topgit_branches()
 # Note that this function WILL call get_temp if -a= is NOT given AND -n is used
 # (but it will remove the temp file before returning)
 #
-run_awk_require "ref_prepare" "topgit_msg_prepare" "topgit_msg"
+run_awk_require "ref_match" "ref_prepare" "topgit_msg_prepare" "topgit_msg"
 run_awk_topgit_msg()
 {
 	_ra_colfmt=
@@ -588,7 +588,7 @@ run_awk_topmsg_header()
 # OR -b= is NOT given AND -t is used
 # (but it will remove the temp file(s) before returning)
 #
-run_awk_require "ref_prepare" "topgit_deps_prepare" "topgit_deps"
+run_awk_require "ref_match" "ref_prepare" "topgit_deps_prepare" "topgit_deps"
 run_awk_topgit_deps()
 {
 	_ra_noann=
