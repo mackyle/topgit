@@ -1,7 +1,7 @@
 #!/usr/bin/awk -f
 
 # topgit_deps - TopGit awk utility script used by tg--awksome
-# Copyright (C) 2017 Kyle J. McKay <mackyle@gmail.com>
+# Copyright (C) 2017,2019 Kyle J. McKay <mackyle@gmail.com>
 # All rights reserved.
 # License GPLv2
 
@@ -141,7 +141,7 @@ NF == 3 && $2 != "missing" && $1 != "" && $2 ~ /^[0-9]+$/ && validbr($3) {
 	while (curlen < datalen && (err = getline) > 0) {
 		curlen += length($0) + 1
 		sub(/\r$/, "", $1)
-		if (NF != 1 || $1 == "" || !validbr($1)) continue
+		if (NF != 1 || $1 == "" || $1 == bn || !validbr($1)) continue
 		if (!isann && !ann[$1] && included($1) && wanted($1)) {
 			if (rev)
 				items[++cnt] = $1 " " bn
