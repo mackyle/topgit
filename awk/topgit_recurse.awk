@@ -1,7 +1,7 @@
 #!/usr/bin/awk -f
 
 # topgit_recurse - TopGit awk utility script used by tg--awksome
-# Copyright (C) 2017 Kyle J. McKay <mackyle@gmail.com>
+# Copyright (C) 2017,2019 Kyle J. McKay <mackyle@gmail.com>
 # All rights reserved.
 # License GPLv2
 
@@ -31,6 +31,8 @@
 #   leaves  if true omit output lines where L != 1 (withbr recommended if set)
 #   tgonly  if true only T != 0 (or M == 1) lines are output
 #   showlp  if true output a :loop: line for any loops
+#
+# NOTE: a non-empty startb value IS REQUIRED!
 #
 # in multi start mode (multib is true) duplicate start names are ignored
 # (using a true value for "multib" other than "1" may have undefined behavior)
@@ -68,7 +70,7 @@
 # where M T L are single numeric digits with the following meanings:
 #
 #   M=0  branch actually exists (i.e. it's NOT missing)
-#   M=1  branch does not exist but was named in a .topdeps or startb (if withbr)
+#   M=1  branch does not exist but was named in a .topdeps or startb
 #
 #   T=0  branch is NOT tgish or NOT local (missing and remotes are always 0)
 #   T=1  branch IS local tgish (annihilated branches are always 1)
@@ -95,7 +97,7 @@
 #
 #   0 1 1 0 t/foo/leaf t/foo/int t/stage
 #
-# L=2 "a leaf" means any node that is either not a TopGit branch or is a
+# L=1 "a leaf" means any node that is either not a TopGit branch or is a
 # non-annihilated TopGit branch with NO non-annihilated dependencies (that
 # means NO non-tgish dependencies either)
 #
