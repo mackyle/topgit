@@ -41,6 +41,9 @@
 # content itself will still be suppressed) but other kinds of loops are not
 # detected (until awk_topgit_recurse runs on the output)
 #
+# if the same branch name is listed more than once within the same .topdeps
+# file, all occurences after the first will be ignored
+#
 # if withbr is true then a line will be output with the branch name as both
 # the first and second fields (i.e. the edge points to itself) and this line
 # will be output after all of the .topdeps content for the branch unless rev
@@ -135,13 +138,16 @@ NF == 3 && $2 != "missing" && $1 != "" && $2 ~ /^[0-9]+$/ && validbr($3) {
 	want = wanted(bn)
 	datalen = $2 + 1
 	curlen = 0
+	split("", seen, ":")
+	seen[bn] = 1
 	if (withbr && rev && incl && want) print bn " " bn
 	cnt = 0
 	err = 0
 	while (curlen < datalen && (err = getline) > 0) {
 		curlen += length($0) + 1
 		sub(/\r$/, "", $1)
-		if (NF != 1 || $1 == "" || $1 == bn || !validbr($1)) continue
+		if (NF != 1 || $1 == "" || $1 in seen || !validbr($1)) continue
+		seen[$1] = 1
 		if (!isann && !ann[$1] && included($1) && wanted($1)) {
 			if (rev)
 				items[++cnt] = $1 " " bn
