@@ -162,12 +162,13 @@ NR == 1 {init()}
 
 NF == 3 && $2 != "missing" && $1 != "" && $2 ~ /^[0-9]+$/ && validbr($3) {
 	bn = $3
-	isann = $1 != "blob" || bn in ann || excluded(bn)
+	bnann = bn in ann;
+	isann = $1 != "blob" || bnann || excluded(bn)
 	datalen = $2 + 1
 	curlen = 0
 	split("", seen, ":")
 	seen[bn] = 1
-	if (withbr && rev && inclself(bn)) print bn " " bn
+	if (withbr && rev && !bnann && inclself(bn)) print bn " " bn
 	cnt = 0
 	err = 0
 	while (curlen < datalen && (err = getline) > 0) {
@@ -184,5 +185,5 @@ NF == 3 && $2 != "missing" && $1 != "" && $2 ~ /^[0-9]+$/ && validbr($3) {
 	}
 	if (err < 0) exitnow(2)
 	for (i=cnt; i>0; --i) print items[i]
-	if (withbr && !rev && inclself(bn)) print bn " " bn
+	if (withbr && !rev && !bnann && inclself(bn)) print bn " " bn
 }
