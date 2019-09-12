@@ -854,7 +854,7 @@ test_cmp_bin() {
 
 # Use git diff --no-index for the diff (with a few supporting options)
 test_diff() {
-	git --no-pager -c core.abbrev=16 diff --no-color --exit-code --no-prefix --no-index "$@"
+	git --git-dir="$EMPTY_DIRECTORY" --no-pager -c core.abbrev=16 diff --no-color --exit-code --no-prefix --no-index "$@"
 }
 
 # Call any command "$@" but be more verbose about its
