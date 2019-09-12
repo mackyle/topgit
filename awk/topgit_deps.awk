@@ -20,9 +20,21 @@
 #   exclbr  whitespace separated list of names to exclude
 #   inclbr  whitespace separated list of names to include
 #
-# if inclbr is non-empty a branch name must be listed to appear on stdout
+# if inclbr is non-empty only edges with at least one end listed in inclbr
+# will appear on stdout
 #
-# if a branch name appears in exclbr it is omitted from stdout trumping inclbr
+# if a branch name appears in exclbr any edge with either end listed in exclbr
+# will be omitted from stdout trumping inclbr
+#
+# when withbr is true, the "edge to self" undergoes inclbr/exclbr processing
+# too which can end up suppressing it from the output
+#
+# if a branch is listed in exclbr then all edges going to/from that branch
+# are necessarily omitted which means effectively that any branch listed in
+# exclbr has its .topdeps file treated as though it were empty
+#
+# note that if tgonly is true then effectively all non-tgish branches are
+# considered to be implicitly listed in exclbr
 #
 # input must be result of the git --batch output as described for
 # awk_topgit_deps_prepare
@@ -116,12 +128,18 @@ function init(abranch, _e) {
 	if (rmlist != "") system("rm -f" rmlist)
 }
 
-function included(abranch) {
-	return (!inconly || incnames[abranch]) && !excnames[abranch]
+function excluded(abranch) {
+	return abranch in excnames || (tgonly && !(abranch in tgish))
 }
 
-function wanted(abranch) {
-	return !tgonly || tgish[abranch]
+function inclself(abranch) {
+	return !excluded(abranch) &&
+	       (!inconly || abranch in incnames)
+}
+
+function incledge(b1, b2) {
+	return !excluded(b1) && !excluded(b2) &&
+	       (!inconly || b1 in incnames || b2 in incnames)
 }
 
 function validbr(branchname) {
@@ -133,14 +151,12 @@ NR == 1 {init()}
 
 NF == 3 && $2 != "missing" && $1 != "" && $2 ~ /^[0-9]+$/ && validbr($3) {
 	bn = $3
-	isann = ann[bn] || $1 != "blob"
-	incl = included(bn)
-	want = wanted(bn)
+	isann = $1 != "blob" || bn in ann || excluded(bn)
 	datalen = $2 + 1
 	curlen = 0
 	split("", seen, ":")
 	seen[bn] = 1
-	if (withbr && rev && incl && want) print bn " " bn
+	if (withbr && rev && inclself(bn)) print bn " " bn
 	cnt = 0
 	err = 0
 	while (curlen < datalen && (err = getline) > 0) {
@@ -148,7 +164,7 @@ NF == 3 && $2 != "missing" && $1 != "" && $2 ~ /^[0-9]+$/ && validbr($3) {
 		sub(/\r$/, "", $1)
 		if (NF != 1 || $1 == "" || $1 in seen || !validbr($1)) continue
 		seen[$1] = 1
-		if (!isann && !ann[$1] && included($1) && wanted($1)) {
+		if (!isann && !($1 in ann) && incledge(bn,$1)) {
 			if (rev)
 				items[++cnt] = $1 " " bn
 			else
@@ -157,5 +173,5 @@ NF == 3 && $2 != "missing" && $1 != "" && $2 ~ /^[0-9]+$/ && validbr($3) {
 	}
 	if (err < 0) exitnow(2)
 	for (i=cnt; i>0; --i) print items[i]
-	if (withbr && !rev && incl && want) print bn " " bn
+	if (withbr && !rev && inclself(bn)) print bn " " bn
 }
