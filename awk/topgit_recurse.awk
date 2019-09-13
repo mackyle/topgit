@@ -186,15 +186,33 @@ function quotevar(v) {
 	return "\047" v "\047"
 }
 
-function init(abranch, _e) {
+function rmfiles() {
 	rmlist = ""
+	if (rmbr && brfile != "") rmlist = rmlist " " quotevar(brfile)
+	if (rman && anfile != "") rmlist = rmlist " " quotevar(anfile)
+	if (rmhd && hdfile != "") rmlist = rmlist " " quotevar(hdfile)
+	if (rmrt && rtfile != "") rmlist = rmlist " " quotevar(rtfile)
+	if (rmlist != "") {
+		system("rm -f" rmlist)
+		rmbr = 0
+		brfile = ""
+		rman = 0
+		anfile = ""
+		rmhd = 0
+		hdfile = ""
+		rmrt = 0
+		rtfile = ""
+	}
+}
+END { rmfiles() }
+
+function init(abranch, _e) {
 	if (brfile != "") {
 		while ((_e = (getline abranch <brfile)) > 0) {
 			if (abranch != "") tgish[abranch] = 1
 		}
 		close(brfile)
 		if (_e < 0) exitnow(2)
-		if (rmbr) rmlist = rmlist " " quotevar(brfile)
 	}
 	if (anfile != "") {
 		while ((_e = (getline abranch <anfile)) > 0) {
@@ -202,7 +220,6 @@ function init(abranch, _e) {
 		}
 		close(anfile)
 		if (_e < 0) exitnow(2)
-		if (rman) rmlist = rmlist " " quotevar(anfile)
 	}
 	if (hdfile != "") {
 		if (cuthd) {
@@ -220,7 +237,6 @@ function init(abranch, _e) {
 		}
 		close(hdfile)
 		if (_e < 0) exitnow(2)
-		if (rmhd) rmlist = rmlist " " quotevar(hdfile)
 	}
 	if (rtfile != "") {
 		if (!filter) {
@@ -230,9 +246,8 @@ function init(abranch, _e) {
 			close(rtfile)
 			if (_e < 0) exitnow(2)
 		}
-		if (rmrt) rmlist = rmlist " " quotevar(rtfile)
 	}
-	if (rmlist != "") system("rm -f" rmlist)
+	rmfiles()
 }
 
 function included(abranch) {
