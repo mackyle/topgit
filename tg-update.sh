@@ -1,7 +1,7 @@
 #!/bin/sh
 # TopGit - A different patch queue manager
 # Copyright (C) Petr Baudis <pasky@suse.cz>  2008
-# Copyright (C) Kyle J. McKay <mackyle@gmail.com>  2015,2016,2017,2018
+# Copyright (C) Kyle J. McKay <mackyle@gmail.com>  2015,2016,2017,2018,2019
 # All rights reserved.
 # GPLv2
 
@@ -484,7 +484,7 @@ die "git rev-parse --show-toplevel failed"
 # NOTE: [optional] arguments MUST appear in the order shown
 # [optional] '-v' varname => optional variable to return original HEAD hash in
 # [optional] '--merge', '--theirs' or '--remove' to alter .topfile handling
-# [optional] '--name' <name-for-ours [--name <name-for-theirs>]
+# [optional] '--name' <name-for-ours> [--name <name-for-theirs>]
 # $1 => '-m' MUST be '-m'
 # $2 => commit message
 # $3 => commit-ish to merge as "theirs"
