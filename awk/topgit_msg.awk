@@ -1,7 +1,7 @@
 #!/usr/bin/awk -f
 
 # topgit_msg - TopGit awk utility script used by tg--awksome
-# Copyright (C) 2017 Kyle J. McKay <mackyle@gmail.com>
+# Copyright (C) 2017,2019 Kyle J. McKay <mackyle@gmail.com>
 # All rights reserved.
 # License GPLv2
 
@@ -114,7 +114,7 @@ BEGIN {
 }
 
 function included(abranch) {
-	return (!inconly || incnames[abranch]) && !excnames[abranch]
+	return (!inconly || (abranch in incnames)) && !(abranch in excnames)
 }
 
 function wanted(abranch, akind) {
