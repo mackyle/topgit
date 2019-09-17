@@ -1,7 +1,7 @@
 #!/usr/bin/awk -f
 
 # topgit_branches - TopGit awk utility script used by tg--awksome
-# Copyright (C) 2017 Kyle J. McKay <mackyle@gmail.com>
+# Copyright (C) 2017,2019 Kyle J. McKay <mackyle@gmail.com>
 # All rights reserved.
 # License GPLv2
 
@@ -74,7 +74,7 @@ NF == 4 && $4 == ":" && $3 != "" && $2 != "missing" && $1 != "" {
 		if (noann) next
 	}
 	if (brfile) print $3 >brfile
-	if ((!inconly || incnames[$3]) && !excnames[$3]) {
+	if ((!inconly || ($3 in incnames)) && !($3 in excnames)) {
 		if (delay)
 			items[++cnt] = $3
 		else
