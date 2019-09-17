@@ -1,7 +1,7 @@
 #!/usr/bin/awk -f
 
 # ref_prefixes - TopGit awk utility script used by tg--awksome
-# Copyright (C) 2017 Kyle J. McKay <mackyle@gmail.com>
+# Copyright (C) 2017,2019 Kyle J. McKay <mackyle@gmail.com>
 # All rights reserved.
 # License GPLv2
 
@@ -80,10 +80,10 @@ BEGIN {
 
 function check(r) {
 	if (length(r) > plen1 && prefix1 == substr(r, 1, plen1)) {
-		if (prefixh && !heads[substr(r, plen1)]) return 0
+		if (prefixh && !(substr(r, plen1) in heads)) return 0
 		sawp1 = 1
 	} else if (length(r) > plen2 && prefix2 == substr(r, 1, plen2)) {
-		if (prefixh && !heads[substr(r, plen2)]) return 0
+		if (prefixh && !(substr(r, plen2) in heads)) return 0
 		sawp2 = 1
 	}
 	if (sawp1 && sawp2) return 1
