@@ -1,7 +1,7 @@
 #!/usr/bin/awk -f
 
 # ref_prepare - TopGit awk utility script used by tg--awksome
-# Copyright (C) 2017 Kyle J. McKay <mackyle@gmail.com>
+# Copyright (C) 2017,2019 Kyle J. McKay <mackyle@gmail.com>
 # All rights reserved.
 # License GPLv2
 
@@ -136,7 +136,7 @@ BEGIN {
 
 NR == 1 {init()}
 
-function getref(r) { return refsfile == "" ? r : (refs[r] ? refs[r] : "?") }
+function getref(r) { return refsfile == "" ? r : ((r in refs) ? refs[r] : "?") }
 
 NF == 1 && substr($1, 1, tblen) == topbases {
 	bn = substr($1, tbdrop)
