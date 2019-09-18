@@ -10,7 +10,7 @@ TEST_NO_CREATE_REPO=1
 
 . ./test-lib.sh
 
-test_plan 15
+test_plan 16
 
 # required working
 
@@ -106,6 +106,25 @@ test_tolerate_failure 'POSIX export unset var exports it' '
 	unset NO_SUCH_VAR &&
 	export NO_SUCH_VAR &&
 	printenv NO_SUCH_VAR >/dev/null
+'
+
+v_count_words() { eval "${1:-scratch_}=\"$(( $# - 1 ))\""; }
+
+test_expect_success 'count word function works' '
+	sane_unset scratch_ &&
+	v_count_words && test "$scratch_" = "-1" &&
+	sane_unset scratch_ &&
+	test "${scratch_+yes}" != "yes" &&
+	v_count_words zero && test "$zero" = "0" &&
+	v_count_words one 1 && test "$one" = "1" &&
+	v_count_words one "a b c" && test "$one" = "1" &&
+	v_count_words two    a   b      && test "$two" = "2" &&
+	v_count_words three  three 2 1 && test "$three" = "3" &&
+	line="\"a b c d\" e f g" &&
+	eval v_count_words four "$line" && test "$four" = "4" &&
+	line="\"a b c d\" e" &&
+	v_count_words five $line && test "$five" = "5" &&
+	test "${scratch_+yes}" != "yes"
 '
 
 test_done
