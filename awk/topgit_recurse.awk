@@ -150,6 +150,7 @@ function exitnow(e) { exitcode=e; exit e }
 END { if (exitcode != "") exit exitcode }
 
 BEGIN {
+	inited = 0
 	inconly = 0
 	cnt = split(inclbr, scratch, " ")
 	if (cnt) {
@@ -204,9 +205,11 @@ function rmfiles() {
 		rtfile = ""
 	}
 }
-END { rmfiles() }
 
 function init(abranch, _e) {
+	if (inited)
+		return
+	inited=1
 	if (brfile != "") {
 		while ((_e = (getline abranch <brfile)) > 0) {
 			if (abranch != "") tgish[abranch] = 1
@@ -249,6 +252,8 @@ function init(abranch, _e) {
 	}
 	rmfiles()
 }
+
+END { init(); rmfiles(); }
 
 function included(abranch) {
 	return (!inconly || incnames[abranch]) && !excnames[abranch]
