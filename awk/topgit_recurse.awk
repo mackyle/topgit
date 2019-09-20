@@ -9,11 +9,11 @@
 #
 # variable arguments (-v):
 #
-#   brfile  if non-empty, read TopGit branch names from here
+#   brfile  if non-empty, read TopGit (tg) branch names from here
 #   rmbr    if true run system rm on brfile (after reading) if non-empty brfile
-#   anfile  if non-empty, annihilated branch names are read from here
+#   anfile  if non-empty, annihilated TopGit branch names are read from here
 #   rman    if true run system rm on anfile (after reading) if non-empty anfile
-#   hdfile  if non-empty, existing head names are read from here
+#   hdfile  if non-empty, existing git branch (heads) names are read from here
 #   rmhd    if true run system rm on hdfile (after reading) if non-empty hdfile
 #   cuthd   if true extract and cut cuthd field of each "refs/heads/" line
 #   rtfile  if non-empty, read non-annihilated remote tg branch names from here
@@ -30,12 +30,15 @@
 #   once    if > 0 nodes when 1st visited only if < 0 deps on 1st visit only
 #   leaves  if true omit output lines where L != 1 (withbr recommended if set)
 #   tgonly  if true only T != 0 (or M == 1) lines are output
-#   showlp  if true output a :loop: line for any loops
+#   showlp  if true output a :loop: line for any loops (even when filter != 0)
 #
 # NOTE: a non-empty startb value IS REQUIRED!
 #
 # in multi start mode (multib is true) duplicate start names are ignored
 # (using a true value for "multib" other than "1" may have undefined behavior)
+#
+# with !preord (default), a post-order tree traversal is done, with preord
+# a pre-order tree traversal is done
 #
 # if inclbr is non-empty a branch name must be listed to appear on stdout
 #
@@ -103,7 +106,7 @@
 #
 # loops are detected and avoided (the link causing the loop is dropped) and
 # if showlp is true a line like the following will be output whenever one is
-# encountered:
+# encountered (even when filter != 0):
 #
 #   :loop: t/foo/int t/foo/leaf t/foo/int t/stage
 #
@@ -127,6 +130,10 @@
 # is active the single node name will be doubled to make an edge to itself)
 # because the edge format is "<node-with-topdeps-line> <for-this-node>" whereas
 # the normal recursion lines have the opposite order.
+#
+# When filter != 0, any missing and remote lines are always omitted from
+# the output, but loop lines (if showlp=1) ARE output and are NOT truncated
+# at all (i.e. as though filter=0 just for the loop line).
 #
 # extra items in startb are ignored in filter mode unless multib is "1" in
 # which case they're then treated as additional starting nodes (just like
