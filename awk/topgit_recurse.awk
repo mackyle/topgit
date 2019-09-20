@@ -25,7 +25,7 @@
 #   exclbr  whitespace separated list of names to exclude
 #   inclbr  whitespace separated list of names to include
 #   startb  whitespace separated list of start branch plus extra path items
-#   multib  if "1" startb is list of multiple start nodes (with no extra path)
+#   multib  if true startb is list of multiple start nodes (with no extra path)
 #   filter  if 1 or 2 output dependency instead of recurse lines (see below)
 #   once    if > 0 nodes when 1st visited only if < 0 deps on 1st visit only
 #   leaves  if true omit output lines where L != 1 (withbr recommended if set)
@@ -35,7 +35,7 @@
 # NOTE: a non-empty startb value IS REQUIRED!
 #
 # in multi start mode (multib is true) duplicate start names are ignored
-# (using a true value for "multib" other than "1" may have undefined behavior)
+# unless multib is an integer > 1
 #
 # with !preord (default), a post-order tree traversal is done, with preord
 # a pre-order tree traversal is done
@@ -169,12 +169,16 @@ BEGIN {
 	cnt = split(startb, scratch, " ")
 	if (!cnt) exitnow(2)
 	if (multib) {
+		multibonce = 1
+		if (multib ~ /^[1-9][0-9]*$/) {
+			if (0 + multib > 1) multibonce = 0
+		}
 		startcnt = 0
 		for (i = 1; i <= cnt; ++i) {
-			if (!seenstartbr[scratch[i]]) {
+			if (!multibonce || !seenstartbr[scratch[i]]) {
 				startbr[++startcnt] = scratch[i]
 				extrabr[startcnt] = ""
-				seenstartr[scratch[i]] = 1
+				seenstartbr[scratch[i]] = 1
 			}
 		}
 	} else {
