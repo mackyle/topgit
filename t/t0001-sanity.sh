@@ -10,7 +10,7 @@ TEST_NO_CREATE_REPO=1
 
 . ./test-lib.sh
 
-test_plan 16
+test_plan 17
 
 # required working
 
@@ -125,6 +125,49 @@ test_expect_success 'count word function works' '
 	line="\"a b c d\" e" &&
 	v_count_words five $line && test "$five" = "5" &&
 	test "${scratch_+yes}" != "yes"
+'
+
+test_expect_success 'cat -' '
+	echo one >one &&
+	echo two >two &&
+	echo three >three &&
+	cat <<-EOT >four &&
+		four
+	EOT
+	echo four >expected &&
+	test_cmp four expected &&
+	cat - <<-EOT >five &&
+		five
+	EOT
+	echo five >expected &&
+	test_cmp five expected &&
+	cat - three <<-EOT >xthree &&
+		x
+	EOT
+	echo x >expected &&
+	echo three >>expected &&
+	test_cmp xthree expected &&
+	cat four - <<-EOT >foury &&
+		y
+	EOT
+	echo four >expected &&
+	echo y >>expected &&
+	test_cmp foury expected &&
+	cat one - two <<-EOT >one_two &&
+		1.5
+	EOT
+	echo one >expected &&
+	echo 1.5 >>expected &&
+	echo two >>expected &&
+	test_cmp one_two expected &&
+	cat one - two - three <<-EOT >one_two_three &&
+		1.9
+	EOT
+	echo one >expected &&
+	echo 1.9 >>expected &&
+	echo two >>expected &&
+	echo three >>expected &&
+	test_cmp one_two_three expected
 '
 
 test_done
