@@ -40,9 +40,22 @@
 # with !preord (default), a post-order tree traversal is done, with preord
 # a pre-order tree traversal is done
 #
-# if inclbr is non-empty a branch name must be listed to appear on stdout
+# for inclbr and exclbr the "edge" referred to is the edge that would be
+# output by filter=2 (even if filter is not set to that value) and in the
+# case of withbr=1 the "top-level branch" line will be an edge to self
 #
-# if a branch name appears in exclbr it is omitted from stdout trumping inclbr
+# if inclbr is non-empty only edges with at least one end listed in inclbr
+# will appear on stdout
+#
+# if a branch name appears in exclbr any edge with either end listed in exclbr
+# will be omitted from stdout trumping inclbr
+#
+# when withbr is true, the "top-level branch" line undergoes inclbr/exclbr
+# processing too which can end up suppressing it from the output
+#
+# if a branch is listed in exclbr then all edges going to/from that branch
+# are necessarily omitted which means effectively that any branch listed in
+# exclbr has its .topdeps file treated as though it were empty
 #
 # except for branches removed entirely from consideration by exclbr/inclbr
 # or !withan and being in anfile, any other branch found to be missing
@@ -58,6 +71,8 @@
 #
 # if a branch is excluded (either by not being in a non-empty inclbr list or
 # by being listed in the exclbr list) then it will not be recursed into either
+# (but the node itself can appear in the output if it's NOT in a non-empty
+# inclbr list nor in the exclbr list and an inclbr branch has an edge to it)
 #
 # to get accurate output, brfile, anfile and hdfile must all be provided and,
 # obviously, if remote information is needed rtfile as well (usermt will be
@@ -266,14 +281,20 @@ function init(abranch, _e) {
 
 END { init(); rmfiles(); }
 
-function included(abranch) {
-	return (!inconly || incnames[abranch]) && !excnames[abranch]
+function inclself(abranch) {
+	return !(abranch in excnames) &&
+	       (!inconly || abranch in incnames)
+}
+
+function incledge(b1, b2) {
+	return !(b1 in excnames) && !(b2 in excnames) &&
+	       (!inconly || b1 in incnames || b2 in incnames)
 }
 
 NR == 1 {init()}
 
 NF == 2 && $1 != "" && $2 != "" && $1 != $2 &&
-included($1) && included($2) && !ann[$1] && (withan || !ann[$2]) {
+incledge($1, $2) && !($1 in ann) && (withan || !($2 in ann)) {
 	linkval = links[$1]
 	if (linkval != "") {
 		if (index(" " linkval " ", " " $2 " ")) next
@@ -281,7 +302,7 @@ included($1) && included($2) && !ann[$1] && (withan || !ann[$2]) {
 	} else {
 		links[$1] = $2
 	}
-	if (withan && !ann[$2]) {
+	if (withan && !($2 in ann)) {
 		# when using withan, linksx is the tree !withan would generate
 		# (it eXcludes all annihilated links)
 		# no need for it if !withan in effect as it would match links
@@ -303,7 +324,7 @@ function walktree(node, trail, level,
 	oncenodes, istgish, isleaf, children, childcnt, parent, child, visited, i)
 {
 	if (once > 0 && (node in oncenodes)) return
-	if (!heads[node]) {
+	if (!(node in heads)) {
 		if (!filter) print "1 0 0 " xvisits(node) " " node trail
 		if (once) oncenodes[node] = 1
 		return
@@ -316,14 +337,14 @@ function walktree(node, trail, level,
 	}
 	istgish = 0
 	isleaf = 0
-	if (ann[node]) {
+	if (node in ann) {
 		istgish = 1
 		isleaf = 2
-	} else if (tgish[node]) {
-		istgish = tgishr[node] ? 2 : 1
+	} else if (node in tgish) {
+		istgish = (node in tgishr) ? 2 : 1
 	}
 	if (isleaf != 2) isleaf = !istgish || (withan?linksx[node]:links[node]) == ""
-	if (preord && (level > 0 || withbr) && (!leaves || isleaf == 1) && (!tgonly || istgish)) {
+	if (preord && (level > 0 || (withbr && inclself(node))) && (!leaves || isleaf == 1) && (!tgonly || istgish)) {
 		if (filter) print parent node
 		else print "0 " istgish " " isleaf " " xvisits(node) " " node trail
 	}
@@ -342,7 +363,7 @@ function walktree(node, trail, level,
 			}
 		}
 	}
-	if (!preord && (level > 0 || withbr) && (!leaves || isleaf == 1) && (!tgonly || istgish)) {
+	if (!preord && (level > 0 || (withbr && inclself(node))) && (!leaves || isleaf == 1) && (!tgonly || istgish)) {
 		if (filter) print parent node
 		else print "0 " istgish " " isleaf " " xvisits(node) " " node trail
 	}
@@ -352,7 +373,7 @@ function walktree(node, trail, level,
 END {
 	for (startidx = 1; startidx <= startcnt; ++startidx) {
 		astart = startbr[startidx]
-		if (included(astart) && (!heads[astart] || withan || !ann[astart]))
+		if (!(astart in excnames) && (!(astart in heads) || withan || !(astart in ann)))
 			walktree(astart, extrabr[startidx], 0)
 	}
 }
