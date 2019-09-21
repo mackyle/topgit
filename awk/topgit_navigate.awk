@@ -1,7 +1,7 @@
 #!/usr/bin/awk -f
 
 # topgit_navigate - TopGit awk utility script used by tg--awksome
-# Copyright (C) 2017 Kyle J. McKay <mackyle@gmail.com>
+# Copyright (C) 2017,2019 Kyle J. McKay <mackyle@gmail.com>
 # All rights reserved.
 # License GPLv2
 
@@ -24,6 +24,9 @@
 #   pin     if true and steps is > 0 and runs off the end keep last visited node
 #   tgonly  if true only nodes listed in brfile are output
 #   fldone  output only the first field on each line
+#
+# NOTE: an integer "steps" value is REQUIRED
+# NOTE: if "steps" is zero, a non-empty "startb" value is REQUIRED
 #
 # if inclbr is non-empty a branch name must be listed to appear on stdout
 #
@@ -78,9 +81,9 @@
 # forward (!rev) direction starts at the roots and moves to the heads resulting
 # in the same thing as one step in the backwards direction from the empty node
 # and vice-versa for an empty startb with negative steps and backwards (rev)
-# direction; the two cases single step cases (empty startb and steps == 1) are
+# direction; the two single step cases (empty startb and steps == 1) are
 # recognized and converted to the equivalent -1 steps version automatically as
-# both of# the -1 steps versions are optimized and do NOT walk the graph nor
+# both of the -1 steps versions are optimized and do NOT walk the graph nor
 # cause loop checking (unless check chklps is true) and they also only output
 # one field on each output line (the head or root) rather than two
 #
@@ -106,7 +109,7 @@
 # same as the result branch name (unless startb is empty and steps is negative
 # or 1), but there could be more (space separated) if the branch is part of
 # more than one patch series; if fldone is true the only the first field shown
-# aove (the result branch name) will be output on each line no matter what
+# above (the result branch name) will be output on each line no matter what
 #
 
 BEGIN { exitcode = ""; stderr = "exec cat>&2"; }
