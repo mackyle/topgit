@@ -153,8 +153,21 @@ function quotevar(v) {
 	return "\047" v "\047"
 }
 
-function init(abranch, _e) {
+function rmfiles() {
 	rmlist = ""
+	if (rmbr && brfile != "") rmlist = rmlist " " quotevar(brfile)
+	if (rman && anfile != "") rmlist = rmlist " " quotevar(anfile)
+	if (rmlist != "") {
+		system("rm -f" rmlist)
+		rmbr = 0
+		brfile = ""
+		rman = 0
+		anfile = ""
+	}
+}
+END { rmfiles() }
+
+function init(abranch, _e) {
 	if (brfile != "") {
 		if (tgonly) {
 			while ((_e = (getline abranch <brfile)) > 0) {
@@ -163,7 +176,6 @@ function init(abranch, _e) {
 			close(brfile)
 			if (_e < 0) exitnow(2)
 		}
-		if (rmbr) rmlist = rmlist " " quotevar(brfile)
 	}
 	if (anfile != "") {
 		if (!withan) {
@@ -173,9 +185,8 @@ function init(abranch, _e) {
 			close(anfile)
 			if (_e < 0) exitnow(2)
 		}
-		if (rman) rmlist = rmlist " " quotevar(anfile)
 	}
-	if (rmlist != "") system("rm -f" rmlist)
+	rmfiles()
 }
 
 function included(abranch) {
