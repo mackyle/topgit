@@ -972,7 +972,7 @@ run_awk_topgit_navigate()
 		badsteps= _t="${_ra_steps#-}" && [ "$_t" = "${_t%%[!0-9]*}" ] || badsteps=1
 	esac
 	[ -z "$badsteps" ] ||
-		run_awk_bug "run_awk_topgit_navigate -s steps value must be empty an integer"
+		run_awk_bug "run_awk_topgit_navigate -s steps value must be an integer"
 	_ra_startb=
 	[ $# -eq 0 ] || { _ra_startb="$1"; shift; }
 	awk -f "$TG_INST_AWKDIR/topgit_navigate" \
