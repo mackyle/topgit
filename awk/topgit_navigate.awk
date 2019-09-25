@@ -178,13 +178,11 @@ function init(abranch, _e) {
 		}
 	}
 	if (anfile != "") {
-		if (!withan) {
-			while ((_e = (getline abranch <anfile)) > 0) {
-				if (abranch != "") ann[abranch] = 1
-			}
-			close(anfile)
-			if (_e < 0) exitnow(2)
+		while ((_e = (getline abranch <anfile)) > 0) {
+			if (abranch != "") ann[abranch] = 1
 		}
+		close(anfile)
+		if (_e < 0) exitnow(2)
 	}
 	rmfiles()
 }
@@ -194,7 +192,7 @@ function included(abranch) {
 }
 
 function wanted(abranch) {
-	return !(abranch in ann) && (!tgonly || (abranch in tgish))
+	return (withan || !(abranch in ann)) && (!tgonly || (abranch in tgish))
 }
 
 NR == 1 {init()}
@@ -226,7 +224,7 @@ NF == 2 && $1 != "" && $2 != "" {
 		}
 		--isexcl
 	}
-	if (!isexcl && $1 != $2) {
+	if (!isexcl && $1 != $2 && !($1 in ann)) {
 		addlink(incoming, $2, $1)
 		addlink(outgoing, $1, $2)
 		edgenodes[$1] = 1
