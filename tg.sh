@@ -1236,7 +1236,7 @@ find_leaves()
 				case " $seen_leaf_revs " in *" $fullrev "*);;*)
 					seen_leaf_revs="${seen_leaf_revs:+$seen_leaf_revs }$fullrev"
 					# See if Git knows it by another name
-					if tagname="$(git describe --exact-match "$fullrev" 2>/dev/null)" && [ -n "$tagname" ]; then
+					if tagname="$(git describe --exact-match "$fullrev" 2>/dev/null || git describe --exact-match --tags "$fullrev" 2>/dev/null)" && [ -n "$tagname" ]; then
 						echo "refs/tags/$tagname"
 					else
 						echo "$fulldep"

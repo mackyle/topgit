@@ -4,7 +4,7 @@ test_description='test tg info --leaves functionality'
 
 . ./test-lib.sh
 
-test_plan 11
+test_plan 12
 
 test_expect_success 'setup' '
 	tg_test_create_branches <<-EOT &&
@@ -40,6 +40,18 @@ test_expect_success 'setup' '
 
 		+four
 		:::four
+
+		five
+		:::
+
+		+five
+		:::five
+
+		t/base-five
+		:five
+
+		+five
+		:::five
 
 		t/one
 		one
@@ -86,6 +98,12 @@ test_expect_success 'setup' '
 	git update-ref refs/heads/t/annihilated "$newcmt" refs/heads/t/annihilated &&
 	git tag four-tagged-light four^^ &&
 	git tag -am tagged four-tagged four^ &&
+	test_tick &&
+	git tag five-tagged-light-1 five^ &&
+	test_tick &&
+	git tag -am tagged5 five-tagged five^ &&
+	test_tick &&
+	git tag five-tagged-light-2 five^ &&
 	test_when_finished test_set_prereq SETUP
 '
 
@@ -130,7 +148,7 @@ test_expect_success SETUP 'two leaves backwards' '
 '
 
 test_expect_success SETUP 'one lightweight base' '
-	echo "$(tg --top-bases)/t/base-four-up-up" >expected &&
+	echo refs/tags/four-tagged-light >expected &&
 	tg info --leaves t/base-four-up-up >actual &&
 	test_cmp actual expected
 '
@@ -138,6 +156,12 @@ test_expect_success SETUP 'one lightweight base' '
 test_expect_success SETUP 'one annotated base' '
 	echo refs/tags/four-tagged >expected &&
 	tg info --leaves t/base-four-up >actual &&
+	test_cmp actual expected
+'
+
+test_expect_success SETUP 'one multi-tagged base' '
+	echo refs/tags/five-tagged >expected &&
+	tg info --leaves t/base-five >actual &&
 	test_cmp actual expected
 '
 
