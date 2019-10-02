@@ -67,7 +67,9 @@
 # performed for each one and the results combined in that order, but there will
 # be no way to distinguish where the boundary between results for the different
 # branches lies in the output, but since sometimes that doesn't matter it's a
-# helpful mode to have
+# helpful mode to have.  Note that duplicate output is suppressed so, for
+# example, using startb="a a" will always produce exactly the same output as
+# just startb="a".
 #
 # if steps is 0 and startb is empty it's an error otherwise startb just gets
 # dumped right back out unless it's been excluded (and no loop checking is
@@ -108,7 +110,7 @@
 # there will always be at least one containing branch name even if it's the
 # same as the result branch name (unless startb is empty and steps is negative
 # or 1), but there could be more (space separated) if the branch is part of
-# more than one patch series; if fldone is true the only the first field shown
+# more than one patch series; if fldone is true then only the first field shown
 # above (the result branch name) will be output on each line no matter what
 #
 
