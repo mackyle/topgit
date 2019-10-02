@@ -28,12 +28,18 @@
 # NOTE: an integer "steps" value is REQUIRED
 # NOTE: if "steps" is zero, a non-empty "startb" value is REQUIRED
 #
-# if inclbr is non-empty a branch name must be listed to appear on stdout
+# for inclbr and exclbr the "edge" referred to is any edge as provided on a
+# line of the input stream (which is the output from run_awk_topgit_deps)
 #
-# if a branch name appears in exclbr it is omitted from stdout trumping inclbr
+# if inclbr is non-empty only edges with at least one end listed in inclbr
+# will be considered to be present
 #
-# if a branch is excluded (either by not being in a non-empty inclbr list or
-# by being listed in the exclbr list) then it will not be recursed into either
+# if a branch name appears in exclbr any edge with either end listed in exclbr
+# will be omitted trumping inclbr
+#
+# if a branch is listed in exclbr then all edges going to/from that branch
+# are necessarily omitted which means effectively that any branch listed in
+# exclbr has its .topdeps file treated as though it were empty
 #
 # input is a list of edges as output by run_awk_topgit_deps
 #
@@ -189,8 +195,9 @@ function init(abranch, _e) {
 	rmfiles()
 }
 
-function included(abranch) {
-	return (!inconly || incnames[abranch]) && !excnames[abranch]
+function incledge(b1, b2) {
+	return !(b1 in excnames) && !(b2 in excnames) &&
+	       (!inconly || b1 in incnames || b2 in incnames)
 }
 
 function wanted(abranch) {
@@ -210,23 +217,16 @@ function addlink(anarray, anode, alink, _linkstr) {
 	anarray[anode] = _linkstr
 }
 
-NF == 2 && $1 != "" && $2 != "" {
-	isexcl = 2
-	if (included($2)) {
-		if (!($2 in nodes)) {
-			nodes[$2] = 1
-			ordered[++ordidx] = $2
-		}
-		--isexcl
+NF == 2 && $1 != "" && $2 != "" && incledge($1, $2) {
+	if (!($2 in nodes)) {
+		nodes[$2] = 1
+		ordered[++ordidx] = $2
 	}
-	if (included($1)) {
-		if (!($1 in nodes)) {
-			nodes[$1] = 1
-			ordered[++ordidx] = $1
-		}
-		--isexcl
+	if (!($1 in nodes)) {
+		nodes[$1] = 1
+		ordered[++ordidx] = $1
 	}
-	if (!isexcl && $1 != $2 && !($1 in ann)) {
+	if ($1 != $2 && !($1 in ann)) {
 		addlink(incoming, $2, $1)
 		addlink(outgoing, $1, $2)
 		edgenodes[$1] = 1
