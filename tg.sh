@@ -2815,11 +2815,15 @@ else
 				[ "${looplevel%%[!0-9]*}" = "$looplevel" ] ||
 				looplevel=0
 				tgalias="$(git config "topgit.alias.$cmd" 2>/dev/null)" || :
-				[ -n "$tgalias" ] || {
-					echo "Unknown subcommand: $cmd" >&2
-					do_help
-					exit 1
-				}
+				if [ -z "$tgalias" ]; then
+					if [ "$cmd" = "goto" ]; then
+						tgalias="checkout goto"
+					else
+						echo "Unknown subcommand: $cmd" >&2
+						do_help
+						exit 1
+					fi
+				fi
 				looplevel=$(( $looplevel + 1 ))
 				[ $looplevel -le 10 ] || die "topgit.alias nesting level 10 exceeded"
 				TG_ALIAS_DEPTH="$looplevel"

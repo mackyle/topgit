@@ -459,6 +459,14 @@ this command may be used:
 To make it specific to a particular repository just omit the ``--global``
 option from the command.
 
+There is one implicit universal alias as though this were set:
+
+::
+
+	git config topgit.alias.goto "checkout goto"
+
+But only if no explicit alias has already been set for ``topgit.alias.goto``.
+
 
 NAVIGATION
 ----------
@@ -1560,6 +1568,9 @@ tg checkout
 	If any of the above commands can find more than one possible
 	branch to switch to, you will be presented with the matches
 	and asked to select one of them.
+
+	Note that unless overridden by an explicit alias (see ALIASES_),
+	``tg goto`` is an implicit alias for ``tg checkout goto``.
 
 	If the ``--ignore-other-worktrees`` (or ``--iow``) option is given and
 	the current Git version is at least 2.5.0 then the full
