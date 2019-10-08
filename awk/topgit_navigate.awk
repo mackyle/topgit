@@ -377,6 +377,7 @@ END {
 			collectstarts(incoming)
 		else if ((steps < 0 && rev) || (steps > 0 && !rev))
 			collectstarts(outgoing)
+		if (steps > 0) --steps
 		if (steps < 0 || !startcnt) {
 			for (i = 1; i <= startcnt; ++i)
 				if (wanted(starts[i])) print starts[i]
