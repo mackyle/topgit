@@ -83,24 +83,70 @@
 # with the containing head(s); this provides "contains" functionality and is an
 # obvious special case of the general navigation described below
 #
-# if startb is empty then one step forward (!rev) moves to all the roots or
-# "starting" nodes whereas one step backwards (rev) moves to all the heads or
-# "ending" nodes; so an empty startb with a negative steps (all the way) and a
-# forward (!rev) direction starts at the roots and moves to the heads resulting
-# in the same thing as one step in the backwards direction from the empty node
-# and vice-versa for an empty startb with negative steps and backwards (rev)
-# direction; the two single step cases (empty startb and steps == 1) are
-# recognized and converted to the equivalent -1 steps version automatically as
-# both of the -1 steps versions are optimized and do NOT walk the graph nor
-# cause loop checking (unless check chklps is true) and they also only output
-# one field on each output line (the head or root) rather than two
+# Consider this TopGit DAG for the next section:
 #
-# with all but the two special cases just mentioned, loop detection is
-# performed first to avoid problems and will cause an exit status of EX_DATAERR
-# (65) if loops are detected in which case no output is produced; the
-# recommended way to check for loops is with an empty startb, steps=-1 and
-# chklps=1 and redirecting output to /dev/null (or capturing the heads output
-# on success) and then testing the exit status for an EX_DATAERR (65) result
+#      C       # content of branch "C"'s .topdeps file:
+#     / \      A
+#    A   B     B
+#
+# The linearized patch sequence is:
+#   patch A
+#   patch B
+#   patch C
+#
+# The "head(s)" of the graph is just the single node C
+# The "ending point(s)" of the patch sequence is just patch C
+# The "leaves"/"roots" of the graph are the nodes A and B
+# The "starting point(s)" of the patch sequence is just patch A
+#
+# N.B. While the "head(s)" of the graph *DO* correspond exactly to
+#      the "ending point(s)" of the patch sequence,
+#      the "leaves"/"roots" *DO NOT ALWAYS* correspond exactly to
+#      the "starting point(s)" of the patch sequence!
+#
+# if startb is empty then one step forward (!rev) moves to all the roots or
+# "leaf" nodes whereas one step backwards (rev) moves to all the heads or
+# "ending" nodes; an empty startb with a negative steps (all the way) and a
+# forward (!rev) direction starts at the leaves and moves to the heads;
+# an empty startb with a negative steps (all the way) and a reverse (rev)
+# direction starts at the heads or "ending points" and moves to the
+# "starting points" which MAY BE DIFFERENT THAN THE "leaves"!
+#
+# Note that one step (either forward or backward) off of an empty startb
+# is optimized and does NOT walk the graph nor cause loop checking (unless
+# chklps is true).  Additionally a steps value of 1 or any negative value
+# with an empty startb will only output one single field on each output
+# line -- the head/ending point, root/leaf, or starting point.
+#
+# As a special case, since the output is identical, a negative steps (all
+# the way) moving forward (!rev) from an empty startb gets treated exactly
+# the same as a single reverse step from an empty startb and is therefore
+# also optimized and does not cause loop checking (unless chklps is true).
+#
+# N.B. a negative steps (all the way) moving backward (rev) from an empty
+# startb IS NOT OPTIMIZED because it IS NOT THE SAME (as it finds "starting
+# points") as moving one step forward from an empty startb (as that finds
+# "root/leaf" nodes) since the set of "root/leaf nodes" may differ from the
+# set of "starting point nodes".
+#
+#
+#   === stepping from nil startb ===
+#
+#               | forced |
+#   steps | rev | chklps | result
+#   ------|-----|--------|------------------------------------------------
+#     1   |  0  |   No   | "roots"/"leaves" of TopGit DAG
+#     1   |  1  |   No   | "heads"/"ending/final patches of patch series"
+#    -1   |  0  |   No   | "heads"/"ending/final patches of patch series"
+#    -1   |  1  |   Yes  | "starting/first patches of patch series"
+#
+# with all but the three special cases just mentioned (the three "No" rows
+# in the table above), loop detection is performed first to avoid problems
+# and will cause an exit status of EX_DATAERR (65) if loops are detected in
+# which case no output is produced; the recommended way to check for loops is
+# with an empty startb, steps=-1 and chklps=1 and redirecting output to
+# /dev/null (or capturing the heads output on success) and then testing the
+# exit status for an EX_DATAERR (65) result
 #
 # the effect of "navigation" is as though the heads containing startb are first
 # determined (by walking "forward" as far as possible) then those heads are
@@ -135,10 +181,13 @@ BEGIN {
 			seen[ascratch[i]] = 1
 		}
 	}
-	if (!steps && !startcnt) exitnow(2)
-	if (!startcnt && steps == 1) {
-		rev = !rev
-		steps = -1
+	if (!startcnt) {
+		if (!steps) exitnow(2)
+		if (steps < 0 && !rev) {
+			rev = 1
+			steps = 1
+		}
+		if (steps < 0) fldone = 1
 	}
 	if (steps < 0) steps = -1
 	inconly = 0
@@ -328,7 +377,7 @@ function getpath(anode, pnodes, arlinks, _seen, _pcnt, _z) {
 }
 
 END {
-	if (chklps || startcnt || prunecnt || steps >= 0) checkloops()
+	if (chklps || startcnt || prunecnt || steps != 1) checkloops()
 	if (prunecnt) {
 		state = 1
 		for (i = 1; i <= prunecnt; ++ i) {
@@ -373,12 +422,16 @@ END {
 		for (onep in nodes) if (!nodes[onep]) delete nodes[onep]
 	}
 	if (!startcnt) {
-		if ((steps < 0 && !rev) || (steps > 0 && rev))
+		if (steps < 0 && !rev) {
+			print "internal error: non-optimized steps=-1 rev=0" |stderr
+			exitnow(70) # EX_SOFTWARE
+		}
+		if (rev)
 			collectstarts(incoming)
-		else if ((steps < 0 && rev) || (steps > 0 && !rev))
+		else
 			collectstarts(outgoing)
 		if (steps > 0) --steps
-		if (steps < 0 || !startcnt) {
+		if (steps == 0 || !startcnt) {
 			for (i = 1; i <= startcnt; ++i)
 				if (wanted(starts[i])) print starts[i]
 			exit 0
