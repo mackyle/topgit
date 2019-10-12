@@ -1,8 +1,8 @@
 #! git-changelog-smudge.pl
 
-# This file is processed with the git-changelog.pl smudger during archive
-# creation to produce a "smudged" ChangeLog file containing the contents of the
-# annotated/signed tags listed below.
+# This file is processed with the git-changelog-smudge.pl smudger during
+# archive creation to produce a "smudged" ChangeLog file containing the
+# contents of the annotated/signed tags listed below.
 
 topgit-0.19.12	# Compatibility Conundrum
 topgit-0.19.11	# Speed Bump
