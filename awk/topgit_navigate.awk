@@ -67,7 +67,11 @@
 # negative refs are walked excluding those so negative refs always trump
 # positive refs just like git rev-list does; anything left over and not
 # included acts like it was never there in the first place -- can't be visited
-# or traversed
+# or traversed.
+#
+# note that inclbr/exclbr operations are performed prior to pruneb operations
+# which means that if inclbr/exclbr ends up excluding a node, listing that
+# node's name in pruneb will have absolutely no effect whatsoever
 #
 # if startb contains more than one branch name, the requested operation is
 # performed for each one and the results combined in that order, but there will
@@ -399,27 +403,26 @@ END {
 			break
 		}
 		for (onep in poznodes) marknodes(onep, 1)
-		for (onep in negnodes) {
-			marknodes(onep, 0)
-			if (onep in incoming && split(incoming[onep], links, " ")) {
-				for (linki in links) {
-					link = links[linki]
-					if (link in outgoing) {
-						outlist = outgoing[link]
-						if ((idx = index(outlist, " " onep " "))) {
-							outlist = substr(outlist, 1, idx) \
-								substr(outlist,
-								       idx + length(onep) + 2)
-							if (length(outlist) < 3)
-								delete outgoing[link]
-							else
-								outgoing[link] = outlist
-						}
+		for (onep in negnodes) marknodes(onep, 0)
+		for (onep in nodes) if (nodes[onep]) tmpa[onep] = 1
+		split("", nodes, " ")
+		for (onep in tmpa) if (tmpa[onep]) nodes[onep] = 1
+		split("", tmpa, " ")
+		for (onep in outgoing) tmpa[onep] = outgoing[onep]
+		split("", incoming, " ")
+		split("", outgoing, " ")
+		for (onep in nodes) {
+			if (onep in tmpa) {
+				lcnt = split(tmpa[onep], links, " ")
+				for (i = 1; i <= lcnt; ++i) {
+					dest = links[i]
+					if (dest in nodes) {
+						addlink(incoming, dest, onep)
+						addlink(outgoing, onep, dest)
 					}
 				}
 			}
 		}
-		for (onep in nodes) if (!nodes[onep]) delete nodes[onep]
 	}
 	if (!startcnt) {
 		if (steps < 0 && !rev) {
