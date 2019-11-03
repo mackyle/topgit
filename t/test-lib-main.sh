@@ -910,6 +910,8 @@ export TESTLIB_DIRECTORY
 
 : "${SHELL_PATH:=/bin/sh}"
 : "${DIFF:=diff}"
+: "${AWK_PATH:=awk}"
+case "$AWK_PATH" in */*);;*) AWK_PATH="/usr/bin/$AWK_PATH"; esac
 [ "$GIT_PATH" = "/${GIT_PATH#?}" ] || GIT_PATH="$(cmd_path "${GIT_PATH:-git}")"
 [ "$PERL_PATH" = "/${PERL_PATH#?}" ] || PERL_PATH="$(cmd_path "${PERL_PATH:-perl}")"
 
@@ -976,25 +978,30 @@ EDITOR=:
 # /usr/xpg4/bin/sh and /bin/ksh to bail out.  So keep the unsets
 # deriving from the command substitution clustered with the other
 # ones.
-unset_ VISUAL EMAIL LANGUAGE COLUMNS $("$PERL_PATH" -e '
-	my @env = keys %ENV;
-	my $ok = join("|", qw(
-		TRACE
-		DEBUG
-		USE_LOOKUP
-		TEST
-		.*_TEST
-		MINIMUM_VERSION
-		PATH
-		PROVE
-		UNZIP
-		PERF_
-		CURL_VERBOSE
-		TRACE_CURL
-		CEILING_DIRECTORIES
-	));
-	my @vars = grep(/^GIT_/ && !/^GIT_($ok)/o, @env);
-	print join("\n", @vars);
+unset_ VISUAL EMAIL LANGUAGE COLUMNS $("$AWK_PATH" '
+	BEGIN {exit} END {
+		split("\
+			TRACE			\
+			DEBUG			\
+			USE_LOOKUP		\
+			TEST			\
+			.*_TEST			\
+			MINIMUM_VERSION		\
+			PATH			\
+			PROVE			\
+			UNZIP			\
+			PERF_			\
+			CURL_VERBOSE		\
+			TRACE_CURL		\
+			CEILING_DIRECTORIES	\
+		", a, " ")
+		re = "^GIT_("
+		for (i in a) re = re a[i] "|"
+		re = substr(re, 1, length(re) - 1) ")"
+		for (e in ENVIRON) {
+			if (e ~ /^GIT_/ && e !~ re) print e
+		}
+	}
 ')
 unset_ XDG_CONFIG_HOME
 unset_ GITPERLLIB
