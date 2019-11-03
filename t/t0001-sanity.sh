@@ -2,7 +2,7 @@
 
 test_description='various sanity checks
 
-Most of these are "tolerate_failure" checks
+Many of these are "tolerate_failure" checks
 as there are workarounds in place for them.
 '
 
@@ -10,7 +10,7 @@ TEST_NO_CREATE_REPO=1
 
 . ./test-lib.sh
 
-test_plan 17
+test_plan 19
 
 # required working
 
@@ -93,12 +93,44 @@ test_tolerate_failure 'POSIX awk pattern brace quantifiers' '
 	test z"$result" = z"not-mawk"
 '
 
-test_tolerate_failure 'POSIX awk ENVIRON array' '
+test_expect_success 'POSIX awk ENVIRON array' '
 	EVAR="This  is  some  test  here" &&
 	export EVAR &&
 	val="$(awk "BEGIN{exit}END{print ENVIRON[\"EVAR\"]}")" &&
 	test z"$val" = z"$EVAR"
 '
+
+test_expect_success 'POSIX awk ENVIRON array detects unset' '
+	EVAR=1 &&
+	unset EVAR &&
+	val="$(awk "BEGIN{exit}END{print ((\"EVAR\" in ENVIRON)?1:0)}")" &&
+	test z"$val" = z"0" &&
+	EVAR= &&
+	export EVAR &&
+	val="$(awk "BEGIN{exit}END{print ((\"EVAR\" in ENVIRON)?1:0)}")" &&
+	test z"$val" = z"1"
+'
+
+test_expect_success 'POSIX awk backslash continues line' - <<'EOT'
+	val="$(awk '
+		BEGIN {exit}
+		END {
+			x = "\
+				One		\
+				Line		\
+				Now		\
+			"
+			n = split(x, a, " ")
+			ans = ""
+			for (i = 1; i <= n; ++i) {
+				if (i > 1) ans = ans " "
+				ans = ans a[i]
+			}
+			print ans
+		}
+	')" &&
+	test z"$val" = z"One Line Now"
+EOT
 
 test_tolerate_failure 'POSIX export unset var exports it' '
 	say_color info "# POSIX is, regrettably, quite explicit about this" &&
