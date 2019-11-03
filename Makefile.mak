@@ -97,7 +97,7 @@ Makefile:
 # The fatal flaw with .SUFFIXES is that while it's possible to add dependencies
 # without listing rule commands, doing so prevents use of an inference rule
 # because the dependency-adding-rule-with-no-commands is still considered a rule.
-# Of course that means the free automatic dependency crated by an inference rule
+# Of course that means the free automatic dependency created by an inference rule
 # also can't be picked up but fortunately we have DEPFILE instead.
 include $(DEPFILE)
 
