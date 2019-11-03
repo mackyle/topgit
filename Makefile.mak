@@ -23,6 +23,10 @@
 ##            Only required to `make doc` aka `make html` (i.e. topgit.html)
 ##            If "rst2html" is not in $PATH this must be set
 ##            in order to successfully `make doc` (or `make html`)
+##
+## SHELL_PATH path to POSIX sh, default is /bin/sh if not otherwise set
+##
+## AWK_PATH   path to awk, default is /usr/bin/awk if not otherwise set
 #
 
 # Default target is all

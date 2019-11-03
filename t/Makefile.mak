@@ -23,6 +23,7 @@
 ##
 ## SHELL_PATH -- path to POSIX sh, default is /bin/sh if not otherwise set
 ## PERL_PATH  -- path to Perl, default is $(command -v perl) if not set
+## AWK_PATH   -- path to awk, default is /usr/bin/awk if not otherwise set
 ## GIT_PATH   -- path to git to use, default is $(command -v git) if not set
 ## DIFF       -- diff to use, defaults to "diff"
 ## PROVE      -- prove executable to run, MAY contain options
