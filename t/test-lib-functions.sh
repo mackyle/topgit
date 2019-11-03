@@ -1007,6 +1007,11 @@ test_write_lines() {
 	printf '%s\n' "$@"
 }
 
+awk() (
+	{ "unset" -f awk; } >/dev/null 2>&1 || :
+	"exec" "$AWK_PATH" "$@"
+)
+
 git() (
 	{ "unset" -f git; } >/dev/null 2>&1 || :
 	"exec" "$GIT_PATH" "$@"

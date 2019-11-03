@@ -188,6 +188,8 @@ aggregate-results:
 TEST_SETTINGS = \
 ts() { printf "%s\\n" \
 	': "$${SHELL_PATH:=$(SHELL_PATH)}"' \
+	': "$${AWK_PATH:=$(AWK_PATH)}"' \
+	': "$${AWK_PATH:=awk}"' \
 	': "$${PERL_PATH:=$(PERL_PATH)}"' \
 	': "$${PERL_PATH:=perl}"' \
 	': "$${GIT_PATH:=$(GIT_PATH)}"' \
