@@ -23,7 +23,7 @@ configsh
 
 # config.sh may not unset these
 : "${SHELL_PATH:=/bin/sh}" "${DIFF:=diff}" "${PROVE:=prove}"
-: "${TEST_LINT=test-lint}"
+: "${TESTLIB_TEST_LINT=test-lint}"
 TEST_RESULTS_DIRECTORY="${TEST_OUTPUT_DIRECTORY:+$TEST_OUTPUT_DIRECTORY/}test-results"
 
 quotevar SHELL_PATH SHELL_PATH_SQ
