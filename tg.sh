@@ -1890,6 +1890,13 @@ setup_pager()
 # where the output is piped through eval "$TG_PAGER" unless emptypager is set
 # by setup_pager (in which case the output is left as-is).
 #
+# However, if the first argument starts with '. ' then the rest of the
+# arguments are _NOT_ passed to it since the dot command does not take
+# arguments, but as it will be evaluated in the scope of this function,
+# any arguments it needs to look at must be passed to this function to
+# make sure they remain set -- they just shouldn't be passed to the 'dot'
+# command itself.
+#
 # To handle arbitrary paging duties, collect lines to be paged into a
 # function and then call page with the function name or perhaps func_name "$@".
 #
@@ -1899,10 +1906,12 @@ page()
 	[ $# -gt 0 ] || return 0
 	setup_pager
 	_evalarg="$1"; shift
+	_evalargs='"$@"'
+	[ ". ${_evalarg#. }" != "$_evalarg" ] || _evalargs=
 	if [ -n "$emptypager" ]; then
-		eval "$_evalarg" '"$@"'
+		eval "$_evalarg" $_evalargs
 	else
-		{ eval "$_evalarg" '"$@"';} | eval "$TG_PAGER"
+		{ eval "$_evalarg" $_evalargs; } | eval "$TG_PAGER"
 	fi
 }
 
