@@ -2899,6 +2899,14 @@ else
 			[ -n "$showing_help" ] || initial_setup
 			[ -z "$noremote" ] || unset_ base_remote
 
+			# Include merging support functions for commands that need them
+
+			case "$cmd$showing_help" in annihilate|create|depend|update)
+				[ -f "$TG_INST_CMDDIR/tg--merging" ] && [ -r "$TG_INST_CMDDIR/tg--merging" ] ||
+					die "Missing merging support: '$TG_INST_CMDDIR/tg--merging'"
+				. "$TG_INST_CMDDIR/tg--merging"
+			esac
+
 			if [ -z "$nomergesetup" ]; then
 				# make sure merging the .top* files will always behave sanely
 
