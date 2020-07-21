@@ -6,11 +6,17 @@ TEST_NO_CREATE_REPO=1
 
 . ./test-lib.sh
 
+init_gpg2_dir() {
+	printf '%s\n' "use-agent" "pinentry-mode loopback" >"$GNUPGHOME/gpg.conf" &&
+	printf '%s\n' "allow-loopback-pinentry" >"$GNUPGHOME/gpg-agent.conf"
+}
+
 GNUPGHOME="$PWD/gnupg" &&
 mkdir "$GNUPGHOME" &&
 test -d "$GNUPGHOME" &&
 chmod go-rwx "$GNUPGHOME" &&
-export GNUPGHOME || die
+export GNUPGHOME &&
+{ ! command -v gpgconf >/dev/null 2>&1 || gpgconf --kill gpg-agent >/dev/null 2>&1 || :; } || die
 
 gpgscript="$PWD/gpg-sign.sh"
 gitgpg() {
@@ -24,7 +30,18 @@ test_plan 40
 
 test_tolerate_failure 'gpg check and setup' '
 	if gpg --version; then
-		gpg --import "$TEST_DIRECTORY/$this_test/framework-key.gpg" &&
+		gpgvers="$(gpg --version | head -n 1)" &&
+		gpgvers_jnk="${gpgvers%%[0-9]*}" gpgvers="${gpgvers#$gpgvers_jnk}" &&
+		gpgvers="${gpgvers%%[!0-9.]*}" &&
+		case "$gpgvers" in
+		""|1|1.*)
+			gpg --import "$TEST_DIRECTORY/$this_test/framework-key.gpg"
+			;;
+		*)
+			init_gpg2_dir &&
+			gpg --batch --passphrase "framework" --import "$TEST_DIRECTORY/$this_test/framework-key.gpg"
+			;;
+		esac &&
 		gpg --import-ownertrust "$TEST_DIRECTORY/$this_test/framework-key.trust" &&
 		write_script "$gpgscript" <<-\EOT &&
 			exec gpg --batch --passphrase "framework" "$@"
