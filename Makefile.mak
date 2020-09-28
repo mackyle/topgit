@@ -153,7 +153,7 @@ bin-wrappers/pre-commit : hooks/pre-commit
 	echo ". '$$curdir/hooks/pre-commit'" >>"$@" && \
 	chmod a+x "$@"
 
-$(help_out): README create-help.sh polish-help-txt.pl
+$(help_out): README_DOCS.rst create-help.sh polish-help-txt.pl
 	$(QHELP)CMD="$@" && CMD="$${CMD#tg-}" && CMD="$${CMD%.txt}" && \
 	$(SHELL_PATH) ./create-help.sh "$$CMD"
 
@@ -163,14 +163,14 @@ install-doc: install-html
 
 html: topgit.html $(html_out)
 
-tg-tg.txt: README create-html-usage.pl $(commands_in)
-	$(QHELPTG)perl ./create-html-usage.pl --text < README > $@
+tg-tg.txt: README_DOCS.rst create-html-usage.pl $(commands_in)
+	$(QHELPTG)perl ./create-html-usage.pl --text < README_DOCS.rst > $@
 
-topgit.html: README create-html-usage.pl $(commands_in)
+topgit.html: README_DOCS.rst create-html-usage.pl $(commands_in)
 	$(Q)command -v "$${RST2HTML:-rst2html}" >/dev/null || \
 	{ echo "need $${RST2HTML:-rst2html} to make $@" >&2; exit 1; }
 	$(QPOUND)echo "# \$${RST2HTML:-rst2html} is \"$${RST2HTML:-rst2html}\""
-	$(QHTMLTOPGIT)perl ./create-html-usage.pl < README | "$${RST2HTML:-rst2html}" - $@ && \
+	$(QHTMLTOPGIT)perl ./create-html-usage.pl < README_DOCS.rst | "$${RST2HTML:-rst2html}" - $@ && \
 	perl -i -pe 's/&nbsp;/\&#160;/g' "$@"
 
 $(html_out): create-html.sh

@@ -7,7 +7,7 @@ if [ $# -ne 1 ] ; then
 	exit 1
 fi
 
-< README awk '
+< README_DOCS.rst awk '
 	BEGIN { incommand = 0; }
 	/^tg '"$1"'$/ { incommand = 1; next; }
 	/^~/ { next; } # Ignore the title underlines.

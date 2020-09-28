@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 
-# create-html-usage.pl -- insert usage lines into README
-# Cpoyright (C) 2015,2017 Kyle J. McKay.
+# create-html-usage.pl -- insert usage lines into README_DOCS.rst
+# Copyright (C) 2015,2017,2020 Kyle J. McKay.
 # All rights reserved.
 # License GPLv2 or, at your option, any later version.
 
