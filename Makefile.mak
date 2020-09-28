@@ -170,8 +170,9 @@ topgit.html: README_DOCS.rst create-html-usage.pl $(commands_in)
 	$(Q)command -v "$${RST2HTML:-rst2html}" >/dev/null || \
 	{ echo "need $${RST2HTML:-rst2html} to make $@" >&2; exit 1; }
 	$(QPOUND)echo "# \$${RST2HTML:-rst2html} is \"$${RST2HTML:-rst2html}\""
-	$(QHTMLTOPGIT)perl ./create-html-usage.pl < README_DOCS.rst | "$${RST2HTML:-rst2html}" - $@ && \
-	perl -i -pe 's/&nbsp;/\&#160;/g' "$@"
+	$(QHTMLTOPGIT)perl ./create-html-usage.pl < README_DOCS.rst | "$${RST2HTML:-rst2html}" - $@.tmp && \
+	LC_ALL=C sed -e 's/&nbsp;/\&#160;/g' -e 's/<th class=/<th align="left" class=/g' <$@.tmp >$@ && \
+	rm -f $@.tmp
 
 $(html_out): create-html.sh
 	$(QHTML)CMD="$@" && CMD="$${CMD#tg-}" && CMD="$${CMD%.html}" && \
@@ -201,7 +202,7 @@ install-html: html FORCE
 	install -m 644 topgit.html $(html_out) "$(DESTDIR)$(sharedir)"
 
 clean: FORCE
-	rm -f tg $(commands_out) $(utils_out) $(awk_out) $(hooks_out) $(helpers_out) $(help_out) tg-tg.txt topgit.html $(html_out)
+	rm -f tg $(commands_out) $(utils_out) $(awk_out) $(hooks_out) $(helpers_out) $(help_out) tg-tg.txt topgit.html topgit.html.tmp $(html_out)
 	rm -f TG-BUILD-SETTINGS Makefile.dep Makefile.var
 	rm -rf bin-wrappers
 	+-$(Q)cd t && $(MAKE) clean
