@@ -1,0 +1,164 @@
+TopGit -- A Different Patch Queue Manager
+=========================================
+
+Overview
+--------
+
+TopGit manages one or more "patch queue"s (aka "patch set"s) using
+Git.
+
+Whereas a utility such as `quilt` maintains each individual patch
+as a "diff" file on disk, TopGit (the `tg` command) maintains each
+individual patch as _two_ branches in Git -- the patch's "branch"
+and the patch's "base branch".  The patch itself is simply the
+"diff" from the patch's "base branch" to the patch's "branch".
+
+Whereas a utilty such as `quilt` maintains the list of active patch
+"diff" files and the correct order to apply them in a file (the
+`series` file), TopGit maintains this information in a `.topdeps`
+file that is part of each patch's "branch".
+
+TopGit maintains any desired "documentation" (aka the patch header)
+in a `.topmsg` file that is also part of each patch's "branch" and
+prepends it when generating a patch "diff".
+
+
+TopGit Advantages
+-----------------
+
+### Patch Dependency Topology
+
+Whereas the `series` file in Quilt is (obviously) limited to a
+"linear" topology, TopGit's `.topdeps` file is not.
+
+For example, consider that you have three patches:
+
+ 1. add "feature A"
+ 2. add "feature B"
+ 3. add "feature C" that requires both feature A and feature B
+
+If "feature A" and "feature B" are completely independent features,
+then the order that the "feature A" and "feature B" patches are
+applied does not matter as long as they are both applied before the
+"feature C" patch.
+
+TopGit can represent this by listing both the "feature A" and
+"feature B" patches in the `.topdeps` file for the "feature C"
+patch.
+
+### Patch Change History
+
+Whereas with Quilt there is no history of changes (aka edits) to a
+patch (unless explicit backups are made along the way), all changes
+to a patch in TopGit are made via regular Git commands.
+
+This means all the standard Git introspection commands (e.g. "log",
+"diff", "bisect", "blame", etc.) are available to view the history
+of an individual patch.
+
+### Patch Updating
+
+With Quilt when the "upstream" sources are updated (or even an early
+patch in the series is updated) in such a way as to cause a patch
+to no longer apply cleanly, the patch must be fixed by hand.
+
+With TopGit, the full Git merge machinery is used to merge the
+"upstream" changes (or changes to an earlier patch) into the patches
+in dependency topological order.  This can often avoid patch
+conflicts.
+
+In the case where a patch must be fixed by hand (yes, this still
+can happen in TopGit), the Git `rerere` (reuse recorded resolution)
+mechanism can be used to record the hand-crafted fix and later
+automatically reuse that fix when needed.
+
+### Patch Identification
+
+When there are a very large number of patches in a patch set, it
+may be difficult to remember (especially if you're not the original
+author) which individual patch of a "patch set" contains a particular
+change.
+
+After using the various Git introspection commands (e.g. "log",
+"diff", "bisect", "blame", etc.) to locate a commit containing a
+particular change, the TopGit `tg contains` command can be used to
+identify the individual patch of a "patch set" that logically
+contains that commit.
+
+In other words, `tg contains` identifies which TopGit branch would
+produce a patch "diff" file that makes the change introduced by the
+given commit.
+
+### Collaboration
+
+Because TopGit stores all information directly in Git, all of Git's
+normal push/pull/remote functionality can be used to collaborate
+on and/or share TopGit "patch set"s with others.
+
+
+TopGit Features
+---------------
+
+### Multiple Patch Sets
+
+With Quilt it is possible to use different `series` files to combine
+patch "diff" files into different arrangements (e.g.  for different
+machine architectures or development branches).
+
+TopGit also allows multiple "patch set"s to exist at the same time
+where a single "patch" may be used by more than one "patch set".
+
+### Patch Set History
+
+As an alternative to maintaining two or more different versions of
+the same patch (e.g. for different development branches) under
+different names such as, for example, "patch1-oldstable", "patch1-stable"
+and "patch1-unstable", it's possible to use a TopGit tag to record
+the state of a "patch set" (via the `tg tag` command) and then later
+go back to that state (via the `tg shell` command) to, for example,
+produce an updated patch set for an older software version and
+record that new state of the older software version "patch set"
+without disturbing the current version of the "patch set".
+
+The advantage of using this mechanism is that the branch names for
+the individual patches always remain the same no matter how many
+different versions are being kept.
+
+### Import and Export
+
+TopGit can import and export "patch set"s to other formats.  This
+includes the one "diff" file per patch and one "commit" per patch
+formats.
+
+This makes it easy to produce a set of "diff" patch files on demand
+for external (e.g. non-Git) use for a "patch set".
+
+
+TopGit Downsides
+----------------
+
+Forget about using `git rebase` on a TopGit branch (either a patch's
+"branch" or its "base branch").  With the exception being commits
+that have not yet been merged into any other patch's "branch" or
+"base branch".
+
+The merge history for a "patch set" can become rather complex as a
+"patch set" is maintained over time (via the `tg update` command)
+since nothing is ever thrown away.
+
+TopGit has a learning curve and those unfamiliar with Git will need
+to become comfortable with Git too.
+
+
+Additional Information
+----------------------
+
+[Full documentation][1] is available including a [fully formatted
+version of the manual][2] (created from `README_DOCS.rst`) which
+contains [examples][3] and the [TopGit changelog][4].
+
+
+[1]: https://mackyle.github.io/topgit
+[2]: https://mackyle.github.io/topgit/topgit.html
+[3]: https://mackyle.github.io/topgit/topgit.html#synopsis
+[4]: https://mackyle.github.io/topgit/changelog.html
