@@ -23,6 +23,88 @@ in a `.topmsg` file that is also part of each patch's "branch" and
 prepends it when generating a patch "diff".
 
 
+Simplistic Quilt vs. TopGit Example
+-----------------------------------
+
+Consider the following files:
+
+    frabjous.tar.gz    # tarball of "frabjous" sources
+    0001-brillig.diff  # first patch to apply
+    0002-gimble.diff   # second patch to apply
+
+With Quilt they might be used like so:
+
+    $ tar -xzf frabjous.tar.gz
+    $ cd frabjous
+    $ quilt import ../0001-brillig.diff && quilt push
+    $ quilt import ../0002-gimble.diff && quilt push
+    $ quilt applied
+    patches/0001-brillig.diff
+    patches/0002-gimble.diff
+
+With TopGit they might be used like so:
+
+    $ tar -xzf frabjous.tar.gz
+    $ cd frabjous
+    $ git init && git add -A
+    $ git -c user.name=- -c user.email=- commit -qm frabjous
+    $ git checkout -b patches
+    $ git -c user.name=- -c user.email=- am ../0001-brillig.diff
+    $ git -c user.name=- -c user.email=- am ../0002-gimble.diff
+    $ git checkout master
+    $ tg -c user.name=- -c user.email=- import ..patches
+    $ git branch
+      master
+      patches
+      t/brillig
+    * t/gimble
+      {top-bases}/t/brillig
+      {top-bases}/t/gimble
+    $ tg summary
+      t/brillig  [PATCH] brillig
+    > t/gimble   [PATCH] gimble
+    $ tg summary --rdeps --heads
+    t/gimble
+      t/brillig
+        master
+
+Whereas with Quilt, the "0001-brillig.diff" patch is maintained as
+the original patch file (in `patches/0001-brillig.diff`), with
+TopGit, the "0001-brillig.diff" patch becomes _two_ Git branches,
+`{top-bases}/t/brillig` which represents the sources before the
+"0001-brillig.diff" patch has been applied and `t/brillig` which
+represents the sources after the "0001-brillig.diff" patch has been
+applied.
+
+The original "0001-brillig.diff" patch can be re-generated with this
+TopGit command:
+
+    $ tg patch t/brillig
+
+And is roughly equivalent to the diff from the `{top-bases}/t/brillig`
+branch to the `t/brillig` branch.  (It's the diff excluding the two
+TopGit metadata files with the patch header prepended to the result.)
+
+To work on the "brillig" patch, one simply does a checkout of the
+`t/brillig` branch and makes and commits changes as normal using
+regular Git commands.  After the changes have been made, the "gimble"
+patch may need updating if any of the changes made to the "brillig"
+patch modified the same files affected by the "gimble" patch.  That
+can be accomplished with this command:
+
+    $ tg update --all
+
+Finally, when a new set of ".diff" patch files needs to be generated,
+these commands can be used:
+
+    $ git checkout t/gimble
+    $ tg export --quilt --strip --numbered patchdir
+    $ ls -1 patchdir
+    0001-brillig.diff
+    0002-gimble.diff
+    series
+
+
 TopGit Advantages
 -----------------
 
@@ -102,7 +184,7 @@ TopGit Features
 ### Multiple Patch Sets
 
 With Quilt it is possible to use different `series` files to combine
-patch "diff" files into different arrangements (e.g.  for different
+patch "diff" files into different arrangements (e.g. for different
 machine architectures or development branches).
 
 TopGit also allows multiple "patch set"s to exist at the same time
@@ -140,7 +222,8 @@ TopGit Downsides
 Forget about using `git rebase` on a TopGit branch (either a patch's
 "branch" or its "base branch").  With the exception being commits
 that have not yet been merged into any other patch's "branch" or
-"base branch".
+"base branch".  (TopGit does, however, have its own `tgstash` that
+provides a kind of "undo" after unfortunate update accidents.)
 
 The merge history for a "patch set" can become rather complex as a
 "patch set" is maintained over time (via the `tg update` command)
