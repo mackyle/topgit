@@ -1107,7 +1107,8 @@ ensure_work_tree()
 	[ -z "$wayback" ] ||
 	die "the wayback machine cannot be used with the specified options"
 	setup_git_dir_is_bare
-	[ -n "$git_dir_is_bare" ] || return 0
+	[ -n "$git_dir_is_bare" ] || v_get_show_toplevel
+	[ -n "$git_dir_is_bare" ] || [ -z "$git_toplevel_result" ] || return 0
 	die "This operation must be run in a work tree"
 }
 
@@ -1974,6 +1975,17 @@ v_get_show_cdup()
 		got_cdup_result=1
 	fi
 	[ -z "$1" ] || eval "$1="'"$git_cdup_result"'
+}
+
+got_toplevel_result=
+git_toplevel_result=
+v_get_show_toplevel()
+{
+	if [ -z "$got_toplevel_result" ]; then
+		git_toplevel_result="$(git rev-parse --show-toplevel)"
+		got_toplevel_result=1
+	fi
+	[ -z "$1" ] || eval "$1="'"$git_toplevel_result"'
 }
 
 git_dir_is_bare_setup=

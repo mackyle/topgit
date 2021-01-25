@@ -6,8 +6,8 @@
 
 # git_topmerge will need this even on success and since it might otherwise
 # be called many times do it just the once here and now
-repotoplvl="$(git rev-parse --show-toplevel)" && [ -n "$repotoplvl" ] && [ -d "$repotoplvl" ] ||
-die "git rev-parse --show-toplevel failed"
+ensure_work_tree
+v_get_show_toplevel repotoplvl
 
 # If HEAD is a symref to "$1" detach it at its current value
 detach_symref_head_on_branch() {
