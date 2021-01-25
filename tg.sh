@@ -245,13 +245,16 @@ cat_depsmsg_internal()
 	fi
 	[ -d "$tg_cache_dir/refs/heads/$1" ] || mkdir -p "$tg_cache_dir/refs/heads/$1" 2>/dev/null || :
 	if [ -d "$tg_cache_dir/refs/heads/$1" ]; then
-		printf '%s\n' "$_rev" >"$tg_cache_dir/refs/heads/$1/.$2"
+		rm -f "$tg_cache_dir/refs/heads/$1/.$2" "$tg_cache_dir/refs/heads/$1/.$2-$$"
+		printf '%s\n' "$_rev" >"$tg_cache_dir/refs/heads/$1/.$2-$$"
 		_line=
 		git cat-file blob "$_rev:.$2" 2>/dev/null |
 		while IFS= read -r _line || [ -n "$_line" ]; do
 			printf '%s\n' "$_line" >&3
 			printf '%s\n' "$_line"
-		done 3>>"$tg_cache_dir/refs/heads/$1/.$2"
+		done 3>>"$tg_cache_dir/refs/heads/$1/.$2-$$"
+		mv -f "$tg_cache_dir/refs/heads/$1/.$2-$$" "$tg_cache_dir/refs/heads/$1/.$2"
+		rm -f "$tg_cache_dir/refs/heads/$1/.$2-$$"
 	else
 		git cat-file blob "$_rev:.$2" 2>/dev/null
 	fi
