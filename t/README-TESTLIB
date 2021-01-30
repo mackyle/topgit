@@ -780,7 +780,7 @@ by using a `return` statement or, if `$TESTLIB_TEST_NO_SUBSHELL` is _NOT_ set
     Note that the special prerequiste `LASTOK` behaves as expected here --
     that is if the first `test_external` call is skipped then its state
     _does NOT change_ regardless of the outcome of the second "stderr"
-    subtest check.  In addition, if the the `test_external` test is _not_
+    subtest check.  In addition, if the `test_external` test is _not_
     skipped then the `LASTOK` prerequisite is guaranteed to only be true
     provided _both_ the `test_external` call suceeds _and_ no "stderr" output
     is generated.  In other words, it just does the right thing here so don't
@@ -1288,7 +1288,7 @@ available utility functions that are TopGit-specific.
 - test_unconfig [-C <dir>] <arg>...
 
     Runs `git [-C <dir>] config --unset-all <arg>...` immediately but ignores
-    any error resulting from the the value(s) to be unset not actually being
+    any error resulting from the value(s) to be unset not actually being
     currently set at all (status 5).
 
     Can be used for global values simply by making the first <arg> be `--global`

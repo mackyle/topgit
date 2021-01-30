@@ -784,7 +784,7 @@ run_awk_topgit_deps()
 #   t/foo/int t/foo/leaf
 #
 # note the reversed ordering as the first branch name is the branch with the
-# .topdeps file that contains the the second branch name
+# .topdeps file that contains the second branch name
 #
 # Note that this function WILL call get_temp if -h=<file> is NOT given
 #
