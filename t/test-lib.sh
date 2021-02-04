@@ -1,5 +1,5 @@
 # Test lib caching support
-# Copyright (C) 2016,2017 Kyle J. McKay.
+# Copyright (C) 2016,2017,2021 Kyle J. McKay.
 # All rights reserved.
 # License GPLv2+
 
@@ -115,7 +115,7 @@ if [ "$1" = "--cache" ]; then
 		# run all the "lazy" prereq tests now in a new subdir
 		# (set up on the "--root" if selected) using setup code
 		# taken (and modified) from test-lib-main.sh so that the
-		# lazy prereqs get the same answer the would when not cached
+		# lazy prereqs get the same answer they would when not cached
 		TRASH_DIRECTORY="cachetest"
 		test -n "$root" && TRASH_DIRECTORY="$root/$TRASH_DIRECTORY"
 		case "$TRASH_DIRECTORY" in
