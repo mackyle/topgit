@@ -28,6 +28,19 @@ commit_orphan() {
 	git update-ref HEAD "$_gc" HEAD
 }
 
+# replace `git symbolic-ref HEAD refs/heads/foo`
+# with `sane_reattach_ref HEAD refs/heads/foo`
+sane_reattach_ref() {
+	_rlc="$(git reflog show "$1" -- | wc -l)" &&
+	git symbolic-ref "$1" "$2" &&
+	_rlc2="$(git reflog show "$1" -- | wc -l)" &&
+	if test x"$_rlc" != x"$_rlc2"; then
+		git reflog delete "$1@{0}" &&
+		_rlc2="$(git reflog show "$1" -- | wc -l)" &&
+		test x"$_rlc" = x"$_rlc2"
+	fi
+}
+
 test_expect_success 'setup main' '
 	test_create_repo main &&
 	cd main &&
@@ -71,7 +84,7 @@ test_expect_success 'setup main' '
 	c7="$(git rev-parse --verify HEAD)" && test -n "$c7" &&
 	git update-ref --no-deref -m "detaching to c4" HEAD "$c4" HEAD &&
 	git update-ref --no-deref -m "attaching back to c7" HEAD "$c7" HEAD &&
-	git symbolic-ref HEAD refs/heads/master &&
+	sane_reattach_ref HEAD refs/heads/master &&
 	echo "$hash2" >objs &&
 	echo "$hash5" >>objs &&
 	pack="$(git pack-objects <objs .git/objects/pack/pack)" && test -n "$pack" &&
@@ -124,7 +137,7 @@ test_expect_success 'LASTOK GIT_2_5' 'setup linked' '
 	c1="$(git rev-parse --verify HEAD)" && test -n "$c1" &&
 	git update-ref --no-deref -m "detaching to linked c4" HEAD "$c4" HEAD &&
 	git update-ref --no-deref -m "attaching back to linked c1" HEAD "$c1" HEAD &&
-	git symbolic-ref HEAD refs/heads/linked
+	sane_reattach_ref HEAD refs/heads/linked
 '
 
 cat <<\EOT >HEAD_main.log || die
