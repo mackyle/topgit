@@ -108,7 +108,11 @@ git_topmerge()
 					rm -r -f "$zapbad"
 				fi
 			done
-			(cd "$repotoplvl" && git checkout-index -q -f -u -- .topdeps .topmsg) ||
+			# Since Git v2.30.1, even with "-q" checkout-index can spuriously fail!
+			# It must only be called with the names of files actually in the index to avoid that.
+			idxtopfiles="$(git ls-files --full-name -- :/.topdeps :/.topmsg)" || :
+			[ -z "$idxtopfiles" ] ||
+			(cd "$repotoplvl" && git checkout-index -q -f -u -- $idxtopfiles) ||
 			die "git checkout-index failed"
 		fi
 		# dump output without any .topdeps or .topmsg messages
