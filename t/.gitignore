@@ -2,6 +2,7 @@
 /TG-TEST-SETTINGS
 /Makefile.var
 /empty
+/git
 /trash directory*
 /trash tmp directory*
 /test-results

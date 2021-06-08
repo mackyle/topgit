@@ -915,6 +915,9 @@ case "$AWK_PATH" in */*);;*) AWK_PATH="/usr/bin/$AWK_PATH"; esac
 [ "$GIT_PATH" = "/${GIT_PATH#?}" ] || GIT_PATH="$(cmd_path "${GIT_PATH:-git}")"
 [ "$PERL_PATH" = "/${PERL_PATH#?}" ] || PERL_PATH="$(cmd_path "${PERL_PATH:-perl}")"
 
+[ "$SHELL_PATH" = "/${SHELL_PATH#?}" ] || fatal "SHELL_PATH must be absolute: $SHELL_PATH"
+[ "$AWK_PATH" = "/${AWK_PATH#?}" ] || fatal "AWK_PATH must be absolute: $AWK_PATH"
+
 # Test the binaries we have just built.  The tests are kept in
 # t/ subdirectory and are run in 'trash directory' subdirectory.
 if test -z "$TEST_DIRECTORY"
@@ -944,6 +947,42 @@ fi
 	test -d "$TESTLIB_DIRECTORY"/empty ||
 	fatal "error: could not make empty directory: '$TESTLIB_DIRECTORY/empty'"
 }
+GIT_IN_PATH="$(cmd_path git)" || :
+if test x"$GIT_IN_PATH" = x"$GIT_PATH"
+then
+	if [ -e "$TESTLIB_DIRECTORY/git/git" ]
+	then
+		rm -f "$TESTLIB_DIRECTORY/git/git"
+		! test -e "$TESTLIB_DIRECTORY/git/git" ||
+		fatal "error: could not make git shim go away: '$TESTLIB_DIRECTORY/git/git'"
+	fi
+else
+	case "$GIT_PATH" in *"'"*)
+		fatal "error: GIT_PATH may not contain any single quote (') characters: $GIT_PATH"
+	esac
+	case "$SHELL_PATH" in *" "*|*'"'*|*"'"*)
+		fatal "error: SHELL_PATH may not contain any single/double quotes or spaces: $SHELL_PATH"
+	esac
+	[ -d "$TESTLIB_DIRECTORY"/git ] || {
+		mkdir -p "$TESTLIB_DIRECTORY/git" || :
+		test -d "$TESTLIB_DIRECTORY"/git &&
+		test -w "$TESTLIB_DIRECTORY"/git ||
+		fatal "error: could not make git directory: '$TESTLIB_DIRECTORY/git'"
+	}
+	git_shim_script="#!$SHELL_PATH"'
+exec '"'$GIT_PATH'"' "$@"'
+	if
+		! test -x "$TESTLIB_DIRECTORY/git/git" ||
+		! test x"$git_shim_script" = x"$(cat "$TESTLIB_DIRECTORY/git/git")"
+	then
+		printf '%s\n' "$git_shim_script" >"$TESTLIB_DIRECTORY/git/git.$$" &&
+		chmod a+rx "$TESTLIB_DIRECTORY/git/git.$$" &&
+		mv -f "$TESTLIB_DIRECTORY/git/git.$$" "$TESTLIB_DIRECTORY/git/git" &&
+		test -x "$TESTLIB_DIRECTORY/git/git" &&
+		test x"$git_shim_script" = x"$(cat "$TESTLIB_DIRECTORY/git/git")" ||
+		fatal "error: could not make git shim: '$TESTLIB_DIRECTORY/git/git'"
+	fi
+fi
 EMPTY_DIRECTORY="$TESTLIB_DIRECTORY/empty"
 export TEST_DIRECTORY TEST_HELPER_DIRECTORY TEST_OUTPUT_DIRECTORY EMPTY_DIRECTORY
 GIT_CEILING_DIRECTORIES="$TESTLIB_DIRECTORY"
@@ -957,6 +996,7 @@ export GIT_CEILING_DIRECTORIES
 # It appears that people try to run tests with missing perl or git...
 git_version="$("$GIT_PATH" --version 2>&1)" ||
 	fatal 'error: you do not seem to have git available?'
+[ "$GIT_PATH" = "/${GIT_PATH#?}" ] || fatal "GIT_PATH must be absolute: $GIT_PATH"
 case "$git_version" in [Gg][Ii][Tt]\ [Vv][Ee][Rr][Ss][Ii][Oo][Nn]\ [0-9]*);;*)
 	fatal "error: git --version returned bogus value: $git_version"
 esac
@@ -1171,6 +1211,7 @@ test_lib_functions_tg_init
 
 last_verbose=t
 
+[ ! -x "$TESTLIB_DIRECTORY/git/git" ] || PATH="$TESTLIB_DIRECTORY/git:$PATH"
 [ -n "$TEST_HELPER_DIRECTORY" ] && [ -d "$TEST_HELPER_DIRECTORY" ] && PATH="$TEST_HELPER_DIRECTORY:$PATH" || :
 if [ -n "$TG_TEST_INSTALLED" ]; then
 	TG_TEST_FULL_PATH="$(cmd_path tg)" && [ -n "$TG_TEST_FULL_PATH" ] ||
