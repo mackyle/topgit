@@ -262,7 +262,7 @@ for cmd in $TG_CMDS; do
 done
 
 test_expect_success 'no setup happens in bare repository' '
-	git init --bare r5 && cd r5 &&
+	git init --bare --quiet r5 && cd r5 &&
 	for cmd in $TG_CMDS; do
 		say "# checking tg $cmd does not do setup in bare repo"
 		test_might_fail </dev/null tg $cmd && has_no_tg_setup_bare &&
