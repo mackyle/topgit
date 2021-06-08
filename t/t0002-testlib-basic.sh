@@ -1143,4 +1143,31 @@ test_expect_success 'very long name in the index handled sanely' '
 	test $len = 4098
 '
 
+# git_add_config "some.var=value"
+# every ' in value must be replaced with the 4-character sequence '\'' before
+# calling this function or Git will barf.  Will not be effective unless running
+# Git version 1.7.3 or later.
+git_add_config() {
+	GIT_CONFIG_PARAMETERS="${GIT_CONFIG_PARAMETERS:+$GIT_CONFIG_PARAMETERS }'$1'" &&
+	export GIT_CONFIG_PARAMETERS
+}
+
+git_sane_get_config() {
+	git config --get "$1" || :
+}
+
+test_expect_success 'GIT_CONFIG_PARAMETERS works as expected' '
+	val1="$(git_sane_get_config testgcp.val1)" &&
+	val2="$(git_sane_get_config testgcp.val2)" &&
+	test -z "$val1" && test -z "$val2" &&
+	git_add_config "testgcp.val1=value1" &&
+	val1="$(git_sane_get_config testgcp.val1)" &&
+	val2="$(git_sane_get_config testgcp.val2)" &&
+	test x"$val1" = x"value1" && test -z "$val2" &&
+	git_add_config "testgcp.val2=value too" &&
+	val1="$(git_sane_get_config testgcp.val1)" &&
+	val2="$(git_sane_get_config testgcp.val2)" &&
+	test x"$val1" = x"value1" && test x"$val2" = x"value too"
+'
+
 test_done
