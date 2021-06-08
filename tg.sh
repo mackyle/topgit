@@ -27,6 +27,7 @@ lf='
 # some ridiculous sh implementations require 'trap ... EXIT' to be executed
 # OUTSIDE ALL FUNCTIONS to work in a sane fashion.  Always trap it and eval
 # "${TRAPEXIT_:-exit}" as a substitute.
+TRAPEXIT_=
 trapexit_()
 {
 	EXITCODE_=${1:-$?}
