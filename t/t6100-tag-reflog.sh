@@ -12,7 +12,7 @@ if vcmp "$git_version" '>=' "2.5"; then
         test_set_prereq "GIT_2_5"
 fi
 
-test_plan 44
+test_plan 48
 
 commit_empty_root() {
 	_gt="$(git mktree </dev/null)" &&
@@ -582,6 +582,20 @@ test_expect_success SETUP 'tag -g --no-type master' '
 	test_cmp actual expected
 '
 
+test_expect_success SETUP 'rev-parse --verify master@{0..7}' '
+	cd main &&
+	test_must_fail git rev-parse --verify master@{8} -- &&
+	test_cmp_rev b63866e5 master@{7} &&
+	test_cmp_rev c18fcef2 master@{6} &&
+	test_cmp_rev c0ed6e70 master@{5} &&
+	test_cmp_rev feeb764a master@{4} &&
+	test_cmp_rev 40403e00 master@{3} &&
+	test_cmp_rev 8238c7e7 master@{2} &&
+	test_cmp_rev 84b1e4e6 master@{1} &&
+	test_cmp_rev dd1016e3 master@{0} &&
+	test_cmp_rev master master@{0}
+'
+
 cat <<\EOT >tgHEAD_linked.log || die
 === 2005-04-07 ===
 04eea982 15:20:13 (commit) HEAD@{0}: attaching back to linked c1
@@ -639,6 +653,20 @@ test_expect_success 'SETUP GIT_2_5' 'tag --no-type -g linked' '
 	cd ../main &&
 	tg tag -g --no-type linked >actual &&
 	test_cmp actual ../linked/expected
+'
+
+test_expect_success 'SETUP GIT_2_5' 'rev-parse --verify linked@{0..7}' '
+	cd linked &&
+	test_must_fail git rev-parse --verify linked@{8} -- &&
+	test_cmp_rev fce870c7 linked@{7} &&
+	test_cmp_rev 2849f113 linked@{6} &&
+	test_cmp_rev e053b7d1 linked@{5} &&
+	test_cmp_rev 0a45d475 linked@{4} &&
+	test_cmp_rev 40403e00 linked@{3} &&
+	test_cmp_rev 602d59a7 linked@{2} &&
+	test_cmp_rev 4d776c64 linked@{1} &&
+	test_cmp_rev 04eea982 linked@{0} &&
+	test_cmp_rev linked linked@{0}
 '
 
 cat <<\EOT >tgHEAD_main_1.log || die
@@ -795,6 +823,28 @@ test_expect_success 'SETUP GIT_2_5' 'tag --drop linked@{0}' '
 	lnew="$(git rev-parse --verify linked)" && test -n "$lnew" &&
 	test "$lnew" = "$l0new" &&
 	test "$l0new" = "$l1"
+'
+
+test_expect_success SETUP 'rev-parse --verify master@{0..4}' '
+	cd main &&
+	test_must_fail git rev-parse --verify master@{5} -- &&
+	test_cmp_rev c18fcef2 master@{4} &&
+	test_cmp_rev c0ed6e70 master@{3} &&
+	test_cmp_rev feeb764a master@{2} &&
+	test_cmp_rev 8238c7e7 master@{1} &&
+	test_cmp_rev 84b1e4e6 master@{0} &&
+	test_cmp_rev master master@{0}
+'
+
+test_expect_success 'SETUP GIT_2_5' 'rev-parse --verify linked@{0..4}' '
+	cd linked &&
+	test_must_fail git rev-parse --verify linked@{5} -- &&
+	test_cmp_rev 2849f113 linked@{4} &&
+	test_cmp_rev e053b7d1 linked@{3} &&
+	test_cmp_rev 0a45d475 linked@{2} &&
+	test_cmp_rev 40403e00 linked@{1} &&
+	test_cmp_rev 4d776c64 linked@{0} &&
+	test_cmp_rev linked linked@{0}
 '
 
 test_expect_success SETUP 'tag --drop symref HEAD@{0}' '
