@@ -46,7 +46,7 @@ With TopGit they might be used like so:
 
     $ tar -xzf frabjous.tar.gz
     $ cd frabjous
-    $ git init && git add -A
+    $ git -c init.defaultBranch=master init && git add -A
     $ git -c user.name=- -c user.email=- commit -qm frabjous
     $ git checkout -b patches
     $ git -c user.name=- -c user.email=- am ../0001-brillig.diff
