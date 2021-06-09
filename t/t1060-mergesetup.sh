@@ -26,6 +26,8 @@ fi
 
 test_plan 10
 
+# Note that the initial branch name in bare.git does
+# not affect these tests in any way
 test_expect_success 'test setup' '
 	git init --bare --quiet --template="$EMPTY_DIRECTORY" bare.git &&
 	test_create_repo r1 &&

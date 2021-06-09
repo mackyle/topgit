@@ -261,6 +261,8 @@ for cmd in $TG_CMDS; do
 	fi
 done
 
+# Note that the initial branch name in r5 does
+# not affect these tests in any way
 test_expect_success 'no setup happens in bare repository' '
 	git init --bare --quiet r5 && cd r5 &&
 	for cmd in $TG_CMDS; do

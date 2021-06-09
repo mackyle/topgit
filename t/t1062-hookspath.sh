@@ -35,6 +35,8 @@ do_status() {
         test_might_fail tg -C "$1" status 2>&1
 }
 
+# Note that the initial branch name in insidious/_global does
+# not affect these tests in any way
 test_expect_success 'setup' '
 	mkdir _global _global/hooks insidious insidious/_global insidious/_global/hooks &&
 	ln -s _global/hooks globhookdir &&

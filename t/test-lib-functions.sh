@@ -143,6 +143,15 @@ sane_unset() {
 	{ "unset" "$@"; } >/dev/null 2>&1 || :
 }
 
+# Protect against breaking in the future when Git changes its
+# nearly two decades old defaults.  The `-c` option first appeared
+# in Git 1.7.2 (2010-07-21).  That means this test framework
+# requires at least Git 1.7.2.  Since TopGit requires at least
+# Git 1.9.2 that's not a problem.
+git_init() {
+	git -c init.defaultBranch=master init "$@"
+}
+
 test_tick() {
 	if test -z "${test_tick:+set}"
 	then
@@ -313,7 +322,7 @@ test_lazy_prereq() {
 
 test_ensure_git_dir_() {
 	git rev-parse --git-dir >/dev/null 2>&1 ||
-	git init --quiet --template="$EMPTY_DIRECTORY" >/dev/null 2>&1 ||
+	git_init --quiet --template="$EMPTY_DIRECTORY" >/dev/null 2>&1 ||
 		fatal "cannot run git init"
 }
 
@@ -977,7 +986,7 @@ test_create_repo() {
 	mkdir -p "$repo"
 	(
 		cd "$repo" || error "Cannot setup test environment"
-		git init --quiet "--template=$EMPTY_DIRECTORY" >&3 2>&4 ||
+		git_init --quiet "--template=$EMPTY_DIRECTORY" >&3 2>&4 ||
 		error "cannot run git init -- have you built things yet?"
 		! [ -e .git/hooks ] || mv .git/hooks .git/hooks-disabled
 	) || exit

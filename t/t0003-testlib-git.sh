@@ -92,7 +92,7 @@ test_expect_success 'test_unconfig --global already unset without repo' '
 	test z = z"$(git config yesuch.global || :)"
 '
 
-git init --quiet --template="$EMPTY_DIRECTORY" &&
+git_init --quiet --template="$EMPTY_DIRECTORY" &&
 cp .git/config .git/config.bak ||
 error "failed to initialize top repo"
 
