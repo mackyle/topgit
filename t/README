@@ -68,7 +68,7 @@ provided functions to produce TAP output like so:
 
     And any more lines go here much like a standard Git
     checkin comment although there is no requirement that
-    the description follow any partiuclar layout.  It is
+    the description follow any particular layout.  It is
     only used by the -h|--help functionality.
     '
 
@@ -127,7 +127,7 @@ must consist of one of four kinds of lines:
      (If the '#' isn't in column 1 then it's technically an "other" line.)
      Some harnesses have an option to show comments and "other" lines do NOT
      qualify, only lines matching "^#" are considered "comments".  For example,
-     all of the following are recognized as comment/diagnostice lines:
+     all of the following are recognized as comment/diagnostic lines:
          # Hello
 	 #   some random gobbledygook
 	 # Lines may be located anywhere in the output
