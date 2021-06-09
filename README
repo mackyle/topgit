@@ -52,6 +52,7 @@ With TopGit they might be used like so:
     $ git -c user.name=- -c user.email=- am ../0001-brillig.diff
     $ git -c user.name=- -c user.email=- am ../0002-gimble.diff
     $ git checkout master
+    $ git config topgit.top-bases heads # not the default...yet!
     $ tg -c user.name=- -c user.email=- import ..patches
     $ git branch
       master
