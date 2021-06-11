@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 
 # create-html-usage.pl -- insert usage lines into README_DOCS.rst
-# Copyright (C) 2015,2017,2020 Kyle J. McKay.  All rights reserved.
+# Copyright (C) 2015,2017,2020,2021 Kyle J. McKay.  All rights reserved.
 # License GPLv2 or, at your option, any later version.
 
 use strict;
@@ -48,31 +48,52 @@ sub wrap
 	return $ans;
 }
 
+sub maybe_uc
+{
+	my $l = shift;
+	$l =~ /^tg / and return $l;
+	return uc($l);
+}
+
 my $textmode;
 $textmode=1, shift if defined($ARGV[0]) && $ARGV[0] eq '--text';
 my $tab = ' ' x 8;
-while (my $line = <>) {
-	chomp $line;
-	1 while $line =~ s/\t+/" " x (($+[0] - $-[0]) * 8 - $-[0] % 8)/e;
-	$line =~ s'^``([^``\n].*)``$'wrap(78, 4, $1)'e if $textmode;
-	$line =~ s'^(\s*):`(.+?)`_:'"$1$2  "'e if $textmode;
-	$line =~ s'^(\s*):(\w+?)_?:'"$1$2"'e if $textmode;
+my $discard = 0;
+while (<>) {
+	chomp;
+	# From the Perl camel book "Fluent Perl" section (slightly modified)
+	s/(.*?)(\t+)/$1 . ' ' x (length($2) * 8 - length($1) % 8)/eg;
+	if ($textmode) {
+		$discard and do {$discard = 0; next};
+		/^::\s*$/ and do {$discard = 1; next};
+		m'^```+$' and next;
+		s'^``([^``\n].*)``$'wrap(78, 4, $1)'e;
+		s'^(\s*):`(`.+?`)`: '"$1$2  "'e;
+		s'^(\s*):`(.+?)`_: '"$1\"$2\"  "'e;
+		s'^(\s*):(\w+?)_?: '"$1\"$2\""'e;
+		s'`([^`]+?>)`_'"$1"'ge;
+		s'`([^`]+?)`_'"\"".maybe_uc($1)."\""'ge;
+		s'`(`[^`]+?`)`'"$1"'ge;
+		s'"(`[^`]+?`)"'"$1"'ge;
+		s' ([A-Za-z]+?)_(?![A-Za-z])'" \"".maybe_uc($1)."\""'ge;
+		s'::$':';
+	}
 	if (defined($last)) {
 		printf "%s\n",  $last;
-		if ($line =~ /^[~]+$/ && $last =~ /^tg ([^\s]+)$/) {
+		if (/^[~]+$/ && $last =~ /^tg ([^\s]+)$/) {
 			my @usage = get_tg_usage($1);
 			if (@usage) {
-				printf "%s\n", $line;
+				printf "%s\n", $_;
 				if ($textmode) {
 					printf "%s", join("",map({wrap(78, 12, "$tab$_")."\n"} @usage));
 				} else {
 					printf "%s", join("",map({"$tab| ".'``'.$_.'``'."\n"} @usage));
 				}
-				$line = "";
+				$_ = "";
 			}
 		}
 	}
-	$last = $line;
+	$last = $_;
 }
 
 printf "%s\n", $last if defined($last);
