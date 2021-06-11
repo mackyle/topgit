@@ -2831,7 +2831,7 @@ The following references are useful to understand the development of
 topgit and its subcommands.
 
 * tg depend:
-  http://public-inbox.org/git/36ca99e90904091034m4d4d31dct78acb333612e678@mail.gmail.com/T/#u
+  https://lore.kernel.org/git/36ca99e90904091034m4d4d31dct78acb333612e678@mail.gmail.com/T/#u
 
 
 THIRD-PARTY SOFTWARE
