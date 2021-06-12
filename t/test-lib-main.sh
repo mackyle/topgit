@@ -150,9 +150,9 @@ error_lno() {
 	[ -z "$TESTLIB_TEST_PARENT_INT_ON_ERROR" ] || {
 		trap '' INT
 		perl -e "kill(-2, getpgrp($TESTLIB_TEST_PARENT_INT_ON_ERROR), getpgrp($PPID), getpgrp($$), getpgrp(0))" || :
-		kill -INT $TESTLIB_TEST_PARENT_INT_ON_ERROR $PPID || :
+		kill -s INT $TESTLIB_TEST_PARENT_INT_ON_ERROR $PPID || :
 	} >/dev/null 2>&1
-	kill -USR1 $$ || :
+	kill -s USR1 $$ || :
 	exit 1
 }
 error() {
