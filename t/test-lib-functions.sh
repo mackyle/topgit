@@ -1098,16 +1098,16 @@ test_skip_or_die() {
 # The following mingw_* functions obey POSIX shell syntax, but are actually
 # bash scripts, and are meant to be used only with bash on Windows.
 
-# A test_cmp function that treats LF and CRLF equal and avoids to fork
+# A test_cmp function that treats LF and CRLF equal and avoids forking
 # diff when possible.
 mingw_test_cmp() {
 	# Read text into shell variables and compare them. If the results
 	# are different, use regular diff to report the difference.
-	local test_cmp_a= test_cmp_b=
+	test_cmp_a= test_cmp_b=
 
 	# When text came from stdin (one argument is '-') we must feed it
 	# to diff.
-	local stdin_for_diff=
+	stdin_for_diff=
 
 	# Since it is difficult to detect the difference between an
 	# empty input file and a failure to read the files, we go straight
@@ -1140,24 +1140,24 @@ mingw_test_cmp() {
 mingw_read_file_strip_cr_() {
 	# Read line-wise using LF as the line separator
 	# and use IFS to strip CR.
-	local line
+	line_=
 	while :
 	do
-		if IFS=$'\r' read -r -d $'\n' line
+		if IFS=$'\r' read -r -d $'\n' line_
 		then
 			# good
-			line=$line$'\n'
+			line_=$line_$'\n'
 		else
 			# we get here at EOF, but also if the last line
 			# was not terminated by LF; in the latter case,
 			# some text was read
-			if test -z "$line"
+			if test -z "$line_"
 			then
 				# EOF, really
 				break
 			fi
 		fi
-		eval "$1=\$$1\$line"
+		eval "$1=\$$1\$line_"
 	done
 }
 
