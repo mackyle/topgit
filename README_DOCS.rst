@@ -424,6 +424,11 @@ EXTRA SETTINGS
 
 TopGit supports various config settings:
 
+	:`tg tag`_:             ``color.tgtag`` on/off color for ``tg tag -g``
+	:`tg tag`_:             ``color.tgtag.commit`` reflog hash color
+	:`tg tag`_:             ``color.tgtag.date`` reflog date line color
+	:`tg tag`_:             ``color.tgtag.meta`` reflog object type color
+	:`tg tag`_:             ``color.tgtag.time`` reflog time info color
 	:`tg create`_:          ``format.signoff`` template Signed-off-by line
 	:ALIASES_:              ``topgit.alias.*`` for Git-like command aliases
 	:`tg update`_:          ``topgit.autostash`` automatic stash control
@@ -2003,7 +2008,14 @@ tg tag
 	override the default.
 
 	When showing reflogs, non-tag entries are annotated with their type
-	unless ``--no-type`` is given.
+	unless ``--no-type`` is given.  Custom colors can be set with these
+	git config options:
+
+	  :``color.tgtag``:         enable/disable color, default is ``color.ui``
+	  :``color.tgtag.commit``:  hash color, dflt ``color.diff.commit``/yellow
+	  :``color.tgtag.date``:    date line color, default is bold blue
+	  :``color.tgtag.meta``:    object type "color", default is bold
+	  :``color.tgtag.time``:    time info color, default is green
 
 	TopGit tags are created with a reflog if core.logallrefupdates is
 	enabled (the default for non-bare repositories).  Unfortunately Git
