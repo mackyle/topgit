@@ -2039,7 +2039,7 @@ tg tag
 	it and its reflog (if it has one).  Note that `HEAD` cannot be removed.
 
 	The ``--clear`` option clears all but the most recent (the ``@{0}``)
-	reflog entries from the reflog for the specified tag.  It's equivalent
+	reflog entry from the reflog for the specified tag.  It's equivalent
 	to dropping all the higher numbered reflog entries.
 
 	The ``--drop`` option drops the specified reflog entry and requires the
