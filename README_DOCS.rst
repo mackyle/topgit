@@ -134,8 +134,8 @@ SYNOPSIS
 
 	## Create and evolve a topic branch
 	$ tg create t/gitweb/pathinfo-action
-	tg: Automatically marking dependency on master
-	tg: Creating t/gitweb/pathinfo-action base from master...
+	tg: automatically marking dependency on master
+	tg: creating t/gitweb/pathinfo-action base from master...
 	$ ..hack..
 	$ git commit
 	$ ..fix a mistake..
@@ -143,15 +143,15 @@ SYNOPSIS
 
 	## Create another topic branch on top of the former one
 	$ tg create t/gitweb/nifty-links
-	tg: Automatically marking dependency on t/gitweb/pathinfo-action
-	tg: Creating t/gitweb/nifty-links base from t/gitweb/pathinfo-action...
+	tg: automatically marking dependency on t/gitweb/pathinfo-action
+	tg: creating t/gitweb/nifty-links base from t/gitweb/pathinfo-action...
 	$ ..hack..
 	$ git commit
 
 	## Create another topic branch on top of master and submit
 	## the resulting patch upstream
 	$ tg create t/revlist/author-fixed master
-	tg: Creating t/revlist/author-fixed base from master...
+	tg: creating t/revlist/author-fixed base from master...
 	$ ..hack..
 	$ git commit
 	$ tg patch -m
@@ -163,13 +163,13 @@ SYNOPSIS
 
 	## Create another topic branch depending on two others non-trivially
 	$ tg create t/whatever t/revlist/author-fixed t/gitweb/nifty-links
-	tg: Creating t/whatever base from t/revlist/author-fixed...
-	tg: Merging t/whatever base with t/gitweb/nifty-links...
-	Merge failed!
-	tg: Please commit merge resolution and call: tg update --continue
-	tg: It is also safe to abort this operation using `git reset --hard`
-	tg: but please remember you are on the base branch now;
-	tg: you will want to switch to a different branch.
+	tg: creating t/whatever base from t/revlist/author-fixed...
+	tg: Topic branch t/whatever created.
+	tg: Running tg update to merge in dependencies.
+	tg: Updating t/whatever base with t/gitweb/nifty-links changes...
+	Automatic merge failed; fix conflicts and then commit the result.
+	tg: Please commit merge resolution and call `tg update --continue`
+	tg: (use `tg status` to see more options)
 	$ ..resolve..
 	$ git commit
 	$ tg update --continue
@@ -183,22 +183,23 @@ SYNOPSIS
 	$ git commit
 	$ git checkout t/whatever
 	$ tg info
-	Topic Branch: t/whatever (1 commit)
+	Topic Branch: t/whatever (2/1 commits)
 	Subject: [PATCH] Whatever patch
 	Base: 3f47ebc1
-	Depends: t/revlist/author-fixed t/gitweb/nifty-links
+	Depends: t/revlist/author-fixed
+		 t/gitweb/nifty-links
 	Needs update from:
-		t/gitweb/nifty-links (1 commit)
+		t/gitweb/nifty-links (1/1 commit)
 	$ tg update
-	tg: Updating base with t/gitweb/nifty-links changes...
-	Merge failed!
+	tg: Updating t/whatever base with t/gitweb/nifty-links changes...
+	Automatic merge failed; fix conflicts and then commit the result.
 	tg: Please commit merge resolution and call `tg update --continue`
 	tg: (use `tg status` to see more options)
 	$ ..resolve..
 	$ git commit
 	$ tg update --continue
 	tg: Updating t/whatever against new base...
-	Merge failed!
+	Automatic merge failed; fix conflicts and then commit the result.
 	tg: Please commit merge resolution and call `tg update --continue`
 	tg: (use `tg status` to see more options)
 	$ ..resolve..
@@ -215,26 +216,29 @@ SYNOPSIS
 	Topic Branch: t/whatever (1/2 commits)
 	Subject: [PATCH] Whatever patch
 	Base: 0ab2c9b3
-	Depends: t/revlist/author-fixed t/gitweb/nifty-links
+	Depends: t/revlist/author-fixed
+		 t/gitweb/nifty-links
 	Needs update from:
-		t/gitweb/pathinfo-action (<= t/gitweb/nifty-links) (1 commit)
+		t/gitweb/pathinfo-action (<= t/gitweb/nifty-links) (1/1 commit)
 	$ tg update
 	tg: Recursing to t/gitweb/nifty-links...
-	[t/gitweb/nifty-links] tg: Updating base with t/gitweb/pathinfo-action changes...
-	Merge failed!
-	[t/gitweb/nifty-links] tg: Please commit merge resolution and call `tg update --continue`
-	[t/gitweb/nifty-links] tg: (use `tg status` to see more options)
+	==> [t/gitweb/nifty-links]
+	tg: Updating t/gitweb/nifty-links base with t/gitweb/pathinfo-action changes...
+	Automatic merge failed; fix conflicts and then commit the result.
+	tg: Please commit merge resolution and call `tg update --continue`
+	tg: (use `tg status` to see more options)
 	$ ..resolve..
 	$ git commit
 	$ tg update --continue
-	[t/gitweb/nifty-links] tg: Updating t/gitweb/nifty-links against new base...
-	Merge failed!
-	[t/gitweb/nifty-links] tg: Please commit merge resolution and call `tg update --continue`
-	[t/gitweb/nifty-links] tg: (use `tg status` to see more options)
+	==> [t/gitweb/nifty-links]
+	tg: Updating t/gitweb/nifty-links against new base...
+	Automatic merge failed; fix conflicts and then commit the result.
+	tg: Please commit merge resolution and call `tg update --continue`
+	tg: (use `tg status` to see more options)
 	$ ..resolve..
 	$ git commit
 	$ tg update --continue
-	tg: Updating base with t/gitweb/nifty-links changes...
+	tg: Updating t/whatever base with t/gitweb/nifty-links changes...
 	tg: Updating t/whatever against new base...
 
 	## Clone a TopGit-controlled repository
