@@ -79,7 +79,7 @@ function kasort_order3(anarray, i1, i2, i3, _c12, _c13, _c23) {
 }
 
 # Could "ka" mean, oh I don't know, perhaps one of these?  ;)
-#   Kyle's Awesome alternativve to the low iQ sort
+#   Kyle's Awesome alternative to the low iQ sort
 #   Kick Ass sort
 #   Kyle's Array sort
 #
@@ -241,6 +241,7 @@ function formatline(rname, oname, _out) {
 	_out = theformat
 	gsub(/%\(objectname\)/, oname, _out)
 	gsub(/%\(objecttype\)/, "object", _out)
+	gsub(/[&]/, "\\\\&", rname)
 	gsub(/%\(refname\)/, rname, _out)
 	return _out
 }
