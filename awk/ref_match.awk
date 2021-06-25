@@ -133,18 +133,18 @@ function getpatarr(patstr,
 	_c2 = 0
 	for (_pi in _sa1) {
 		_p = _sa1[_pi]
-		if (_p !~ /^refs\/./) continue
-		if (_p !~ /\/$/) _p = _p "/"
+		if (_p !~ /^refs\/[^\/]/) continue
+		sub(/\/+$/, "", _p)
 		_sa2[++_c2] = _p
 	}
 	_pc = 0
 	if (_c2 > 1) {
 		kasort_partition(_sa2, 1, _c2)
-		_lpat = _sa2[1]
+		_lpat = _sa2[1] "/"
 		_llen = length(_lpat)
 		patarr[++_pc] = _lpat
 		for (_i = 2; _i <= _c2; ++_i) {
-			_p = _sa2[_i]
+			_p = _sa2[_i] "/"
 			if (length(_p) >= _llen && _lpat == substr(_p, 1, _llen))
 				continue
 			patarr[++_pc] = _p
@@ -154,7 +154,7 @@ function getpatarr(patstr,
 	} else if (!_c2) {
 		patarr[++_pc] = "refs/"
 	} else {
-		patarr[++_pc] = _sa2[1]
+		patarr[++_pc] = _sa2[1] "/"
 	}
 	patarr[_pc + 1] = "zend"
 	return _pc
@@ -206,7 +206,7 @@ pckdrefs && $2 ~ /^refs\/./ &&
 $1 ~ /^[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]+$/ {
 	r = $2
 	sub(/\/+$/, "", r)
-	refs[++cnt] = r "/"
+	refs[++cnt] = r
 	hashes[cnt] = tolower($1)
 }
 
@@ -214,7 +214,7 @@ $1 ~ /^[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]+$/ {
 $2 ~ /^[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]+$/ {
 	r = $1
 	sub(/\/+$/, "", r)
-	refs[++cnt] = r "/"
+	refs[++cnt] = r
 	hashes[cnt] = tolower($2)
 }
 
@@ -258,11 +258,12 @@ END {
 		ref = ""
 		curpat = patarr[ji]
 		for (i = 1; i <= cnt; ++i) {
-			if (refs[i] == ref) {
+			refs_i = (refs[i] != "") ? refs[i] "/" : ""
+			if (refs_i == ref) {
 				refs[i] = ""
 				continue
 			}
-			ref = refs[i]
+			ref = refs_i
 			if (ref < curpat) {
 				refs[i] = ""
 				continue
@@ -283,7 +284,6 @@ END {
 	outcnt = 0
 	for (i = 1; i <= cnt; ++i) {
 		refname = refs[i]
-		sub(/\/+$/, "", refname)
 		if (refname == "") continue
 		if (maxout > 0 && ++outcnt > maxout) exit 0
 		objname = hashes[i]
