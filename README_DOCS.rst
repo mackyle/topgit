@@ -2297,7 +2297,7 @@ tg prev
 
 tg next
 ~~~~~~~
-	Output tne "next" branch(es) in the patch series containing the current
+	Output the "next" branch(es) in the patch series containing the current
 	or named branch.  The "next" branch(es) being one step away by default.
 
 	Options:
