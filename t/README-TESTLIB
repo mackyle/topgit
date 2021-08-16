@@ -120,7 +120,7 @@ test_commit                     | make a new commit optionally tagging it
 test_config                     | make test_when_finished reverted config mod
 test_config_global              | like `test_config` but `--global` config
 test_copy_bytes                 | transfer specified # of bytes from in to out
-test_create_repo                | create dif (if not exists) and `git_init` it
+test_create_repo                | create dir (if not exists) and `git_init` it
 test_debug                      | with `--debug` run args otherwise nop
 test_diff                       | fancy (same semantics) `test_cmp` using git
 test_dir_is_empty               | verbose fail if directory not empty
