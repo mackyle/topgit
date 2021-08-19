@@ -1,7 +1,7 @@
 #!/usr/bin/awk -f
 
 # ref_prefixes - TopGit awk utility script used by tg--awksome
-# Copyright (C) 2017,2019 Kyle J. McKay <mackyle@gmail.com>
+# Copyright (C) 2017,2019,2021 Kyle J. McKay <mackyle@gmail.com>
 # All rights reserved.
 # License GPLv2
 
@@ -18,6 +18,7 @@
 # second field of the line will be used otherwise the first
 #
 # prefix1 may not be a prefix of prefix2 or vice versa
+# if prefix1, prefix2 and/or prefixh are invalid exit status will be 2
 #
 # if prefixh is non-empty then matches for prefix1 or prefix2 must also match
 # another line from the input after replacing the prefix1/prefix2 part with
@@ -30,16 +31,17 @@
 #
 # ontput according to this table:
 #
-#   any refs match   any refs match   noerr   exit     output
-#   prefix1 prefix   prefix2 prefix   value   status   value
-#   --------------   --------------   -----   ------  -------
-#   no               no               any     0        prefix1
-#   yes              no               any     0        prefix1
-#   no               yes              any     0        prefix2
-#   yes              yes              false   1
-#   yes              yes              true    0        prefix1
+#   any refs match   any refs match   noerr   nodef    exit     output
+#   prefix1 prefix   prefix2 prefix   value   value    status   value
+#   --------------   --------------   -----   ------   ------   -------
+#   no               no               any     false    0        prefix1
+#   no               no               any     true     66
+#   yes              no               any     any      0        prefix1
+#   no               yes              any     any      0        prefix2
+#   yes              yes              false   any      65
+#   yes              yes              true    any      0        prefix1
 #
-# there is no output when exit status is 1
+# there is no output when exit status is not 0
 # the output value, if any, will have any trailing slash(es) removed from it
 #
 
