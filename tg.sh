@@ -455,7 +455,7 @@ make_empty_commit()
 		MTDATE="$SECS $ZONE"
 	fi
 	EMPTYID="- <-> $MTDATE"
-	EMPTYTREE="$(git hash-object -t tree -w --stdin < /dev/null)"
+	EMPTYTREE="$(git mktree < /dev/null)"
 	printf '%s\n' "tree $EMPTYTREE" "author $EMPTYID" "committer $EMPTYID" '' |
 	git hash-object -t commit -w --stdin
 )

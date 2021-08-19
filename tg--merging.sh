@@ -67,7 +67,7 @@ git_topmerge()
 	_msg="$2"
 	_mt=
 	_mb="$(git merge-base --all "$_ours" "$_theirs")" && [ -n "$_mb" ] ||
-	{ _mt=1; _mb="$(git hash-object -w -t tree --stdin < /dev/null)"; }
+	{ _mt=1; _mb="$(git mktree < /dev/null)"; }
 	# any .topdeps or .topmsg output needs to be stripped from stdout
 	tmpstdout="$tg_tmp_dir/stdout.$$"
 	_ret=0
@@ -283,7 +283,7 @@ v_attempt_index_merge() {
 	fi
 	[ $# -eq 1 ] || _octo=1
 	mb="$(git merge-base ${_octo:+--octopus} "$rh" "$@")" && [ -n "$mb" ] || {
-		mb="$(git hash-object -w -t tree --stdin < /dev/null)"
+		mb="$(git mktree < /dev/null)"
 		_mt=1
 	}
 	if [ -z "$_mt" ]; then

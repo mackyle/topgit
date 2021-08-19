@@ -822,7 +822,7 @@ if [ $pcnt -eq 1 ]; then
 fi
 if [ -z "$tagtarget" ]; then
 	tagtree="${treeish:-$firstprnt}"
-	[ -n "$tagtree" ] || tagtree="$(git hash-object -t tree -w --stdin </dev/null)"
+	[ -n "$tagtree" ] || tagtree="$(git mktree </dev/null)"
 	tagtarget="$(printf '%s\n' "tg tag branch consolidation" "" $branches |
 		git commit-tree $tagtree^{tree} $(printf -- '-p %s ' $parents))"
 fi
