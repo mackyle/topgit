@@ -176,7 +176,9 @@ given commit.
 
 Because TopGit stores all information directly in Git, all of Git's
 normal push/pull/remote functionality can be used to collaborate
-on and/or share TopGit "patch set"s with others.
+on and/or share TopGit "patch set"s with others.  The `tg push`
+command facilitates pushing all branches in one or more TopGit
+"patch set"s at once.
 
 
 TopGit Features
@@ -238,8 +240,8 @@ Additional Information
 ----------------------
 
 [Full documentation][1] is available including a [fully formatted
-version of the manual][2] (created from `README_DOCS.rst`) which
-contains [examples][3] and the [TopGit changelog][4].
+version of the manual][2] (created from `README_DOCS.rst` which
+incorporates a few [examples][3]) and the [TopGit changelog][4].
 
 
 [1]: https://mackyle.github.io/topgit
