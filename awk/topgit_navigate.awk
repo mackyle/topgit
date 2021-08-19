@@ -59,7 +59,7 @@
 #
 # if pruneb is non-empty after splitting a loop check will be forced and then
 # items are taken as positive refs (unless they are prefixed with "^") until
-# a sole "^" which flips state so unprefixed refs are takes as negative (unless
+# a sole "^" which flips state so unprefixed refs are taken as negative (unless
 # they are prefixed with "^") and so on -- very much like git rev-list except
 # that an isolated "^" takes the place of "--not".  However, if there are no
 # positive refs found then all nodes in the input start out as positive.
