@@ -21,7 +21,7 @@
 #   topmsg    if in form <branch>:<hash> substitute <hash> for branch:.topmsg
 #   teeout    if non-empty output lines are written here too
 #
-# if refsfile is non-empty, each line of the file it names must 2+ fields:
+# if refsfile is non-empty, each line of the file it names must be 2+ fields:
 #
 #   <full-ref-name> <full-hash-for-ref> <anything-else-on-line-ignored>
 #
