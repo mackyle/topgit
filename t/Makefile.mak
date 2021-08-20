@@ -173,7 +173,8 @@ test-lint-filenames:
 run-individual-tests: $(T)
 
 aggregate-results-and-cleanup:
-	$(Q)set -m && ec=0 && $(SHELL_PATH_SQ)'' -c 'TESTLIB_TEST_PARENT_INT_ON_ERROR=$$$$ exec "$$@"' $(SHELL_PATH_SQ)'' \
+	$(Q)set -m && ec=0 && trap : INT && \
+	$(SHELL_PATH_SQ)'' -c 'TESTLIB_TEST_PARENT_INT_ON_ERROR=$$$$ exec "$$@"' $(SHELL_PATH_SQ)'' \
 	$(MAKE) $${GNO_PD_OPT} -f Makefile.mak -k $(TESTLIB_MAKE_OPTS) run-individual-tests || ec=$$? && \
 	test -e $(TEST_RESULTS_DIRECTORY_SQ)/bailout || { $(MAKE) $${GNO_PD_OPT} -f Makefile.mak aggregate-results || exit; } && exit $$ec
 	$(Q)$(NOCLEANCMT)$(MAKE) $${GNO_PD_OPT} -f Makefile.mak -s post-clean
