@@ -1844,10 +1844,10 @@ tg update
 	recurse into them and update them.
 
 	If a remote branch update brings in dependencies on branches
-	that are not yet instantiated locally, you can either bring in
-	all the new branches from the remote using ``tg remote
-	--populate``, or only pick out the missing ones using ``tg create
-	-r`` (``tg summary`` will point out branches with incomplete
+	that are not yet instantiated locally, you can either bring
+	in all the new branches from the remote using
+	``tg remote --populate``, or only pick out the missing ones using
+	``tg create -r`` (``tg summary`` will point out branches with incomplete
 	dependencies by showing an ``!`` next to them).  TopGit will attempt to
 	instantiate just the missing ones automatically for you, if possible,
 	when ``tg update`` merges in the new dependencies from the remote.
