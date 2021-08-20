@@ -1025,6 +1025,7 @@ unset_ VISUAL EMAIL LANGUAGE COLUMNS $("${AWK_PATH:-awk}" '
 		split("\
 			TRACE			\
 			DEBUG			\
+			DEFAULT_HASH		\
 			USE_LOOKUP		\
 			TEST			\
 			.*_TEST			\

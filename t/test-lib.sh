@@ -45,10 +45,10 @@ if [ "$1" = "--cache" ]; then
 	# UNSET_VARS is a list of variables that should always be unset
 	# it will automatically have unwanted GIT_XXX vars added to it
 
-	CACHE_VARS="GIT_MERGE_VERBOSITY GIT_MERGE_AUTOEDIT \
+	CACHE_VARS="GIT_DEFAULT_HASH GIT_MERGE_VERBOSITY GIT_MERGE_AUTOEDIT \
 		GIT_CONFIG_NOSYSTEM GIT_ATTR_NOSYSTEM GIT_TRACE_BARE \
 		debug verbose verbose_only test_count trace LANG LC_ALL \
-		TZ _x05 _x40 LF u200c color \
+		TZ _x05 _x40 LF u200c color test_git229_plus test_hash_algo \
 		immediate TESTLIB_TEST_LONG run_list help quiet \
 		say_color_error say_color_skip say_color_warn say_color_pass \
 		say_color_info say_color_ TERM TESTLIB_SHELL_HAS_SHOPT \
@@ -65,7 +65,7 @@ if [ "$1" = "--cache" ]; then
 		TESTLIB_NO_TOLERATE TESTLIB_TEST_CHAIN_LINT \
 		TESTLIB_TEST_TAP_ONLY"
 
-	EXPORT_VARS="PATH GIT_TEMPLATE_DIR GIT_CONFIG_NOSYSTEM \
+	EXPORT_VARS="PATH GIT_DEFAULT_HASH GIT_TEMPLATE_DIR GIT_CONFIG_NOSYSTEM \
 		GIT_ATTR_NOSYSTEM GIT_MERGE_VERBOSITY GIT_MERGE_AUTOEDIT \
 		GIT_AUTHOR_EMAIL GIT_AUTHOR_NAME GIT_COMMITTER_EMAIL TZ \
 		GIT_COMMITTER_NAME EDITOR GIT_TRACE_BARE LANG LC_ALL PAGER \
@@ -83,6 +83,7 @@ if [ "$1" = "--cache" ]; then
 			split("\
 				TRACE			\
 				DEBUG			\
+				DEFAULT_HASH		\
 				USE_LOOKUP		\
 				TEST			\
 				.*_TEST			\
