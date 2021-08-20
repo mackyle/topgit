@@ -35,7 +35,7 @@
 
 #
 ## IMPORTANT:  THIS FILE MUST NOT CONTAIN ANYTHING OTHER THAN FUNCTION
-##             DEFINITION!!!  INITIALIZATION GOES IN THE LAST FUNCTION
+##             DEFINITIONS!!!  INITIALIZATION GOES IN THE LAST FUNCTION
 ##             DEFINED IN THIS FILE "test_lib_main_init" AS REQUIRED!
 #
 
@@ -1000,6 +1000,7 @@ git_version="$("$GIT_PATH" --version 2>&1)" ||
 case "$git_version" in [Gg][Ii][Tt]\ [Vv][Ee][Rr][Ss][Ii][Oo][Nn]\ [0-9]*);;*)
 	fatal "error: git --version returned bogus value: $git_version"
 esac
+test_auh=
 ! vcmp "$git_version" '>=' "2.9" || test_auh="--allow-unrelated-histories"
 #"$PERL_PATH" --version >/dev/null 2>&1 ||
 #	fatal 'error: you do not seem to have perl available?'
