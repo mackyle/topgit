@@ -915,7 +915,6 @@ export TESTLIB_DIRECTORY
 : "${AWK_PATH:=awk}"
 case "$AWK_PATH" in */*);;*) AWK_PATH="/usr/bin/$AWK_PATH"; esac
 [ "$GIT_PATH" = "/${GIT_PATH#?}" ] || GIT_PATH="$(cmd_path "${GIT_PATH:-git}")"
-[ "$PERL_PATH" = "/${PERL_PATH#?}" ] || PERL_PATH="$(cmd_path "${PERL_PATH:-perl}")"
 
 [ "$SHELL_PATH" = "/${SHELL_PATH#?}" ] || fatal "SHELL_PATH must be absolute: $SHELL_PATH"
 [ "$AWK_PATH" = "/${AWK_PATH#?}" ] || fatal "AWK_PATH must be absolute: $AWK_PATH"
@@ -995,7 +994,7 @@ GIT_CEILING_DIRECTORIES="$TESTLIB_DIRECTORY"
 export GIT_CEILING_DIRECTORIES
 
 ################################################################
-# It appears that people try to run tests with missing perl or git...
+# It appears that people try to run tests with missing git...
 git_version="$("$GIT_PATH" --version 2>&1)" ||
 	fatal 'error: you do not seem to have git available?'
 [ "$GIT_PATH" = "/${GIT_PATH#?}" ] || fatal "GIT_PATH must be absolute: $GIT_PATH"
@@ -1004,8 +1003,6 @@ case "$git_version" in [Gg][Ii][Tt]\ [Vv][Ee][Rr][Ss][Ii][Oo][Nn]\ [0-9]*);;*)
 esac
 test_auh=
 ! vcmp "$git_version" '>=' "2.9" || test_auh="--allow-unrelated-histories"
-#"$PERL_PATH" --version >/dev/null 2>&1 ||
-#	fatal 'error: you do not seem to have perl available?'
 
 test_lib_main_init_tee "$@"
 

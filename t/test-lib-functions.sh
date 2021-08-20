@@ -1,6 +1,7 @@
 # Test function library from Git with modifications.
 #
-# Modifications Copyright (C) 2016,2017 Kyle J. McKay.  All rights reserved.
+# Modifications Copyright (C) 2016,2017,2021 Kyle J. McKay
+# All rights reserved
 # Modifications made:
 #
 #  * Many "GIT_..." variables removed -- some were kept as TESTLIB_..." instead
@@ -557,7 +558,7 @@ alias test_expect_success='test_expect_success_lno "$LINENO"' >/dev/null 2>&1 ||
 # <n>: ..." before running it.  When providing relative paths, keep in
 # mind that all scripts run in "trash directory".
 # Usage: test_external description command arguments...
-# Example: test_external 'Perl API' perl ../path/to/test.pl
+# Example: test_external 'Awk API' awk -f ../path/to/test.awk
 test_external_lno() {
 	callerlno="$1"
 	shift
@@ -1026,10 +1027,17 @@ git() (
 	"exec" "$GIT_PATH" "$@"
 )
 
-perl() (
-	{ "unset" -f perl; } >/dev/null 2>&1 || :
-	"exec" "$PERL_PATH" "$@"
+perl_lno() (
+	: "${callerlno:=$1}"
+	shift
+	perlerr_() { return 70; } # EX_SOFTWARE
+	perlerr_ || die "${0##*/}:${callerlno:+$callerlno:} test suite attempted to use perl"
+	exit 70 # EX_SOFTWARE
 )
+perl() {
+	perl_lno "" "$@"
+}
+alias perl='perl_lno "$LINENO"' >/dev/null 2>&1 || :
 
 # Given a variable $1, normalize the value of it to one of "true",
 # "false", or "auto" and store the result to it.
