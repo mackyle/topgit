@@ -144,12 +144,134 @@ sane_unset() {
 	{ "unset" "$@"; } >/dev/null 2>&1 || :
 }
 
+test_asv_cache_lno() {
+	: "${callerlno:=$1}"
+	shift
+	if [ "$1" != "-" ]; then
+		test_asv_cache_lno "$callerlno" - <<EOT
+$1
+EOT
+	else
+		while read _tac_id _tac_hash _tac_value; do
+			case "$_tac_id" in "#"*|"") continue; esac
+			case "$_tac_hash" in
+			sha1|sha256)
+				eval "test_asvdb_${_tac_id}_$_tac_hash=\"\$_tac_value\""
+				;;
+			*)
+				die "${0##*/}:${callerlno:+$callerlno:}" \
+					"invalid test_asv_cache hash algorithm '$_tac_hash'"
+			esac
+		done
+	fi
+}
+test_asv_cache() {
+	test_asv_cache_lno "" "$@"
+}
+alias test_asv_cache='test_asv_cache_lno "$LINENO"' >/dev/null 2>&1 || :
+
+test_v_asv_lno() {
+	: "${callerlno:=$1}"
+	shift
+	_asvhash="${3:-$test_hash_algo}"
+	: "${_asvhash:=sha1}"
+	case "$_asvhash" in sha1|sha256);;*)
+		die "${0##*/}:${callerlno:+$callerlno:} invalid test_v_asv hash algorithm '$_asvhash'"
+	esac
+	eval "_tac_set=\${test_asvdb_${2}_$_asvhash+set}"
+	test "$_tac_set" = "set" ||
+		die "${0##*/}:${callerlno:+$callerlno:}" \
+			"missing test_asv_cache value for id \"$2\" hash algorithm $_asvhash"
+	test -z "$1" || eval "$1=\"\$test_asvdb_${2}_$_asvhash\""
+}
+test_v_asv() {
+	test_v_asv_lno "" "$@"
+}
+alias test_v_asv='test_v_asv_lno "$LINENO"' >/dev/null 2>&1 || :
+
+test_asv_lno() {
+	: "${callerlno:=$1}"
+	shift
+	_asvhash="${2:-$test_hash_algo}"
+	: "${_asvhash:=sha1}"
+	case "$_asvhash" in sha1|sha256);;*)
+		die "${0##*/}:${callerlno:+$callerlno:} invalid test_asv hash algorithm '$_asvhash'"
+	esac
+	eval "_tac_set=\${test_asvdb_${1}_$_asvhash+set}"
+	test "$_tac_set" = "set" ||
+		die "${0##*/}:${callerlno:+$callerlno:}" \
+			"missing test_asv_cache value for id \"$1\" hash algorithm $_asvhash"
+	eval "printf '%s\n' \"\$test_asvdb_${1}_$_asvhash\""
+}
+test_asv() {
+	test_asv_lno "" "$@"
+}
+alias test_asv='test_asv_lno "$LINENO"' >/dev/null 2>&1 || :
+
+test_v_git_mt_lno() {
+	: "${callerlno:=$1}"
+	shift
+	case "$2" in blob|tree|null);;*)
+		die "${0##*/}:${callerlno:+$callerlno:} invalid test_v_git_mt object type '$2'"
+	esac
+	_mthash="${3:-$test_hash_algo}"
+	: "${_mthash:=sha1}"
+	case "$_mthash" in sha1|sha256);;*)
+		die "${0##*/}:${callerlno:+$callerlno:} invalid test_v_git_mt hash algorithm '$_mthash'"
+	esac
+	_mthashval=
+	case "$2" in
+	null)
+		case "$_mthash" in
+		sha1)	_mthashval="0000000000000000000000000000000000000000";;
+		sha256)	_mthashval="0000000000000000000000000000000000000000000000000000000000000000";;
+		esac;;
+	blob)
+		case "$_mthash" in
+		sha1)	_mthashval="e69de29bb2d1d6434b8b29ae775ad8c2e48c5391";;
+		sha256)	_mthashval="473a0f4c3be8a93681a267e3b1e9a7dcda1185436fe141f7749120a303721813";;
+		esac;;
+	tree)
+		case "$_mthash" in
+		sha1)	_mthashval="4b825dc642cb6eb9a060e54bf8d69288fbee4904";;
+		sha256)	_mthashval="6ef19b41225c5369f1c104d45d8d85efa9b057b53b14b4b9b939dd74decc5321";;
+		esac;;
+	esac
+	test -z "$1" || eval "$1=\"\$_mthashval\""
+}
+test_v_git_mt() {
+	test_v_git_mt_lno "" "$@"
+}
+alias test_v_git_mt='test_v_git_mt_lno "$LINENO"' >/dev/null 2>&1 || :
+
+test_set_hash_algo_lno() {
+	: "${callerlno:=$1}"
+	shift
+	case "$1" in sha1|sha256);;*)
+		die "${0##*/}:${callerlno:+$callerlno:} invalid test_set_hash_algo hash algorithm '$1'"
+	esac
+	test "$1" != "sha256" || test -n "$test_git229_plus" ||
+		die "${0##*/}:${callerlno:+$callerlno:}" \
+			"test_set_hash_algo sha256 requires Git 2.29.0 or later" \
+			"but found $git_version"
+	test_hash_algo="$1"
+	GIT_DEFAULT_HASH="$test_hash_algo" && export GIT_DEFAULT_HASH
+}
+test_set_hash_algo() {
+	test_set_hash_algo_lno "" "$@"
+}
+alias test_set_hash_algo='test_set_hash_algo_lno "$LINENO"' >/dev/null 2>&1 || :
+
 # Protect against breaking in the future when Git changes its
 # nearly two decades old defaults.  The `-c` option first appeared
 # in Git 1.7.2 (2010-07-21).  That means this test framework
 # requires at least Git 1.7.2.  Since TopGit requires at least
-# Git 1.9.2 that's not a problem.
+# Git 1.9.2 that's not a problem.  If Git is at least version 2.29.0
+# pass a --object-format=$test_hash_algo option as the first `git init`
+# option.
 git_init() {
+	test -z "$test_git229_plus" ||
+	set -- --object-format="${test_hash_algo:-sha1}" "$@"
 	git -c init.defaultBranch=master init "$@"
 }
 
@@ -392,6 +514,12 @@ test_have_prereq() {
 		if test "$prerequisite" = "LASTOK"
 		then
 			if test -n "$test_last_subtest_ok"
+			then
+				satisfied_this_prereq=t
+			fi
+		elif test "$prerequisite" = "GITSHA1"
+		then
+			if test "${test_hash_algo:-sha1}" = "sha1"
 			then
 				satisfied_this_prereq=t
 			fi

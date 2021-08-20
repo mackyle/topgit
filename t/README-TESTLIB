@@ -87,6 +87,7 @@ skip_all                        | `test_done` skip value for `1..0` plan
 test_auh                        | `--allow-unrelated-histories` if Git >= 2.9
 test_description                | must be non-empty before `. ./test-lib.sh`
 test_external_has_tap           | avoid changing -- will suppress TAP lines
+test_hash_algo                  | either `sha1` or `sha256` (only if supported)
 test_tick                       | last commit timestamp used see same function
 this_test                       | basename $0 | sed 's/-*//' (usually tNNNN)
 
@@ -290,6 +291,21 @@ Variables
 
     Set `TESTLIB_TEST_TAP_ONLY = -1` in your `config.mak` and get happy.
 
+- TESTLIB_GIT_DEFAULT_HASH
+
+    Select the default hash algorithm for Git to use when creating new
+    repositories.  If this is not set, it defaults to `sha1`.
+
+    Essentially TESTLIB_GIT_DEFAULT_HASH provides a default `--hash=<hash>`
+    option for the individual tests if no explicit `--hash=<hash>` option has
+    been given.
+
+    If TESTLIB_GIT_DEFAULT_HASH is not the empty string ("") and is neither
+    `sha1` nor `sha256` a fatal error will occur.
+
+    If TESTLIB_GIT_DEFAULT_HASH is set to `sha256` and the version of Git is
+    not at least version 2.29.0, a fatal error will occur.
+
 - TEST_NO_CREATE_REPO
 
     Since the focus of the testing library is on Git or Git-related software
@@ -343,6 +359,16 @@ Variables
     testing library test is using the testing library to run a set of tests
     thereby preventing the recursive testing library invocation from upsetting
     the TAP output of the parent.
+
+- test_hash_algo
+
+    This will be set to either `sha1` or `sha256`.  It indicates which hash
+    algorithm Git will use for `git_init` and `test_asv`.  The initial value
+    will be taken from `TESTLIB_GIT_DEFAULT_HASH` with `sha1` being used if
+    that is not set.  The `--hash=<hash>` option can be used to run a test with
+    a specific hash algorithm (overriding any `TESTLIB_GIT_DEFAULT_HASH`
+    value).  However, an error will be generated if an attempt is made to use
+    the `sha256` algorithm with a version of Git prior to the 2.29.0 release.
 
 - test_tick
 
@@ -409,6 +435,18 @@ options to _every_ test run by the Makefile.
 
     Using this option also prevents the temporary trash directory from being
     removed even for a successful test.
+
+* --hash=<hash>
+
+    The value of <hash> must be either `sha1` or `sha256`.  If this option is
+    not used, the `TESTLIB_GIT_DEFAULT_HASH` environment variable will select
+    the hash to be used and if that's not set, `sha1` will be used.
+
+    If this option is used, then the `TESTLIB_GIT_DEFAULT_HASH` environment
+    variable will be set to <hash> and exported to fully effect an override.
+
+    Attempting to use `sha256` with a version of Git prior to version 2.29.0
+    will cause a fatal error.
 
 * -h | --help
 
@@ -843,6 +881,17 @@ there are a number of pre-defined prerequisites that may be tested:
     True if Git thinks the executable bit is supported properly (i.e.
     Git's `core.filemode` is set to true after `git_init`).
 
+- `GITSHA1`
+
+    This prerequisite is never cached.  It evaluates to true if the current
+    value of the `test_hash_algo` variable is `sha1`.
+
+- `GITSHA256`
+
+    True if the Git executable being used to run the tests is at least version
+    2.29.0.  If true it means `git init --object-format=sha256` can be used.
+    (As well as `git init --object-format=sha1` if necessary.)
+
 - `GREP_STRIPS_CR`
 
     The grep command strips off CR.  Normally only defined for `MINGW` and
@@ -946,6 +995,13 @@ available utility functions that are TopGit-specific.
     depend on the name of the initial branch being "master" to avoid future
     breakage.
 
+    When running Git version 2.29.0 or later, the
+    `--object-format=$test_hash_algo` option will also be passed to `git init`
+    immediately preceding the `"$@"` arguments.  Note that to override the
+    automatically passed `--object-format=$test_hash_algo` option, simply
+    provide another `--object-format=<hash>` option.  As far as `git init` is
+    concerned, the last `--object-format=<hash>` option wins.
+
 - list_contains <commalist> <pattern>
 
     Returns true if comma separated list <commalist> contains any item that
@@ -1006,6 +1062,83 @@ available utility functions that are TopGit-specific.
 
     If there is no `$HARNESS_ACTIVE` then this call is identical to `say_color`
     with the exact same arguments.
+
+- test_asv <id>
+
+    Output the value of the hash algorithm specific value cached with the
+    id <id> to standard output.  This will typically be used as
+    `"$(test_asv <id>)"`.  The test_v_asv function does not cause a subshell to
+    be created and is therefore recommended since it's more efficient.
+
+    A fatal error will occur if no value has been set for <id> using the
+    `test_asv_cache` function.
+
+    See further details in the description for `test_asv_cache`.
+
+- test_asv_cache <database>
+
+    Read each line of <database> using the shell's `read` function into three
+    variables.  The first is the <id> to be used with `test_asv` and
+    `test_v_asv`, the second is either `sha1` or `sha256` and the rest of the
+    line is the algorithm specific value to associate with that database entry.
+
+    Blank lines and lines with the first non-space character a `#` are ignored.
+
+    If the <database> is given as a single hyphen (-) then the database lines
+    will be read from standard input.
+
+    For example:
+
+        test_asv_cache '
+            # this is a comment
+            01 sha1   value for sha1
+            01 sha256 \
+            value for sha256
+
+               # this is a comment too
+
+            v33 sha1   hash is sha1
+            v33 sha256 hash is sha256
+        '
+
+    The value of <id> must be a valid shell variable name after having a letter
+    prefix added.  In other words, if <id> is "5" then prefixing a letter such
+    as "z" produces "z5" which is a valid shell variable name.  In general,
+    the <id> must consist of only alphanumeric characters plus underscore (`_`).
+
+    In the case of duplicate <id> plus hash keys, the last one wins.
+
+    Note that since the shell's read function is used with the standard setting
+    for `$IFS` extra whitespace may be used around the <id> and hash name and
+    the value will have whitespace trimmed from its beginning and end.  In
+    addition, since the shell's read function supports line continuation with
+    a backslash (`\`) as the last character on a line, the value for each entry
+    may be split across lines using that feature if desired.
+
+    The `test_asv_cache` function may be invoked more than once.  Subsequent
+    invocations add to the cache (replacing any items with the same <id> plus
+    hash key).  Since each individual test runs in its own subshell (unless
+    `TESTLIB_TEST_NO_SUBSHELL` has been used), the effects of calls to
+    `test_asv_cache` from inside an individual test will not persist after that
+    test has completed (successfully or not).
+
+    Providing a hash name of other than `sha1` or `sha256` will produce a
+    fatal error.  Note that it is *not* an error to provide a database with
+    `sha256` entries even when running a version of Git prior to 2.29.0 -- they
+    will just never be produced by `test_asv` or `test_v_asv` in that case.
+
+    After executing the above example, the following code can be used:
+
+        test_asv 01  # outputs "value for sha1" or "value for sha256"
+        test_asv v33 # outputs "hash is sha1" or "hash is sha256"
+        test_v_asv ex1 01  # sets variable `ex1` to "value for sha1"
+                           # or "value for sha256"
+        test_v_asv ex2 v33 # sets variable `ex2` to "hash is sha1"
+                           # or "hash is sha256"
+
+    Which value is chosen by `test_asv` or `test_v_asv` depends solely on the
+    current value of `test_hash_algo` at the time `test_asv` or `test_v_asv`
+    is executed.
 
 - test_at_end_hook_
 
@@ -1248,6 +1381,17 @@ available utility functions that are TopGit-specific.
     <path-to-editor> is allowed to contain any value (including spaces, quotes,
     etc.) without needing any special quoting.
 
+- test_set_hash_algo <algorithm>
+
+    The value of <algorithm> must be either `sha1` or `sha256`.  Attempting to
+    set a value of `sha256` with a version of Git prior to version 2.29.0 will
+    cause a fatal error.  The value of both the `GIT_DEFAULT_HASH` environment
+    variable and the `test_hash_algo` variable are set by this function.  The
+    `TESTLIB_GIT_DEFAULT_HASH` environment variable is, however, left untouched.
+
+    An implicit `test_set_hash_algo ${TESTLIB_GIT_DEFAULT_HASH:-sha1}` happens
+    early during test setup.
+
 - test_set_prereq <PREREQ>
 
     Indicate that the test prerequisite <PREREQ> is available (should be a
@@ -1302,6 +1446,29 @@ available utility functions that are TopGit-specific.
 
     Can be used for global values simply by making the first <arg> be `--global`
     and the rest the global arg(s) to unset.
+
+- test_v_asv <varname> <id>
+
+    Set <varname> to the value of the hash algorithm specific value cached with
+    the id <id>.
+
+    A fatal error will occur if no value has been set for <id> using the
+    `test_asv_cache` function.
+
+    See further details in the description for `test_asv_cache`.
+
+- test_v_git_mt <varname> <object-type> [<hash>]
+
+    With an <object-type> of `blob`, `tree` or 'null`, set <varname> to the
+    correct $test_hash_algo hash algorithm value for an empty Git
+    <object-type> object.  (A `null` <object-type> returns a string of 0's of
+    the proper length for $test_hash_algo.)
+
+    If <hash> is provided, it must be `sha1` or `sha256` or a fatal error will
+    occur.  If <hash> is non-empty it will be used as the hash algorithm
+    instead of $test_hash_algo.
+
+    An unknown <object-type> will produce a fatal error.
 
 - test_when_finished <cmd> [<arg>...]
 

@@ -898,6 +898,7 @@ test_tolerate_failure 'git write-tree should be able to write an empty tree' '
 	tree=$(git write-tree)
 '
 sane_unset TESTLIB_TEST_NO_SUBSHELL
+test_v_git_mt EMPTY_TREE tree
 
 if test -n "$tree"
 then

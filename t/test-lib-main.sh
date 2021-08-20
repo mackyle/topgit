@@ -1003,6 +1003,8 @@ case "$git_version" in [Gg][Ii][Tt]\ [Vv][Ee][Rr][Ss][Ii][Oo][Nn]\ [0-9]*);;*)
 esac
 test_auh=
 ! vcmp "$git_version" '>=' "2.9" || test_auh="--allow-unrelated-histories"
+test_git229_plus=
+! vcmp "$git_version" '>=' "2.29" || test_git229_plus=1
 
 test_lib_main_init_tee "$@"
 
@@ -1082,12 +1084,6 @@ esac
 _x05='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 _x40="$_x05$_x05$_x05$_x05$_x05$_x05$_x05$_x05"
 
-# Zero SHA-1
-_z40=0000000000000000000000000000000000000000
-
-EMPTY_TREE=4b825dc642cb6eb9a060e54bf8d69288fbee4904
-EMPTY_BLOB=e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-
 # Line feed
 LF='
 '
@@ -1096,8 +1092,9 @@ LF='
 # when case-folding filenames
 u200c="$(printf '\342\200\214')"
 
-export _x05 _x40 _z40 LF u200c EMPTY_TREE EMPTY_BLOB
+export _x05 _x40 LF u200c
 
+hash_opt=
 while test "$#" -ne 0
 do
 	case "$1" in
@@ -1118,6 +1115,14 @@ do
 		run_list=${1#--*=}; shift ;;
 	-h|--h|--he|--hel|--help)
 		help=t; shift ;;
+	--hash)
+		shift; test "$#" -ne 0 || {
+			echo 'error: --hash requires an argument' >&2;
+			exit 1;
+		}
+		hash_opt="$1"; shift ;;
+	--hash=*)
+		hash_opt="${1#--*=}"; shift ;;
 	-v|--v|--ve|--ver|--verb|--verbo|--verbos|--verbose)
 		verbose=t; shift ;;
 	--verbose-only=*)
@@ -1157,6 +1162,24 @@ do
 		echo "error: unknown test option '$1'" >&2; exit 1 ;;
 	esac
 done
+
+hash_opt_orig="$hash_opt"
+: "${hash_opt:=$TESTLIB_GIT_DEFAULT_HASH}"
+: "${hash_opt:=sha1}"
+test z"$hash_opt" = zsha1 || test z"$hash_opt" = zsha256 || {
+	echo "error: unknown Git hash algorithm value '$hash_opt'" >&2
+	exit 1
+}
+test $hash_opt = sha1 || test -n "$test_git229_plus" || {
+	echo "error: Git hash algorithm sha256 requires Git 2.29.0 or later" \
+		"but found $git_version" >&2
+	exit 1
+}
+test_hash_algo="$hash_opt"
+GIT_DEFAULT_HASH="$test_hash_algo" && export GIT_DEFAULT_HASH
+if test -n "$hash_opt_orig"; then
+	TESTLIB_GIT_DEFAULT_HASH="$hash_opt" && export TESTLIB_GIT_DEFAULT_HASH
+fi
 
 test z"$run_list" = z || test z"$quiet" != z || quiet=T
 test z"$quiet" != z"0" || quiet=
@@ -1325,6 +1348,10 @@ test_lazy_prereq AUTOIDENT '
 
 test_lazy_prereq EXPENSIVE '
 	test -n "$TESTLIB_TEST_LONG"
+'
+
+test_lazy_prereq GITSHA256 '
+	test -n "$test_git229_plus"
 '
 
 test_lazy_prereq USR_BIN_TIME '
