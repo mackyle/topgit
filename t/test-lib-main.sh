@@ -1,6 +1,7 @@
 # Test framework from Git with modifications.
 #
-# Modifications Copyright (C) 2016,2017 Kyle J. McKay.  All rights reserved.
+# Modifications Copyright (C) 2016,2017,2021 Kyle J. McKay
+# All rights reserved
 # Modifications made:
 #
 #  * Many "GIT_..." variables removed -- some were kept as TESTLIB_..." instead
@@ -149,8 +150,9 @@ error_lno() {
 	TESTLIB_EXIT_OK=t
 	[ -z "$TESTLIB_TEST_PARENT_INT_ON_ERROR" ] || {
 		trap '' INT
-		perl -e "kill(-2, getpgrp($TESTLIB_TEST_PARENT_INT_ON_ERROR), getpgrp($PPID), getpgrp($$), getpgrp(0))" || :
-		kill -s INT $TESTLIB_TEST_PARENT_INT_ON_ERROR $PPID || :
+		kill -s INT -- \
+			-$TESTLIB_TEST_PARENT_INT_ON_ERROR -$PPID \
+			$TESTLIB_TEST_PARENT_INT_ON_ERROR $PPID 0 || :
 	} >/dev/null 2>&1
 	kill -s USR1 $$ || :
 	exit 1
