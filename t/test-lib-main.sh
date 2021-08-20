@@ -1018,7 +1018,7 @@ EDITOR=:
 # /usr/xpg4/bin/sh and /bin/ksh to bail out.  So keep the unsets
 # deriving from the command substitution clustered with the other
 # ones.
-unset_ VISUAL EMAIL LANGUAGE COLUMNS $("$AWK_PATH" '
+unset_ VISUAL EMAIL LANGUAGE COLUMNS $("${AWK_PATH:-awk}" '
 	BEGIN {exit} END {
 		split("\
 			TRACE			\
@@ -1034,12 +1034,12 @@ unset_ VISUAL EMAIL LANGUAGE COLUMNS $("$AWK_PATH" '
 			CURL_VERBOSE		\
 			TRACE_CURL		\
 			CEILING_DIRECTORIES	\
-		", a, " ")
-		re = "^GIT_("
-		for (i in a) re = re a[i] "|"
-		re = substr(re, 1, length(re) - 1) ")"
+		", ok, " ")
+		reok = "^GIT_("
+		for (i in ok) reok = reok ok[i] "|"
+		reok = substr(reok, 1, length(reok) - 1) ")"
 		for (e in ENVIRON) {
-			if (e ~ /^GIT_/ && e !~ re) print e
+			if (e ~ /^GIT_/ && e !~ reok) print e
 		}
 	}
 ')

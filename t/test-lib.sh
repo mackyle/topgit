@@ -1,6 +1,6 @@
 # Test lib caching support
-# Copyright (C) 2016,2017,2021 Kyle J. McKay.
-# All rights reserved.
+# Copyright (C) 2016,2017,2021 Kyle J. McKay
+# All rights reserved
 # License GPLv2+
 
 
@@ -61,7 +61,7 @@ if [ "$1" = "--cache" ]; then
 		GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_PATH AWK_PATH DIFF \
 		GIT_COMMITTER_NAME GIT_COMMITTER_EMAIL GIT_TEMPLATE_DIR \
 		EMPTY_DIRECTORY EDITOR TESTLIB_DIRECTORY TEST_DIRECTORY \
-		TEST_OUTPUT_DIRECTORY PAGER root SHELL_PATH PERL_PATH \
+		TEST_OUTPUT_DIRECTORY PAGER root SHELL_PATH \
 		TESTLIB_NO_TOLERATE TESTLIB_TEST_CHAIN_LINT \
 		TESTLIB_TEST_TAP_ONLY"
 
@@ -70,7 +70,7 @@ if [ "$1" = "--cache" ]; then
 		GIT_AUTHOR_EMAIL GIT_AUTHOR_NAME GIT_COMMITTER_EMAIL TZ \
 		GIT_COMMITTER_NAME EDITOR GIT_TRACE_BARE LANG LC_ALL PAGER \
 		_x05 _x40 _z40 EMPTY_TREE EMPTY_BLOB LF u200c UNAME_S \
-		TERM SHELL_PATH PERL_PATH GIT_PATH DIFF TG_TEST_INSTALLED \
+		TERM SHELL_PATH GIT_PATH DIFF TG_TEST_INSTALLED \
 		test_prereq TESTLIB_NO_TOLERATE TESTLIB_TEST_LONG \
 		GIT_CEILING_DIRECTORIES TG_TEST_FULL_PATH TEST_HELPER_DIRECTORY"
 
@@ -78,26 +78,30 @@ if [ "$1" = "--cache" ]; then
 		CDPATH GREP_OPTIONS UNZIP TESTLIB_EXIT_OK last_verbose"
 
 	# Add most GIT_XXX vars (variation of code from test-lib-main.sh)
-	UNSET_VARS="$UNSET_VARS $("${PERL_PATH:-perl}" -e '
-			my @env = keys %ENV;
-			my $ok = join("|", qw(
-				TRACE
-				DEBUG
-				USE_LOOKUP
-				TEST
-				.*_TEST
-				MINIMUM_VERSION
-				PATH
-				PROVE
-				UNZIP
-				PERF_
-				CURL_VERBOSE
-				TRACE_CURL
-				CEILING_DIRECTORIES
-			));
-			my @vars = grep(/^GIT_/ && !/^GIT_($ok)/o, @env);
-			print join(" ", @vars);
-		')"
+	UNSET_VARS="$UNSET_VARS $("${AWK_PATH:-awk}" '
+		BEGIN {exit} END {
+			split("\
+				TRACE			\
+				DEBUG			\
+				USE_LOOKUP		\
+				TEST			\
+				.*_TEST			\
+				MINIMUM_VERSION		\
+				PATH			\
+				PROVE			\
+				UNZIP			\
+				PERF_			\
+				CURL_VERBOSE		\
+				TRACE_CURL		\
+				CEILING_DIRECTORIES	\
+			", ok, " ")
+			reok = "^GIT_("
+			for (i in ok) reok = reok ok[i] "|"
+			reok = substr(reok, 1, length(reok) - 1) ")"
+			for (e in ENVIRON) {
+				if (e ~ /^GIT_/ && e !~ reok) print e
+			}
+		}')"
 
 	# strip off --cache
 	shift
