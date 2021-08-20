@@ -9,18 +9,24 @@ Make sure tg status detects everything it should.
 
 test_plan 17
 
+test_asv_cache '
+	master	sha1	0665c39
+	master	sha256	6b313f8
+'
+test_v_asv mastr7 master
+
 unborn='HEAD -> master [unborn]
 working directory is clean'
 
 bareub='HEAD -> master [unborn]'
 
-born='HEAD -> master [0665c39]
-working directory is clean'
+born="HEAD -> master [$mastr7]
+working directory is clean"
 
-bare='HEAD -> master [0665c39]'
+bare="HEAD -> master [$mastr7]"
 
-headborn='HEAD -> master [0665c39]
-'
+headborn="HEAD -> master [$mastr7]
+"
 allfixed='
 all conflicts fixed; run "git commit" to record result'
 
