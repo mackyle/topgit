@@ -98,6 +98,17 @@ test_expect_success 'setup' '
 	test_cmp actual expected
 '
 
+case "$test_hash_algo" in
+sha1)
+	primarybase=8e476c63c7ef4558
+	secondarybase=8f7ce5c9f088954c
+	;;
+sha256)
+	primarybase=597e7c92a7237dd5
+	secondarybase=1ed0c61ee3ddc0dc
+	;;
+esac
+
 test_expect_success LASTOK 'verify setup' '
 	cat <<-EOT >expected &&
 		t/branch3
@@ -138,7 +149,7 @@ test_expect_success LASTOK 'verify setup' '
 		Topic Branch: t/primary (1/1 commit)
 		Subject: [PATCH] branch t/primary
 		Dependents: t/primary2
-		Base: 8e476c63c7ef4558
+		Base: $primarybase
 		Depends: t/branch1
 		Up-to-date.
 	EOT
@@ -148,7 +159,7 @@ test_expect_success LASTOK 'verify setup' '
 		Topic Branch: t/secondary (2/2 commits)
 		Subject: [PATCH] branch t/secondary
 		Dependents: t/secondary2
-		Base: 8f7ce5c9f088954c
+		Base: $secondarybase
 		Depends: t/branch2
 		Up-to-date.
 	EOT
@@ -202,8 +213,17 @@ test_expect_success SETUP 'files -w' '
 
 # tg mail uses tg patch so test tg patch and follow up with tg mail
 
+case "$test_hash_algo" in
+sha1)
+	f1f2f3blob=e69de29bb2d1d643
+	;;
+sha256)
+	f1f2f3blob=473a0f4c3be8a936
+	;;
+esac
+
 test_expect_success SETUP 'patch' '
-	cat <<-\EOT >expected &&
+	cat <<-EOT >expected &&
 From: Te s t (Author) <test@example.net>
 Subject: [PATCH] branch t/secondary
 
@@ -218,16 +238,16 @@ Subject: [PATCH] branch t/secondary
 
 diff --git a/f3 b/f3
 new file mode 100644
-index 0000000000000000..e69de29bb2d1d643
+index 0000000000000000..$f1f2f3blob
 diff --git a/f4 b/f4
 new file mode 100644
-index 0000000000000000..e69de29bb2d1d643
+index 0000000000000000..$f1f2f3blob
 diff --git a/f5 b/f5
 new file mode 100644
-index 0000000000000000..e69de29bb2d1d643
+index 0000000000000000..$f1f2f3blob
 
 -- 
-tg: (8f7ce5c9f088954c..) t/secondary (depends on: t/branch2)
+tg: ($secondarybase..) t/secondary (depends on: t/branch2)
 	EOT
 	tg patch >actual &&
 	test_cmp actual expected
@@ -239,8 +259,17 @@ test_expect_success SETUP,LASTOK 'mail' '
 	test_cmp actual expected
 '
 
+case "$test_hash_algo" in
+sha1)
+	f3blob=7c8ac2f8d82a1eb5
+	;;
+sha256)
+	f3blob=7b6de9267ded53f0
+	;;
+esac
+
 test_expect_success SETUP 'patch -i' '
-	cat <<-\EOT >expected &&
+	cat <<-EOT >expected &&
 From: Te s t (Author) <test@example.net>
 Subject: [PATCH] branch t/tertiary
 
@@ -251,14 +280,14 @@ Subject: [PATCH] branch t/tertiary
 
 diff --git a/f3 b/f3
 new file mode 100644
-index 0000000000000000..7c8ac2f8d82a1eb5
+index 0000000000000000..$f3blob
 --- /dev/null
 +++ b/f3
 @@ -0,0 +1 @@
 +file3
 
 -- 
-tg: (8f7ce5c9f088954c..) t/secondary (depends on: t/branch3)
+tg: ($secondarybase..) t/secondary (depends on: t/branch3)
 	EOT
 	tg patch -i >actual &&
 	test_cmp actual expected
@@ -269,9 +298,19 @@ test_expect_success SETUP,LASTOK 'mail -i' '
 	tg mail -i >actual &&
 	test_cmp actual expected
 '
+case "$test_hash_algo" in
+sha1)
+	f4blob=bfd6a6583f9a9ac5
+	f5blob=4806cb9df135782b
+	;;
+sha256)
+	f4blob=a76920b2c5d13460
+	f5blob=343656d54d3d9c28
+	;;
+esac
 
 test_expect_success SETUP 'patch -w' '
-	cat <<-\EOT >expected &&
+	cat <<-EOT >expected &&
 From: Te s t (Author) <test@example.net>
 Subject: [PATCH] branch t/quaternary
 
@@ -284,21 +323,21 @@ Subject: [PATCH] branch t/quaternary
 
 diff --git a/f4 b/f4
 new file mode 100644
-index 0000000000000000..bfd6a6583f9a9ac5
+index 0000000000000000..$f4blob
 --- /dev/null
 +++ b/f4
 @@ -0,0 +1 @@
 +file4
 diff --git a/f5 b/f5
 new file mode 100644
-index 0000000000000000..4806cb9df135782b
+index 0000000000000000..$f5blob
 --- /dev/null
 +++ b/f5
 @@ -0,0 +1 @@
 +file5
 
 -- 
-tg: (8f7ce5c9f088954c..) t/secondary (depends on: t/branch4 t/branch5)
+tg: ($secondarybase..) t/secondary (depends on: t/branch4 t/branch5)
 	EOT
 	tg patch -w >actual &&
 	test_cmp actual expected
@@ -653,10 +692,10 @@ EOT
 '
 
 test_expect_success SETUP 'info' '
-	cat <<\EOT >expected &&
+	cat <<EOT >expected &&
 Topic Branch: t/secondary (2/2 commits)
 Subject: [PATCH] branch t/secondary
-Base: 8f7ce5c9f088954c
+Base: $secondarybase
 Depends: t/branch2
 Up-to-date.
 EOT
@@ -665,10 +704,10 @@ EOT
 '
 
 test_expect_success SETUP 'info -i' '
-	cat <<\EOT >expected &&
+	cat <<EOT >expected &&
 Topic Branch: t/secondary (2/2 commits)
 Subject: [PATCH] branch t/tertiary
-Base: 8f7ce5c9f088954c
+Base: $secondarybase
 Depends: t/branch3
 Needs update from:
  t/branch3 (2/2 commits)
@@ -678,10 +717,10 @@ EOT
 '
 
 test_expect_success SETUP 'info -w' '
-	cat <<\EOT >expected &&
+	cat <<EOT >expected &&
 Topic Branch: t/secondary (2/2 commits)
 Subject: [PATCH] branch t/quaternary
-Base: 8f7ce5c9f088954c
+Base: $secondarybase
 Depends: t/branch4
  t/branch5
 Needs update from:
@@ -693,11 +732,11 @@ EOT
 '
 
 test_expect_success SETUP 'info -v' '
-	cat <<\EOT >expected &&
+	cat <<EOT >expected &&
 Topic Branch: t/secondary (2/2 commits)
 Subject: [PATCH] branch t/secondary
 Dependents: t/secondary2
-Base: 8f7ce5c9f088954c
+Base: $secondarybase
 Depends: t/branch2
 Up-to-date.
 EOT
@@ -705,33 +744,50 @@ EOT
 	test_cmp actual expected
 '
 
+case "$test_hash_algo" in
+sha1)
+	quaternarybase=8f7ce5c9f088954c
+	branch2base=64ef3d8ae1560635
+	branch3base=231a8797a3d0de74
+	branch4base=f6890848ee0253af
+	branch5base=261e548eac1f8d28
+	;;
+sha256)
+	quaternarybase=1ed0c61ee3ddc0dc
+	branch2base=341670e4d25e58c8
+	branch3base=80b378eef7859f1e
+	branch4base=6d0162e00d6052c2
+	branch5base=864390011614c02a
+	;;
+esac
+
 test_expect_success SETUP 'info -v -i' '
-	cat <<\EOT >expected &&
+	cat <<EOT >expected &&
 Topic Branch: t/secondary (2/2 commits)
 Subject: [PATCH] branch t/tertiary
 Dependents: t/secondary2
-Base: 8f7ce5c9f088954c
+Base: $secondarybase
 Depends: t/branch3
 Needs update from:
  t/branch3 (2/2 commits)
 EOT
 	trim tg info -v -i >actual &&
 	test_cmp actual expected &&
-	cat <<\EOT >expected &&
+	cat <<EOT >expected &&
 Topic Branch: t/branch3 (1/1 commit)
 Subject: [PATCH] branch t/branch3
 Dependents: t/secondary
-Base: 231a8797a3d0de74
+Base: $branch3base
 Depends: branch3
 Up-to-date.
 EOT
 	trim tg info -v -i t/branch3 >actual &&
 	test_cmp actual expected &&
-	cat <<\EOT >expected &&
+	cat <<EOT >expected &&
 Topic Branch: t/branch2 (1/1 commit)
 Subject: [PATCH] branch t/branch2
 Dependents: [none]
-Base: 64ef3d8ae1560635
+Base: $branch2base
 Depends: branch2
 Up-to-date.
 EOT
@@ -740,11 +796,11 @@ EOT
 '
 
 test_expect_success SETUP 'info -v -w' '
-	cat <<\EOT >expected &&
+	cat <<EOT >expected &&
 Topic Branch: t/secondary (2/2 commits)
 Subject: [PATCH] branch t/quaternary
 Dependents: t/secondary2
-Base: 8f7ce5c9f088954c
+Base: $quaternarybase
 Depends: t/branch4
  t/branch5
 Needs update from:
@@ -753,31 +809,31 @@ Needs update from:
 EOT
 	trim tg info -v -w >actual &&
 	test_cmp actual expected &&
-	cat <<\EOT >expected &&
+	cat <<EOT >expected &&
 Topic Branch: t/branch4 (1/1 commit)
 Subject: [PATCH] branch t/branch4
 Dependents: t/secondary
-Base: f6890848ee0253af
+Base: $branch4base
 Depends: branch4
 Up-to-date.
 EOT
 	trim tg info -v -w t/branch4 >actual &&
 	test_cmp actual expected &&
-	cat <<\EOT >expected &&
+	cat <<EOT >expected &&
 Topic Branch: t/branch5 (1/1 commit)
 Subject: [PATCH] branch t/branch5
 Dependents: t/secondary
-Base: 261e548eac1f8d28
+Base: $branch5base
 Depends: branch5
 Up-to-date.
 EOT
 	trim tg info -v -w t/branch5 >actual &&
 	test_cmp actual expected &&
-	cat <<\EOT >expected &&
+	cat <<EOT >expected &&
 Topic Branch: t/branch2 (1/1 commit)
 Subject: [PATCH] branch t/branch2
 Dependents: [none]
-Base: 64ef3d8ae1560635
+Base: $branch2base
 Depends: branch2
 Up-to-date.
 EOT
@@ -786,11 +842,11 @@ EOT
 '
 
 test_expect_success SETUP 'info -v -v' '
-	cat <<\EOT >expected &&
+	cat <<EOT >expected &&
 Topic Branch: t/secondary (2/2 commits)
 Subject: [PATCH] branch t/secondary
 Dependents: t/secondary2
-Base: 8f7ce5c9f088954c
+Base: $secondarybase
 Depends: t/branch2
 Up-to-date.
 EOT
@@ -799,32 +855,32 @@ EOT
 '
 
 test_expect_success SETUP 'info -v -v -i' '
-	cat <<\EOT >expected &&
+	cat <<EOT >expected &&
 Topic Branch: t/secondary (2/2 commits)
 Subject: [PATCH] branch t/tertiary
 Dependents: t/secondary2
-Base: 8f7ce5c9f088954c
+Base: $secondarybase
 Depends: t/branch3
 Needs update from:
  t/branch3 (2/2 commits)
 EOT
 	trim tg info -v -v -i >actual &&
 	test_cmp actual expected &&
-	cat <<\EOT >expected &&
+	cat <<EOT >expected &&
 Topic Branch: t/branch3 (1/1 commit)
 Subject: [PATCH] branch t/branch3
 Dependents: t/secondary [needs merge]
-Base: 231a8797a3d0de74
+Base: $branch3base
 Depends: branch3
 Up-to-date.
 EOT
 	trim tg info -v -v -i t/branch3 >actual &&
 	test_cmp actual expected &&
-	cat <<\EOT >expected &&
+	cat <<EOT >expected &&
 Topic Branch: t/branch2 (1/1 commit)
 Subject: [PATCH] branch t/branch2
 Dependents: [none]
-Base: 64ef3d8ae1560635
+Base: $branch2base
 Depends: branch2
 Up-to-date.
 EOT
@@ -833,11 +889,11 @@ EOT
 '
 
 test_expect_success SETUP 'info -v -v -w' '
-	cat <<\EOT >expected &&
+	cat <<EOT >expected &&
 Topic Branch: t/secondary (2/2 commits)
 Subject: [PATCH] branch t/quaternary
 Dependents: t/secondary2
-Base: 8f7ce5c9f088954c
+Base: $secondarybase
 Depends: t/branch4
  t/branch5
 Needs update from:
@@ -846,31 +902,31 @@ Needs update from:
 EOT
 	trim tg info -v -v -w >actual &&
 	test_cmp actual expected &&
-	cat <<\EOT >expected &&
+	cat <<EOT >expected &&
 Topic Branch: t/branch4 (1/1 commit)
 Subject: [PATCH] branch t/branch4
 Dependents: t/secondary [needs merge]
-Base: f6890848ee0253af
+Base: $branch4base
 Depends: branch4
 Up-to-date.
 EOT
 	trim tg info -v -v -w t/branch4 >actual &&
 	test_cmp actual expected &&
-	cat <<\EOT >expected &&
+	cat <<EOT >expected &&
 Topic Branch: t/branch5 (1/1 commit)
 Subject: [PATCH] branch t/branch5
 Dependents: t/secondary [needs merge]
-Base: 261e548eac1f8d28
+Base: $branch5base
 Depends: branch5
 Up-to-date.
 EOT
 	trim tg info -v -v -w t/branch5 >actual &&
 	test_cmp actual expected &&
-	cat <<\EOT >expected &&
+	cat <<EOT >expected &&
 Topic Branch: t/branch2 (1/1 commit)
 Subject: [PATCH] branch t/branch2
 Dependents: [none]
-Base: 64ef3d8ae1560635
+Base: $branch2base
 Depends: branch2
 Up-to-date.
 EOT
