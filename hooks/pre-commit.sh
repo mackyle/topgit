@@ -188,7 +188,7 @@ if [ -n "$headrev" ]; then
 else
 	GIT_INDEX_FILE="$tg_index" git read-tree --empty
 fi
-prefix="100[0-9][0-9][0-9] $octet20 0$tab"
+prefix="100[0-9][0-9][0-9] $octet20$hexch* 0$tab"
 {
 	printf '%s\n' "0 $nullsha$tab.topdeps"
 	printf '%s\n' "0 $nullsha$tab.topmsg"

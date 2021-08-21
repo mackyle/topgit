@@ -12,10 +12,12 @@ GIT_MINIMUM_VERSION="@mingitver@"
 
 ## SHA-1 pattern
 
-octet='[0-9a-f][0-9a-f]'
+hexch='[0-9a-f]'
+octet="$hexch$hexch"
 octet4="$octet$octet$octet$octet"
 octet19="$octet4$octet4$octet4$octet4$octet$octet$octet"
 octet20="$octet4$octet4$octet4$octet4$octet4"
+octet32="$octet20$octet4$octet4$octet4"
 tab='	'
 lf='
 '
@@ -697,7 +699,7 @@ v_ref_exists_rev()
 	case "$2" in
 		refs/*)
 			;;
-		$octet20)
+		$octethl)
 			eval "$1="'"$2"'
 			return;;
 		*)
@@ -724,7 +726,7 @@ v_ref_exists_rev_short()
 	case "$2" in
 		refs/*)
 			;;
-		$octet20)
+		$octethl)
 			;;
 		*)
 			die "v_ref_exists_rev_short requires fully-qualified ref name (given: $2)"
@@ -928,7 +930,7 @@ ensure_clean_topfiles()
 # Whether REF is a SHA1 (compared to a symbolic name).
 is_sha1()
 {
-	case "$1" in $octet20) return 0;; esac
+	case "$1" in $octethl) return 0;; esac
 	return 1
 }
 
@@ -1518,7 +1520,7 @@ checkout_symref_full()
 	case "$1" in
 		refs/?*)
 			;;
-		$octet20)
+		$octethl)
 			_ishash=1
 			[ -z "$2" ] || [ "$1" = "$2" ] ||
 				die "programmer error: invalid checkout_symref_full \"$1\" \"$2\""
@@ -2112,9 +2114,11 @@ setup_hashalgo_vars()
 	case "${#mtblob}" in
 	40)
 		nullsha="0000000000000000000000000000000000000000"
+		octethl="$octet20"
 		;;
 	64)
 		nullsha="0000000000000000000000000000000000000000000000000000000000000000"
+		octethl="$octet32"
 		;;
 	*)
 		die "git hash-object failed"
