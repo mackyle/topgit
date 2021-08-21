@@ -18,7 +18,7 @@ if vcmp "$git_version" '>=' "2.31"; then
 	test_set_prereq "GIT_2_31"
 fi
 
-test_plan 48
+test_plan 50
 
 commit_empty_root() {
 	_gt="$(git mktree </dev/null)" &&
@@ -1939,22 +1939,36 @@ test_expect_success 'SETUP GIT_2_5' 'tag --clear HEAD [linked]' '
 	test_cmp actual ../tgHEAD_linked_cleared
 '
 
-test_tolerate_failure 'SETUP GIT_2_5' 'tag --clear HEAD w/o log fails [linked]' '
+test_expect_success 'SETUP GIT_2_5' 'tag --clear HEAD w/o log fails [linked]' '
 	cd linked &&
 	git rev-parse --verify HEAD@{0} >/dev/null -- &&
 	tg tag --clear HEAD &&
 	tg tag --drop HEAD@{0} &&
-	test_must_fail git rev-parse --verify HEAD@{0} -- &&
+	test -e ../main/.git/worktrees/linked/logs/HEAD &&
+	! test -s ../main/.git/worktrees/linked/logs/HEAD &&
 	test_must_fail tg tag --clear HEAD
 '
 
-test_tolerate_failure SETUP 'tag --clear HEAD w/o log fails' '
+test_expect_success '!GIT_2_31 LASTOK SETUP GIT_2_5' \
+	'HEAD@{0} fails after tag --clear and --drop @{0} [linked]' '
+	cd linked &&
+	test_must_fail git rev-parse --verify HEAD@{0} --
+'
+
+test_expect_success SETUP 'tag --clear HEAD w/o log fails' '
 	cd main &&
 	git rev-parse --verify HEAD@{0} >/dev/null -- &&
 	tg tag --clear HEAD &&
 	tg tag --drop HEAD@{0} &&
-	test_must_fail git rev-parse --verify HEAD@{0} -- &&
+	test -e .git/logs/HEAD &&
+	! test -s .git/logs/HEAD &&
 	test_must_fail tg tag --clear HEAD
+'
+
+test_expect_success '!GIT_2_31 LASTOK SETUP' \
+	'HEAD@{0} fails after tag --clear and --drop @{0}' '
+	cd main &&
+	test_must_fail git rev-parse --verify HEAD@{0} --
 '
 
 test_done
