@@ -16,8 +16,6 @@ octet='[0-9a-f][0-9a-f]'
 octet4="$octet$octet$octet$octet"
 octet19="$octet4$octet4$octet4$octet4$octet$octet$octet"
 octet20="$octet4$octet4$octet4$octet4$octet4"
-nullsha="0000000000000000000000000000000000000000" # :|git mktree|tr 0-9a-f 0
-mtblob="e69de29bb2d1d6434b8b29ae775ad8c2e48c5391" # :|git hash-object --stdin -w
 tab='	'
 lf='
 '
@@ -2099,6 +2097,46 @@ setup_git_dirs()
 	fi
 	[ -n "$git_dir" ] && [ -n "$git_common_dir" ] &&
 	[ -d "$git_dir" ] && [ -d "$git_common_dir" ] || die "Not a git repository"
+	activate_awksome $1
+}
+
+mtblob=
+setup_hashalgo_vars()
+{
+	test -z "$mtblob" || return 0
+
+	# the empty blob will match the hash algorithm of the repository (if any)
+
+	mtblob="$(git hash-object -t blob --stdin </dev/null 2>/dev/null)" ||
+		die "git hash-object failed"
+	case "${#mtblob}" in
+	40)
+		nullsha="0000000000000000000000000000000000000000"
+		;;
+	64)
+		nullsha="0000000000000000000000000000000000000000000000000000000000000000"
+		;;
+	*)
+		die "git hash-object failed"
+	esac
+}
+
+## Include awk scripts and their utility functions (separated for easier debugging)
+awksome_loaded=
+activate_awksome()
+{
+	test -z "$awksome_loaded" || return 0
+
+	# tg--awksome requires that mtblob be set before sourcing it;
+	# mtblob is configured by setup_hashalgo_vars;
+	# therefore run setup_hashalgo_vars first.
+
+	setup_hashalgo_vars $1
+	[ -f "$TG_INST_CMDDIR/tg--awksome" ] && [ -r "$TG_INST_CMDDIR/tg--awksome" ] ||
+		die "Missing awk scripts: '$TG_INST_CMDDIR/tg--awksome'"
+	. "$TG_INST_CMDDIR/tg--awksome"
+
+	awksome_loaded=1
 }
 
 basic_setup_remote()
@@ -2340,14 +2378,20 @@ activate_wayback_machine()
 	qpesc="$(printf '%s\n' "$git_common_dir" | sed -e 's/\([\\""]\)/\\\1/g' -e '$!s/$/\\n/' | tr -d '\n')"
 	laru="false"
 	[ -z "$2" ] || laru="true"
+	rfv=0
+	ofmt=
+	if [ "${#mtblob}" = 64 ]; then
+		rfv=1
+		ofmt="$lf${tab}objectFormat = sha256"
+	fi
 	printf '%s' "\
 [include]
 	path = \"$qpesc/config\"
 [core]
 	bare = false
 	logAllRefUpdates = $laru
-	repositoryFormatVersion = 0
-[extensions]
+	repositoryFormatVersion = $rfv
+[extensions]$ofmt
 	preciousObjects = true
 [gc]
 	auto = 0
@@ -2417,6 +2461,7 @@ set_topbases()
 
 	[ -z "$tg_topbases_set" ] || return 0
 
+	activate_awksome # may not have been loaded yet
 	topbases_implicit_default=1
 	# See if topgit.top-bases is set to heads or refs
 	tgtb="$(git config "topgit.top-bases" 2>/dev/null)" || :
@@ -2555,12 +2600,6 @@ v_get_abs_path()
 
 [ -d "$TG_INST_CMDDIR" ] ||
 	die "No command directory: '$TG_INST_CMDDIR'"
-
-## Include awk scripts and their utility functions (separated for easier debugging)
-
-[ -f "$TG_INST_CMDDIR/tg--awksome" ] && [ -r "$TG_INST_CMDDIR/tg--awksome" ] ||
-	die "Missing awk scripts: '$TG_INST_CMDDIR/tg--awksome'"
-. "$TG_INST_CMDDIR/tg--awksome"
 
 if [ -n "$tg__include" ]; then
 

@@ -1,8 +1,8 @@
 #!/bin/sh
 
 # tg--index-merge-one-file -- auto merge a file without touching working tree
-# Copyright (C) 2017 Kyle J. McKay
-# All rights reserved.
+# Copyright (C) 2017,2021 Kyle J. McKay
+# All rights reserved
 # License GPLv2+
 
 # $TG_TMP_DIR => location to store temporary files
@@ -15,7 +15,6 @@
 # $6          => stage 2 mode
 # $7          => stage 3 mode
 
-nullsha="0000000000000000000000000000000000000000"
 tab='	'
 
 if [ "$1" = "-h" ] && [ $# -eq 1 ]; then
@@ -30,6 +29,11 @@ if [ -z "$tg_index_mergetop_behavior" ]; then case "$1" in
 esac; fi
 
 [ $# -eq 7 ] || exit 1
+
+mtblob="$(git hash-object -t blob --stdin </dev/null 2>/dev/null)" || :
+nullsha="0000000000000000000000000000000000000000"
+test "${#mtblob}" != "64" ||
+nullsha="0000000000000000000000000000000000000000000000000000000000000000"
 
 # The read-tree --aggressive option handles three cases that may end up in
 # here:
