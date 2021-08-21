@@ -8,6 +8,17 @@ TEST_NO_CREATE_REPO=1
 
 test_plan 11
 
+case "$test_hash_algo" in
+sha1)
+	startblob=1a2b97e
+	oneblob=9a60eae
+	;;
+sha256)
+	startblob=39390ba
+	oneblob=1299efa
+	;;
+esac
+
 test_expect_success 'default branch import' '
 	test_create_repo r1 && cd r1 &&
 	test_commit --notick start^here &&
@@ -68,7 +79,7 @@ t/three
 	printf "%s" "\
 diff --git a/start^here.t b/start^here.t
 deleted file mode 100644
-index 1a2b97e..0000000
+index $startblob..0000000
 --- a/start^here.t
 +++ /dev/null
 @@ -1 +0,0 @@
@@ -110,7 +121,7 @@ t/three
 	printf "%s" "\
 diff --git a/start^here.t b/start^here.t
 deleted file mode 100644
-index 1a2b97e..0000000
+index $startblob..0000000
 --- a/start^here.t
 +++ /dev/null
 @@ -1 +0,0 @@
@@ -151,7 +162,7 @@ t/three
 	printf "%s" "\
 diff --git a/start^here.t b/start^here.t
 deleted file mode 100644
-index 1a2b97e..0000000
+index $startblob..0000000
 --- a/start^here.t
 +++ /dev/null
 @@ -1 +0,0 @@
@@ -193,7 +204,7 @@ t/three
 	printf "%s" "\
 diff --git a/start^here.t b/start^here.t
 deleted file mode 100644
-index 1a2b97e..0000000
+index $startblob..0000000
 --- a/start^here.t
 +++ /dev/null
 @@ -1 +0,0 @@
@@ -232,14 +243,14 @@ t/two
 	printf "%s" "\
 diff --git a/one^.t b/one^.t
 deleted file mode 100644
-index 9a60eae..0000000
+index $oneblob..0000000
 --- a/one^.t
 +++ /dev/null
 @@ -1 +0,0 @@
 -one^
 diff --git a/start^here.t b/start^here.t
 deleted file mode 100644
-index 1a2b97e..0000000
+index $startblob..0000000
 --- a/start^here.t
 +++ /dev/null
 @@ -1 +0,0 @@
@@ -280,7 +291,7 @@ t/three
 	printf "%s" "\
 diff --git a/start^here.t b/start^here.t
 deleted file mode 100644
-index 1a2b97e..0000000
+index $startblob..0000000
 --- a/start^here.t
 +++ /dev/null
 @@ -1 +0,0 @@
@@ -321,7 +332,7 @@ t/three
 	printf "%s" "\
 diff --git a/start^here.t b/start^here.t
 deleted file mode 100644
-index 1a2b97e..0000000
+index $startblob..0000000
 --- a/start^here.t
 +++ /dev/null
 @@ -1 +0,0 @@
@@ -362,7 +373,7 @@ t/three
 	printf "%s" "\
 diff --git a/start^here.t b/start^here.t
 deleted file mode 100644
-index 1a2b97e..0000000
+index $startblob..0000000
 --- a/start^here.t
 +++ /dev/null
 @@ -1 +0,0 @@
