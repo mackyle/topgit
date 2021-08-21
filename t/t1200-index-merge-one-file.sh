@@ -10,10 +10,23 @@ version1="$(printf '%s\n' one two three | git hash-object -w -t blob --stdin)" |
 version2="$(printf '%s\n' alpha beta gamma | git hash-object -w -t blob --stdin)" || die
 version3="$(printf '%s\n' setup check | git hash-object -w -t blob --stdin)" || die
 
+test_asv_cache '
+	commit1	sha1	4cb29ea
+	commit2	sha1	85c3040
+	commit3	sha1	2488d99
+
+	commit1	sha256	c5df06a
+	commit2	sha256	404b87a
+	commit3	sha256	20ef10c
+'
+test_v_asv comit1 commit1
+test_v_asv comit2 commit2
+test_v_asv comit3 commit3
+
 cat <<EOT >check
-100644 4cb29ea 1	test
-100644 85c3040 2	test
-100644 2488d99 3	test
+100644 $comit1 1	test
+100644 $comit2 2	test
+100644 $comit3 3	test
 EOT
 
 tg_exec_path="$(tg --exec-path)" && [ -n "$tg_exec_path" ] || die
