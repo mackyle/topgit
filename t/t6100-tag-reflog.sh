@@ -9,7 +9,13 @@ TEST_NO_CREATE_REPO=1
 TZ=PST8PDT && export TZ || die
 
 if vcmp "$git_version" '>=' "2.5"; then
-        test_set_prereq "GIT_2_5"
+	test_set_prereq "GIT_2_5"
+fi
+
+git_231_plus=
+if vcmp "$git_version" '>=' "2.31"; then
+	git_231_plus=1
+	test_set_prereq "GIT_2_31"
 fi
 
 test_plan 48
@@ -140,6 +146,7 @@ test_expect_success 'LASTOK GIT_2_5' 'setup linked' '
 	sane_reattach_ref HEAD refs/heads/linked
 '
 
+test "$test_hash_algo" != "sha1" ||
 cat <<\EOT >HEAD_main.log || die
 commit dd1016e3aedddb592ab8b1075dc5957c2c770c57
 Reflog: HEAD@{0} (Fra mewor k (Committer) <framework@example.org>)
@@ -242,6 +249,7 @@ CommitDate: Thu Apr 7 15:13:13 2005 -0700
     empty
 EOT
 
+test "$test_hash_algo" != "sha1" ||
 cat <<\EOT >HEAD_linked.log || die
 commit 04eea982f4572b35c7cbb6597f5d777661f15e60
 Reflog: HEAD@{0} (Fra mewor k (Committer) <framework@example.org>)
@@ -344,6 +352,7 @@ CommitDate: Thu Apr 7 15:13:13 2005 -0700
     empty linked
 EOT
 
+test "$test_hash_algo" != "sha1" ||
 cat <<\EOT >master.log
 commit dd1016e3aedddb592ab8b1075dc5957c2c770c57
 Reflog: master@{0} (Fra mewor k (Committer) <framework@example.org>)
@@ -426,6 +435,7 @@ CommitDate: Thu Apr 7 15:13:13 2005 -0700
     empty
 EOT
 
+test "$test_hash_algo" != "sha1" ||
 cat <<\EOT >linked.log
 commit 04eea982f4572b35c7cbb6597f5d777661f15e60
 Reflog: linked@{0} (Fra mewor k (Committer) <framework@example.org>)
@@ -508,6 +518,378 @@ CommitDate: Thu Apr 7 15:13:13 2005 -0700
     empty linked
 EOT
 
+test "$test_hash_algo" != "sha256" ||
+cat <<\EOT >HEAD_main.log || die
+commit e784e427bc756c7dab3c5c993ce172605b03911f4a4cee2b472f5eaf47439f1f
+Reflog: HEAD@{0} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: attaching back to c7
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:20:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:20:13 2005 -0700
+
+    file 7
+
+commit e2552eeb08597fac52b221ecdcdda3d73b298adf066bd68a75e6d78b5c3ae0a8
+Reflog: HEAD@{1} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: detaching to c4
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:17:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:17:13 2005 -0700
+
+    file 4
+
+commit e784e427bc756c7dab3c5c993ce172605b03911f4a4cee2b472f5eaf47439f1f
+Reflog: HEAD@{2} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: 
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:20:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:20:13 2005 -0700
+
+    file 7
+
+commit 201a80d1dac354e3bf8f5ffd8d6ed3bf45425d25903e51c5b5fe581ed1915b2b
+Reflog: HEAD@{3} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: 
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:19:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:19:13 2005 -0700
+
+    file 6
+
+commit 71acff480527a965010d8d59c50ed31ccff26637eb259ecd29aeb48f90dbcbd6
+Reflog: HEAD@{4} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: 
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:18:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:18:13 2005 -0700
+
+    file 5
+
+commit e2552eeb08597fac52b221ecdcdda3d73b298adf066bd68a75e6d78b5c3ae0a8
+Reflog: HEAD@{5} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: 
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:17:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:17:13 2005 -0700
+
+    file 4
+
+commit 196f1299c911ab944da342f5df818d2c930c84a6efecf6ab73e074abec73aa1c
+Reflog: HEAD@{6} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: 
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:16:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:16:13 2005 -0700
+
+    file 3
+
+commit 7dec28d627784a76bef56727ce0da16f78c9bf93c4ee21d63c26bfe19aec525b
+Reflog: HEAD@{7} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: 
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:15:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:15:13 2005 -0700
+
+    file 2
+
+commit ecf5cd744123c8f322d61b4a97d18d75f1c25440ca838a9654decff6b8697226
+Reflog: HEAD@{8} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: 
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:14:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:14:13 2005 -0700
+
+    file 1
+
+commit 079309f2fa99f1dc84e7d2b40b25766e2e6ff4da86bc8f2be31487085cc9359a
+Reflog: HEAD@{9} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: 
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:13:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:13:13 2005 -0700
+
+    empty
+EOT
+
+test "$test_hash_algo" != "sha256" ||
+cat <<\EOT >HEAD_linked.log || die
+commit 6fda165d8aaa203d2bf9a67dcd750ac6e273489ea89e174866c1170d81cf2f73
+Reflog: HEAD@{0} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: attaching back to linked c1
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:20:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:20:13 2005 -0700
+
+    file 1
+
+commit e2552eeb08597fac52b221ecdcdda3d73b298adf066bd68a75e6d78b5c3ae0a8
+Reflog: HEAD@{1} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: detaching to linked c4
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:17:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:17:13 2005 -0700
+
+    file 4
+
+commit 6fda165d8aaa203d2bf9a67dcd750ac6e273489ea89e174866c1170d81cf2f73
+Reflog: HEAD@{2} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: 
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:20:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:20:13 2005 -0700
+
+    file 1
+
+commit 1a6140d409f963b95143d6d2ca04ceb547c798938ddac9e34f4be143c3de2e0e
+Reflog: HEAD@{3} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: 
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:19:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:19:13 2005 -0700
+
+    file 2
+
+commit a45e681849307b92993a9798ae71198df602a16281a29810fc1180139e426e89
+Reflog: HEAD@{4} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: 
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:18:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:18:13 2005 -0700
+
+    file 3
+
+commit e2552eeb08597fac52b221ecdcdda3d73b298adf066bd68a75e6d78b5c3ae0a8
+Reflog: HEAD@{5} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: 
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:17:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:17:13 2005 -0700
+
+    file 4
+
+commit 8575f83fcc048762d2e22aebed05a05bc0d7bada62665eacf83fbff2afb88a7a
+Reflog: HEAD@{6} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: 
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:16:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:16:13 2005 -0700
+
+    file 5
+
+commit 821fd1740f7c0903282e1f7e16b90891732f6f1480dd997591462a4514cc1d5a
+Reflog: HEAD@{7} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: 
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:15:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:15:13 2005 -0700
+
+    file 6
+
+commit e2473e861fd48f0ece81fdbd760dde169c6e00c57b426f85853b59203760214b
+Reflog: HEAD@{8} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: 
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:14:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:14:13 2005 -0700
+
+    file 7
+
+commit a6345fe47a02ec4a2f0f5b749104a44dddff871fcea90b2525b0a5eb1af946e2
+Reflog: HEAD@{9} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: 
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:13:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:13:13 2005 -0700
+
+    empty linked
+EOT
+
+test "$test_hash_algo" != "sha256" ||
+cat <<\EOT >master.log
+commit e784e427bc756c7dab3c5c993ce172605b03911f4a4cee2b472f5eaf47439f1f
+Reflog: master@{0} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: 
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:20:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:20:13 2005 -0700
+
+    file 7
+
+commit 201a80d1dac354e3bf8f5ffd8d6ed3bf45425d25903e51c5b5fe581ed1915b2b
+Reflog: master@{1} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: 
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:19:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:19:13 2005 -0700
+
+    file 6
+
+commit 71acff480527a965010d8d59c50ed31ccff26637eb259ecd29aeb48f90dbcbd6
+Reflog: master@{2} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: 
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:18:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:18:13 2005 -0700
+
+    file 5
+
+commit e2552eeb08597fac52b221ecdcdda3d73b298adf066bd68a75e6d78b5c3ae0a8
+Reflog: master@{3} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: 
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:17:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:17:13 2005 -0700
+
+    file 4
+
+commit 196f1299c911ab944da342f5df818d2c930c84a6efecf6ab73e074abec73aa1c
+Reflog: master@{4} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: 
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:16:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:16:13 2005 -0700
+
+    file 3
+
+commit 7dec28d627784a76bef56727ce0da16f78c9bf93c4ee21d63c26bfe19aec525b
+Reflog: master@{5} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: 
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:15:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:15:13 2005 -0700
+
+    file 2
+
+commit ecf5cd744123c8f322d61b4a97d18d75f1c25440ca838a9654decff6b8697226
+Reflog: master@{6} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: 
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:14:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:14:13 2005 -0700
+
+    file 1
+
+commit 079309f2fa99f1dc84e7d2b40b25766e2e6ff4da86bc8f2be31487085cc9359a
+Reflog: master@{7} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: 
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:13:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:13:13 2005 -0700
+
+    empty
+EOT
+
+test "$test_hash_algo" != "sha256" ||
+cat <<\EOT >linked.log
+commit 6fda165d8aaa203d2bf9a67dcd750ac6e273489ea89e174866c1170d81cf2f73
+Reflog: linked@{0} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: 
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:20:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:20:13 2005 -0700
+
+    file 1
+
+commit 1a6140d409f963b95143d6d2ca04ceb547c798938ddac9e34f4be143c3de2e0e
+Reflog: linked@{1} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: 
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:19:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:19:13 2005 -0700
+
+    file 2
+
+commit a45e681849307b92993a9798ae71198df602a16281a29810fc1180139e426e89
+Reflog: linked@{2} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: 
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:18:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:18:13 2005 -0700
+
+    file 3
+
+commit e2552eeb08597fac52b221ecdcdda3d73b298adf066bd68a75e6d78b5c3ae0a8
+Reflog: linked@{3} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: 
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:17:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:17:13 2005 -0700
+
+    file 4
+
+commit 8575f83fcc048762d2e22aebed05a05bc0d7bada62665eacf83fbff2afb88a7a
+Reflog: linked@{4} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: 
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:16:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:16:13 2005 -0700
+
+    file 5
+
+commit 821fd1740f7c0903282e1f7e16b90891732f6f1480dd997591462a4514cc1d5a
+Reflog: linked@{5} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: 
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:15:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:15:13 2005 -0700
+
+    file 6
+
+commit e2473e861fd48f0ece81fdbd760dde169c6e00c57b426f85853b59203760214b
+Reflog: linked@{6} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: 
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:14:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:14:13 2005 -0700
+
+    file 7
+
+commit a6345fe47a02ec4a2f0f5b749104a44dddff871fcea90b2525b0a5eb1af946e2
+Reflog: linked@{7} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: 
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:13:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:13:13 2005 -0700
+
+    empty linked
+EOT
+
 test_expect_success LASTOK 'verify setup' '
 	test -f "main/.git/objects/pack/$objpack.idx" &&
 	test -f "main/.git/objects/pack/$objpack.pack" &&
@@ -530,6 +912,7 @@ test_expect_success LASTOK 'verify setup' '
 	test_when_finished test_set_prereq SETUP
 '
 
+test "$test_hash_algo" != "sha1" ||
 cat <<\EOT >tgHEAD_main.log || die
 === 2005-04-07 ===
 dd1016e3 15:20:13 (commit) HEAD@{0}: attaching back to c7
@@ -542,6 +925,21 @@ feeb764a 15:16:13 (commit) HEAD@{6}: file 3
 c0ed6e70 15:15:13 (commit) HEAD@{7}: file 2
 c18fcef2 15:14:13 (commit) HEAD@{8}: file 1
 b63866e5 15:13:13 (commit) HEAD@{9}: empty
+EOT
+
+test "$test_hash_algo" != "sha256" ||
+cat <<\EOT >tgHEAD_main.log || die
+=== 2005-04-07 ===
+e784e427 15:20:13 (commit) HEAD@{0}: attaching back to c7
+e2552eeb 15:20:13 (commit) HEAD@{1}: detaching to c4
+e784e427 15:20:13 (commit) HEAD@{2}: file 7
+201a80d1 15:19:13 (commit) HEAD@{3}: file 6
+71acff48 15:18:13 (commit) HEAD@{4}: file 5
+e2552eeb 15:17:13 (commit) HEAD@{5}: file 4
+196f1299 15:16:13 (commit) HEAD@{6}: file 3
+7dec28d6 15:15:13 (commit) HEAD@{7}: file 2
+ecf5cd74 15:14:13 (commit) HEAD@{8}: file 1
+079309f2 15:13:13 (commit) HEAD@{9}: empty
 EOT
 
 test_expect_success SETUP 'tag -g HEAD' '
@@ -557,6 +955,7 @@ test_expect_success SETUP 'tag -g --no-type HEAD' '
 	test_cmp actual expected
 '
 
+test "$test_hash_algo" != "sha1" ||
 cat <<\EOT >tgmaster.log || die
 === 2005-04-07 ===
 dd1016e3 15:20:13 (commit) master@{0}: file 7
@@ -567,6 +966,19 @@ feeb764a 15:16:13 (commit) master@{4}: file 3
 c0ed6e70 15:15:13 (commit) master@{5}: file 2
 c18fcef2 15:14:13 (commit) master@{6}: file 1
 b63866e5 15:13:13 (commit) master@{7}: empty
+EOT
+
+test "$test_hash_algo" != "sha256" ||
+cat <<\EOT >tgmaster.log || die
+=== 2005-04-07 ===
+e784e427 15:20:13 (commit) master@{0}: file 7
+201a80d1 15:19:13 (commit) master@{1}: file 6
+71acff48 15:18:13 (commit) master@{2}: file 5
+e2552eeb 15:17:13 (commit) master@{3}: file 4
+196f1299 15:16:13 (commit) master@{4}: file 3
+7dec28d6 15:15:13 (commit) master@{5}: file 2
+ecf5cd74 15:14:13 (commit) master@{6}: file 1
+079309f2 15:13:13 (commit) master@{7}: empty
 EOT
 
 test_expect_success SETUP 'tag -g master' '
@@ -585,6 +997,8 @@ test_expect_success SETUP 'tag -g --no-type master' '
 test_expect_success SETUP 'rev-parse --verify master@{0..7}' '
 	cd main &&
 	test_must_fail git rev-parse --verify master@{8} -- &&
+	case "$test_hash_algo" in
+	sha1)
 	test_cmp_rev b63866e5 master@{7} &&
 	test_cmp_rev c18fcef2 master@{6} &&
 	test_cmp_rev c0ed6e70 master@{5} &&
@@ -592,10 +1006,23 @@ test_expect_success SETUP 'rev-parse --verify master@{0..7}' '
 	test_cmp_rev 40403e00 master@{3} &&
 	test_cmp_rev 8238c7e7 master@{2} &&
 	test_cmp_rev 84b1e4e6 master@{1} &&
-	test_cmp_rev dd1016e3 master@{0} &&
+	test_cmp_rev dd1016e3 master@{0}
+	;;
+	sha256)
+	test_cmp_rev 079309f2 master@{7} &&
+	test_cmp_rev ecf5cd74 master@{6} &&
+	test_cmp_rev 7dec28d6 master@{5} &&
+	test_cmp_rev 196f1299 master@{4} &&
+	test_cmp_rev e2552eeb master@{3} &&
+	test_cmp_rev 71acff48 master@{2} &&
+	test_cmp_rev 201a80d1 master@{1} &&
+	test_cmp_rev e784e427 master@{0}
+	;;*) die unknown hash "$test_hash_algo"
+	esac &&
 	test_cmp_rev master master@{0}
 '
 
+test "$test_hash_algo" != "sha1" ||
 cat <<\EOT >tgHEAD_linked.log || die
 === 2005-04-07 ===
 04eea982 15:20:13 (commit) HEAD@{0}: attaching back to linked c1
@@ -608,6 +1035,21 @@ cat <<\EOT >tgHEAD_linked.log || die
 e053b7d1 15:15:13 (commit) HEAD@{7}: file 6
 2849f113 15:14:13 (commit) HEAD@{8}: file 7
 fce870c7 15:13:13 (commit) HEAD@{9}: empty linked
+EOT
+
+test "$test_hash_algo" != "sha256" ||
+cat <<\EOT >tgHEAD_linked.log || die
+=== 2005-04-07 ===
+6fda165d 15:20:13 (commit) HEAD@{0}: attaching back to linked c1
+e2552eeb 15:20:13 (commit) HEAD@{1}: detaching to linked c4
+6fda165d 15:20:13 (commit) HEAD@{2}: file 1
+1a6140d4 15:19:13 (commit) HEAD@{3}: file 2
+a45e6818 15:18:13 (commit) HEAD@{4}: file 3
+e2552eeb 15:17:13 (commit) HEAD@{5}: file 4
+8575f83f 15:16:13 (commit) HEAD@{6}: file 5
+821fd174 15:15:13 (commit) HEAD@{7}: file 6
+e2473e86 15:14:13 (commit) HEAD@{8}: file 7
+a6345fe4 15:13:13 (commit) HEAD@{9}: empty linked
 EOT
 
 test_expect_success 'SETUP GIT_2_5' 'tag -g HEAD [linked]' '
@@ -623,6 +1065,7 @@ test_expect_success 'SETUP GIT_2_5' 'tag -g --no-type HEAD [linked]' '
 	test_cmp actual expected
 '
 
+test "$test_hash_algo" != "sha1" ||
 cat <<\EOT >tglinked.log || die
 === 2005-04-07 ===
 04eea982 15:20:13 (commit) linked@{0}: file 1
@@ -635,6 +1078,18 @@ e053b7d1 15:15:13 (commit) linked@{5}: file 6
 fce870c7 15:13:13 (commit) linked@{7}: empty linked
 EOT
 
+test "$test_hash_algo" != "sha256" ||
+cat <<\EOT >tglinked.log || die
+=== 2005-04-07 ===
+6fda165d 15:20:13 (commit) linked@{0}: file 1
+1a6140d4 15:19:13 (commit) linked@{1}: file 2
+a45e6818 15:18:13 (commit) linked@{2}: file 3
+e2552eeb 15:17:13 (commit) linked@{3}: file 4
+8575f83f 15:16:13 (commit) linked@{4}: file 5
+821fd174 15:15:13 (commit) linked@{5}: file 6
+e2473e86 15:14:13 (commit) linked@{6}: file 7
+a6345fe4 15:13:13 (commit) linked@{7}: empty linked
+EOT
 
 test_expect_success 'SETUP GIT_2_5' 'tag -g linked' '
 	cd linked &&
@@ -658,6 +1113,8 @@ test_expect_success 'SETUP GIT_2_5' 'tag --no-type -g linked' '
 test_expect_success 'SETUP GIT_2_5' 'rev-parse --verify linked@{0..7}' '
 	cd linked &&
 	test_must_fail git rev-parse --verify linked@{8} -- &&
+	case "$test_hash_algo" in
+	sha1)
 	test_cmp_rev fce870c7 linked@{7} &&
 	test_cmp_rev 2849f113 linked@{6} &&
 	test_cmp_rev e053b7d1 linked@{5} &&
@@ -665,10 +1122,23 @@ test_expect_success 'SETUP GIT_2_5' 'rev-parse --verify linked@{0..7}' '
 	test_cmp_rev 40403e00 linked@{3} &&
 	test_cmp_rev 602d59a7 linked@{2} &&
 	test_cmp_rev 4d776c64 linked@{1} &&
-	test_cmp_rev 04eea982 linked@{0} &&
+	test_cmp_rev 04eea982 linked@{0}
+	;;
+	sha256)
+	test_cmp_rev a6345fe4 linked@{7} &&
+	test_cmp_rev e2473e86 linked@{6} &&
+	test_cmp_rev 821fd174 linked@{5} &&
+	test_cmp_rev 8575f83f linked@{4} &&
+	test_cmp_rev e2552eeb linked@{3} &&
+	test_cmp_rev a45e6818 linked@{2} &&
+	test_cmp_rev 1a6140d4 linked@{1} &&
+	test_cmp_rev 6fda165d linked@{0}
+	;;*) die unknown hash "$test_hash_algo"
+	esac &&
 	test_cmp_rev linked linked@{0}
 '
 
+test "$test_hash_algo" != "sha1" ||
 cat <<\EOT >tgHEAD_main_1.log || die
 === 2005-04-07 ===
 dd1016e3 15:20:13 (commit) HEAD@{0}: attaching back to c7
@@ -680,6 +1150,20 @@ feeb764a 15:16:13 (commit) HEAD@{5}: file 3
 c0ed6e70 15:15:13 (commit) HEAD@{6}: file 2
 c18fcef2 15:14:13 (commit) HEAD@{7}: file 1
 b63866e5 15:13:13 (commit) HEAD@{8}: empty
+EOT
+
+test "$test_hash_algo" != "sha256" ||
+cat <<\EOT >tgHEAD_main_1.log || die
+=== 2005-04-07 ===
+e784e427 15:20:13 (commit) HEAD@{0}: attaching back to c7
+e784e427 15:20:13 (commit) HEAD@{1}: file 7
+201a80d1 15:19:13 (commit) HEAD@{2}: file 6
+71acff48 15:18:13 (commit) HEAD@{3}: file 5
+e2552eeb 15:17:13 (commit) HEAD@{4}: file 4
+196f1299 15:16:13 (commit) HEAD@{5}: file 3
+7dec28d6 15:15:13 (commit) HEAD@{6}: file 2
+ecf5cd74 15:14:13 (commit) HEAD@{7}: file 1
+079309f2 15:13:13 (commit) HEAD@{8}: empty
 EOT
 
 test_expect_success SETUP 'tag --drop HEAD@{1}' '
@@ -702,6 +1186,7 @@ test_expect_success SETUP 'tag --drop HEAD@{8}' '
 	test_cmp actual expected
 '
 
+test "$test_hash_algo" != "sha1" ||
 cat <<\EOT >tgmaster_3.log || die
 === 2005-04-07 ===
 dd1016e3 15:20:13 (commit) master@{0}: file 7
@@ -711,6 +1196,18 @@ feeb764a 15:16:13 (commit) master@{3}: file 3
 c0ed6e70 15:15:13 (commit) master@{4}: file 2
 c18fcef2 15:14:13 (commit) master@{5}: file 1
 b63866e5 15:13:13 (commit) master@{6}: empty
+EOT
+
+test "$test_hash_algo" != "sha256" ||
+cat <<\EOT >tgmaster_3.log || die
+=== 2005-04-07 ===
+e784e427 15:20:13 (commit) master@{0}: file 7
+201a80d1 15:19:13 (commit) master@{1}: file 6
+71acff48 15:18:13 (commit) master@{2}: file 5
+196f1299 15:16:13 (commit) master@{3}: file 3
+7dec28d6 15:15:13 (commit) master@{4}: file 2
+ecf5cd74 15:14:13 (commit) master@{5}: file 1
+079309f2 15:13:13 (commit) master@{6}: empty
 EOT
 
 test_expect_success SETUP 'tag --drop master@{3}' '
@@ -733,6 +1230,7 @@ test_expect_success SETUP 'tag --drop master@{6}' '
 	test_cmp actual expected
 '
 
+test "$test_hash_algo" != "sha1" ||
 cat <<\EOT >tgHEAD_linked_1.log || die
 === 2005-04-07 ===
 04eea982 15:20:13 (commit) HEAD@{0}: attaching back to linked c1
@@ -744,6 +1242,20 @@ cat <<\EOT >tgHEAD_linked_1.log || die
 e053b7d1 15:15:13 (commit) HEAD@{6}: file 6
 2849f113 15:14:13 (commit) HEAD@{7}: file 7
 fce870c7 15:13:13 (commit) HEAD@{8}: empty linked
+EOT
+
+test "$test_hash_algo" != "sha256" ||
+cat <<\EOT >tgHEAD_linked_1.log || die
+=== 2005-04-07 ===
+6fda165d 15:20:13 (commit) HEAD@{0}: attaching back to linked c1
+6fda165d 15:20:13 (commit) HEAD@{1}: file 1
+1a6140d4 15:19:13 (commit) HEAD@{2}: file 2
+a45e6818 15:18:13 (commit) HEAD@{3}: file 3
+e2552eeb 15:17:13 (commit) HEAD@{4}: file 4
+8575f83f 15:16:13 (commit) HEAD@{5}: file 5
+821fd174 15:15:13 (commit) HEAD@{6}: file 6
+e2473e86 15:14:13 (commit) HEAD@{7}: file 7
+a6345fe4 15:13:13 (commit) HEAD@{8}: empty linked
 EOT
 
 test_expect_success 'SETUP GIT_2_5' 'tag --drop HEAD@{1} [linked]' '
@@ -766,6 +1278,7 @@ test_expect_success 'SETUP GIT_2_5' 'tag --drop HEAD@{8} [linked]' '
 	test_cmp actual expected
 '
 
+test "$test_hash_algo" != "sha1" ||
 cat <<\EOT >tglinked_2.log || die
 === 2005-04-07 ===
 04eea982 15:20:13 (commit) linked@{0}: file 1
@@ -775,6 +1288,18 @@ cat <<\EOT >tglinked_2.log || die
 e053b7d1 15:15:13 (commit) linked@{4}: file 6
 2849f113 15:14:13 (commit) linked@{5}: file 7
 fce870c7 15:13:13 (commit) linked@{6}: empty linked
+EOT
+
+test "$test_hash_algo" != "sha256" ||
+cat <<\EOT >tglinked_2.log || die
+=== 2005-04-07 ===
+6fda165d 15:20:13 (commit) linked@{0}: file 1
+1a6140d4 15:19:13 (commit) linked@{1}: file 2
+e2552eeb 15:17:13 (commit) linked@{2}: file 4
+8575f83f 15:16:13 (commit) linked@{3}: file 5
+821fd174 15:15:13 (commit) linked@{4}: file 6
+e2473e86 15:14:13 (commit) linked@{5}: file 7
+a6345fe4 15:13:13 (commit) linked@{6}: empty linked
 EOT
 
 test_expect_success 'SETUP GIT_2_5' 'tag --drop linked@{2}' '
@@ -828,26 +1353,48 @@ test_expect_success 'SETUP GIT_2_5' 'tag --drop linked@{0}' '
 test_expect_success SETUP 'rev-parse --verify master@{0..4}' '
 	cd main &&
 	test_must_fail git rev-parse --verify master@{5} -- &&
+	case "$test_hash_algo" in
+	sha1)
 	test_cmp_rev c18fcef2 master@{4} &&
 	test_cmp_rev c0ed6e70 master@{3} &&
 	test_cmp_rev feeb764a master@{2} &&
 	test_cmp_rev 8238c7e7 master@{1} &&
-	test_cmp_rev 84b1e4e6 master@{0} &&
+	test_cmp_rev 84b1e4e6 master@{0}
+	;;
+	sha256)
+	test_cmp_rev ecf5cd74 master@{4} &&
+	test_cmp_rev 7dec28d6 master@{3} &&
+	test_cmp_rev 196f1299 master@{2} &&
+	test_cmp_rev 71acff48 master@{1} &&
+	test_cmp_rev 201a80d1 master@{0}
+	;;*) die unknown hash "$test_hash_algo"
+	esac &&
 	test_cmp_rev master master@{0}
 '
 
 test_expect_success 'SETUP GIT_2_5' 'rev-parse --verify linked@{0..4}' '
 	cd linked &&
 	test_must_fail git rev-parse --verify linked@{5} -- &&
+	case "$test_hash_algo" in
+	sha1)
 	test_cmp_rev 2849f113 linked@{4} &&
 	test_cmp_rev e053b7d1 linked@{3} &&
 	test_cmp_rev 0a45d475 linked@{2} &&
 	test_cmp_rev 40403e00 linked@{1} &&
-	test_cmp_rev 4d776c64 linked@{0} &&
+	test_cmp_rev 4d776c64 linked@{0}
+	;;
+	sha256)
+	test_cmp_rev e2473e86 linked@{4} &&
+	test_cmp_rev 821fd174 linked@{3} &&
+	test_cmp_rev 8575f83f linked@{2} &&
+	test_cmp_rev e2552eeb linked@{1} &&
+	test_cmp_rev 1a6140d4 linked@{0}
+	;;*) die unknown hash "$test_hash_algo"
+	esac &&
 	test_cmp_rev linked linked@{0}
 '
 
-test_expect_success SETUP 'tag --drop symref HEAD@{0}' '
+test_expect_success '!GIT_2_31 SETUP' 'tag --drop symref HEAD@{0}' '
 	cd main &&
 	h0="$(git rev-parse --verify HEAD@{0})" && test -n "$h0" &&
 	h1="$(git rev-parse --verify HEAD@{1})" && test -n "$h1" &&
@@ -861,7 +1408,7 @@ test_expect_success SETUP 'tag --drop symref HEAD@{0}' '
 	test "$h0new" = "$h0"
 '
 
-test_expect_success 'SETUP GIT_2_5' 'tag --drop symref HEAD@{0} [linked]' '
+test_expect_success '!GIT_2_31 SETUP GIT_2_5' 'tag --drop symref HEAD@{0} [linked]' '
 	cd linked &&
 	h0="$(git rev-parse --verify HEAD@{0})" && test -n "$h0" &&
 	h1="$(git rev-parse --verify HEAD@{1})" && test -n "$h1" &&
@@ -875,7 +1422,7 @@ test_expect_success 'SETUP GIT_2_5' 'tag --drop symref HEAD@{0} [linked]' '
 	test "$h0new" = "$h0"
 '
 
-test_expect_success SETUP 'tag --drop detached HEAD@{0}' '
+test_expect_success '!GIT_2_31 SETUP' 'tag --drop detached HEAD@{0}' '
 	cd main &&
 	git update-ref -m detach --no-deref HEAD HEAD HEAD &&
 	h0="$(git rev-parse --verify HEAD@{0})" && test -n "$h0" &&
@@ -890,7 +1437,7 @@ test_expect_success SETUP 'tag --drop detached HEAD@{0}' '
 	test "$h0new" = "$h1"
 '
 
-test_expect_success 'SETUP GIT_2_5' 'tag --drop detached HEAD@{0} [linked]' '
+test_expect_success '!GIT_2_31 SETUP GIT_2_5' 'tag --drop detached HEAD@{0} [linked]' '
 	cd linked &&
 	git update-ref -m detach --no-deref HEAD HEAD HEAD &&
 	h0="$(git rev-parse --verify HEAD@{0})" && test -n "$h0" &&
@@ -914,11 +1461,20 @@ test_expect_success SETUP 'staleify two log entries' '
 	test_must_fail git rev-list --no-walk --objects master@{3} >/dev/null 2>&1
 '
 
+test "$test_hash_algo" != "sha1" ||
 cat <<\EOT >tgmaster_fix1.log || die
 === 2005-04-07 ===
 feeb764a 15:16:13 (commit) master@{0}: file 3
 c0ed6e70 15:15:13 (commit) master@{1}: file 2
 c18fcef2 15:14:13 (commit) master@{2}: file 1
+EOT
+
+test "$test_hash_algo" != "sha256" ||
+cat <<\EOT >tgmaster_fix1.log || die
+=== 2005-04-07 ===
+196f1299 15:16:13 (commit) master@{0}: file 3
+7dec28d6 15:15:13 (commit) master@{1}: file 2
+ecf5cd74 15:14:13 (commit) master@{2}: file 1
 EOT
 
 test_expect_success SETUP 'tag --drop master@{0} --stale-fix 1' '
@@ -928,9 +1484,16 @@ test_expect_success SETUP 'tag --drop master@{0} --stale-fix 1' '
 	test_cmp actual ../tgmaster_fix1.log
 '
 
+test "$test_hash_algo" != "sha1" ||
 cat <<\EOT >tgmaster_fix2.log || die
 === 2005-04-07 ===
 c18fcef2 15:14:13 (commit) master@{0}: file 1
+EOT
+
+test "$test_hash_algo" != "sha256" ||
+cat <<\EOT >tgmaster_fix2.log || die
+=== 2005-04-07 ===
+ecf5cd74 15:14:13 (commit) master@{0}: file 1
 EOT
 
 test_expect_success SETUP 'tag --drop master@{0} --stale-fix 2' '
@@ -948,12 +1511,22 @@ test_expect_success SETUP 'tag --drop master@{0} final entry' '
 	git rev-parse --verify master -- >/dev/null
 '
 
+test "$test_hash_algo" != "sha1" ||
 cat <<\EOT >tglinked_0.log || die
 === 2005-04-07 ===
 40403e00 15:17:13 (commit) linked@{0}: file 4
 0a45d475 15:16:13 (commit) linked@{1}: file 5
 e053b7d1 15:15:13 (commit) linked@{2}: file 6
 2849f113 15:14:13 (commit) linked@{3}: file 7
+EOT
+
+test "$test_hash_algo" != "sha256" ||
+cat <<\EOT >tglinked_0.log || die
+=== 2005-04-07 ===
+e2552eeb 15:17:13 (commit) linked@{0}: file 4
+8575f83f 15:16:13 (commit) linked@{1}: file 5
+821fd174 15:15:13 (commit) linked@{2}: file 6
+e2473e86 15:14:13 (commit) linked@{3}: file 7
 EOT
 
 test_expect_success 'SETUP GIT_2_5' 'tag --drop linked@{0} broken' '
@@ -963,10 +1536,18 @@ test_expect_success 'SETUP GIT_2_5' 'tag --drop linked@{0} broken' '
 	test_cmp actual ../tglinked_0.log
 '
 
+test "$test_hash_algo" != "sha1" ||
 cat <<\EOT >tglinked_fix1.log || die
 === 2005-04-07 ===
 e053b7d1 15:15:13 (commit) linked@{0}: file 6
 2849f113 15:14:13 (commit) linked@{1}: file 7
+EOT
+
+test "$test_hash_algo" != "sha256" ||
+cat <<\EOT >tglinked_fix1.log || die
+=== 2005-04-07 ===
+821fd174 15:15:13 (commit) linked@{0}: file 6
+e2473e86 15:14:13 (commit) linked@{1}: file 7
 EOT
 
 test_expect_success 'SETUP GIT_2_5' 'tag --drop linked@{0} --stale-fix 1' '
@@ -985,6 +1566,7 @@ test_expect_success 'SETUP GIT_2_5' 'tag --drop linked@{0} final entries' '
 	git rev-parse --verify linked -- >/dev/null
 '
 
+! { test "$test_hash_algo" = "sha1" && test -z "$git_231_plus"; } ||
 cat <<\EOT >tgHEAD_main_pre2 || die
 === 2005-04-07 ===
 dd1016e3 15:20:13 (commit) HEAD@{0}: file 7
@@ -993,9 +1575,63 @@ c0ed6e70 15:15:13 (commit) HEAD@{2}: file 2
 c18fcef2 15:14:13 (commit) HEAD@{3}: file 1
 EOT
 
+! { test "$test_hash_algo" = "sha1" && test -z "$git_231_plus"; } ||
 cat <<\EOT >tgHEAD_main_double || die
 === 2005-04-07 ===
 c18fcef2 15:14:13 (commit) HEAD@{0}: file 1
+EOT
+
+! { test "$test_hash_algo" = "sha256" && test -z "$git_231_plus"; } ||
+cat <<\EOT >tgHEAD_main_pre2 || die
+=== 2005-04-07 ===
+e784e427 15:20:13 (commit) HEAD@{0}: file 7
+71acff48 15:18:13 (commit) HEAD@{1}: file 5
+7dec28d6 15:15:13 (commit) HEAD@{2}: file 2
+ecf5cd74 15:14:13 (commit) HEAD@{3}: file 1
+EOT
+
+! { test "$test_hash_algo" = "sha256" && test -z "$git_231_plus"; } ||
+cat <<\EOT >tgHEAD_main_double || die
+=== 2005-04-07 ===
+ecf5cd74 15:14:13 (commit) HEAD@{0}: file 1
+EOT
+
+! { test "$test_hash_algo" = "sha1" && test -n "$git_231_plus"; } ||
+cat <<\EOT >tgHEAD_main_pre2 || die
+=== 2005-04-07 ===
+dd1016e3 15:20:13 (commit) HEAD@{0}: attaching back to c7
+84b1e4e6 15:19:13 (commit) HEAD@{1}: file 6
+feeb764a 15:16:13 (commit) HEAD@{2}: file 3
+c0ed6e70 15:15:13 (commit) HEAD@{3}: file 2
+c18fcef2 15:14:13 (commit) HEAD@{4}: file 1
+EOT
+
+! { test "$test_hash_algo" = "sha1" && test -n "$git_231_plus"; } ||
+cat <<\EOT >tgHEAD_main_double || die
+=== 2005-04-07 ===
+84b1e4e6 15:19:13 (commit) HEAD@{0}: file 6
+feeb764a 15:16:13 (commit) HEAD@{1}: file 3
+c0ed6e70 15:15:13 (commit) HEAD@{2}: file 2
+c18fcef2 15:14:13 (commit) HEAD@{3}: file 1
+EOT
+
+! { test "$test_hash_algo" = "sha256" && test -n "$git_231_plus"; } ||
+cat <<\EOT >tgHEAD_main_pre2 || die
+=== 2005-04-07 ===
+e784e427 15:20:13 (commit) HEAD@{0}: attaching back to c7
+201a80d1 15:19:13 (commit) HEAD@{1}: file 6
+196f1299 15:16:13 (commit) HEAD@{2}: file 3
+7dec28d6 15:15:13 (commit) HEAD@{3}: file 2
+ecf5cd74 15:14:13 (commit) HEAD@{4}: file 1
+EOT
+
+! { test "$test_hash_algo" = "sha256" && test -n "$git_231_plus"; } ||
+cat <<\EOT >tgHEAD_main_double || die
+=== 2005-04-07 ===
+201a80d1 15:19:13 (commit) HEAD@{0}: file 6
+196f1299 15:16:13 (commit) HEAD@{1}: file 3
+7dec28d6 15:15:13 (commit) HEAD@{2}: file 2
+ecf5cd74 15:14:13 (commit) HEAD@{3}: file 1
 EOT
 
 test_expect_success SETUP 'tag --drop detached HEAD@{0} double stale' '
@@ -1008,16 +1644,50 @@ test_expect_success SETUP 'tag --drop detached HEAD@{0} double stale' '
 	tg tag --drop HEAD@{0} &&
 	tg tag -g HEAD >actual &&
 	test_cmp actual ../tgHEAD_main_double &&
-	test_must_fail git rev-parse --verify --quiet HEAD@{1} -- >/dev/null &&
+	if test -z "$git_231_plus"; then
+		test_must_fail git rev-parse --verify --quiet HEAD@{1} -- >/dev/null
+	else
+		test_must_fail git rev-parse --verify --quiet HEAD@{4} -- >/dev/null &&
+		git rev-parse --verify HEAD@{3} -- >/dev/null &&
+		git rev-parse --verify HEAD@{2} -- >/dev/null &&
+		git rev-parse --verify HEAD@{1} -- >/dev/null
+	fi &&
 	git rev-parse --verify HEAD@{0} -- >/dev/null &&
 	git rev-parse --verify HEAD -- >/dev/null
 '
 
+! { test "$test_hash_algo" = "sha1" && test -z "$git_231_plus"; } ||
 cat <<\EOT >tgHEAD_linked_only || die
 === 2005-04-07 ===
 04eea982 15:20:13 (commit) HEAD@{0}: file 1
 4d776c64 15:19:13 (commit) HEAD@{1}: file 2
 0a45d475 15:16:13 (commit) HEAD@{2}: file 5
+EOT
+
+! { test "$test_hash_algo" = "sha256" && test -z "$git_231_plus"; } ||
+cat <<\EOT >tgHEAD_linked_only || die
+=== 2005-04-07 ===
+6fda165d 15:20:13 (commit) HEAD@{0}: file 1
+1a6140d4 15:19:13 (commit) HEAD@{1}: file 2
+8575f83f 15:16:13 (commit) HEAD@{2}: file 5
+EOT
+
+! { test "$test_hash_algo" = "sha1" && test -n "$git_231_plus"; } ||
+cat <<\EOT >tgHEAD_linked_only || die
+=== 2005-04-07 ===
+04eea982 15:20:13 (commit) HEAD@{0}: attaching back to linked c1
+04eea982 15:20:13 (commit) HEAD@{1}: file 1
+40403e00 15:17:13 (commit) HEAD@{2}: file 4
+2849f113 15:14:13 (commit) HEAD@{3}: file 7
+EOT
+
+! { test "$test_hash_algo" = "sha256" && test -n "$git_231_plus"; } ||
+cat <<\EOT >tgHEAD_linked_only || die
+=== 2005-04-07 ===
+6fda165d 15:20:13 (commit) HEAD@{0}: attaching back to linked c1
+6fda165d 15:20:13 (commit) HEAD@{1}: file 1
+e2552eeb 15:17:13 (commit) HEAD@{2}: file 4
+e2473e86 15:14:13 (commit) HEAD@{3}: file 7
 EOT
 
 test_expect_success 'SETUP GIT_2_5' 'tag --drop detached HEAD@{0} [linked] all stale' '
@@ -1029,15 +1699,53 @@ test_expect_success 'SETUP GIT_2_5' 'tag --drop detached HEAD@{0} [linked] all s
 	tg tag -g HEAD >actual &&
 	test_cmp actual ../tgHEAD_linked_only &&
 	tg tag --drop HEAD@{0} &&
-	test_must_fail git rev-parse --verify --quiet HEAD@{0} -- >/dev/null &&
+	if test -z "$git_231_plus"; then
+		test_must_fail git rev-parse --verify --quiet HEAD@{0} -- >/dev/null
+	else
+		test_must_fail git rev-parse --verify --quiet HEAD@{3} -- >/dev/null
+		git rev-parse --verify HEAD@{2} -- >/dev/null &&
+		git rev-parse --verify HEAD@{1} -- >/dev/null &&
+		git rev-parse --verify HEAD@{0} -- >/dev/null
+	fi &&
 	git rev-parse --verify HEAD -- >/dev/null
 '
 
+! { test "$test_hash_algo" = "sha1" && test -z "$git_231_plus"; } ||
 cat <<\EOT >tgHEAD_main_new || die
 === 2005-04-07 ===
 c18fcef2 15:14:13 (commit) HEAD@{0}: allons master
 b63866e5 15:13:13 (commit) HEAD@{1}: to empty main
 c18fcef2 15:14:13 (commit) HEAD@{2}: file 1
+EOT
+
+! { test "$test_hash_algo" = "sha256" && test -z "$git_231_plus"; } ||
+cat <<\EOT >tgHEAD_main_new || die
+=== 2005-04-07 ===
+ecf5cd74 15:14:13 (commit) HEAD@{0}: allons master
+079309f2 15:13:13 (commit) HEAD@{1}: to empty main
+ecf5cd74 15:14:13 (commit) HEAD@{2}: file 1
+EOT
+
+! { test "$test_hash_algo" = "sha1" && test -n "$git_231_plus"; } ||
+cat <<\EOT >tgHEAD_main_new || die
+=== 2005-04-07 ===
+b63866e5 15:14:13 (commit) HEAD@{0}: allons master
+b63866e5 15:13:13 (commit) HEAD@{1}: to empty main
+84b1e4e6 15:19:13 (commit) HEAD@{2}: file 6
+feeb764a 15:16:13 (commit) HEAD@{3}: file 3
+c0ed6e70 15:15:13 (commit) HEAD@{4}: file 2
+c18fcef2 15:14:13 (commit) HEAD@{5}: file 1
+EOT
+
+! { test "$test_hash_algo" = "sha256" && test -n "$git_231_plus"; } ||
+cat <<\EOT >tgHEAD_main_new || die
+=== 2005-04-07 ===
+079309f2 15:14:13 (commit) HEAD@{0}: allons master
+079309f2 15:13:13 (commit) HEAD@{1}: to empty main
+201a80d1 15:19:13 (commit) HEAD@{2}: file 6
+196f1299 15:16:13 (commit) HEAD@{3}: file 3
+7dec28d6 15:15:13 (commit) HEAD@{4}: file 2
+ecf5cd74 15:14:13 (commit) HEAD@{5}: file 1
 EOT
 
 test_expect_success SETUP 'rebuild HEAD log' '
@@ -1050,11 +1758,42 @@ test_expect_success SETUP 'rebuild HEAD log' '
 	test_cmp actual ../tgHEAD_main_new
 '
 
+! { test "$test_hash_algo" = "sha1" && test -z "$git_231_plus"; } ||
 cat <<\EOT >tgHEAD_linked_new || die
 === 2005-04-07 ===
 04eea982 15:15:13 (commit) HEAD@{0}: HEAD back
 2849f113 15:14:13 (commit) HEAD@{1}: allons linked
 b63866e5 15:13:13 (commit) HEAD@{2}: to empty linked
+EOT
+
+! { test "$test_hash_algo" = "sha256" && test -z "$git_231_plus"; } ||
+cat <<\EOT >tgHEAD_linked_new || die
+=== 2005-04-07 ===
+6fda165d 15:15:13 (commit) HEAD@{0}: HEAD back
+e2473e86 15:14:13 (commit) HEAD@{1}: allons linked
+079309f2 15:13:13 (commit) HEAD@{2}: to empty linked
+EOT
+
+! { test "$test_hash_algo" = "sha1" && test -n "$git_231_plus"; } ||
+cat <<\EOT >tgHEAD_linked_new || die
+=== 2005-04-07 ===
+2849f113 15:15:13 (commit) HEAD@{0}: HEAD back
+b63866e5 15:14:13 (commit) HEAD@{1}: allons linked
+b63866e5 15:13:13 (commit) HEAD@{2}: to empty linked
+04eea982 15:20:13 (commit) HEAD@{3}: file 1
+40403e00 15:17:13 (commit) HEAD@{4}: file 4
+2849f113 15:14:13 (commit) HEAD@{5}: file 7
+EOT
+
+! { test "$test_hash_algo" = "sha256" && test -n "$git_231_plus"; } ||
+cat <<\EOT >tgHEAD_linked_new || die
+=== 2005-04-07 ===
+e2473e86 15:15:13 (commit) HEAD@{0}: HEAD back
+079309f2 15:14:13 (commit) HEAD@{1}: allons linked
+079309f2 15:13:13 (commit) HEAD@{2}: to empty linked
+6fda165d 15:20:13 (commit) HEAD@{3}: file 1
+e2552eeb 15:17:13 (commit) HEAD@{4}: file 4
+e2473e86 15:14:13 (commit) HEAD@{5}: file 7
 EOT
 
 test_expect_success 'SETUP GIT_2_5' 'rebuild HEAD log [linked]' '
@@ -1070,6 +1809,7 @@ test_expect_success 'SETUP GIT_2_5' 'rebuild HEAD log [linked]' '
 	test_cmp actual ../tgHEAD_linked_new
 '
 
+! { test "$test_hash_algo" = "sha1" && test -z "$git_231_plus"; } ||
 cat <<\EOT >tgHEAD_main_cleared || die
 commit c18fcef2dd73f7969b45b108d061309b670c886c
 Reflog: HEAD@{0} (Fra mewor k (Committer) <framework@example.org>)
@@ -1080,6 +1820,45 @@ Commit:     Fra mewor k (Committer) <framework@example.org>
 CommitDate: Thu Apr 7 15:14:13 2005 -0700
 
     file 1
+EOT
+
+! { test "$test_hash_algo" = "sha256" && test -z "$git_231_plus"; } ||
+cat <<\EOT >tgHEAD_main_cleared || die
+commit ecf5cd744123c8f322d61b4a97d18d75f1c25440ca838a9654decff6b8697226
+Reflog: HEAD@{0} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: allons master
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:14:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:14:13 2005 -0700
+
+    file 1
+EOT
+
+! { test "$test_hash_algo" = "sha1" && test -n "$git_231_plus"; } ||
+cat <<\EOT >tgHEAD_main_cleared || die
+commit b63866e540ea13ef92d9eaad23c571912019da41
+Reflog: HEAD@{0} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: allons master
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:13:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:13:13 2005 -0700
+
+    empty
+EOT
+
+! { test "$test_hash_algo" = "sha256" && test -n "$git_231_plus"; } ||
+cat <<\EOT >tgHEAD_main_cleared || die
+commit 079309f2fa99f1dc84e7d2b40b25766e2e6ff4da86bc8f2be31487085cc9359a
+Reflog: HEAD@{0} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: allons master
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:13:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:13:13 2005 -0700
+
+    empty
 EOT
 
 test_expect_success SETUP 'tag --clear HEAD' '
@@ -1095,6 +1874,7 @@ test_expect_success SETUP 'tag --clear HEAD' '
 	test_cmp actual ../tgHEAD_main_cleared
 '
 
+! { test "$test_hash_algo" = "sha1" && test -z "$git_231_plus"; } ||
 cat <<\EOT >tgHEAD_linked_cleared || die
 commit 04eea982f4572b35c7cbb6597f5d777661f15e60
 Reflog: HEAD@{0} (Fra mewor k (Committer) <framework@example.org>)
@@ -1105,6 +1885,45 @@ Commit:     Fra mewor k (Committer) <framework@example.org>
 CommitDate: Thu Apr 7 15:20:13 2005 -0700
 
     file 1
+EOT
+
+! { test "$test_hash_algo" = "sha256" && test -z "$git_231_plus"; } ||
+cat <<\EOT >tgHEAD_linked_cleared || die
+commit 6fda165d8aaa203d2bf9a67dcd750ac6e273489ea89e174866c1170d81cf2f73
+Reflog: HEAD@{0} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: HEAD back
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:20:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:20:13 2005 -0700
+
+    file 1
+EOT
+
+! { test "$test_hash_algo" = "sha1" && test -n "$git_231_plus"; } ||
+cat <<\EOT >tgHEAD_linked_cleared || die
+commit 2849f113c66cbf3c9521e90be3bc7e39fce8db16
+Reflog: HEAD@{0} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: HEAD back
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:14:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:14:13 2005 -0700
+
+    file 7
+EOT
+
+! { test "$test_hash_algo" = "sha256" && test -n "$git_231_plus"; } ||
+cat <<\EOT >tgHEAD_linked_cleared || die
+commit e2473e861fd48f0ece81fdbd760dde169c6e00c57b426f85853b59203760214b
+Reflog: HEAD@{0} (Fra mewor k (Committer) <framework@example.org>)
+Reflog message: HEAD back
+Author:     Te s t (Author) <test@example.net>
+AuthorDate: Thu Apr 7 15:14:13 2005 -0700
+Commit:     Fra mewor k (Committer) <framework@example.org>
+CommitDate: Thu Apr 7 15:14:13 2005 -0700
+
+    file 7
 EOT
 
 test_expect_success 'SETUP GIT_2_5' 'tag --clear HEAD [linked]' '
@@ -1120,7 +1939,7 @@ test_expect_success 'SETUP GIT_2_5' 'tag --clear HEAD [linked]' '
 	test_cmp actual ../tgHEAD_linked_cleared
 '
 
-test_expect_success 'SETUP GIT_2_5' 'tag --clear HEAD w/o log fails [linked]' '
+test_tolerate_failure 'SETUP GIT_2_5' 'tag --clear HEAD w/o log fails [linked]' '
 	cd linked &&
 	git rev-parse --verify HEAD@{0} >/dev/null -- &&
 	tg tag --clear HEAD &&
@@ -1129,7 +1948,7 @@ test_expect_success 'SETUP GIT_2_5' 'tag --clear HEAD w/o log fails [linked]' '
 	test_must_fail tg tag --clear HEAD
 '
 
-test_expect_success SETUP 'tag --clear HEAD w/o log fails' '
+test_tolerate_failure SETUP 'tag --clear HEAD w/o log fails' '
 	cd main &&
 	git rev-parse --verify HEAD@{0} >/dev/null -- &&
 	tg tag --clear HEAD &&
