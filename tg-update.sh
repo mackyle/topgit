@@ -45,6 +45,78 @@ usage()
 	exit ${1:-0}
 }
 
+# Remove any currently untracked files that also appear in
+# $1's tree AND have an identical blob hash.  Never fail, but
+# instead simply ignore any operations with problems.
+clear_matching_untracked() {
+	_cmutree="$(git rev-parse --verify "$1^{tree}" 2>/dev/null)" &&
+	[ -n "$_cmutree" ] || return 0
+	_idxtree="$(git write-tree 2>/dev/null)" &&
+	[ -n "$_idxtree" ] || return 0
+	v_get_show_toplevel _tplvl
+	# Save the list of untracked files in a temp file, then feed the
+	# "A" file lines from diff-tree index to the tree to an awk script
+	# along with the list of untracked files and let it spit out
+	# a list of blob matches which includes the file mode of the match
+	# and then remove any untracked files with a matching hash and mode.
+	# Due to limitations of awk, files with '\n' in their names are skipped.
+	_utfl="$(get_temp untracked)" || return 0
+	_hvrl=1
+	command -v readlink >/dev/null 2>&1 || _hvrl=
+	git status --porcelain -z | tr '\n\000' '\177\n' | awk '!/^\?\? ./||/\177/{next}{print}' >"$_utfl" || :
+	saveIFS="$IFS"
+	IFS=" "
+	git diff-tree --raw --ignore-submodules=all --no-renames -r -z --diff-filter=A "$_idxtree" "$_cmutree" |
+	tr '\n\000' '\177\n' | paste - - | awk -v u="$_utfl" '
+		BEGIN {x=""}
+		function exitnow(c) {x=c;exit x}
+		END {if(x!="")exit x}
+		function init(e,l) {
+			while ((e=(getline l<u))>0) {
+				if(l!~/^\?\? ./||l~/\177/)continue
+				f[substr(l,4)]=1
+			}
+			close(u)
+		}
+		BEGIN {if(u=="")exitnow(2);init()}
+		NF<5||/\177/{next}
+		{
+			if($1!=":000000"||($2!="100644"&&$2!="100755"&&$2!="120000")||
+			   $3!~/^0+$/||$4!~/^[0-9a-f][0-9a-f][0-9a-f][0-9a-f]+$/||
+			   $5!="A")next
+			t=$0;sub(/^[^\t]*\t/,"",t)
+			if(t!=""&&f[t])print $4" "$2" "t
+		}
+	' |
+	while read -r _uthsh _utmod _utnam && [ -n "$_utnam" ] && [ -n "$_uthsh" ]; do
+		case "$_utmod" in "100644"|"100755"|"120000");;*) continue; esac
+		if
+			[ -L "$_tplvl/$_utnam" ] ||
+			[ -f "$_tplvl/$_utnam" ]
+		then
+			case "$_utmod" in
+			"100644") test ! -L "$_tplvl/$_utnam" &&
+				  test ! -x "$_tplvl/$_utnam" || continue;;
+			"100755") test ! -L "$_tplvl/$_utnam" &&
+				  test -x "$_tplvl/$_utnam" || continue;;
+			"120000") test -n "$_hvrl" &&
+				  test -L "$_tplvl/$_utnam" || continue;;
+			*) ! :;;
+			esac &&
+			case "$_utmod" in
+			"100644"|"100755") _flhsh="$(git hash-object -t blob -- "$_tplvl/$_utnam")";;
+			"120000") _flhsh="$(readlink -n "$_tplvl/$_utnam" 2>/dev/null |
+					    git hash-object -t blob --stdin)";;
+			*) ! :;;
+			esac &&
+			[ "$_flhsh" = "$_uthsh" ] || continue
+			rm -f "$_tplvl/$_utnam" >/dev/null 2>&1 || :
+		fi
+	done || :
+	IFS="$saveIFS"
+	return 0
+}
+
 # --base mode comes here with $1 set to <base-branch> and $2 set to <ref>
 # and all options already parsed and validated into above-listed flags
 # this function should exit after returning to "$current"
@@ -135,6 +207,7 @@ do_base_mode()
 	eval git merge --no-ff --no-log --no-stat $auhopt $ncopt $editopt "$msgopt" "refs/$topbases/$tgbranch" -- || exit
 	ec=0
 	if [ -z "$basenc" ]; then
+		clear_matching_untracked "$current"
 		checkout_symref_full "$current" || ec=$?
 		tmpdir_cleanup || :
 		if [ "${ec:-0}" != "0" ]; then
@@ -847,6 +920,7 @@ done
 [ -z "$all" ] && case "$names" in *" "*) ! :; esac ||
 info "Returning to ${current#refs/heads/}..."
 ec=0
+clear_matching_untracked "$current"
 checkout_symref_full "$current" || ec=$?
 ! [ -f "$git_dir/TGMERGE_MSG" ] || [ -e "$git_dir/MERGE_MSG" ] ||
 	mv -f "$git_dir/TGMERGE_MSG" "$git_dir/MERGE_MSG" || :
