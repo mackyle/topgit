@@ -133,8 +133,22 @@ do_base_mode()
 	ncopt=
 	[ -z "$basenc" ] || ncopt="--no-commit"
 	eval git merge --no-ff --no-log --no-stat $auhopt $ncopt $editopt "$msgopt" "refs/$topbases/$tgbranch" -- || exit
-	[ -n "$basenc" ] || checkout_symref_full "$current"
-	exit
+	ec=0
+	if [ -z "$basenc" ]; then
+		checkout_symref_full "$current" || ec=$?
+		tmpdir_cleanup || :
+		if [ "${ec:-0}" != "0" ]; then
+			info "Unable to switch to ${current#refs/heads/}"
+			if
+				git rev-parse -q --verify HEAD >/dev/null 2>&1 &&
+				! git symbolic-ref -q HEAD >/dev/null 2>&1
+			then
+				info "HEAD is currently detached"
+				info "Use 'git checkout ${current#refs/heads/}' to reattach"
+			fi
+		fi
+	fi
+	exit ${ec:-0}
 }
 
 state_dir="$git_dir/tg-update"
@@ -832,10 +846,20 @@ done
 
 [ -z "$all" ] && case "$names" in *" "*) ! :; esac ||
 info "Returning to ${current#refs/heads/}..."
-checkout_symref_full "$current"
+ec=0
+checkout_symref_full "$current" || ec=$?
 ! [ -f "$git_dir/TGMERGE_MSG" ] || [ -e "$git_dir/MERGE_MSG" ] ||
 	mv -f "$git_dir/TGMERGE_MSG" "$git_dir/MERGE_MSG" || :
-ec=$?
 tmpdir_cleanup || :
 git gc --auto || :
-exit $ec
+if [ "${ec:-0}" != "0" ]; then
+	info "Unable to switch to ${current#refs/heads/}"
+	if
+		git rev-parse -q --verify HEAD >/dev/null 2>&1 &&
+		! git symbolic-ref -q HEAD >/dev/null 2>&1
+	then
+		info "HEAD is currently detached"
+		info "Use 'git checkout ${current#refs/heads/}' to reattach"
+	fi
+fi
+exit ${ec:-0}
