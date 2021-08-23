@@ -94,6 +94,7 @@ else
 fi
 
 _listfile="$(get_temp tg-push-listfile)"
+_inclfile="$(get_temp tg-push-inclfile)"
 
 push_branch()
 {
@@ -144,7 +145,77 @@ EOT
 
 [ -s "$_listfile" ] || die "nothing to push"
 
-# remove multiple occurrences of the same branch
-sort -u "$_listfile" |
-sed 's,[^A-Za-z0-9/_.+-],\\&,g' |
-xargs git push $opt4 $opt6 $dry_run $force $atomicopt $signedopt "$remote"
+# find a suitable temporary remote name to use
+_rmtbase="tg-push-$(date '+%Y%m%d_%H%M%S')" || :
+_rmttemp="$(git config --name-only --get-regexp '^remote\.[^.][^.]*\.' |
+	awk -v b="$_rmtbase" '
+		{sub(/^remote\./,"");sub(/\.[^.]*$/,"");if($0!="")r[$0]=1}
+		END {
+			if(b=="") exit 1
+			if(!r[b]) {print b;exit 0}
+			x=1
+			while (r[b"-"x]) ++x
+			print b"-"x
+			exit 0
+		}
+	')" || die "unable to create temporary remote name"
+
+# attempt to allow specifying a URL as an explicit push remote
+# first see if there's a pushurl or url setting for the given
+# remote and if not, use it as-is thereby treating it as a URL
+_rmtnm=1
+_rmturl="$(git config --get "remote.$remote.pushurl" 2>/dev/null)" || :
+[ -n "$_rmturl" ] ||
+_rmturl="$(git config --get "remote.$remote.url" 2>/dev/null)" || :
+[ -n "$_rmturl" ] || { _rmtnm=; _rmturl="$remote"; } # use it as-is
+
+# if we have a real remote name, check to see whether or not there is
+# a fetch spec configured for the remote TopGit branches and/or bases
+# and if so add suitable fetch specs for both the branches and bases
+# to the temporary remote in order for the opportunistic ref updates
+# to take place that would have if a temporary remote was not in use.
+_rmtftc=
+if
+	test -n "$_rmtnm" &&
+	git config --get-all "remote.$remote.fetch" 2>/dev/null |
+	awk -v r="$remote" -v bl="$topbases" -v br="${topbases#heads/}" '
+		BEGIN {
+			x=""
+			sl0="refs/heads/*:refs/remotes/"r"/*"; sl1="+"sl0
+			sr0="refs/"bl"/*:refs/remotes/"r"/"br"/*"; sr1="+"sr0
+		}
+		function exitnow(c) {x=c;exit x}
+		END {if(x!="")exit x}
+		$0 == sl0 || $0 == sl1 || $0 == sr0 || $0 == sr1 {exitnow(0)}
+		END {exit 1}'
+then
+	_rmtftc=1
+fi
+
+# remove multiple occurrences of the same branch and create
+# an include file with a temporary remote listing all of them
+# as push specs thereby avoiding any command line length limit
+# and keeping the push entirely atomic if desired no matter how
+# many branches may be involved
+sort -u "$_listfile" | awk -v r="$_rmttemp" -v u="$_rmturl" -v f="$_rmtftc" \
+	-v fr="$remote" -v bl="$topbases" -v br="${topbases#heads/}" '
+	function q(s) {	gsub(/[\\"]/,"\\\\&",s); return "\""s"\""; }
+	BEGIN {
+		print "[remote "q(r)"]"
+		print "\turl = "q(u)
+		if (f) {
+			sl="+refs/heads/*:refs/remotes/"fr"/*"
+			sr="+refs/"bl"/*:refs/remotes/"fr"/"br"/*"
+			print "\tfetch = "q(sl)
+			print "\tfetch = "q(sr)
+		}
+	}
+	{ print "\tpush = "q($0":"$0) }
+' > "$_inclfile" || die "unable to create temporary remote include file"
+
+# be careful to make sure the shell doesn't chain to git and clean up the
+# temporary file via the EXIT trap before Git's had a chance to read it
+ec=0
+git -c "include.path=$_inclfile" push $opt4 $opt6 $dry_run $force $atomicopt $signedopt "$_rmttemp" || ec=$?
+tmpdir_cleanup || :
+exit ${ec:-0}

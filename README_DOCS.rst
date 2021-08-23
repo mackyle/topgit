@@ -1884,16 +1884,26 @@ tg push
 
 	The ``--dry-run``, ``--force``, ``--atomic``, ``--signed[=...]``,
 	``-4`` and ``-6`` options are passed through directly to ``git push``
-	if given.  Note that in the highly unlikely event that the branch names
-	of all the branches being pushed do not fit on a single command line,
-	multiple ``git push`` commands will be issued which would have the side
-	effect of rendering ``--atomic`` not so atomic and cause more than
-	one signature to be needed if ``--signed[=...]`` is used.
+	if given.
 
 	The push remote may be specified with the ``-r`` option. If no remote
 	was specified, the configured default TopGit push remote will be
 	used (``topgit.pushRemote``) or if that's unset the regular remote
 	(``topgit.remote``).
+
+	Note that when pushing to a configured Git remote (i.e. it appears in
+	the ``git remote`` output) that appears to have local tracking branches
+	set up for the remote TopGit branches and/or TopGit bases, ``tg push``
+	will attempt to make sure the local tracking branches are updated to
+	reflect the result of a successful ``tg push``.  This is the same as
+	the normal Git behavior except that ``tg push`` will always attempt to
+	make sure that *both* the local tracking branches for the remote TopGit
+	branches *and* their bases are always updated together even if the
+	configured Git remote only has a ``fetch`` refspec for one of them.  If
+	the remote branches are being tracked by the configured Git remote in a
+	non-standard local tracking branch location, it may be necessary to
+	issue a subsequent ``git fetch`` on that remote after a successful
+	``tg push`` in order for them to be updated to reflect the ``tg push``.
 
 	Use something like this to push to an ``origin`` remote when it's set
 	as ``topgit.remote`` while only checking for local out-of-dateness:
