@@ -125,36 +125,40 @@ test_expect_success LASTOK 'tg status revert' '
 '
 
 test_expect_success LASTOK 'tg status update' '
-	mkdir .git/tg-update &&
-	>.git/tg-update/name &&
+	mkdir .git/tg-state &&
+	>.git/tg-state/name &&
+	echo update >.git/tg-state/state &&
 	test "${headborn}tg update in progress$updatecmds$workclean" = "$(tg status)" &&
-	rm -rf .git/tg-update
+	rm -rf .git/tg-state
 '
 
 test_expect_success LASTOK 'tg status update moof' '
-	mkdir .git/tg-update &&
-	echo moof >.git/tg-update/name &&
+	mkdir .git/tg-state &&
+	echo moof >.git/tg-state/name &&
+	echo update >.git/tg-state/state &&
 	test "${headborn}tg update in progress$moof$updatecmds$workclean" = "$(tg status)" &&
-	rm -rf .git/tg-update
+	rm -rf .git/tg-state
 '
 
 test_expect_success LASTOK 'tg status update moofing moof' '
-	mkdir .git/tg-update &&
-	echo moof >.git/tg-update/name &&
-	echo moof >.git/tg-update/names &&
-	echo "moofing moof" > .git/tg-update/fullcmd &&
+	mkdir .git/tg-state &&
+	echo moof >.git/tg-state/name &&
+	echo moof >.git/tg-state/names &&
+	echo update >.git/tg-state/state &&
+	echo "moofing moof" > .git/tg-state/fullcmd &&
 	test "${headborn}tg update in progress$moof${resultof}moofing moof$updatecmds$workclean" = "$(tg status)" &&
-	rm -rf .git/tg-update
+	rm -rf .git/tg-state
 '
 
 test_expect_success LASTOK 'tg status update moofing moof woof' '
-	mkdir .git/tg-update &&
-	echo moof >.git/tg-update/name &&
-	echo moof woof >.git/tg-update/names &&
-	echo moof >.git/tg-update/processed &&
-	echo "moofing moof" > .git/tg-update/fullcmd &&
+	mkdir .git/tg-state &&
+	echo moof >.git/tg-state/name &&
+	echo moof woof >.git/tg-state/names &&
+	echo moof >.git/tg-state/processed &&
+	echo update >.git/tg-state/state &&
+	echo "moofing moof" > .git/tg-state/fullcmd &&
 	test "${headborn}tg update in progress$moof${resultof}moofing moof${lf}1 of 2 branches updated so far$updatecmds$workclean" = "$(tg status)" &&
-	rm -rf .git/tg-update
+	rm -rf .git/tg-state
 '
 
 test_done

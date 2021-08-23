@@ -139,8 +139,8 @@ check_topdeps()
 	# current HEAD
 	check_status
 	base_remote=
-	[ -z "$tg_topmerge" ] || [ ! -s "$git_dir/tg-update/remote" ] ||
-	IFS= read -r base_remote <"$git_dir/tg-update/remote" || :
+	[ -z "$tg_topmerge" ] || [ ! -s "$git_dir/tg-state/remote" ] ||
+	IFS= read -r base_remote <"$git_dir/tg-state/remote" || :
 	git diff --cached --ignore-space-at-eol -- "$root_dir/.topdeps" | diff_added_lines |
 	while read newly_added; do
 		ref_exists "refs/heads/$newly_added" ||

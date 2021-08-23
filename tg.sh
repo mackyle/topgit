@@ -1681,10 +1681,15 @@ check_status()
 	fi
 	git_remove="${git_remove#./}"
 
-	if [ -e "$git_dir/tg-update" ]; then
+	if
+		[ -d "$git_dir/tg-state" ] &&
+		[ -s "$git_dir/tg-state/state" ] &&
+		read -r _astate <"$git_dir/tg-state/state" &&
+		[ "$_astate" = "update" ]
+	then
 		tg_state="update"
-		tg_remove="$git_dir/tg-update"
-		! [ -s "$git_dir/tg-update/merging_topfiles" ] || tg_topmerge=1
+		tg_remove="$git_dir/tg-state"
+		! [ -s "$git_dir/tg-state/merging_topfiles" ] || tg_topmerge=1
 	fi
 	tg_remove="${tg_remove#./}"
 }
@@ -1749,19 +1754,19 @@ do_status()
 	if [ -n "$tg_state" ]; then
 		extra=
 		if [ "$tg_state" = "update" ]; then
-			IFS= read -r uname <"$git_dir/tg-update/name" || :
+			IFS= read -r uname <"$git_dir/tg-state/name" || :
 			[ -z "$uname" ] ||
 			extra="; currently updating branch '$uname'"
 		fi
 		echol "${pfx}tg $tg_state in progress$extra"
-		if [ -s "$git_dir/tg-update/fullcmd" ] && [ -s "$git_dir/tg-update/names" ]; then
+		if [ -s "$git_dir/tg-state/fullcmd" ] && [ -s "$git_dir/tg-state/names" ]; then
 			printf "${pfx}You are currently updating as a result of:\n${pfx}  "
-			cat "$git_dir/tg-update/fullcmd"
-			bcnt="$(( $(wc -w < "$git_dir/tg-update/names") ))"
+			cat "$git_dir/tg-state/fullcmd"
+			bcnt="$(( $(wc -w < "$git_dir/tg-state/names") ))"
 			if [ $bcnt -gt 1 ]; then
 				pcnt=0
-				! [ -s "$git_dir/tg-update/processed" ] ||
-				pcnt="$(( $(wc -w < "$git_dir/tg-update/processed") ))"
+				! [ -s "$git_dir/tg-state/processed" ] ||
+				pcnt="$(( $(wc -w < "$git_dir/tg-state/processed") ))"
 				echo "${pfx}$pcnt of $bcnt branches updated so far"
 			fi
 		fi

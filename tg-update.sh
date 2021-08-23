@@ -224,7 +224,7 @@ do_base_mode()
 	exit ${ec:-0}
 }
 
-state_dir="$git_dir/tg-update"
+state_dir="$git_dir/tg-state"
 mergeours=
 mergetheirs=
 mergeresult=
@@ -234,6 +234,9 @@ merging_topfiles=
 
 is_active() {
 	[ -d "$state_dir" ] || return 1
+	[ -s "$state_dir/state" ] || return 1
+	read -r _astate <"$state_dir/state" &&
+	[ "$_astate" = "update" ] || return 1
 	[ -s "$state_dir/fullcmd" ] || return 1
 	[ -f "$state_dir/remote" ] || return 1
 	[ -f "$state_dir/skipms" ] || return 1
@@ -488,6 +491,7 @@ fi
 
 save_state() {
 	mkdir -p "$state_dir"
+	>"$state_dir/state"
 	printf '%s\n' "$fullcmd" >"$state_dir/fullcmd"
 	printf '%s\n' "$base_remote" >"$state_dir/remote"
 	printf '%s\n' "$skipms" >"$state_dir/skipms"
@@ -503,6 +507,8 @@ save_state() {
 	printf '%s' "$merging_topfiles" >"$state_dir/merging_topfiles"
 	printf '%s\n' "$1" >"$state_dir/mergeours"
 	printf '%s\n' "$2" >"$state_dir/mergetheirs"
+	# state not valid until $state_dir/state contains "update"
+	echo update >"$state_dir/state"
 }
 
 stash_now_if_requested() {
