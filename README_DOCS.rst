@@ -866,8 +866,8 @@ Global options:
 	-u		Pretend ``topgit.remote`` is not set
 	-c <name=val>	Pass config option to git, may be repeated
 	-w <tgtag>      Activate `wayback machine`_ using the `tg tag`_ <tgtag>
-	--no-pager	Disable use of any pager (by both TopGit and Git)
-	--pager		Enable use of a pager (aka ``-p``)
+	--no-pager	Disable all pagers (by both TopGit and Git aka ``-P``)
+	--pager		Enable use of a pager (aka ``-p`` aka ``--paginate``)
 	--top-bases	Show full ``top-bases`` ref prefix and exit
 	--exec-path	Show path to subcommand scripts location and exit
 	--help		Show brief usage help and exit (aka ``-h``)
