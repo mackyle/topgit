@@ -33,7 +33,7 @@ tg_test_create_tag              | create a TopGit annotated refs state tag
 tg_test_include                 | source target `tg` in `tg__include` mode
 tg_test_setup_topgit            | do hook and merge TopGit setup only
 tg_test_v_getbases              | get local or remote full top-bases ref prefix
-tg_test_v_getremote             | error checking `: "${var:=$tg_test_remote}"
+tg_test_v_getremote             | error checking `: "${var:=$tg_test_remote}"`
 
 
 ----------------
