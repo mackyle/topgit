@@ -364,15 +364,23 @@ tg-push-remote
 	url = "origin"
 	push = "refs/heads/other:refs/heads/other"
 EOT
-	for opt in "-4" "--ipv4" "--ipv6" "-6" "--dry-run" "--force" "--atomic" "--signed" "--signed=" "--signed=..."; do
+	for opt in "-4" "--ipv4" "--ipv6" "-6" "--dry-run" "--force" "--atomic" "--follow-tags" "--no-follow-tags" "--signed" "--signed=" "--signed=..."; do
 		printf "%s\n" "$opt" >expected &&
 		cat exprmt >>expected &&
 		tgshim push -r origin $opt >actual &&
 		test_cmp actual expected || return
 	done &&
-	printf "%s\n" "-4" "-6" "--dry-run" "--force" "--atomic" "--signed=yes" >expected &&
+	printf "%s\n" "-4" "-6" "--dry-run" "--force" "--atomic" "--follow-tags" "--signed=yes" >expected &&
 	cat exprmt >>expected &&
-	tgshim push --force -r origin --ipv6 --atomic --signed -4 -6 --force --dry-run --signed=yes >actual &&
+	tgshim push --force -r origin --ipv6 --atomic --follow-tags --signed -4 -6 --force --dry-run --signed=yes >actual &&
+	test_cmp actual expected &&
+	tgshim push --force -r origin --ipv6 --atomic --no-follow-tags --follow-tags --signed -4 -6 --force --dry-run --signed=yes >actual &&
+	test_cmp actual expected &&
+	printf "%s\n" "-4" "-6" "--dry-run" "--force" "--atomic" "--no-follow-tags" "--signed=yes" >expected &&
+	cat exprmt >>expected &&
+	tgshim push --force -r origin --ipv6 --atomic --no-follow-tags --signed -4 -6 --force --dry-run --signed=yes >actual &&
+	test_cmp actual expected &&
+	tgshim push --force -r origin --ipv6 --atomic --follow-tags --no-follow-tags --signed -4 -6 --force --dry-run --signed=yes >actual &&
 	test_cmp actual expected
 '
 

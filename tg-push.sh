@@ -14,6 +14,7 @@ branches=
 remote=
 signedopt=
 atomicopt=
+tagsopt=
 opt4=
 opt6=
 
@@ -30,6 +31,8 @@ while [ -n "$1" ]; do
 		signedopt="$arg";;
 	--atomic)
 		atomicopt="$arg";;
+	--follow-tags|--no-follow-tags)
+		tagsopt="$arg";;
 	-4|--ipv4)
 		opt4="$arg";;
 	-6|--ipv6)
@@ -216,6 +219,6 @@ sort -u "$_listfile" | awk -v r="$_rmttemp" -v u="$_rmturl" -v f="$_rmtftc" \
 # be careful to make sure the shell doesn't chain to git and clean up the
 # temporary file via the EXIT trap before Git's had a chance to read it
 ec=0
-git -c "include.path=$_inclfile" push $opt4 $opt6 $dry_run $force $atomicopt $signedopt "$_rmttemp" || ec=$?
+git -c "include.path=$_inclfile" push $opt4 $opt6 $dry_run $force $atomicopt $tagsopt $signedopt "$_rmttemp" || ec=$?
 tmpdir_cleanup || :
 exit ${ec:-0}

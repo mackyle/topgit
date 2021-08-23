@@ -1889,9 +1889,9 @@ tg push
 	the configured TopGit remote (``topgit.remote``) if it's set (as
 	modified by the global ``-u`` and ``-r <remote>`` options).
 
-	The ``--dry-run``, ``--force``, ``--atomic``, ``--signed[=...]``,
-	``-4`` and ``-6`` options are passed through directly to ``git push``
-	if given.
+	The ``--dry-run``, ``--force``, ``--atomic``, ``--follow-tags``,
+	``--no-follow-tags``, ``--signed[=...]``, ``-4`` and ``-6`` options
+	are passed through directly to ``git push`` if given.
 
 	The push remote may be specified with the ``-r`` option. If no remote
 	was specified, the configured default TopGit push remote will be
