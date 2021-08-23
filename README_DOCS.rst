@@ -981,7 +981,7 @@ tg create
 	You should edit the patch description (contained in the ``.topmsg``
 	file) as appropriate.  It will already contain some prefilled bits.
 	You can set the ``topgit.to``, ``topgit.cc`` and ``topgit.bcc``
-	git configuration variables (see ``man git-config``) in order to
+	git configuration variables (see ``git help config``) in order to
 	have ``tg create`` add these headers with the given default values
 	to ``.topmsg`` before invoking the editor.  If the configuration
 	variable ``topgit.subjectPrefix`` is set its value will be inserted
