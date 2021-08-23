@@ -67,7 +67,7 @@ See the file ``INSTALL``.
 GIT REPOSITORY
 --------------
 
-The TopGit git repository can be found at <http://repo.or.cz/topgit/pro>.
+The TopGit git repository can be found at <https://repo.or.cz/topgit/pro>.
 
 
 RATIONALE
