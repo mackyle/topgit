@@ -4,8 +4,9 @@
 # All rights reserved.
 # GPLv2
 
-USAGE="Usage: ${tgname:-tg} [...] revert (-f | -i | -n) [-q] [--tgish-only] [--no-deps] [--no-stash] [--exclude <ref>...] (<tagname> | --stash) [<ref>...]"
-USAGE="$USAGE$lf   Or: ${tgname:-tg} [...] revert [-l] [--no-short] [--hash] [--tgish-only] [(--deps | --rdeps)] [--exclude <ref>...] (<tagname> | --stash) [(--[topgit-]heads] | <ref>...)]"
+USAGE="\
+Usage: ${tgname:-tg} [...] revert (-f | -i | -n) [-q] [--tgish-only] [--no-deps] [--no-stash] [--exclude <ref>...] (<tagname> | --stash) [<ref>...]
+   Or: ${tgname:-tg} [...] revert [-l] [--no-short] [--hash] [--tgish-only] [(--deps | --rdeps)] [--exclude <ref>...] (<tagname> | --stash) [(--[topgit-]heads] | <ref>...)]"
 
 usage()
 {
