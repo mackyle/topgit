@@ -33,7 +33,7 @@ fi
 USAGE="\
 Usage: ${tgname:-tg} [...] update [--[no-]stash] [--skip-missing] ([<name>...] | -a [<pattern>...])
    Or: ${tgname:-tg} [...] update --base [-F <file> | -m <msg>] [--[no-]edit] [-f] <base-branch> <ref>
-   Or: ${tgname:-tg} [...] update --continue | -skip | --stop | --abort"
+   Or: ${tgname:-tg} [...] update --continue | --skip | --stop | --abort"
 
 usage()
 {
