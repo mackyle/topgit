@@ -164,7 +164,7 @@ test_expect_success '--top-bases -r topgit.top-bases override trumps all' '
 			result="$(tg -c topgit.top-bases=refs -C "$repo" --top-bases -r "$rmt")" &&
 			test z"$result" = z"refs/remotes/$rmt/top-bases" &&
 			result="$(tg -c topgit.top-bases=heads -C "$repo" --top-bases -r "$rmt")" &&
-			test z"$result" = z"refs/remotes/$rmt/{top-bases}"
+			test z"$result" = z"refs/remotes/$rmt/{top-bases}" || return
 		done
 	done
 '

@@ -229,7 +229,7 @@ test_expect_success 'no setup happens for help' '
 	for cmd in $TG_CMDS; do
 		say "# checking tg $cmd help variations" &&
 		test_might_fail </dev/null tg $cmd -h && has_no_tg_setup &&
-		test_might_fail </dev/null tg $cmd --help && has_no_tg_setup
+		test_might_fail </dev/null tg $cmd --help && has_no_tg_setup || return
 	done &&
 	has_no_tg_setup &&
 	cd .. && rm -rf r3
@@ -241,7 +241,7 @@ test_expect_success 'no setup happens for exempted commands' '
 		if ! tg_cmd_will_setup "$cmd"; then
 			say "# checking tg $cmd does not do setup"
 			test_might_fail </dev/null tg $cmd && has_no_tg_setup &&
-			test_might_fail </dev/null tg $cmd --bogus-option-here && has_no_tg_setup
+			test_might_fail </dev/null tg $cmd --bogus-option-here && has_no_tg_setup || return
 		fi
 	done &&
 	has_no_tg_setup &&
@@ -268,7 +268,7 @@ test_expect_success 'no setup happens in bare repository' '
 	for cmd in $TG_CMDS; do
 		say "# checking tg $cmd does not do setup in bare repo"
 		test_might_fail </dev/null tg $cmd && has_no_tg_setup_bare &&
-		test_might_fail </dev/null tg $cmd --bogus-option-here && has_no_tg_setup_bare
+		test_might_fail </dev/null tg $cmd --bogus-option-here && has_no_tg_setup_bare || return
 	done &&
 	has_no_tg_setup_bare &&
 	cd .. && rm -rf r5

@@ -104,7 +104,7 @@ test_expect_success 'setup' '
 			hasrmt2
 		EOT
 		git -C "$repo" checkout -f movealong &&
-		git -C "$repo" clean -d -x -f
+		git -C "$repo" clean -d -x -f || return
 	done
 '
 

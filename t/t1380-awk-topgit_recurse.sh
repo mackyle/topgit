@@ -575,7 +575,7 @@ test_expect_success 'startb with path works' '
 		sed <expected "s,\$, $comp," >expected2 &&
 		mv -f expected2 expected &&
 		<graph tgrecurse "$base" -v hdfile=hdlist -v brfile=brlist135 -v withbr=1 >actual &&
-		test_cmp actual expected
+		test_cmp actual expected || return
 	done
 '
 

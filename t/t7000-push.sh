@@ -285,7 +285,7 @@ test_expect_success SETUP 'pass options' '
 	for opt in "-4" "--ipv4" "--ipv6" "-6" "--dry-run" "--force" "--atomic" "--signed" "--signed=" "--signed=..."; do
 		printf "%s\n" "$opt" origin refs/heads/other >expected &&
 		tgshim push -r origin $opt >actual &&
-		test_cmp actual expected
+		test_cmp actual expected || return
 	done &&
 	printf "%s\n" "-4" "-6" "--dry-run" "--force" "--atomic" "--signed=yes" origin refs/heads/other >expected &&
 	tgshim push --force -r origin --ipv6 --atomic --signed -4 -6 --force --dry-run --signed=yes >actual &&
@@ -297,7 +297,7 @@ test_expect_success SETUP 'nontg push' '
 	for b in base1 base2 master2 master3 other2 tgbranch1 tgbranch2; do
 		printf "%s\n" origin "refs/heads/$b" >expected &&
 		tgshim push -r origin $b >actual &&
-		test_cmp actual expected
+		test_cmp actual expected || return
 	done
 '
 
@@ -306,7 +306,7 @@ test_expect_success SETUP 'tg base up-to-date push' '
 	for b in t/abranch1 t/branch1 t/branch2 t/branch3 t/branch4 t/fullann t/mt t/mtann; do
 		printf "%s\n" origin "refs/heads/$b" "refs/$topbases/$b" >expected &&
 		tgshim push -r origin $b >actual &&
-		test_cmp actual expected
+		test_cmp actual expected || return
 	done
 '
 
@@ -318,7 +318,7 @@ test_expect_success SETUP 'tg --no-deps up-to-date push' '
 	do
 		printf "%s\n" origin "refs/heads/$b" "refs/$topbases/$b" >expected &&
 		tgshim push -r origin --no-deps $b >actual &&
-		test_cmp actual expected
+		test_cmp actual expected || return
 	done
 '
 

@@ -552,7 +552,7 @@ test_expect_success 'wayback list' '
 		squish tg -C copy -w "$wtag" summary -vvl >actual &&
 		test_diff pristine_full_list actual &&
 		tg -C copy -w ":$wtag" summary -vvl >actual &&
-		test_diff expected actual
+		test_diff expected actual || return
 	done &&
 	squish tg -C copy -w t/midway summary -vvl >actual &&
 	test_diff pristine_fullb4_list actual &&
@@ -582,7 +582,7 @@ test_expect_success 'wayback summary' '
 		squish tg -C copy -w "$wtag" summary >actual &&
 		test_diff pristine_full_summary actual &&
 		tg -C copy -w ":$wtag" summary >actual &&
-		test_diff expected actual
+		test_diff expected actual || return
 	done &&
 	squish tg -C copy -w t/midway summary >actual &&
 	test_diff pristine_full_summary actual &&
