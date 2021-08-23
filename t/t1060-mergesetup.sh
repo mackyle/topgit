@@ -52,11 +52,13 @@ test_expect_success GIT_2_9 'test setup hookspath' '
 	git -C hooksrepo config core.hooksPath "$PWD/hookspath"
 '
 
-test_expect_failure GIT_2_5 'rev-parse --git-common-dir is broken!' '
+test_tolerate_failure GIT_2_5 'rev-parse --git-common-dir is not broken' '
 	gcd="$(cd r2/subdir && git rev-parse --git-common-dir)" &&
 	test -n "$gcd" &&
+	cd r2/subdir &&
 	test -d "$gcd" &&
-	test "$(cd "$gcd" && pwd -P)" = "$(cd r2/.git && pwd -P)"
+	cd ../.. &&
+	test "$(cd r2/subdir && cd "$gcd" && pwd -P)" = "$(cd r2/.git && pwd -P)"
 '
 
 mergesetup_is_ok() {
