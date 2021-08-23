@@ -1009,11 +1009,11 @@ tg create
 	can be set up with ``tg create -r`` and/or ``tg remote --populate`` to
 	facilitate sharing.
 
-	For example, ``tg create --base release v2.1`` will create a TopGit-
-	controlled ``release`` branch based off the ``v2.1`` tag that can then
+	For example, ``tg create --base t/release v2.1`` will create a TopGit-
+	controlled ``t/release`` branch based off the ``v2.1`` tag that can then
 	be used as a base for creation of other TopGit-controlled branches.
 	Then when the time comes to move the base for an entire set of changes
-	up to ``v2.2`` the command ``tg update --base release v2.2`` can be
+	up to ``v2.2`` the command ``tg update --base t/release v2.2`` can be
 	used followed by ``tg update --all``.
 
 	Using ``--base`` it's also possible to use ``tg create`` on an
