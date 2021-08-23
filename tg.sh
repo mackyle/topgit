@@ -2699,7 +2699,7 @@ else
 			shift
 			break;;
 
-		--no-pager)
+		--no-pager|-P)
 			forcepager=0
 			shift;;
 
