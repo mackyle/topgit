@@ -1793,6 +1793,13 @@ tg update
 
 	You have enabled ``git rerere`` haven't you?
 
+	Remember the default expiration time for resolved merge conflicts is
+	only 60 days.  Increase their longevity by setting the Git
+	configuration variable ``gc.rerereResolved`` to a higher number such
+	as ``9999`` like so::
+
+		git config --global gc.rerereResolved 9999
+
 	The ``--[no-]auto[-update]`` options together with the
 	``topgit.setAutoUpdate`` config item control whether or not TopGit
 	will automatically temporarily set ``rerere.autoUpdate`` to true while
