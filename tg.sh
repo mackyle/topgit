@@ -1553,6 +1553,41 @@ switch_to_base()
 	checkout_symref_full "refs/$topbases/$1" "$2"
 }
 
+# fer_branch_contains [-a|-r] <committish>
+# Like `git branch --no-color --contains [-a|-r] <committish>` except
+# that full ref names are always output without any 2-character prefix
+fer_branch_contains()
+{
+	_feropt=
+	if [ $# -gt 1 ]; then
+		case "$1" in
+		"-a") _feropt="-a"; shift;;
+		"-r") _feropt="-r"; shift;;
+		esac
+	fi
+	[ $# -eq 1 ] ||
+		die "programmer error: fer_branch_contains: wrong number of arguments"
+	if [ -n "$gferc"  ]; then
+		# easy way, Git is 2.7.0+ and for-each-ref has --contains
+		case "$_feropt" in
+		"-a") _ferref="refs/heads refs/remotes";;
+		"-r") _ferref="refs/remotes";;
+		*)    _ferref="refs/heads";;
+		esac
+		git for-each-ref --format='%(refname)' --contains "$1" $_ferref
+	else
+		# hard way, munge `git branch --contains` output;
+		# must run twice for -a to truly avoid ambiguity
+		# with a ref such as "refs/heads/remotes/foo/bar" present
+		[ "$_feropt" = "-r" ] ||
+			git branch --no-color --contains "$@" |
+			awk '{x=substr($0,3);if(x!~/[ \t]/)print"refs/heads/"x}'
+		[ "$_feropt" = "" ] ||
+			git branch --no-color -r --contains "$@" |
+			awk '{x=substr($0,3);if(x!~/[ \t]/)print"refs/remotes/"x}'
+	fi
+}
+
 # run editor with arguments
 # the editor setting will be cached in $tg_editor (which is eval'd)
 # result non-zero if editor fails or GIT_EDITOR cannot be determined
@@ -2355,6 +2390,8 @@ initial_setup()
 	! vcmp "$git_version" '>=' "2.5" || iowopt="--ignore-other-worktrees"
 	gcfbopt=
 	! vcmp "$git_version" '>=' "2.6" || gcfbopt="--buffer"
+	gferc=
+	! vcmp "$git_version" '>=' "2.7" || gferc=1
 	auhopt=
 	! vcmp "$git_version" '>=' "2.9" || auhopt="--allow-unrelated-histories"
 	crlopt=
