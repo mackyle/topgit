@@ -2741,7 +2741,7 @@ else
 				exit 1
 			fi
 			cd "$1"
-			unset_ GIT_DIR GIT_COMMON_DIR
+			unset_ GIT_DIR GIT_COMMON_DIR GIT_OBJECT_DIRECTORY
 			if [ -z "$explicit_dir" ]; then
 				explicit_dir="$1"
 			else
