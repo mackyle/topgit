@@ -123,8 +123,8 @@ depend_add()
 		exit 0
 	}
 	(ensure_clean_tree) || {
-		warn "skipping needed \`tg update\` since worktree is dirty"
-		warn "be sure to run \`tg update\` when worktree is clean"
+		warn "skipping needed \`tg update\` since working directory is dirty"
+		warn "be sure to run \`tg update\` when working directory is clean"
 		exit 1
 	}
 	set -- "$current_name"
