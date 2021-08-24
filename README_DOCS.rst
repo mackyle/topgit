@@ -2108,7 +2108,7 @@ tg rebase
 	All the same rebase options can be used (they are simply passed through
 	to Git unchanged).  However, the ``rerere.autoUpdate`` option is
 	automatically temporarily enabled while running ``git rebase`` and
-	should ``git rebase`` stop asking one to resolve and continue, but all
+	should ``git rebase`` stop, asking one to resolve and continue, but all
 	conflicts have already been resolved and staged using rerere
 	information, then ``git rebase --continue`` will be automatically run.
 
