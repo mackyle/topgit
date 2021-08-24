@@ -1,8 +1,8 @@
 #!/bin/sh
 
 # tg--migrate-bases -- migrate from old top-bases to new {top-bases}
-# Copyright (C) 2017 Kyle J. McKay
-# All rights reserved.
+# Copyright (C) 2017,2021 Kyle J. McKay
+# All rights reserved
 # License GPLv2+
 
 USAGE="\
@@ -258,12 +258,21 @@ else
 	headdir="$(cd "$git_dir" && pwd -P)"
 fi
 
+posix_find_worktrees_HEAD() (
+	# neither -mindepth nor -maxdepth are POSIX, grrrr
+	# however, POSIX has adopted -path
+	# $1 is the starting directory and the output lines,
+	# if any, will all start with "./"
+	cd "$1" &&
+	exec find . -path './HEAD' -prune -o -path '*/*/*/*' -prune -o -name HEAD -type f -print
+) 2>/dev/null
+
 # note that [ -n "$iowopt" ] will be true if linked worktrees are available
 maybehaslw=
 if
 	[ -n "$iowopt" ] &&
 	[ -d "$maindir/worktrees" ] &&
-	[ $(( $(find "$maindir/worktrees" -mindepth 2 -maxdepth 2 -type f -name HEAD -print 2>/dev/null | wc -l) )) -gt 0 ]
+	[ $(( $(posix_find_worktrees_HEAD "$maindir/worktrees" | wc -l) )) -gt 0 ]
 then
 	maybehaslw=1
 fi
@@ -304,9 +313,13 @@ process_one_symref "$headdir"
 process_one_symref "$maindir"
 # then each worktree (again duplicates will be automatically ignored)
 if [ -n "$maybehaslw" ]; then
-	while read -r wktree && [ -n "$wktree" ]; do
-		process_one_symref "${wktree%/HEAD}"
+	while
+		read -r wktree &&
+		wktree="${wktree#./}" &&
+		[ -n "$wktree" ]
+	do
+		process_one_symref "$maindir/worktrees/${wktree%/HEAD}"
 	done <<-EOT
-	$(find "$maindir/worktrees" -mindepth 2 -maxdepth 2 -type f -name HEAD -print 2>/dev/null)
+	$(posix_find_worktrees_HEAD "$maindir/worktrees")
 	EOT
 fi
