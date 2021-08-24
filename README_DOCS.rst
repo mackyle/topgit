@@ -891,9 +891,9 @@ The ``tg`` tool has several subcommands:
 	:`tg log`_:           Run git log limiting revisions to a TopGit branch
 	:`tg mail`_:          Shortcut for git send-email with ``tg patch`` output
 	:`tg migrate-bases`_: Transition top-bases to new location
-	:`tg next`_:          Show branches directly depending on a TopGit branch
+	:`tg next`_:          Show next branch in the patch series
 	:`tg patch`_:         Generate a patch file for a TopGit branch
-	:`tg prev`_:          Show non-annihilated TopGit dependencies for a branch
+	:`tg prev`_:          Show previous branch in the patch series
 	:`tg push`_:          Run git push on TopGit branch(es) and depedencies
 	:`tg rebase`_:        Auto continue git rebase if rerere resolves conflicts
 	:`tg remote`_:        Set up remote for fetching/pushing TopGit branches
