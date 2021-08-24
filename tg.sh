@@ -1679,6 +1679,32 @@ check_status()
 	elif [ -e "$git_dir/REVERT_HEAD" ]; then
 		git_state="revert"
 	fi
+	if [ -z "$git_state" ] && [ -f "$git_dir/sequencer/todo" ]; then
+		# See Git's contrib/completion/git-prompt.sh
+		# the logic in the __git_sequencer_status function
+		if
+			# read will return non-0 status if there's no
+			# actual EOL character to read, but it will still
+			# set the variable and Git does not care about the EOL
+			_stline=
+			IFS= read -r _stline <"$git_dir/sequencer/todo" || :
+			[ -n "$_stline" ]
+		then
+			# Git does this, git-prompt.sh does not.
+			# No easy way to trim only leading whitespace
+			# Without forking, but there usually isn't any.
+			while [ "${_stline#[$tab ]}" != "$_stline" ]; do
+				_stline="${_stline#?}"
+			done
+			# Git does actually require the following tab or space
+			# for the mode to be active, but it does NOT require
+			# anything after the tab or space not even an EOL char!
+			case "$_stline" in
+			p["$tab "]*|pick["$tab "]*) git_state="cherry-pick";;
+			revert["$tab "]*) git_state="revert";;
+			esac
+		fi
+	fi
 	git_remove="${git_remove#./}"
 
 	if
