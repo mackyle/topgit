@@ -1843,9 +1843,8 @@ tg update
 	option may be used to disable a ``topgit.autostash=true`` setting.
 	See the ``tg tag`` ``--stash`` option for details.
 
-	After the update, if a single topic branch was specified, it is
-	left as the current one; if ``-a`` was specified, it returns to
-	the branch which was current at the beginning.
+	After the update, the branch which was current at the beginning of the
+	update is returned to.
 
 	If your dependencies are not up-to-date, ``tg update`` will first
 	recurse into them and update them.
