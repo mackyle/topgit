@@ -935,7 +935,7 @@ tg status
 
 	With the ``--exit-code`` option the exit code will be non-zero if any
 	TopGit or Git operation is currently in progress or the working
-	tree is unclean.
+	directory is unclean.
 
 tg create
 ~~~~~~~~~
