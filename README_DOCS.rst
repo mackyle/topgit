@@ -1781,8 +1781,8 @@ tg import
 
 	Alternatively, you can use the ``-s NAME`` parameter to specify
 	the name of the target branch; the command will then take one
-	more argument describing a *single* commit to import (which may
-	have any number of parents).
+	more argument describing a *single* commit to import which must
+	not be a merge commit.
 
 tg update
 ~~~~~~~~~
