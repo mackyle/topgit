@@ -137,8 +137,6 @@ vcmp() {
 	return 1
 }
 
-vcmp "$@"
-
 error_lno() {
 	: "${callerlno:=$1}"
 	shift
