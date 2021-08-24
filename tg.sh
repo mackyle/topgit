@@ -2130,6 +2130,12 @@ setup_git_dirs()
 	fi
 	[ -n "$git_dir" ] && [ -n "$git_common_dir" ] &&
 	[ -d "$git_dir" ] && [ -d "$git_common_dir" ] || die "Not a git repository"
+	# disallow alternate ref backends
+	_rfv="$(git config --int --get core.repositoryformatversion 2>/dev/null)" || :
+	if [ "${_rfv:-0}" -ge 1 ]; then
+		_rrs="$(git config --get extensions.refstorage 2>/dev/null)" || :
+		[ -z "$_rrs" ] || die "Unsupported extensions.refStorage=$_rrs repository format"
+	fi
 	activate_awksome $1
 }
 
