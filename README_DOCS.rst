@@ -275,7 +275,9 @@ There are three typical uses for a TopGit branch:
        Empty TopGit branches with no dependencies (an empty ``.topdeps`` file)
        that represent a base upon which other "normal" TopGit branches depend.
        These are known as "base" TopGit branches (not to be confused with
-       the refs/top-bases/... refs).
+       the refs/top-bases/... refs).  When such a branch is created on an
+       unborn branch (meaning the base has no parent commit), it will typically
+       be named [ROOT] instead of [BASE].
     3. [STAGE]
        Empty TopGit branches that serve as a staging area to bring together
        several other TopGit branches into one place so they can be used/tested
@@ -2763,6 +2765,13 @@ GLOSSARY
 		branches depends on.  Sometimes these are named ``[RELEASE]``
 		instead because the base dependency they represent is actually
 		the formal release of something.
+
+	TopGit ``[ROOT]`` branch
+		A TopGit branch whose subject starts with ``[ROOT]``.  By
+		convention these TopGit branches do not actually contain
+		any changes and their ``.topdeps`` files are empty.  They
+		are ``[BASE]`` branches where the base commit has no parent.
+		In other words, the base commit is a ``root`` commit.
 
 	TopGit ``[STAGE]`` branch
 		A TopGit branch whose subject starts with ``[STAGE]``.  By
