@@ -2,3 +2,4 @@
 /navigate_deps
 /needs_update_check
 /recurse_deps_internal
+/test_have_prereq
