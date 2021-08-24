@@ -37,7 +37,7 @@ while [ -n "$1" ]; do
 		opt4="$arg";;
 	-6|--ipv6)
 		opt6="$arg";;
-	--tgish-only)
+	--tgish-only|--tgish)
 		tgish_deps_only=1;;
 	-a|--all)
 		push_all=1;;

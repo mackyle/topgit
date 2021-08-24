@@ -70,7 +70,7 @@ while [ -n "$1" ]; do
 		sort=1;;
 	--deps)
 		deps=1;;
-	--tgish-only)
+	--tgish-only|--tgish)
 		tgish=1;;
 	--deps-only)
 		head=HEAD

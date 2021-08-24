@@ -57,7 +57,7 @@ while [ $# -gt 0 ]; do case "$1" in
 	--rdeps)
 		rdeps=1
 		;;
-	--tgish-only)
+	--tgish-only|--tgish)
 		tgish=1
 		;;
 	-f|--force)
