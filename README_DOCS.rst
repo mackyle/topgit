@@ -2049,6 +2049,15 @@ tg tag
 	an actual tag object.  This also works on non-TopGit annotated/signed
 	tags as well provided they have a reflog.
 
+	Note that the time and date shown for reflog entries by ``tg tag -g``
+	is the actual time and date recorded in that reflog entry itself which
+	usually is the time and date that entry was added to the reflog, *not*
+	the time and date of the commit it refers to.  Git itself never shows
+	the reflog entry timestamps (even with ``--pretty=fuller``) instead it
+	uses the time and date from the commit the reflog entry refers to which
+	is not particularly helpful when looking at a reflog for ``HEAD`` that
+	might contain several different entries that point at the same commit.
+
 	The number of entries shown may be limited with the ``-n`` option.  If
 	the tagname is omitted then ``--stash`` is assumed.
 
