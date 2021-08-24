@@ -229,8 +229,23 @@ TG-BUILD-SETTINGS: $(CONFIGDEPS) $(FORCE_SETTINGS_BUILD)
 		bs >"$@"; \
 	elif test z"$(FORCE_SETTINGS_BUILD)" = z; then touch "$@"; fi
 
+test-sha1: all FORCE
+	+$(Q)cd t && TESTLIB_GIT_DEFAULT_HASH=sha1 $(MAKE) all
+
+test-sha256: all FORCE
+	+$(Q)cd t && TESTLIB_GIT_DEFAULT_HASH=sha256 $(MAKE) all
+
 test: all FORCE
-	+$(Q)cd t && $(MAKE) all
+	+$(Q)cd t && $(MAKE) settings && if helper/test_have_prereq GITSHA256; then \
+		echo "* running Git hash algorithm sha1 tests" && \
+		TESTLIB_GIT_DEFAULT_HASH=sha1 $(MAKE) all && \
+		echo "* running Git hash algorithm sha256 tests" && \
+		TESTLIB_GIT_DEFAULT_HASH=sha256 $(MAKE) all && \
+		echo "* both Git hash algorithm sha1 and Git hash algorithm sha256 tests passed"; \
+	else \
+		echo "* running Git hash algorithm sha1 tests only (Git version < 2.29.0)" && \
+		TESTLIB_GIT_DEFAULT_HASH=sha1 $(MAKE) all; \
+	fi
 
 FORCE: __file_which_should_not_exist
 
