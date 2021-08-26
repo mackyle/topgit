@@ -3,7 +3,7 @@
 # Many parts shamelessly swiped from Git's t directory since that works
 # and is GPL2 just like TopGit
 
-# Copyright (C) 2016,2017 Kyle J. McKay
+# Copyright (C) 2016,2017,2021 Kyle J. McKay
 # The lines swiped from Git are Copyright (C) 2005 Junio C Hamano et al.
 
 #
@@ -83,8 +83,8 @@ SHELL = $(SHELL_PATH)
 # Very important rule to avoid "accidents" caused by Makefile.sh's existence
 # Some ridiculous "make" implementations will always implicitly "make Makefile"
 # even though .POSIX: has been specified and that's definitely NOT POSIX!
-Makefile:
-	@true
+Makefile Makefile.mak ../Makefile.mt ../Makefile.dep Makefile.sh ../config.mak ../config.sh:
+	-@true
 
 # Clean out the standard six single suffix inference rules to avoid accidents
 .SUFFIXES: .c .sh .f .c˜ .sh˜ .f˜
@@ -208,11 +208,11 @@ TG-TEST-SETTINGS: $(CONFIGDEPS) $(FORCE_SETTINGS_BUILD)
 		ts >"$@"; \
 	elif test z"$(FORCE_SETTINGS_BUILD)" = z; then touch "$@"; fi
 
-FORCE: __file_which_should_not_exist
+FORCE: Makefile.mak/phony
 
 # This "phony" target must have at least one command otherwise it will not
 # actually run anything and so will not actually trigger the rules that depend
 # on FORCE to run either.  By using "true" instead of ":" "make"s that
 # short-circuit directly to execvp should be able to run "true" directly.
-__file_which_should_not_exist:
+Makefile.mak/phony:
 	-@true

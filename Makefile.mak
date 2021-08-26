@@ -85,8 +85,8 @@ QWRAPPER = $(QWRAPPER_$(V))
 # Very important rule to avoid "accidents" caused by Makefile.sh's existence
 # Some ridiculous "make" implementations will always implicitly "make Makefile"
 # even though .POSIX: has been specified and that's definitely NOT POSIX!
-Makefile:
-	@true
+Makefile Makefile.mak Makefile.mt Makefile.dep Makefile.sh config.mak config.sh:
+	-@true
 
 # Clean out the standard six single suffix inference rules to avoid accidents
 .SUFFIXES: .c .sh .f .c˜ .sh˜ .f˜
@@ -247,11 +247,11 @@ test: all FORCE
 		TESTLIB_GIT_DEFAULT_HASH=sha1 $(MAKE) all; \
 	fi
 
-FORCE: __file_which_should_not_exist
+FORCE: Makefile.mak/phony
 
 # This "phony" target must have at least one command otherwise it will not
 # actually run anything and so will not actually trigger the rules that depend
 # on FORCE to run either.  By using "true" instead of ":" "make"s that
 # short-circuit directly to execvp should be able to run "true" directly.
-__file_which_should_not_exist:
+Makefile.mak/phony:
 	-@true

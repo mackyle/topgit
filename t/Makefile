@@ -1,5 +1,5 @@
 # Makefile - POSIX Makefile for TopGit tests
-# Copyright (C) 2017 Kyle J. McKay
+# Copyright (C) 2017,2021 Kyle J. McKay
 # All rights reserved
 # License GPL2
 
@@ -28,23 +28,23 @@ TARGETS = \
 	aggregate-results TG-TEST-SETTINGS settings
 #TARGETS
 
-__default_target__: __file_which_should_not_exist
+Makefile/default: Makefile/phony
 	+@set -- && set -ae && MAKE="$(MAKE)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak
 
 .DEFAULT:
 	+@set -- "$@" && set -ae && MAKE="$(MAKE)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak "$$@"
 
-target: __file_which_should_not_exist
+target: Makefile/phony
 	+@set -- $(TARGET) && set -ae && MAKE="$(MAKE)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak "$$@"
 
-__any_target__ $(TARGETS): __file_which_should_not_exist
+Makefile/any $(TARGETS): Makefile/phony
 	+@set -- "$@" && set -ae && MAKE="$(MAKE)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak "$$@"
 
 # Very important rule to avoid "accidents" caused by Makefile.sh's existence
 # Some ridiculous "make" implementations will always implicitly "make Makefile"
 # even though .POSIX: has been specified and that's definitely NOT POSIX!
-Makefile:
-	@true
+Makefile Makefile.mak ../Makefile.mt ../Makefile.dep Makefile.sh:
+	-@true
 
 .PRECIOUS:
 
@@ -63,5 +63,5 @@ Makefile:
 # actually run anything and so will not actually trigger the rules that depend
 # on it to run either.  By using "true" instead of ":" "makes" that
 # short-circuit directly to execvp should be able to run "true" directly.
-__file_which_should_not_exist:
+Makefile/phony:
 	-@true
