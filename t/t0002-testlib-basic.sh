@@ -1118,7 +1118,7 @@ test_expect_success 'git read-tree followed by write-tree should be idempotent' 
 	test "$newtree" = "$tree"
 '
 
-test_expect_success 'validate git diff-files output for a know cache/work tree state' '
+test_expect_success 'validate git diff-files output for a known cache/work tree state' '
 	cat >expected <<EOF &&
 :100644 100644 $(test_asv path0f) $ZERO_OID M	path0
 :120000 120000 $(test_asv path0s) $ZERO_OID M	path0sym
