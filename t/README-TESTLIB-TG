@@ -134,7 +134,7 @@ TopGit Utility Functions
     `test_commit` (except that only the message can be specified, the <file>,
     <contents> and <tag> always use default values as described for
     `test_commit`).  Note that since unlike the `test_commit` function, the
-    default message is "branch <<branch>" no tag will be created by default.
+    default message is "branch <branch>" no tag will be created by default.
     To cause a tag to be created, an explicit, single-word, refname-friendly
     message must be provided.
 
