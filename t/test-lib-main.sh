@@ -1253,6 +1253,14 @@ tg_version="$(tg --version)" ||
 case "$tg_version" in [Tt][Oo][Pp][Gg][Ii][Tt]\ [Vv][Ee][Rr][Ss][Ii][Oo][Nn]\ [0-9]*);;*)
 	fatal "error: tg --version returned bogus value: $tg_version"
 esac
+# GIT_CEILING_DIRECTORIES has already been set and exported
+tg__top_bases="$(cd "$EMPTY_DIRECTORY" && tg --top-bases)" ||
+	fatal 'error: tg --top-bases failed!'
+case "$tg__top_bases" in
+	"refs/top-bases")		tg__top_bases="refs";;
+	"refs/heads/{top-bases}")	tg__top_bases="heads";;
+	*) fatal "error: tg --top-bases returned unknown value: $tg__top_bases";;
+esac
 
 vcmp "$git_version" '>=' "$GIT_MINIMUM_VERSION" ||
 fatal "git version >= $GIT_MINIMUM_VERSION required but found \"$git_version\" instead"

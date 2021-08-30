@@ -173,7 +173,7 @@ tg_test_setup_topgit() {
 
 # tg_test_v_getbases <varname> [<remotename>]
 #
-# If tg_test_bases is unset the default for this release of TopGit is used.
+# If tg_test_bases is unset or "" the default for the tg being tested is used.
 # Otherwise it must be set to "refs" or "heads" or a fatal error will occur.
 #
 # The variable named by <varname> is set to the full ref prefix for top-bases
@@ -190,7 +190,7 @@ tg_test_setup_topgit() {
 tg_test_v_getbases() {
 	[ -n "$1" ] || fatal "tg_test_v_getbases called without varname argument"
 	[ $# -le 2 ] || fatal "tg_test_v_getbases called with more than two arguments"
-	case "${tg_test_bases:-refs}" in
+	case "${tg_test_bases:-$tg__top_bases}" in
 		"refs")  _tgbases="top-bases";;
 		"heads") _tgbases="heads/{top-bases}";;
 		*) fatal "tg_test_v_getbases called with invalid tg_test_bases setting \"$tg_test_bases\"";;

@@ -51,7 +51,7 @@ TopGit Variables
     any of these values:
 
       * "" (the empty string or unset)  
-        default top-bases location for this release of TopGit (default value)
+        default top-bases location for the tg being tested (default value)
       * `refs`  
         Use `refs/top-bases` or `refs/remotes/`<remote-name>`/top-bases`
       * `heads`  
