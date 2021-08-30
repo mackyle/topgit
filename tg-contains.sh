@@ -118,8 +118,12 @@ localwide=0
 remoteb=
 remotewide=0
 [ -z "$remotes" ] || remoteb="$(get_temp remoteb)"
-while IFS= read -r branch && [ -n "$branch" ]; do
-	if [ "${branch#refs/heads/}" != "$branch" ] && v_verify_topgit_branch "" "$branch" -f; then
+while IFS= read -r branch && [ -n "$branch" ]; do case "$branch" in
+	"refs/$topbases"/?*)
+		continue
+		;;
+	"refs/heads"/?*)
+		v_verify_topgit_branch "" "$branch" -f || continue
 		branch="${branch#refs/heads/}"
 		[ -n "$annok" ] || ! branch_annihilated "$branch" || continue
 		if contained_by "$findrev" "refs/$topbases/$branch"; then
@@ -133,7 +137,8 @@ while IFS= read -r branch && [ -n "$branch" ]; do
 		[ ${#branch} -le $localwide ] || localwide=${#branch}
 		printf '%s %s\n' "$depth" "$branch" >>"$localb"
 		remotecnt=
-	else
+		;;
+	*)
 		[ -n "$remotes" ] && [ -z "$localcnt" ] && [ "${branch#refs/remotes/}" != "$branch" ] || continue
 		rbranch="${branch#refs/remotes/}"
 		rremote="${rbranch%%/*}"
@@ -152,8 +157,8 @@ while IFS= read -r branch && [ -n "$branch" ]; do
 		[ ${#branch} -le $remotewide ] || remotewide=${#branch}
 		[ -n "$remoteb" ] || remoteb="$(get_temp remoteb)"
 		printf '%s %s\n' "$depth" "remotes/$rremote/$rbranch" >>"$remoteb"
-	fi
-done <<EOT
+		;;
+esac; done <<EOT
 $(fer_branch_contains ${remotes:+-a} "$findrev")
 EOT
 [ -n "$localcnt$remotecnt" ] || exit 1
