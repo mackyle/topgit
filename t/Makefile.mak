@@ -114,10 +114,10 @@ settings: TG-TEST-SETTINGS
 	-@true # avoids the "Nothing to be done" message
 
 test: pre-clean TG-TEST-SETTINGS $(TESTLIB_TEST_LINT) FORCE
-	$(Q)set -m && $(CACHE_SETUP_TTY) $(MAKE) $${GNO_PD_OPT} -f Makefile.mak aggregate-results-and-cleanup
+	$(Q)helper/git_version "*** testing using" && set -m && $(CACHE_SETUP_TTY) $(MAKE) $${GNO_PD_OPT} -f Makefile.mak aggregate-results-and-cleanup
 
 prove: pre-clean TG-TEST-SETTINGS $(TESTLIB_TEST_LINT) FORCE
-	@echo "*** prove ***" && set -m && $(CACHE_SETUP) $(PROVE) --exec $(SHELL_PATH_SQ)'' $(TESTLIB_PROVE_OPTS) $(T) :: $(TESTLIB_TEST_OPTS)
+	@helper/git_version "*** testing using" && echo "*** prove ***" && set -m && $(CACHE_SETUP) $(PROVE) --exec $(SHELL_PATH_SQ)'' $(TESTLIB_PROVE_OPTS) $(T) :: $(TESTLIB_TEST_OPTS)
 	$(Q)$(NOCLEANCMT)$(MAKE) $${GNO_PD_OPT} -f Makefile.mak -s post-clean-except-prove-cache
 
 .PRECIOUS: $(T)
