@@ -35,6 +35,8 @@ switch_to_ref() {
 
 test_expect_success 'setup' '
 	test_create_repo outofdate && cd outofdate &&
+	tg_test_v_getbases topbases &&
+	tg_test_v_getbases topbasesrmt1 rmt1 &&
 	tg_test_create_branches <<-EOT &&
 		movealong nothing to see here
 		:
@@ -62,26 +64,26 @@ test_expect_success 'setup' '
 		:::rmt2/hasrmt2
 	EOT
 	# have to do the bases by hand
-	switch_to_ref "$(tg --top-bases)/hasbase" &&
+	switch_to_ref "$topbases/hasbase" &&
 	test_commit "commit on base" &&
-	switch_to_ref "$(tg --top-bases -r rmt1)/hasrmt1" &&
+	switch_to_ref "$topbasesrmt1/hasrmt1" &&
 	test_commit "commit on remote base" &&
 
 	# make an up-to-date copy (kinda icky without using tg update)
 	cd .. && cp -pR outofdate uptodate && cd uptodate &&
 	# make it up-to-date with some -s ours merges
-	switch_to_ref "$(tg --top-bases)/hasdep" &&
+	switch_to_ref "$topbases/hasdep" &&
 	test_merge "include dep updates" -s ours t/dep &&
 	git checkout -f hasdep &&
-	test_merge "include base changes" -s ours "$(tg --top-bases)/hasdep" &&
+	test_merge "include base changes" -s ours "$topbases/hasdep" &&
 	git checkout -f hasbase &&
-	test_merge "include base changes" -s ours "$(tg --top-bases)/hasbase" &&
-	switch_to_ref "$(tg --top-bases)/hasrmt1" &&
-	test_merge "include remote base changes" -s ours "$(tg --top-bases -r rmt1)/hasrmt1" &&
+	test_merge "include base changes" -s ours "$topbases/hasbase" &&
+	switch_to_ref "$topbases/hasrmt1" &&
+	test_merge "include remote base changes" -s ours "$topbasesrmt1/hasrmt1" &&
 	git checkout -f hasrmt1 &&
-	test_merge "include base changes" -s ours "$(tg --top-bases)/hasrmt1" &&
+	test_merge "include base changes" -s ours "$topbases/hasrmt1" &&
 	# this last one is a little bit sticky
-	git checkout --detach "$(tg --top-bases)/hasrmt2" &&
+	git checkout --detach "$topbases/hasrmt2" &&
 	test_merge "merge remote head changes onto local base" -s ours rmt2/hasrmt2 &&
 	tomerge="$(git rev-parse --verify HEAD --)" &&
 	git checkout -f hasrmt2 &&
@@ -110,6 +112,7 @@ test_expect_success 'setup' '
 
 test_expect_success 'setup more' '
 	test_create_repo more && cd more &&
+	tg_test_v_getbases topbases &&
 	tg_test_create_branches <<-EOT &&
 		dep1 first dep
 		:
@@ -131,13 +134,13 @@ test_expect_success 'setup more' '
 		dep2
 		dep3
 	EOT
-	switch_to_ref "$(tg --top-bases)/combined" &&
+	switch_to_ref "$topbases/combined" &&
 	test_merge "bring base up-to-date" -s ours dep2 dep3 &&
 	git checkout -f combined &&
-	test_merge "bring branch up-to-date" -s ours "$(tg --top-bases)/combined" &&
+	test_merge "bring branch up-to-date" -s ours "$topbases/combined" &&
 	git checkout -f dep2 &&
 	test_commit "make dep2 dirty" &&
-	newc="$(git commit-tree -p dep2 -m "annihilate dep2" "$(tg --top-bases)/dep2"^{tree})" &&
+	newc="$(git commit-tree -p dep2 -m "annihilate dep2" "$topbases/dep2"^{tree})" &&
 	git update-ref refs/heads/dep2 $newc dep2 &&
 	git checkout -f --orphan orphan &&
 	git read-tree --empty &&
@@ -194,7 +197,8 @@ test_expect_success 'branch_needs_update hasbase uptodate' '
 
 test_expect_success 'branch_needs_update hasrmt1 outofdate' '
 	> expected &&
-	echo ":refs/remotes/rmt1/top-bases/hasrmt1 hasrmt1" > expected-base &&
+	tg_test_v_getbases topbasesrmt1 rmt1 &&
+	echo ":$topbasesrmt1/hasrmt1 hasrmt1" > expected-base &&
 	branch_needs_update -C outofdate hasrmt1 > actual &&
 	test_diff expected actual &&
 	test_must_fail branch_needs_update -C outofdate -r rmt1 hasrmt1 > actual &&
@@ -277,7 +281,8 @@ test_expect_success 'branch_needs_update uphasbase uptodate' '
 
 test_expect_success 'branch_needs_update uphasrmt1 outofdate' '
 	> expected &&
-	echo ":refs/remotes/rmt1/top-bases/hasrmt1 hasrmt1 uphasrmt1" > expected-base &&
+	tg_test_v_getbases topbasesrmt1 rmt1 &&
+	echo ":$topbasesrmt1/hasrmt1 hasrmt1 uphasrmt1" > expected-base &&
 	branch_needs_update -C outofdate uphasrmt1 > actual &&
 	test_diff expected actual &&
 	test_must_fail branch_needs_update -C outofdate -r rmt1 uphasrmt1 > actual &&
