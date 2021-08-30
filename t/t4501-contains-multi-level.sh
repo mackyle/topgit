@@ -128,7 +128,7 @@ test_expect_success SETUP 'remote multi-level branch single-level remote' '
 	test "$tb" = "remotes/alpha/du/tri/kvar"
 '
 
-test_expect_failure SETUP 'remote single-level branch multi-level remote' '
+test_expect_success SETUP 'remote single-level branch multi-level remote' '
 	h="$(git rev-parse --verify -q unu@beta_gamma_deltaa)" &&
 	tb="$(tg contains -v --strict -r --ann $h)" &&
 	test "$tb" = "remotes/beta/gamma/delta/unu" &&
@@ -136,7 +136,7 @@ test_expect_failure SETUP 'remote single-level branch multi-level remote' '
 	test "$tb" = "remotes/beta/gamma/delta/unu"
 '
 
-test_expect_failure SETUP 'remote multi-level branch multi-level remote' '
+test_expect_success SETUP 'remote multi-level branch multi-level remote' '
 	h="$(git rev-parse --verify -q du_tri_kvar@beta_gamma_deltam)" &&
 	tb="$(tg contains -v --strict -r --ann $h)" &&
 	test "$tb" = "remotes/beta/gamma/delta/du/tri/kvar" &&

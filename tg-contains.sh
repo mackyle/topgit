@@ -103,7 +103,7 @@ make_deps_list()
 {
 	no_remotes=1
 	base_remote=
-	depslist="$(get_temp depslist)"
+	depslist="$(get_temp depslist)" || exit 1
 	tg summary --topgit-heads |
 	while read -r onetghead; do
 		printf '%s %s\n' "$onetghead" "$onetghead"
@@ -113,54 +113,101 @@ make_deps_list()
 
 localcnt=
 remotecnt=
-localb="$(get_temp localb)"
+localb="$(get_temp localb)" || exit 1
 localwide=0
 remoteb=
 remotewide=0
-[ -z "$remotes" ] || remoteb="$(get_temp remoteb)"
-while IFS= read -r branch && [ -n "$branch" ]; do case "$branch" in
-	"refs/$topbases"/?*)
-		continue
-		;;
-	"refs/heads"/?*)
-		v_verify_topgit_branch "" "$branch" -f || continue
-		branch="${branch#refs/heads/}"
-		[ -n "$annok" ] || ! branch_annihilated "$branch" || continue
-		if contained_by "$findrev" "refs/$topbases/$branch"; then
-			[ -z "$strict" ] || continue
-			depth="$(git rev-list --count --ancestry-path "refs/$topbases/$branch" --not "$findrev")"
-			depth=$(( ${depth:-0} + 1 ))
-		else
-			depth=0
-		fi
-		localcnt=$(( ${localcnt:-0} + 1 ))
-		[ ${#branch} -le $localwide ] || localwide=${#branch}
-		printf '%s %s\n' "$depth" "$branch" >>"$localb"
-		remotecnt=
-		;;
-	*)
-		[ -n "$remotes" ] && [ -z "$localcnt" ] && [ "${branch#refs/remotes/}" != "$branch" ] || continue
-		rbranch="${branch#refs/remotes/}"
-		rremote="${rbranch%%/*}"
-		rbranch="${rbranch#*/}"
-		[ "refs/remotes/$rremote/$rbranch" = "$branch" ] || continue
-		v_is_remote_tgbranch rtopbases "$rremote" "$rbranch" || continue
-		if contained_by "$findrev" "refs/remotes/$rremote/${rtopbases#heads/}/$rbranch"; then
-			[ -z "$strict" ] || continue
-			depth="$(git rev-list --count --ancestry-path "refs/remotes/$rremote/${rtopbases#heads/}/$rbranch" --not "$findrev")"
-			depth=$(( ${depth:-0} + 1 ))
-		else
-			depth=0
-		fi
-		remotecnt=$(( ${remotecnt:-0} + 1 ))
-		branch="${branch#refs/}"
-		[ ${#branch} -le $remotewide ] || remotewide=${#branch}
-		[ -n "$remoteb" ] || remoteb="$(get_temp remoteb)"
-		printf '%s %s\n' "$depth" "remotes/$rremote/$rbranch" >>"$remoteb"
-		;;
-esac; done <<EOT
-$(fer_branch_contains ${remotes:+-a} "$findrev")
+[ -z "$remotes" ] || remoteb="$(get_temp remoteb)" || exit 1
+process_branches() {
+	while read -r branch bremote && [ -n "$branch" ]; do case "$branch" in
+		"refs/$topbases"/?*)
+			continue
+			;;
+		"refs/heads"/?*)
+			[ -z "$bremote" ] && v_verify_topgit_branch "" "$branch" -f || continue
+			branch="${branch#refs/heads/}"
+			[ -n "$annok" ] || ! branch_annihilated "$branch" || continue
+			if contained_by "$findrev" "refs/$topbases/$branch"; then
+				[ -z "$strict" ] || continue
+				depth="$(git rev-list --count --ancestry-path \
+					"refs/$topbases/$branch" --not "$findrev")"
+				depth=$(( ${depth:-0} + 1 ))
+			else
+				depth=0
+			fi
+			localcnt=$(( ${localcnt:-0} + 1 ))
+			[ ${#branch} -le $localwide ] || localwide=${#branch}
+			printf '%s %s\n' "$depth" "$branch" >>"$localb"
+			remotecnt=
+			;;
+		*)
+			[ -n "$bremote" ] && [ -n "$remotes" ] && [ -z "$localcnt" ] &&
+			[ "${branch#refs/remotes/}" != "$branch" ] || continue
+			rbranch="${branch#refs/remotes/$bremote/}"
+			[ "refs/remotes/$bremote/$rbranch" = "$branch" ] || continue
+			v_is_remote_tgbranch rtopbases "$bremote" "$rbranch" || continue
+			if contained_by "$findrev" "refs/remotes/$bremote/${rtopbases#heads/}/$rbranch"; then
+				[ -z "$strict" ] || continue
+				depth="$(git rev-list --count --ancestry-path \
+					"refs/remotes/$bremote/${rtopbases#heads/}/$rbranch" --not "$findrev")"
+				depth=$(( ${depth:-0} + 1 ))
+			else
+				depth=0
+			fi
+			remotecnt=$(( ${remotecnt:-0} + 1 ))
+			branch="${branch#refs/}"
+			[ ${#branch} -le $remotewide ] || remotewide=${#branch}
+			[ -n "$remoteb" ] || remoteb="$(get_temp remoteb)" || exit 1
+			printf '%s %s\n' "$depth" "remotes/$bremote/$rbranch" >>"$remoteb"
+			;;
+	esac; done
+}
+if [ -z "$remotes" ]; then
+	process_branches <<EOT || exit 1
+$(fer_branch_contains "$findrev")
 EOT
+else
+	ferlist="$(get_temp ferlist)" || exit 1
+	fer_branch_contains -a "$findrev" >"$ferlist" || exit 1
+	process_branches <<EOT
+$(	awk -v tb="${topbases#heads/}" -v ob="${oldbases#heads/}" <"$ferlist" '
+		function join(a,b,e,_j,_r) {_r=""
+			for (_j=b;_j<=e;++_j)_r=_r"/"a[_j];return substr(_r,2)}
+		!/^refs\/remotes\/./ {next}
+		{
+			n=split(substr($0,14),c,/\//)
+			if (n<2) next
+			for (i=1;i<n;++i) {
+				r=join(c,1,i); t=join(c,i+1,n)
+				print "refs/remotes/"r"/"tb"/"t" "r
+				print "refs/remotes/"r"/"ob"/"t" "r
+			}
+		}
+	' | git cat-file $gcfbopt --batch-check='%(objectname) %(objecttype) %(rest)' |
+	awk -v f="$ferlist" '
+		function join(a,b,e,_j,_r) {_r=""
+			for (_j=b;_j<=e;++_j)_r=_r"/"a[_j];return substr(_r,2)}
+		!($2=="commit"&&$3!=""&&$1~/^[0-9a-f][0-9a-f][0-9a-f][0-9a-f]+$/){next}
+		{p[$3]=1}
+		END {
+			while((e=(getline b<f))>0) {
+				if(b!~/^refs\/remotes\/./){print b;continue}
+				n=split(substr(b,14),c,/\//)
+				if (n<2) continue
+				d=0
+				for (i=1;!d&&i<n;++i) {
+					r=join(c,1,i)
+					if(r in p) {d=1;t=join(c,i+1,n)
+						print "refs/remotes/"r"/"t" "r}
+				}
+			}
+			close(f)
+			if(e<0)exit 1
+			exit 0;
+		}
+	')
+EOT
+fi
 [ -n "$localcnt$remotecnt" ] || exit 1
 [ -z "$localcnt" ] || [ ${verbose:-0} -le 0 ] || make_deps_list
 if [ -n "$localcnt" ]; then
