@@ -174,7 +174,7 @@ tg_test_setup_topgit() {
 # tg_test_v_getbases <varname> [<remotename>]
 #
 # If tg_test_bases is unset the default for this release of TopGit is used.
-# Otherwise the it must be set to "refs" or "heads" or a fatal error occurs.
+# Otherwise it must be set to "refs" or "heads" or a fatal error will occur.
 #
 # The variable named by <varname> is set to the full ref prefix for top-bases
 # (as selected by tg_test_bases).  If <remotename> is non-empty it will be the
