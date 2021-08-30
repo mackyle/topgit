@@ -9,11 +9,17 @@ TEST_NO_CREATE_REPO=1
 
 . ./test-lib.sh
 
+if vcmp "$tg_version" '>=' '0.19.20'; then
+	deftopbases='refs/heads/{top-bases}'
+else
+	deftopbases='refs/top-bases'
+fi
+
 test_plan 18
 
 test_expect_success 'no repo refs bases default' '
 	test_must_fail tg status >/dev/null 2>&1 &&
-	test "$(tg --top-bases)" = "refs/top-bases"
+	test "$(tg --top-bases)" = "$deftopbases"
 '
 
 test_expect_success 'no repo hard-coded refs bases' '
@@ -86,7 +92,7 @@ test_expect_success 'auto detect heads and override' '
 '
 
 test_expect_success 'default is refs until 0.20.0' '
-	test "$(tg -C noset-mt --top-bases)" = "refs/top-bases"
+	test "$(tg -C noset-mt --top-bases)" = "$deftopbases"
 '
 
 sane_unset tg_test_bases
