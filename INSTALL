@@ -29,7 +29,7 @@ note that "make doc" and "make install-doc" will accomplish the same thing.
 The standard DESTDIR variable is supported to install to an intermediate
 location before moving to the final intended destination via some other means.
 
-The TopGit git repository can be found at: http://repo.or.cz/topgit/pro
+The TopGit git repository can be found at: https://repo.or.cz/topgit/pro
 
 
 Other

@@ -2684,7 +2684,7 @@ if [ -n "$tg__include" ]; then
 
 	# We were sourced from another script for our utility functions;
 	# this is set by hooks.  Skip the rest of the file.  A simple return doesn't
-	# work as expected in every shell.  See http://bugs.debian.org/516188
+	# work as expected in every shell.  See https://bugs.debian.org/516188
 
 	# ensure setup happens
 

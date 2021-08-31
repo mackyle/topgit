@@ -3,8 +3,10 @@
 #
 # Copyright (C) 2008 Jonas Fonseca <fonseca@diku.dk>
 # Copyright (C) 2006,2007 Shawn O. Pearce <spearce@spearce.org>
-# Based git's git-completion.sh: http://repo.or.cz/w/git/fastimport.git
-# Conceptually based on gitcompletion (http://gitweb.hawaga.org.uk/).
+# Based git's git-completion.sh:
+#   https://repo.or.cz/git.git/tree/HEAD:/contrib/completion
+# Conceptually based on gitcompletion (archived):
+#   https://web.archive.org/web/20111117202126/http://gitweb.hawaga.org.uk/gitweb.cgi?p=gitcompletion;a=summary
 # Distributed under the GNU General Public License, version 2.0.
 #
 # To use these routines:
