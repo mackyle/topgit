@@ -117,7 +117,7 @@ if [ -n "$heads" ]; then
 		printf '%s %s\n' "$onetghead" "$onetghead"
 		recurse_deps process_dep "$onetghead"
 	done | sort -u >"$depslist"
-	fer_branch_contains "$hash" | sed 's,^refs/heads/,,' |
+	fer_branch_contains "$hash" | sed 's,^refs/heads/,,' | sort |
 	join -o 2.2 - "$depslist" |
 	sort -u
 	exit 0
@@ -153,7 +153,7 @@ if [ -n "$series" ]; then
 	[ -z "$name" ] || [ "$serieshead" = "$name" ] || flagname="$name"
 	output() {
 	v_get_tmopt tm_opt "$head_from"
-	eval run_awk_topgit_msg -n "-nokind${tm_opt:+ $tm_opt}" "$refslist" '"refs/$topbases"' |
+	eval run_awk_topgit_msg -n "-nokind${tm_opt:+ $tm_opt}" "$refslist" '"refs/$topbases"' | sort |
 	join "$seriesf" - | sort -k2,2n | awk -v "flag=$flagname" '
 	{
 		bn = $1
