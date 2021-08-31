@@ -26,7 +26,7 @@ test_expect_success LASTOK 'modified status as expected' '
 	test_cmp "$tmp/actual" "$tmp/expected"
 '
 
-test_expect_failure LASTOK 'commit -a sequesters .topmsg' '
+test_expect_success LASTOK 'commit -a sequesters .topmsg' '
 	h0="$(git rev-parse --verify HEAD --)" && test -n "$h0" &&
 	test_must_fail git commit -am test &&
 	h1="$(git rev-parse --verify HEAD --)" && test -n "$h1" &&

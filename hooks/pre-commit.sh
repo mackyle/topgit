@@ -1,8 +1,8 @@
 #!/bin/sh
 # TopGit - A different patch queue manager
 # Copyright (C) 2008 Petr Baudis <pasky@suse.cz>
-# Copyright (C) 2015,2017 Kyle J. McKay <mackyle@gmail.com>
-# All rights reserved.
+# Copyright (C) 2015,2017,2021 Kyle J. McKay <mackyle@gmail.com>
+# All rights reserved
 # GPLv2
 
 ## Set up all the tg machinery
@@ -111,7 +111,7 @@ prefix="[A-Z][0-9]*$tab"
 if [ -n "$headrev" ]; then
 	headtree="$headrev^{tree}"
 else
-	headtree="$(: | git mktree)"
+	headtree="$(git mktree < /dev/null)"
 fi
 while read -r status fn; do case "$fn" in
 	".topdeps")
@@ -197,15 +197,23 @@ prefix="100[0-9][0-9][0-9] $octet20$hexch* 0$tab"
 newtree="$(GIT_INDEX_FILE="$tg_index" git write-tree)"
 rm -f "$tg_index"
 files=
+upd=
 if [ -n "$changedeps" ] && [ -n "$changemsg" ]; then
+	upd=":/.topdeps :/.topmsg"
 	files=".topdeps and .topmsg"
 elif [ -n "$changedeps" ]; then
+	upd=":/.topdeps"
 	files=".topdeps"
 else
+	upd=":/.topmsg"
 	files=".topmsg"
 fi
 newcommit="$(git commit-tree -m "tg: $mode $files" ${headrev:+-p} ${headrev:+"$headrev"} "$newtree")"
 git update-ref -m "tg: sequester $files changes into their own preliminary commit" HEAD "$newcommit"
+{ unset GIT_PREFIX; } >/dev/null 2>&1 || :
+GIT_INDEX_FILE="$git_dir/index" && export GIT_INDEX_FILE
+[ ! -e "$GIT_INDEX_FILE.lock" ] || rm -f "$GIT_INDEX_FILE.lock" >/dev/null 2>&1 || :
+[ -z "$upd" ] || eval "git reset $newtree -- $upd" >/dev/null 2>&1 || :
 warn "sequestered $files changes into their own preliminary commit"
 info "run the same \`git commit\` command again to commit the remaining changes" >&2
 exit 1
