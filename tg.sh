@@ -1619,7 +1619,8 @@ do_help()
 		# including when the user made a usage error. Should we end up
 		# providing more than a short help message, then we should
 		# differentiate.
-		# Petr's comment: http://marc.info/?l=git&m=122718711327376&w=2
+		# Petr's comment:
+		#   https://lore.kernel.org/git/20081120131807.GE10491@machine.or.cz/
 
 		## Build available commands list for help output
 
