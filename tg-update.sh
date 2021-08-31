@@ -1,8 +1,8 @@
 #!/bin/sh
 # TopGit - A different patch queue manager
 # Copyright (C) Petr Baudis <pasky@suse.cz>  2008
-# Copyright (C) Kyle J. McKay <mackyle@gmail.com>  2015,2016,2017,2018,2019
-# All rights reserved.
+# Copyright (C) Kyle J. McKay <mackyle@gmail.com>  2015,2016,2017,2018,2019,2021
+# All rights reserved
 # GPLv2
 
 names= # Branch(es) to update
@@ -137,14 +137,24 @@ do_base_mode()
 		[ -n "$quiet" ] || echo "No change"
 		exit 0
 	fi
-	alreadymerged=
-	! contained_by "$newrev" "refs/heads/$tgbranch" || alreadymerged=1
 	if [ -z "$basefrc" ] && ! contained_by "$baserev" "$newrev"; then
 		die "Refusing non-fast-forward update of base without --force"
 	fi
 
+	# make sure the new base commit does not have any .topdeps or .topmsg files
+
+	newrevt="$(git rev-parse --verify "$newrev^{tree}" --)" && [ -n "$newrevt" ] || die "$2 disappeared"
+	v_pretty_tree newptree "$newrev" -r || die "v_pretty_tree ... $2 -r (via git mktree) failed"
+	if [ "$newrevt" != "$newptree" ]; then
+		ensure_ident_available
+		bmsg="tg create $tgbranch base"
+		newrev="$(git commit-tree -p "$newrev" -m "$bmsg" "$newptree")" || die "git commit-tree failed"
+	fi
+
 	# check that we can checkout the branch
 
+	alreadymerged=
+	! contained_by "$newrev" "refs/heads/$tgbranch" || alreadymerged=1
 	[ -n "$alreadymerged" ] || git read-tree -n -u -m "refs/heads/$tgbranch" ||
 		die "git checkout \"$branch\" would fail"
 
@@ -152,6 +162,69 @@ do_base_mode()
 
 	[ -n "$alreadymerged" ] || ensure_clean_tree
 	ensure_ident_available
+
+	# collect the message from the user unless "$alreadymerged" or --no-edit
+
+	if [ -z "$alreadymerged" ]; then
+		ncopt=
+		[ -z "$basenc" ] || ncopt="--no-commit"
+		msgopt=
+		# options validation guarantees that at most one of basemsg or basefile is set
+		[ -z "$basemsg" ] || msgopt='-m "$basemsg"'
+		if [ -n "$basefile" ]; then
+			# git merge does not accept a -F <msgfile> option so we have to fake it
+			basefilemsg="$(cat "$basefile")" || die "could not read file '$basefile'"
+			msgopt='-m "$basefilemsg"'
+		fi
+		editopt=
+		if [ -n "$editmode" ]; then
+			if [ "$editmode" = "0" ]; then
+				editopt="--no-edit"
+			else
+				editopt="--edit"
+			fi
+		fi
+		if [ -z "$basemsg$basefile" ]; then
+			[ -n "$editopt" ] || editopt="--edit"
+			basemsg="tg update --base $tgbranch $2"
+			msgopt='-m "$basemsg"'
+		else
+			[ -n "$editopt" ] || editopt="--no-edit"
+		fi
+		if [ "$editopt" = "--edit" ] || [ "$ncopt" = "--no-commit" ]; then
+			if [ -n "$basefile" ]; then
+				eval 'printf "%s\n"' "${msgopt#-m }" >"$git_dir/MERGE_MSG"
+			else
+				eval 'printf "%s\n"' "${msgopt#-m }" | git stripspace >"$git_dir/MERGE_MSG"
+			fi
+			if [ "$ncopt" != "--no-commit" ]; then
+				cat <<-\EOT >>"$git_dir/MERGE_MSG"
+
+					# Please enter a commit message to explain why this merge is necessary,
+					# especially if it merges an updated upstream into a topic branch.
+					#
+					# Lines starting with '#' will be ignored, and an empty message aborts
+					# the commit.
+				EOT
+				run_editor "$git_dir/MERGE_MSG" ||
+					die "there was a problem with the editor '$tg_editor'"
+				git -c core.commentchar='#' stripspace -s <"$git_dir/MERGE_MSG" >"$git_dir/MERGE_MSG"+
+				mv -f "$git_dir/MERGE_MSG"+ "$git_dir/MERGE_MSG"
+				if [ ! -s "$git_dir/MERGE_MSG" ]; then
+					# Restore the (unannotated) MERGE_MSG even though we are aborting
+					if [ -n "$basefile" ]; then
+						eval 'printf "%s\n"' "${msgopt#-m }" >"$git_dir/MERGE_MSG"
+					else
+						eval 'printf "%s\n"' "${msgopt#-m }" |
+						git stripspace >"$git_dir/MERGE_MSG"
+					fi
+					die "Aborting update due to empty commit message."
+				fi
+				mergemsg="$(cat "$git_dir/MERGE_MSG")" || die "could not read file '$git_dir/MERGE_MSG'"
+				msgopt='-m "$mergemsg"'
+			fi
+		fi
+	fi
 
 	# always auto stash even if it's just to the anonymous stash TG_STASH
 
@@ -179,32 +252,7 @@ do_base_mode()
 		exit 0
 	fi
 	git checkout -q $iowopt "$tgbranch" || die "git checkout failed"
-	msgopt=
-	# options validation guarantees that at most one of basemsg or basefile is set
-	[ -z "$basemsg" ] || msgopt='-m "$basemsg"'
-	if [ -n "$basefile" ]; then
-		# git merge does not accept a -F <msgfile> option so we have to fake it
-		basefilemsg="$(cat "$basefile")" || die "could not read file '$basefile'"
-		msgopt='-m "$basefilemsg"'
-	fi
-	editopt=
-	if [ -n "$editmode" ]; then
-		if [ "$editmode" = "0" ]; then
-			editopt="--no-edit"
-		else
-			editopt="--edit"
-		fi
-	fi
-	if [ -z "$basemsg$basefile" ]; then
-		[ -n "$editopt" ] || editopt="--edit"
-		basemsg="tg update --base $tgbranch $2"
-		msgopt='-m "$basemsg"'
-	else
-		[ -n "$editopt" ] || editopt="--no-edit"
-	fi
-	ncopt=
-	[ -z "$basenc" ] || ncopt="--no-commit"
-	eval git merge --no-ff --no-log --no-stat $auhopt $ncopt $editopt "$msgopt" "refs/$topbases/$tgbranch" -- || exit
+	eval git_topmerge $ncopt "$msgopt" "refs/$topbases/$tgbranch" || exit
 	ec=0
 	if [ -z "$basenc" ]; then
 		clear_matching_untracked "$current"

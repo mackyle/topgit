@@ -109,7 +109,7 @@ test_expect_success LASTOK 'branch with .topdeps and .topmsg files redux' '
 	test_cmp ../actual ../expected
 '
 
-test_expect_failure LASTOK 'base without .topdeps and .topmsg files redux' '
+test_expect_success LASTOK 'base without .topdeps and .topmsg files redux' '
 	cd r &&
 	>../expected &&
 	glst "$(tg base t/frabjous)" >../actual &&
