@@ -1,7 +1,7 @@
 #!/bin/sh
 # TopGit merging utility functions
-# Copyright (C) 2015,2016,2017,2018,2019 Kyle J. McKay <mackyle@gmail.com>
-# All rights reserved.
+# Copyright (C) 2015,2016,2017,2018,2019,2021 Kyle J. McKay <mackyle@gmail.com>
+# All rights reserved
 # License GPLv2
 
 # git_topmerge will need this even on success and since it might otherwise
@@ -19,13 +19,15 @@ detach_symref_head_on_branch() {
 
 # Run an in-tree recursive merge but make sure we get the desired version of
 # any .topdeps and .topmsg files.  The $auhopt and --no-stat options are
-# always implicitly in effect.  If successful, a new commit is performed on HEAD.
+# always implicitly in effect.  If successful, a new commit is performed on HEAD
+# unless the optional --no-commit option has been given.
 #
 # The "git merge-recursive" tool (and others) must be run to get the desired
 # result.  And --no-ff is always implicitly in effect as well.
 #
 # NOTE: [optional] arguments MUST appear in the order shown
 # [optional] '-v' varname => optional variable to return original HEAD hash in
+# [optional] '--no-commit' => update worktree and index but do not commit
 # [optional] '--merge', '--theirs' or '--remove' to alter .topfile handling
 # [optional] '--name' <name-for-ours> [--name <name-for-theirs>]
 # $1 => '-m' MUST be '-m'
@@ -35,6 +37,8 @@ git_topmerge()
 {
 	_ovar=
 	[ "$1" != "-v" ] || [ $# -lt 2 ] || [ -z "$2" ] || { _ovar="$2"; shift 2; }
+	_ncmode=
+	[ "$1" != "--no-commit" ] || { _ncmode=1; shift; }
 	_mmode=
 	case "$1" in --theirs|--remove|--merge) _mmode="${1#--}"; shift; esac
 	_nameours=
@@ -138,6 +142,14 @@ git_topmerge()
 		rm -f "$tmpstdout"
 		return $_ret
 	fi
+	if [ -n "$_ncmode" ]; then
+		# merge succeeded, but --no-commit requested, enter "merge" mode and return
+		printf '%s\n' "$_msg" >"$git_dir/MERGE_MSG"
+		git update-ref MERGE_HEAD "$_theirs" || :
+		echo 'Automatic merge went well; stopped before committing as requested.'
+		rm -f "$tmpstdout"
+		return $_ret
+	fi
 	# commit time at last!
 	thetree="$(git write-tree)" || die "git write-tree failed"
 	# avoid an extra "already up-to-date" commit (can't happen if _mt though)
@@ -173,9 +185,11 @@ git_topmerge()
 git_merge() {
 	_ret=0
 	git_topmerge -v _oldhead "$@" || _ret=$?
-	_exclusions=
-	[ "$1" = "--merge" ] || _exclusions=":/ :!/.topdeps :!/.topmsg"
-	[ "$_ret" != "0" ] || git --no-pager diff-tree --shortstat "$_oldhead" HEAD^0 -- $_exclusions
+	if [ "$1" != "--no-commit" ] && [ "$_ret" = "0" ]; then
+		_exclusions=
+		[ "$1" = "--merge" ] || _exclusions=":/ :!/.topdeps :!/.topmsg"
+		git --no-pager diff-tree --shortstat "$_oldhead" HEAD^0 -- $_exclusions
+	fi
 	return $_ret
 }
 
