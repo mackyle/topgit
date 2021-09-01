@@ -2,17 +2,27 @@
 # TopGit - A different patch queue manager
 # Copyright (C) 2008 Petr Baudis <pasky@suse.cz>
 # Copyright (C) 2008 Aneesh Kumar K.V <aneesh.kumar@linux.vnet.ibm.com>
-# Copyright (C) 2015,2017,2018 Kyle J. McKay <mackyle@gmail.com>
-# All rights reserved.
+# Copyright (C) 2015,2017,2018,2021 Kyle J. McKay <mackyle@gmail.com>
+# All rights reserved
 # GPLv2
 
 branch_prefix=t/
+branch_prefix_set=
 single=
+single_set=
 ranges=
 rangecnt=0
 basedep=
+notesflag=
+notesref=
 
-USAGE="Usage: ${tgname:-tg} [...] import [-d <base-branch>] ([-p <prefix>] <range>... | -s <name> <commit>)"
+USAGE="\
+Usage: ${tgname:-tg} [...] import [-d <base-branch>] [<option>...] <range>...
+   Or: ${tgname:-tg} [...] import [-d <base-branch>] [<option>...] -s <name> <commit>
+Options:
+       -p <prefix>      prepend <prefix> to branch names (default is 't/')
+       --notes[=<ref>]  import notes ref <ref> to .topmsg --- comment
+       --no-notes       do not import any notes ref --- comment"
 
 ## Parse options
 
@@ -22,9 +32,32 @@ while [ -n "$1" ]; do
 	-d)
 		basedep="$1"; shift;;
 	-p)
+		branch_prefix_set=1
 		branch_prefix="$1"; shift;;
 	-s)
+		single_set=1
 		single="$1"; shift;;
+	--notes*)
+		val="${arg#*=}"
+		if [ "$val" = "--notes" ]; then
+			notesflag=1
+			notesref="refs/notes/commits"
+		elif [ -n "$val" ] && [ "${val#-}" = "$val" ]; then
+			case "$val" in
+			refs/notes/*) checknref="$val";;
+			notes/*) checknref="refs/$val";;
+			*) checknref="refs/notes/$val";;
+			esac
+			git check-ref-format "$checknref" >/dev/null 2>&1 ||
+				die "invalid --notes parameter $arg"
+			notesflag=1
+			notesref="$checknref"
+		else
+			die "invalid --notes parameter $arg"
+		fi;;
+	--no-notes)
+		notesflag=0
+		notesref=;;
 	-*)
 		printf '%s\n' "$USAGE" >&2
 		exit 1;;
@@ -32,6 +65,32 @@ while [ -n "$1" ]; do
 		ranges="$ranges $arg"; rangecnt=$(( $rangecnt + 1 ));;
 	esac
 done
+
+[ -z "$single_set" ] || [ -z "$branch_prefix_set" ] ||
+	die "-p does not work with single commit (-s <name> <commit>) mode"
+
+if [ -z "$notesflag" ]; then
+	if notesflag="$(git config --bool --get topgit.notesimport 2>/dev/null)"; then
+		case "$notesflag" in
+		true) notesflag=1; notesref="refs/notes/commits";;
+		false) notesflag=0; notesref=;;
+		esac
+	elif
+		notesflag="$(git config --get topgit.notesimport 2>/dev/null)" &&
+		test -n "$notesflag"
+	then
+		case "$notesflag" in
+		"-"*) checknref="$notesflag";;
+		refs/notes/*) checknref="$notesflag";;
+		notes/*) checknref="refs/$notesflag";;
+		*) checknref="refs/notes/$notesflag";;
+		esac
+		git check-ref-format "$checknref" >/dev/null 2>&1 ||
+			die "invalid topgit.notesImport config setting \"$notesflag\""
+		notesflag=1
+		notesref="$checknref"
+	fi
+fi
 
 ensure_work_tree
 ensure_clean_tree
@@ -80,6 +139,14 @@ process_commit()
 	tg create --quiet --no-edit "$branch_name" $basedep || die "tg create failed"
 	basedep=
 	get_commit_msg "$commit" > .topmsg
+	if [ "${notesflag:-0}" = "1" ] && [ -n "$notesref" ]; then
+		notesblob="$(git notes --ref="$notesref" list "$commit^0" 2>/dev/null)" || :
+		if [ -n "$notesblob" ]; then
+			notesdata="$(git cat-file blob "$notesblob" 2>/dev/null |
+				git stripspace 2>/dev/null)" || :
+			[ -z "$notesdata" ] || printf '\n---\n%s\n' "$notesdata" >>.topmsg
+		fi
+	fi
 	git add -f .topmsg .topdeps || die "git add failed"
 	if [ -n "$tgnosequester" ]; then
 		info "topgit.sequester is set to false, unadvisedly skipping sequester commit"

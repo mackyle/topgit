@@ -442,6 +442,7 @@ TopGit supports various config settings:
 	:`tg create`_:          ``topgit.cc`` default "Cc:" value for create
 	:`tg patch`_:           ``topgit.from`` "From:" fixups by ``tg patch``
 	:`tg export`_:          ``topgit.notesExport`` export ``---`` notes
+	:`tg import`_:          ``topgit.notesImport`` import ``---`` notes
 	:`tg push`_:            ``topgit.pushRemote`` default push remote
 	:`REMOTE HANDLING`_:    ``topgit.remote`` TopGit's default remote
 	:SEQUESTRATION_:        ``topgit.sequester`` for sequestration control
@@ -1798,6 +1799,22 @@ tg import
 	the name of the target branch; the command will then take one
 	more argument describing a *single* commit to import which must
 	not be a merge commit.
+
+	Use the ``--notes[=<ref>]`` option to import the ``git notes``
+	associated with the commit being imported to the .topmsg file -- if
+	non-empty notes are present, they will be appended to the generated
+	.topmsg file preceded by a ``---`` separator line.  If ``<ref>`` is
+	omitted then ``refs/notes/commits`` will be used.  If ``<ref>``
+	does not start with ``refs/notes/`` then ``refs/notes/`` will be
+	prepended unless it starts with ``notes/`` in which case only
+	``refs/`` will be prepended.
+
+	Setting the config variable ``topgit.notesImport`` to a boolean or
+	to a ``<ref>`` name will set the default for the ``--notes`` option
+	(with no config or ``--notes[=<ref>]`` option no ``---`` comment is
+	added to the generated .topmsg file by default).  To override a
+	``topgit.notesImport`` option and not add any ``---`` comments, use
+	``--no-notes``.
 
 tg update
 ~~~~~~~~~
