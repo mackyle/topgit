@@ -426,7 +426,7 @@ if [ -n "$interact" ]; then
 EOT
 	run_editor "$insn" ||
 	die "there was a problem with the editor '$tg_editor'"
-	git stripspace -s <"$insn" >"$insn"+
+	git -c core.commentchar='#' stripspace -s <"$insn" >"$insn"+
 	mv -f "$insn"+ "$insn"
 	[ -s "$insn" ] || die "nothing to do"
 	while read -r op hash ref; do

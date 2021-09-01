@@ -386,7 +386,7 @@ else
 		sobpfx='#'
 		[ z"$(git config --bool format.signoff 2>/dev/null)" != z"true" ] || sobpfx=
 		echo "${sobpfx}Signed-off-by: $author_addr"
-	} | git stripspace ${noedit:+-s} >"$git_dir/TG_EDITMSG"
+	} | git -c core.commentchar='#' stripspace ${noedit:+-s} >"$git_dir/TG_EDITMSG"
 fi
 if [ -z "$noedit" ]; then
 	cat <<EOT >>"$git_dir/TG_EDITMSG"
@@ -403,7 +403,7 @@ if [ -z "$noedit" ]; then
 EOT
 	run_editor "$git_dir/TG_EDITMSG" ||
 	die "there was a problem with the editor '$tg_editor'"
-	git stripspace -s <"$git_dir/TG_EDITMSG" >"$git_dir/TG_EDITMSG"+
+	git -c core.commentchar='#' stripspace -s <"$git_dir/TG_EDITMSG" >"$git_dir/TG_EDITMSG"+
 	mv -f "$git_dir/TG_EDITMSG"+ "$git_dir/TG_EDITMSG"
 	[ -s "$git_dir/TG_EDITMSG" ] || die "nothing to do"
 fi
