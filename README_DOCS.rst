@@ -441,6 +441,7 @@ TopGit supports various config settings:
 	:`tg create`_:          ``topgit.bcc`` default "Bcc:" value for create
 	:`tg create`_:          ``topgit.cc`` default "Cc:" value for create
 	:`tg patch`_:           ``topgit.from`` "From:" fixups by ``tg patch``
+	:`tg export`_:          ``topgit.notesExport`` export ``---`` notes
 	:`tg push`_:            ``topgit.pushRemote`` default push remote
 	:`REMOTE HANDLING`_:    ``topgit.remote`` TopGit's default remote
 	:SEQUESTRATION_:        ``topgit.sequester`` for sequestration control
@@ -1662,15 +1663,15 @@ tg export
 
 		:keep:          Like ``git mailinfo -k``
 		:mailinfo:      Like ``git mailinfo``
-		:patch:         Remove first ``[PATCH*]`` if any
+		:patch:         Remove first [PATCH*] if any
 		:topgit:        Remove first [PATCH*], [BASE], [ROOT] or [STAGE]
 		:trim:          Trim runs of spaces/tabs to a single space
 
 	The ``topgit`` (aka ``tg``) mode is the default (quelle surprise) and
 	like the ``patch`` mode will only strip the first square brackets tag
 	(if there is one) provided it's a TopGit-known tag (the ``patch``
-	variation will only strip a PATCH tag but still just the first one).
-	Note that TopGit does understand ``[RELEASE]`` in ``topgit`` mode.
+	variation will only strip a "[PATCH*]" tag but still just the first
+	one).  Note that TopGit does understand "[RELEASE]" in ``topgit`` mode.
 	With ``trim`` (aka ``ws``) internal runs of spaces/tabs are converted
 	to a single space, but no square brackets tags are removed.  The ``ws``
 	mode should generally be preferred instead of using ``keep`` mode.
@@ -1680,6 +1681,20 @@ tg export
 
 	Setting the config variable ``topgit.subjectMode`` to one of the mode
 	values shown above will change the default to that mode.
+
+	Both the ``--collapse`` and ``--linearize`` modes also accept a
+	``--notes[=<ref>]`` option to export the portion of the .topmsg file
+	following a ``---`` separator line to the specified notes ref.  If
+	``<ref>`` is omitted then ``refs/notes/commits`` will be used.  If
+	``<ref>`` does not start with ``refs/notes/`` then ``refs/notes/``
+	will be prepended unless it starts with ``notes/`` in which case
+	only ``refs/`` will be prepended.
+
+	Setting the config variable ``topgit.notesExport`` to a boolean or
+	to a ``<ref>`` name will set the default for the ``--notes`` option
+	(with no config or ``--notes[=<ref>]`` option the ``---`` comment is
+	discarded by default).  To override a ``topgit.notesExport`` option
+	and discard any ``---`` comments, use ``--no-notes``.
 
 	When using the linearize mode::
 

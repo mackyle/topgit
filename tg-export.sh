@@ -1,15 +1,19 @@
 #!/bin/sh
 # TopGit - A different patch queue manager
 # Copyright (C) 2008 Petr Baudis <pasky@suse.cz>
-# Copyright (C) 2015-2018 Kyle J. McKay <mackyle@gmail.com>
+# Copyright (C) 2015-2021 Kyle J. McKay <mackyle@gmail.com>
 # All rights reserved
 # GPLv2
 
 USAGE="\
-Usage: ${tgname:-tg} [...] export [--collapse] [--force] [-s <mode>] <newbranch>
-   Or: ${tgname:-tg} [...] export --linearize [--force] [-s <mode>] <newbranch>
+Usage: ${tgname:-tg} [...] export [--collapse] [--force] [<option>...] <newbranch>
+   Or: ${tgname:-tg} [...] export --linearize [--force] [<option>...] <newbranch>
    Or: ${tgname:-tg} [...] export --quilt [--force] [-a | --all | -b <branch>...]
-                [--binary] [--flatten] [--numbered] [--strip[=N]] <directory>"
+                [--binary] [--flatten] [--numbered] [--strip[=N]] <directory>
+Options:
+       -s <mode>        set subject bracketed [strings] strip mode
+       --notes[=<ref>]  export .topmsg --- comment to notes ref <ref>
+       --no-notes       discard .topmsg --- comment"
 
 usage()
 {
@@ -34,6 +38,8 @@ stripval=0
 smode=
 allbranches=
 binary=
+notesflag=
+notesref=
 pl=
 
 ## Parse options
@@ -65,8 +71,29 @@ while [ -n "$1" ]; do
 			strip=1
 			stripval="$val"
 		else
-			die "invalid parameter $arg"
+			die "invalid --strip parameter $arg"
 		fi;;
+	--notes*)
+		val="${arg#*=}"
+		if [ "$val" = "--notes" ]; then
+			notesflag=1
+			notesref="refs/notes/commits"
+		elif [ -n "$val" ] && [ "${val#-}" = "$val" ]; then
+			case "$val" in
+			refs/notes/*) checknref="$val";;
+			notes/*) checknref="refs/$val";;
+			*) checknref="refs/notes/$val";;
+			esac
+			git check-ref-format "$checknref" >/dev/null 2>&1 ||
+				die "invalid --notes parameter $arg"
+			notesflag=1
+			notesref="$checknref"
+		else
+			die "invalid --notes parameter $arg"
+		fi;;
+	--no-notes)
+		notesflag=0
+		notesref=;;
 	-s)
 		test $# -gt 0 && test -n "$1" || die "-s requires an argument"
 		smode="$1"; shift;;
@@ -87,6 +114,9 @@ done
 [ -z "$smode" ] || [ "$driver" != "quilt" ] ||
 	die "-s works only with the collapse/linearize driver"
 
+[ "${notesflag:-0}" = "0" ] || [ "$driver" != "quilt" ] ||
+	die "--notes works only with the collapse/linearize driver"
+
 if [ "$driver" != "quilt" ]; then
 	test -n "$smode" || smode="$(git config topgit.subjectmode)" || :
 	case "${smode:-tg}" in
@@ -95,6 +125,28 @@ if [ "$driver" != "quilt" ]; then
 		topgit|patch|mailinfo|trim|keep);;
 		*) die "invalid subject mode: $smode"
 	esac
+	if [ -z "$notesflag" ]; then
+		if notesflag="$(git config --bool --get topgit.notesexport 2>/dev/null)"; then
+			case "$notesflag" in
+			true) notesflag=1; notesref="refs/notes/commits";;
+			false) notesflag=0; notesref=;;
+			esac
+		elif
+			notesflag="$(git config --get topgit.notesexport 2>/dev/null)" &&
+			test -n "$notesflag"
+		then
+			case "$notesflag" in
+			"-"*) checknref="$notesflag";;
+			refs/notes/*) checknref="$notesflag";;
+			notes/*) checknref="refs/$notesflag";;
+			*) checknref="refs/notes/$notesflag";;
+			esac
+			git check-ref-format "$checknref" >/dev/null 2>&1 ||
+				die "invalid topgit.notesExport config setting \"$notesflag\""
+			notesflag=1
+			notesref="$checknref"
+		fi
+	fi
 fi
 
 [ -z "$branches" ] || [ "$driver" = "quilt" ] ||
@@ -176,7 +228,20 @@ create_tg_commit()
 
 	# Get commit message and authorship information
 	git cat-file blob "$name:.topmsg" 2>/dev/null |
-	git mailinfo $mik "$playground/^msg" /dev/null > "$playground/^info"
+	awk -v nf="$playground/^notes" '
+		BEGIN {m=0; printf "%s", "" >nf}
+		m {print >nf; next}
+		/^---[ \t]*$/ {m=1; next}
+		{print}
+		END {close(nf)}
+	' | git mailinfo $mik "$playground/^msg" /dev/null > "$playground/^info"
+	if
+		[ "${notesflag:-0}" = "1" ] && [ -n "$notesref" ] &&
+		[ -s "$playground/^notes" ]
+	then
+		git stripspace <"$playground/^notes" >"$playground/^notes,"
+		mv -f "$playground/^notes," "$playground/^notes"
+	fi
 
 	unset GIT_AUTHOR_NAME
 	unset GIT_AUTHOR_EMAIL
@@ -218,9 +283,23 @@ create_tg_commit()
 	export GIT_AUTHOR_DATE
 	export GIT_COMMITTER_DATE
 
-	(printf '%s\n\n' "${SUBJECT:-$name}"; cat "$playground/^msg") |
-	git stripspace |
-	git commit-tree "$tree" -p "$parent"
+	_cmttreecmd='{
+		printf "%s\n\n" "${SUBJECT:-$name}"
+		cat "$playground/^msg"
+	} | git stripspace |
+	git commit-tree "$tree" -p "$parent"'
+
+	if
+		[ "${notesflag:-0}" = "1" ] && [ -n "$notesref" ] &&
+		[ -s "$playground/^notes" ]
+	then
+		_notesblob="$(git hash-object -t blob -w --stdin <"$playground/^notes")"
+		_cmtnew="$(eval "$_cmttreecmd")"
+		git notes --ref="$notesref" add -f -C "$_notesblob" "$_cmtnew" >/dev/null 2>&1 || :
+		printf '%s\n' "$_cmtnew"
+	else
+		eval "$_cmttreecmd"
+	fi
 
 	unset GIT_AUTHOR_NAME
 	unset GIT_AUTHOR_EMAIL
