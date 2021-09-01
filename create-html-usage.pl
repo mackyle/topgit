@@ -22,10 +22,16 @@ sub get_tg_usage($)
 	if (defined $xname) {
 		my $usage = `"$xname" -h 2>&1`;
 		chomp $usage;
+		my $opts;
+		($usage,$opts) = split "\nOptions:\n", $usage;
 		$usage =~ s/^(Usage|\s+Or):\s*/: /mig;
 		$usage =~ s/[ \t]*\n[ \t]+/ /gs;
 		$usage =~ s/^: //mig;
-		return split "\n", $usage;
+		defined $opts or $opts="";
+		$opts =~ s/^[ \t]*(?=-)/: /mig;
+		$opts =~ s/[ \t]*\n[ \t]+/ /gs;
+		$opts =~ s/^: //mig;
+		return ([split "\n", $usage],[split "\n", $opts]);
 	} elsif ($name eq "help") {
 		return "tg help [-w] [<command>]";
 	} elsif ($name eq "status") {
@@ -40,7 +46,7 @@ sub wrap
 	my ($w, $i, $s) = @_;
 	my $h = ' ' x $i;
 	my $ans = '';
-	while (length($s) > $w && $s =~ /^(.{1,$w})(?<=\w)\b[ \t]+(.+)$/s) {
+	while (length($s) > $w && $s =~ /^(.{1,$w})(?<=[]|\w])[ \t]+(.+)$/s) {
 		$ans .= $1."\n";
 		$s = "$h$2";
 	}
@@ -82,12 +88,21 @@ while (<>) {
 		printf "%s\n",  $last;
 		if (/^[~]+$/ && $last =~ /^tg ([^\s]+)$/) {
 			my @usage = get_tg_usage($1);
+			my @options = ();
+			if (@usage && ref($usage[0]) eq 'ARRAY') {
+				@options = @{$usage[1]} if ref($usage[1]) eq 'ARRAY';
+				@usage = @{$usage[0]};
+			}
 			if (@usage) {
 				printf "%s\n", $_;
 				if ($textmode) {
 					printf "%s", join("",map({wrap(78, 12, "$tab$_")."\n"} @usage));
+					@options and printf "${tab}Options:\n%s",
+						join("",map({wrap(78, 24, "$tab       $_")."\n"} @options));
 				} else {
 					printf "%s", join("",map({"$tab| ".'``'.$_.'``'."\n"} @usage));
+					@options and printf "$tab|\n$tab| ".'``Options:``'."\n%s",
+						join("",map({"$tab|   ".'``'.$_.'``'."\n"} @options));
 				}
 				$_ = "";
 			}
