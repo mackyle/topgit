@@ -191,6 +191,7 @@ fi
 ## Auto-guess dependencies
 
 [ "$name" != "@" ] || name="HEAD"
+[ -z "$nodeps" ] || [ $# -ne 1 ] || [ "$1" != "@" ] || set -- "HEAD"
 if [ -z "$*" ]; then
 	# The common case
 	[ -n "$name" ] || die "no branch name given"
