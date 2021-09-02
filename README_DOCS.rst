@@ -2720,6 +2720,9 @@ GLOSSARY
 		line omitting the leading ``refs/heads/`` part.  See also
 		IMPLEMENTATION_.
 
+	3-way merge
+		See three-way merge.
+
 	branch containment
 		Given two Git commit identifiers (e.g. hashes) C1 and C2,
 		commit C1 "contains" commit C2 if either they are the same
