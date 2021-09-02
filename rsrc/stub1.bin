@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>TopGit &#x2013; A different patch queue manager</title>
+<meta charset="utf-8" />
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<style type="text/css">
+/* <![CDATA[
+ *
+ * Style sheet for TopGit topgit.html documentation
+ * Copyright (C) 2021 Kyle J. McKay
+ * All rights reserved
+ * License GPL2
+ *
+ */
+
+body {
+	font-family: Times, serif;
+	font-size: medium;
+	font-weight: normal;
+}
+h1, h2, h3, th.field-name, a.reference.internal {
+	font-family: Helvetica, sans-serif;
+	font-weight: normal;
+}
+h1 {
+	font-size: large;
+	margin-top: 1.25em;
+	margin-bottom: 0.75em;
+}
+h1.title {
+	font-size: xx-large;
+	text-align: center;
+	margin-top: 1em;
+	margin-bottom: 1em;
+}
+h2 {
+	font-size: medium;
+	margin-top: 1em;
+	margin-bottom: 1em;
+	font-variant: small-caps;
+}
+div#usage h2 {
+	margin-top: 1.25em;
+	margin-bottom: 0.75em;
+	font-variant: normal;
+	font-weight: bold;
+}
+div#usage blockquote {
+	margin-top: 0;
+	margin-bottom: 0;
+}
+h3 {
+	font-size: medium;
+	margin-top: 1em;
+	margin-bottom: 1em;
+}
+div {
+	margin: 0;
+}
+pre, tt {
+	font-family: Menlo, Consolas, Courier, monospace;
+	font-size: smaller;
+	font-weight: normal;
+}
+pre {
+	margin: 0 3ex;
+	border: thin dotted;
+	padding: 0.5em 1ex;
+}
+tt {
+	white-space: nowrap;
+	padding: 0 0.5ex;
+}
+div.line-block {
+	margin-bottom: 1em;
+}
+div.line-block > div.line-block {
+	margin-left: 2ex;
+}
+div.line {
+	padding-left: 4ex;
+	text-indent: -4ex;
+}
+div.line tt {
+	white-space: pre-wrap;
+}
+p {
+	text-align: justify;
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+}
+div#usage p, div#merge-strategies ol * {
+	text-align: left;
+}
+dl, ol {
+	margin-top: 1em;
+}
+li > dl, dt, div#conventions li {
+	margin-top: 0.5em;
+}
+dd > p {
+	margin: 0;
+}
+th, td {
+	vertical-align: top;
+}
+td.option-group {
+	padding-right: 1ex;
+}
+td.option-group span.option {
+	white-space: nowrap;
+}
+tr.field {
+	line-height: 1.0;
+}
+th.field-name {
+	padding-right: 2ex;
+}
+th.field-name,
+th.field-name + td {
+	padding-top: 0.33333em;
+}
+tbody > tr:first-child > th.field-name,
+tbody > tr:first-child > th.field-name + td {
+	padding-top: 0;
+}
+th[colspan="2"].field-name {
+	vertical-align: bottom;
+	padding-bottom: 0;
+}
+tr.field > td:first-child, tr.field > td:first-child + td {
+	padding-top: 0;
+}
+th.field-name > tt, dt > tt {
+	padding-right: 0;
+}
+ol.loweralpha {
+	list-style-type: lower-alpha;
+}
+ol.lowerroman {
+	list-style-type: lower-roman;
+}
+
+/*
+ * ]]>
+ */
+</style>
+</head>
+<body style="text-align:center">
+<div style="display:inline-block;text-align:left;max-width:44pc">

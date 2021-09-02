@@ -102,7 +102,7 @@ while (<>) {
 				} else {
 					printf "%s", join("",map({"$tab| ".'``'.$_.'``'."\n"} @usage));
 					@options and printf "$tab|\n$tab| ".'``Options:``'."\n%s",
-						join("",map({"$tab|   ".'``'.$_.'``'."\n"} @options));
+						join("",map({"$tab|   ".'``&#160;&#160;'.$_.'``'."\n"} @options));
 				}
 				$_ = "";
 			}

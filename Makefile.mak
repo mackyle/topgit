@@ -166,13 +166,26 @@ html: topgit.html $(html_out)
 tg-tg.txt: README_DOCS.rst create-html-usage.pl $(commands_in)
 	$(QHELPTG)perl ./create-html-usage.pl --text < README_DOCS.rst > $@
 
-topgit.html: README_DOCS.rst create-html-usage.pl $(commands_in)
+TOPGIT_HTML_SRCS = \
+	README_DOCS.rst \
+	rsrc/stub1.bin \
+	rsrc/stub2.bin \
+	Makefile.mt
+#TOPGIT_HTML_SRCS
+
+topgit.html: $(TOPGIT_HTML_SRCS) Makefile.mak create-html-usage.pl $(commands_in)
 	$(Q)command -v "$${RST2HTML:-rst2html}" >/dev/null || \
 	{ echo "need $${RST2HTML:-rst2html} to make $@" >&2; exit 1; }
 	$(QPOUND)echo "# \$${RST2HTML:-rst2html} is \"$${RST2HTML:-rst2html}\""
-	$(QHTMLTOPGIT)perl ./create-html-usage.pl < README_DOCS.rst | "$${RST2HTML:-rst2html}" - $@.tmp && \
-	LC_ALL=C sed -e 's/&nbsp;/\&#160;/g' -e 's/<th class=/<th align="left" class=/g' <$@.tmp >$@ && \
-	rm -f $@.tmp
+	$(QHTMLTOPGIT)perl ./create-html-usage.pl < README_DOCS.rst | \
+	"$${RST2HTML:-rst2html}" --stylesheet-path=Makefile.mt - $@.tmp && \
+	{ cat rsrc/stub1.bin && \
+	LC_ALL=C sed -e 's/&nbsp;/\&#160;/g' -e 's/<th class=/<th align="left" class=/g' \
+		-e 's/ -- / \&#x2013; /g' -e 's/&amp;#160;/\&#160;/g' \
+		-e 's/<ol class="lowerroman/<ol type="i" class="lowerroman/g' \
+		-e 's/<ol class="loweralpha/<ol type="a" class="loweralpha/g' <$@.tmp | \
+	LC_ALL=C awk '/^<body/{p=1;next}/^<\/body/{p=0;next}p{print}' && \
+	cat rsrc/stub2.bin; } >$@ && rm -f $@.tmp
 
 $(html_out): create-html.sh
 	$(QHTML)CMD="$@" && CMD="$${CMD#tg-}" && CMD="$${CMD%.html}" && \
