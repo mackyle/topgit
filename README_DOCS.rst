@@ -281,16 +281,18 @@ There are three typical uses for a TopGit branch:
     3. [STAGE]
        Empty TopGit branches that serve as a staging area to bring together
        several other TopGit branches into one place so they can be used/tested
-       all together.  These are known as "stage" TopGit branches.
+       all together.  These are known as "stage" TopGit branches and are
+       sometimes named [RELEASE] instead of [STAGE].
 
-An "empty" TopGit branch is one that does not have any changes of its own --
-it may still have dependencies though ("stage" branches do, "base" branches do
-not).  The ``tg summary`` output shows empty branches with a ``0`` in the
-listing.  Normal "patch" branches that have not been annihilated, "base" and
-"stage" branches fall into this category.  (Annihilated branches are normally
+An "empty" TopGit branch is one that does not have any changes of its own -- it
+may still have dependencies though ("stage" branches do, "base" branches do
+not).  The ``tg summary`` output shows empty branches annotated with a ``0`` in
+the output.  Branches which have not been annihilated (but which still might be
+"empty") such as normal "patch" branches, "base" and "stage" branches are shown
+in the ``tg summary`` output by default.  Annihilated branches are normally
 omitted from the ``tg summary`` output but can be shown if given explicitly as
 an argument to the ``tg summary`` command.  However, the message line will be
-incorrect since an annihilated branch has no ``.topmsg`` file of its own.)
+unavailable since an annihilated branch has no ``.topmsg`` file of its own.
 
 A "patch" branch name typically starts with ``t/`` whereas "base" and "stage"
 branch names often do not.
