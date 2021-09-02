@@ -952,7 +952,7 @@ tg create
 
 	The commit message can be changed with the ``-m`` (or ``--message``) or
 	``-F`` (or ``--file``) option.  The automatic commit can be suppressed
-	by using the ``--no-ccmmit`` (or ``-n``) option.  Running the editor on
+	by using the ``--no-commit`` (or ``-n``) option.  Running the editor on
 	the new ``.topmsg`` file can be suppressed by using ``--no-edit``
 	(which does *NOT* suppress the automatic commit unless ``--no-commit``
 	is also given) or by providing an explicit value for the new
