@@ -879,13 +879,17 @@ non_annihilated_branches()
 
 # Make sure our tree is clean
 # if optional "$1" given also verify that a checkout to "$1" would succeed
+# Note that the empty tree can always be used as a diff target even if it's not
+# actually a real, concrete object in the repository (since Git v1.5.5)
 ensure_clean_tree()
 {
 	check_status
 	[ -z "$tg_state$git_state" ] || { do_status; exit 1; }
 	git update-index --ignore-submodules --refresh ||
 		die "the working directory has uncommitted changes (see above) - first commit or reset them"
-	[ -z "$(git diff-index --cached --name-status -r --ignore-submodules HEAD --)" ] ||
+	_ectHEAD="$(git rev-parse --verify --quiet "HEAD^{tree}" -- 2>/dev/null)" && [ -n "$_ectHEAD" ] ||
+		_ectHEAD="$mttree"
+	[ -z "$(git diff-index --cached --name-status -r --ignore-submodules "$_ectHEAD" -- 2>/dev/null)" ] ||
 		die "the index has uncommited changes"
 	[ -z "$1" ] || git read-tree -n -u -m "$1" ||
 		die "git checkout \"$1\" would fail"
@@ -2187,10 +2191,12 @@ setup_hashalgo_vars()
 	case "${#mtblob}" in
 	40)
 		nullsha="0000000000000000000000000000000000000000"
+		 mttree="4b825dc642cb6eb9a060e54bf8d69288fbee4904"
 		octethl="$octet20"
 		;;
 	64)
 		nullsha="0000000000000000000000000000000000000000000000000000000000000000"
+		 mttree="6ef19b41225c5369f1c104d45d8d85efa9b057b53b14b4b9b939dd74decc5321"
 		octethl="$octet32"
 		;;
 	*)
