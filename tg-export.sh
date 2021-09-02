@@ -517,7 +517,7 @@ if [ "$driver" = "collapse" ] || [ "$driver" = "linearize" ]; then
 	ensure_ident_available
 	setup_smode
 	[ -z "$wayback" ] || wayback_push="$(git config --get remote.wayback.url 2>/dev/null)" || :
-	[ -z "$wayback" ] || [ -n "$wayback_push" ] || die "enable to configure wayback export"
+	[ -z "$wayback" ] || [ -n "$wayback_push" ] || die "failed to configure wayback export"
 
 elif [ "$driver" = "quilt" ]; then
 	[ -n "$output" ] ||
