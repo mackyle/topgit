@@ -6,7 +6,7 @@ TEST_NO_CREATE_REPO=1
 
 . ./test-lib.sh
 
-test_plan 11
+test_plan 16
 
 case "$test_hash_algo" in
 sha1)
@@ -383,8 +383,8 @@ index $startblob..0000000
 	test_diff ../expected ../actual
 '
 
-test_expect_success 'detached HEAD import fails' '
-	test_create_repo r10 && cd r10 &&
+test_expect_success 'detached implicit HEAD import succeeds with empty .topdeps' '
+	test_create_repo r10a && cd r10a &&
 	test_commit --notick start^here &&
 	git branch base &&
 	test_commit --notick one^ &&
@@ -395,9 +395,94 @@ test_expect_success 'detached HEAD import fails' '
 	git commit --allow-empty -m "empty" &&
 	git clean -d -f -x &&
 	git checkout --detach HEAD &&
-	test_must_fail tg import base..master &&
-	test_must_fail tg import -d HEAD base..master &&
-	test_must_fail tg import -d @ base..master
+	tg import base..master &&
+	git checkout t/one &&
+	>expected &&
+	test_cmp .topdeps expected
+'
+
+test_expect_success 'detached explicit HEAD import succeeds with empty .topdeps' '
+	test_create_repo r10b && cd r10b &&
+	test_commit --notick start^here &&
+	git branch base &&
+	test_commit --notick one^ &&
+	test_commit --notick two^ &&
+	test_commit --notick three^ &&
+	git checkout --orphan alt &&
+	git read-tree --empty &&
+	git commit --allow-empty -m "empty" &&
+	git clean -d -f -x &&
+	git checkout --detach HEAD &&
+	tg import -d HEAD base..master &&
+	git checkout t/one &&
+	>expected &&
+	test_cmp .topdeps expected
+'
+
+test_expect_success 'detached explicit @ import succeeds with empty .topdeps' '
+	test_create_repo r10c && cd r10c &&
+	test_commit --notick start^here &&
+	git branch base &&
+	test_commit --notick one^ &&
+	test_commit --notick two^ &&
+	test_commit --notick three^ &&
+	git checkout --orphan alt &&
+	git read-tree --empty &&
+	git commit --allow-empty -m "empty" &&
+	git clean -d -f -x &&
+	git checkout --detach HEAD &&
+	tg import -d @ base..master &&
+	git checkout t/one &&
+	>expected &&
+	test_cmp .topdeps expected
+'
+
+test_expect_success 'unborn implicit HEAD import succeeds with empty .topdeps' '
+	test_create_repo r10d && cd r10d &&
+	test_commit --notick start^here &&
+	git branch base &&
+	test_commit --notick one^ &&
+	test_commit --notick two^ &&
+	test_commit --notick three^ &&
+	git checkout --orphan alt &&
+	git read-tree --empty &&
+	git clean -d -f -x &&
+	tg import base..master &&
+	git checkout t/one &&
+	>expected &&
+	test_cmp .topdeps expected
+'
+
+test_expect_success 'unborn explicit HEAD import succeeds with empty .topdeps' '
+	test_create_repo r10e && cd r10e &&
+	test_commit --notick start^here &&
+	git branch base &&
+	test_commit --notick one^ &&
+	test_commit --notick two^ &&
+	test_commit --notick three^ &&
+	git checkout --orphan alt &&
+	git read-tree --empty &&
+	git clean -d -f -x &&
+	tg import -d HEAD base..master &&
+	git checkout t/one &&
+	>expected &&
+	test_cmp .topdeps expected
+'
+
+test_expect_success 'unborn explicit @ import succeeds with empty .topdeps' '
+	test_create_repo r10f && cd r10f &&
+	test_commit --notick start^here &&
+	git branch base &&
+	test_commit --notick one^ &&
+	test_commit --notick two^ &&
+	test_commit --notick three^ &&
+	git checkout --orphan alt &&
+	git read-tree --empty &&
+	git clean -d -f -x &&
+	tg import -d @ base..master &&
+	git checkout t/one &&
+	>expected &&
+	test_cmp .topdeps expected
 '
 
 auh_opt=

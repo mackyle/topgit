@@ -136,7 +136,15 @@ process_commit()
 	info "---- Importing $commit to $branch_name"
 	lastsymref="$(git symbolic-ref --quiet HEAD)" || :
 	lasthead="$(git rev-parse --verify --quiet HEAD -- 2>/dev/null)" || :
-	tg create --quiet --no-edit "$branch_name" $basedep || die "tg create failed"
+	nodeps=
+	if [ -n "$isfirst" ]; then
+		if [ "$basedep" = "" ] || [ "$basedep" = "HEAD" ] || [ "$basedep" = "@" ]; then
+			if [ -z "$lastsymref" ] || [ -z "$lasthead" ]; then
+				nodeps='--no-deps'
+			fi
+		fi
+	fi
+	tg create --quiet --no-edit $nodeps "$branch_name" $basedep || die "tg create failed"
 	basedep=
 	get_commit_msg "$commit" > .topmsg
 	if [ "${notesflag:-0}" = "1" ] && [ -n "$notesref" ]; then
