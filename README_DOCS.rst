@@ -1,5 +1,5 @@
 =========================================
-TopGit -- A different patch queue manager
+TopGit -- A Different Patch Queue Manager
 =========================================
 
 
