@@ -2870,15 +2870,15 @@ GLOSSARY
 
 			b) The TopGit branch does NOT contain its
 			   corresponding remote branch (there may not be
-			   a remote branch in which case this does not apply)
+			   a remote branch in which case this does not apply).
 
 			c) The TopGit branch's base does NOT contain its
 			   corresponding remote branch's base (there may not be
-			   a remote branch in which case this does not apply)
+			   a remote branch in which case this does not apply).
 
 			d) Any of the TopGit branches listed in the branch's
-			   ``.topdeps`` file are NOT contained by the branch.
-			   (See "branch containment" above.)
+			   ``.topdeps`` file are NOT contained by the branch's
+			   base (see "branch containment" above).
 
 			e) Any of the TopGit branches listed in the branch's
 			   ``.topdeps`` file are out-of-date.
