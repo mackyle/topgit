@@ -2086,11 +2086,13 @@ tg tag
 	Note that the time and date shown for reflog entries by ``tg tag -g``
 	is the actual time and date recorded in that reflog entry itself which
 	usually is the time and date that entry was added to the reflog, *not*
-	the time and date of the commit it refers to.  Git itself never shows
-	the reflog entry timestamps (even with ``--pretty=fuller``) instead it
-	uses the time and date from the commit the reflog entry refers to which
-	is not particularly helpful when looking at a reflog for ``HEAD`` that
-	might contain several different entries that point at the same commit.
+	the time and date of the commit it refers to.  Git itself will only
+	ever show the time and date recorded in a reflog entry when given just
+	the right arguments to ``git log``, but then the reflog entry's time
+	and date are always shown *in place of* its index number.
+
+	By contrast, ``tg tag -g`` always shows the reflog entry's time and
+	date *together with* its reflog entry index number.
 
 	The number of entries shown may be limited with the ``-n`` option.  If
 	the tagname is omitted then ``--stash`` is assumed.
