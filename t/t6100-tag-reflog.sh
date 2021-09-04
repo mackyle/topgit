@@ -15,7 +15,6 @@ fi
 git_231_plus=
 if vcmp "$git_version" '>=' "2.31"; then
 	git_231_plus=1
-	test_set_prereq "GIT_2_31"
 fi
 
 test_plan 50
@@ -102,10 +101,11 @@ test_expect_success 'setup main' '
 '
 
 test_expect_success 'LASTOK GIT_2_5' 'setup linked' '
-	git --git-dir=main/.git worktree add --no-checkout -b linked linked "$mtcommit" &&
+	git --git-dir=main/.git worktree add -b linked linked "$mtcommit" &&
 	cd linked &&
-	# there should be a HEAD@{0} now but there probably is not
-	# remove it just in case so this test does not break if it ever gets fixed
+	# there will be a HEAD@{0} now and there might be a HEAD@{1}
+	# account for both so this test does not break if it ever gets fixed
+	test_might_fail git reflog delete HEAD@{1} &&
 	test_might_fail git reflog delete HEAD@{0} &&
 	git update-ref -d refs/heads/linked &&
 	commit_empty_root "empty linked" &&
@@ -1394,62 +1394,98 @@ test_expect_success 'SETUP GIT_2_5' 'rev-parse --verify linked@{0..4}' '
 	test_cmp_rev linked linked@{0}
 '
 
-test_expect_success '!GIT_2_31 SETUP' 'tag --drop symref HEAD@{0}' '
+test_expect_success SETUP 'tag --drop symref HEAD@{0}' '
 	cd main &&
 	h0="$(git rev-parse --verify HEAD@{0})" && test -n "$h0" &&
 	h1="$(git rev-parse --verify HEAD@{1})" && test -n "$h1" &&
 	h="$(git rev-parse --verify HEAD)" && test -n "$h" &&
-	test "$h" = "$h0" &&
-	test "$h0" != "$h1" &&
+	if test -n "$git_231_plus"; then
+		test "$h" != "$h0" &&
+		test "$h0" = "$h1"
+	else
+		test "$h" = "$h0" &&
+		test "$h0" != "$h1"
+	fi &&
 	tg tag --drop HEAD@{0} &&
 	h0new="$(git rev-parse --verify HEAD@{0})" && test -n "$h0new" &&
 	hnew="$(git rev-parse --verify HEAD)" && test -n "$hnew" &&
-	test "$hnew" = "$h0new" &&
-	test "$h0new" = "$h0"
+	if test -n "$git_231_plus"; then
+		test "$hnew" != "$h0new"
+	else
+		test "$hnew" = "$h0new"
+	fi &&
+	test "$h0new" = "$h0" &&
+	test "$hnew" = "$h"
 '
 
-test_expect_success '!GIT_2_31 SETUP GIT_2_5' 'tag --drop symref HEAD@{0} [linked]' '
+test_expect_success 'SETUP GIT_2_5' 'tag --drop symref HEAD@{0} [linked]' '
 	cd linked &&
 	h0="$(git rev-parse --verify HEAD@{0})" && test -n "$h0" &&
 	h1="$(git rev-parse --verify HEAD@{1})" && test -n "$h1" &&
 	h="$(git rev-parse --verify HEAD)" && test -n "$h" &&
-	test "$h" = "$h0" &&
-	test "$h0" != "$h1" &&
+	if test -n "$git_231_plus"; then
+		test "$h" != "$h0" &&
+		test "$h0" = "$h1"
+	else
+		test "$h" = "$h0" &&
+		test "$h0" != "$h1"
+	fi &&
 	tg tag --drop HEAD@{0} &&
 	h0new="$(git rev-parse --verify HEAD@{0})" && test -n "$h0new" &&
 	hnew="$(git rev-parse --verify HEAD)" && test -n "$hnew" &&
-	test "$hnew" = "$h0new" &&
-	test "$h0new" = "$h0"
+	if test -n "$git_231_plus"; then
+		test "$hnew" != "$h0new"
+	else
+		test "$hnew" = "$h0new"
+	fi &&
+	test "$h0new" = "$h0" &&
+	test "$hnew" = "$h"
 '
 
-test_expect_success '!GIT_2_31 SETUP' 'tag --drop detached HEAD@{0}' '
+test_expect_success SETUP 'tag --drop detached HEAD@{0}' '
 	cd main &&
 	git update-ref -m detach --no-deref HEAD HEAD HEAD &&
 	h0="$(git rev-parse --verify HEAD@{0})" && test -n "$h0" &&
 	h1="$(git rev-parse --verify HEAD@{1})" && test -n "$h1" &&
 	h="$(git rev-parse --verify HEAD)" && test -n "$h" &&
 	test "$h" = "$h0" &&
-	test "$h0" != "$h1" &&
+	if test -n "$git_231_plus"; then
+		test "$h0" = "$h1"
+	else
+		test "$h0" != "$h1"
+	fi &&
 	tg tag --drop HEAD@{0} &&
 	h0new="$(git rev-parse --verify HEAD@{0})" && test -n "$h0new" &&
 	hnew="$(git rev-parse --verify HEAD)" && test -n "$hnew" &&
-	test "$hnew" = "$h0new" &&
-	test "$h0new" = "$h1"
+	if test -n "$git_231_plus"; then
+		test "$h0new" != "$h1"
+	else
+		test "$h0new" = "$h1"
+	fi &&
+	test "$hnew" = "$h0new"
 '
 
-test_expect_success '!GIT_2_31 SETUP GIT_2_5' 'tag --drop detached HEAD@{0} [linked]' '
+test_expect_success 'SETUP GIT_2_5' 'tag --drop detached HEAD@{0} [linked]' '
 	cd linked &&
 	git update-ref -m detach --no-deref HEAD HEAD HEAD &&
 	h0="$(git rev-parse --verify HEAD@{0})" && test -n "$h0" &&
 	h1="$(git rev-parse --verify HEAD@{1})" && test -n "$h1" &&
 	h="$(git rev-parse --verify HEAD)" && test -n "$h" &&
 	test "$h" = "$h0" &&
-	test "$h0" != "$h1" &&
+	if test -n "$git_231_plus"; then
+		test "$h0" = "$h1"
+	else
+		test "$h0" != "$h1"
+	fi &&
 	tg tag --drop HEAD@{0} &&
 	h0new="$(git rev-parse --verify HEAD@{0})" && test -n "$h0new" &&
 	hnew="$(git rev-parse --verify HEAD)" && test -n "$hnew" &&
-	test "$hnew" = "$h0new" &&
-	test "$h0new" = "$h1"
+	if test -n "$git_231_plus"; then
+		test "$h0new" != "$h1"
+	else
+		test "$h0new" = "$h1"
+	fi &&
+	test "$hnew" = "$h0new"
 '
 
 test_expect_success SETUP 'staleify two log entries' '
@@ -1566,7 +1602,7 @@ test_expect_success 'SETUP GIT_2_5' 'tag --drop linked@{0} final entries' '
 	git rev-parse --verify linked -- >/dev/null
 '
 
-! { test "$test_hash_algo" = "sha1" && test -z "$git_231_plus"; } ||
+test "$test_hash_algo" != "sha1" ||
 cat <<\EOT >tgHEAD_main_pre2 || die
 === 2005-04-07 ===
 dd1016e3 15:20:13 (commit) HEAD@{0}: file 7
@@ -1575,13 +1611,13 @@ c0ed6e70 15:15:13 (commit) HEAD@{2}: file 2
 c18fcef2 15:14:13 (commit) HEAD@{3}: file 1
 EOT
 
-! { test "$test_hash_algo" = "sha1" && test -z "$git_231_plus"; } ||
+test "$test_hash_algo" != "sha1" ||
 cat <<\EOT >tgHEAD_main_double || die
 === 2005-04-07 ===
 c18fcef2 15:14:13 (commit) HEAD@{0}: file 1
 EOT
 
-! { test "$test_hash_algo" = "sha256" && test -z "$git_231_plus"; } ||
+test "$test_hash_algo" != "sha256" ||
 cat <<\EOT >tgHEAD_main_pre2 || die
 === 2005-04-07 ===
 e784e427 15:20:13 (commit) HEAD@{0}: file 7
@@ -1590,48 +1626,10 @@ e784e427 15:20:13 (commit) HEAD@{0}: file 7
 ecf5cd74 15:14:13 (commit) HEAD@{3}: file 1
 EOT
 
-! { test "$test_hash_algo" = "sha256" && test -z "$git_231_plus"; } ||
+test "$test_hash_algo" != "sha256" ||
 cat <<\EOT >tgHEAD_main_double || die
 === 2005-04-07 ===
 ecf5cd74 15:14:13 (commit) HEAD@{0}: file 1
-EOT
-
-! { test "$test_hash_algo" = "sha1" && test -n "$git_231_plus"; } ||
-cat <<\EOT >tgHEAD_main_pre2 || die
-=== 2005-04-07 ===
-dd1016e3 15:20:13 (commit) HEAD@{0}: attaching back to c7
-84b1e4e6 15:19:13 (commit) HEAD@{1}: file 6
-feeb764a 15:16:13 (commit) HEAD@{2}: file 3
-c0ed6e70 15:15:13 (commit) HEAD@{3}: file 2
-c18fcef2 15:14:13 (commit) HEAD@{4}: file 1
-EOT
-
-! { test "$test_hash_algo" = "sha1" && test -n "$git_231_plus"; } ||
-cat <<\EOT >tgHEAD_main_double || die
-=== 2005-04-07 ===
-84b1e4e6 15:19:13 (commit) HEAD@{0}: file 6
-feeb764a 15:16:13 (commit) HEAD@{1}: file 3
-c0ed6e70 15:15:13 (commit) HEAD@{2}: file 2
-c18fcef2 15:14:13 (commit) HEAD@{3}: file 1
-EOT
-
-! { test "$test_hash_algo" = "sha256" && test -n "$git_231_plus"; } ||
-cat <<\EOT >tgHEAD_main_pre2 || die
-=== 2005-04-07 ===
-e784e427 15:20:13 (commit) HEAD@{0}: attaching back to c7
-201a80d1 15:19:13 (commit) HEAD@{1}: file 6
-196f1299 15:16:13 (commit) HEAD@{2}: file 3
-7dec28d6 15:15:13 (commit) HEAD@{3}: file 2
-ecf5cd74 15:14:13 (commit) HEAD@{4}: file 1
-EOT
-
-! { test "$test_hash_algo" = "sha256" && test -n "$git_231_plus"; } ||
-cat <<\EOT >tgHEAD_main_double || die
-=== 2005-04-07 ===
-201a80d1 15:19:13 (commit) HEAD@{0}: file 6
-196f1299 15:16:13 (commit) HEAD@{1}: file 3
-7dec28d6 15:15:13 (commit) HEAD@{2}: file 2
-ecf5cd74 15:14:13 (commit) HEAD@{3}: file 1
 EOT
 
 test_expect_success SETUP 'tag --drop detached HEAD@{0} double stale' '
@@ -1644,19 +1642,12 @@ test_expect_success SETUP 'tag --drop detached HEAD@{0} double stale' '
 	tg tag --drop HEAD@{0} &&
 	tg tag -g HEAD >actual &&
 	test_cmp actual ../tgHEAD_main_double &&
-	if test -z "$git_231_plus"; then
-		test_must_fail git rev-parse --verify --quiet HEAD@{1} -- >/dev/null
-	else
-		test_must_fail git rev-parse --verify --quiet HEAD@{4} -- >/dev/null &&
-		git rev-parse --verify HEAD@{3} -- >/dev/null &&
-		git rev-parse --verify HEAD@{2} -- >/dev/null &&
-		git rev-parse --verify HEAD@{1} -- >/dev/null
-	fi &&
+	test_must_fail git rev-parse --verify --quiet HEAD@{1} -- >/dev/null &&
 	git rev-parse --verify HEAD@{0} -- >/dev/null &&
 	git rev-parse --verify HEAD -- >/dev/null
 '
 
-! { test "$test_hash_algo" = "sha1" && test -z "$git_231_plus"; } ||
+test "$test_hash_algo" != "sha1" ||
 cat <<\EOT >tgHEAD_linked_only || die
 === 2005-04-07 ===
 04eea982 15:20:13 (commit) HEAD@{0}: file 1
@@ -1664,7 +1655,7 @@ cat <<\EOT >tgHEAD_linked_only || die
 0a45d475 15:16:13 (commit) HEAD@{2}: file 5
 EOT
 
-! { test "$test_hash_algo" = "sha256" && test -z "$git_231_plus"; } ||
+test "$test_hash_algo" != "sha256" ||
 cat <<\EOT >tgHEAD_linked_only || die
 === 2005-04-07 ===
 6fda165d 15:20:13 (commit) HEAD@{0}: file 1
@@ -1672,25 +1663,9 @@ cat <<\EOT >tgHEAD_linked_only || die
 8575f83f 15:16:13 (commit) HEAD@{2}: file 5
 EOT
 
-! { test "$test_hash_algo" = "sha1" && test -n "$git_231_plus"; } ||
-cat <<\EOT >tgHEAD_linked_only || die
-=== 2005-04-07 ===
-04eea982 15:20:13 (commit) HEAD@{0}: attaching back to linked c1
-04eea982 15:20:13 (commit) HEAD@{1}: file 1
-40403e00 15:17:13 (commit) HEAD@{2}: file 4
-2849f113 15:14:13 (commit) HEAD@{3}: file 7
-EOT
-
-! { test "$test_hash_algo" = "sha256" && test -n "$git_231_plus"; } ||
-cat <<\EOT >tgHEAD_linked_only || die
-=== 2005-04-07 ===
-6fda165d 15:20:13 (commit) HEAD@{0}: attaching back to linked c1
-6fda165d 15:20:13 (commit) HEAD@{1}: file 1
-e2552eeb 15:17:13 (commit) HEAD@{2}: file 4
-e2473e86 15:14:13 (commit) HEAD@{3}: file 7
-EOT
-
 test_expect_success 'SETUP GIT_2_5' 'tag --drop detached HEAD@{0} [linked] all stale' '
+	result=test_must_fail &&
+	{ test -z "$git_231_plus" || result=; } &&
 	cd linked &&
 	tg tag --drop HEAD@{6} &&
 	tg tag --drop HEAD@{5} &&
@@ -1699,18 +1674,12 @@ test_expect_success 'SETUP GIT_2_5' 'tag --drop detached HEAD@{0} [linked] all s
 	tg tag -g HEAD >actual &&
 	test_cmp actual ../tgHEAD_linked_only &&
 	tg tag --drop HEAD@{0} &&
-	if test -z "$git_231_plus"; then
-		test_must_fail git rev-parse --verify --quiet HEAD@{0} -- >/dev/null
-	else
-		test_must_fail git rev-parse --verify --quiet HEAD@{3} -- >/dev/null
-		git rev-parse --verify HEAD@{2} -- >/dev/null &&
-		git rev-parse --verify HEAD@{1} -- >/dev/null &&
-		git rev-parse --verify HEAD@{0} -- >/dev/null
-	fi &&
+	test_must_fail git rev-parse --verify --quiet HEAD@{1} -- >/dev/null &&
+	eval $result git rev-parse --verify --quiet HEAD@{0} -- >/dev/null &&
 	git rev-parse --verify HEAD -- >/dev/null
 '
 
-! { test "$test_hash_algo" = "sha1" && test -z "$git_231_plus"; } ||
+test "$test_hash_algo" != "sha1" ||
 cat <<\EOT >tgHEAD_main_new || die
 === 2005-04-07 ===
 c18fcef2 15:14:13 (commit) HEAD@{0}: allons master
@@ -1718,34 +1687,12 @@ b63866e5 15:13:13 (commit) HEAD@{1}: to empty main
 c18fcef2 15:14:13 (commit) HEAD@{2}: file 1
 EOT
 
-! { test "$test_hash_algo" = "sha256" && test -z "$git_231_plus"; } ||
+test "$test_hash_algo" != "sha256" ||
 cat <<\EOT >tgHEAD_main_new || die
 === 2005-04-07 ===
 ecf5cd74 15:14:13 (commit) HEAD@{0}: allons master
 079309f2 15:13:13 (commit) HEAD@{1}: to empty main
 ecf5cd74 15:14:13 (commit) HEAD@{2}: file 1
-EOT
-
-! { test "$test_hash_algo" = "sha1" && test -n "$git_231_plus"; } ||
-cat <<\EOT >tgHEAD_main_new || die
-=== 2005-04-07 ===
-b63866e5 15:14:13 (commit) HEAD@{0}: allons master
-b63866e5 15:13:13 (commit) HEAD@{1}: to empty main
-84b1e4e6 15:19:13 (commit) HEAD@{2}: file 6
-feeb764a 15:16:13 (commit) HEAD@{3}: file 3
-c0ed6e70 15:15:13 (commit) HEAD@{4}: file 2
-c18fcef2 15:14:13 (commit) HEAD@{5}: file 1
-EOT
-
-! { test "$test_hash_algo" = "sha256" && test -n "$git_231_plus"; } ||
-cat <<\EOT >tgHEAD_main_new || die
-=== 2005-04-07 ===
-079309f2 15:14:13 (commit) HEAD@{0}: allons master
-079309f2 15:13:13 (commit) HEAD@{1}: to empty main
-201a80d1 15:19:13 (commit) HEAD@{2}: file 6
-196f1299 15:16:13 (commit) HEAD@{3}: file 3
-7dec28d6 15:15:13 (commit) HEAD@{4}: file 2
-ecf5cd74 15:14:13 (commit) HEAD@{5}: file 1
 EOT
 
 test_expect_success SETUP 'rebuild HEAD log' '
@@ -1758,7 +1705,7 @@ test_expect_success SETUP 'rebuild HEAD log' '
 	test_cmp actual ../tgHEAD_main_new
 '
 
-! { test "$test_hash_algo" = "sha1" && test -z "$git_231_plus"; } ||
+test "$test_hash_algo" != "sha1" ||
 cat <<\EOT >tgHEAD_linked_new || die
 === 2005-04-07 ===
 04eea982 15:15:13 (commit) HEAD@{0}: HEAD back
@@ -1766,34 +1713,12 @@ cat <<\EOT >tgHEAD_linked_new || die
 b63866e5 15:13:13 (commit) HEAD@{2}: to empty linked
 EOT
 
-! { test "$test_hash_algo" = "sha256" && test -z "$git_231_plus"; } ||
+test "$test_hash_algo" != "sha256" ||
 cat <<\EOT >tgHEAD_linked_new || die
 === 2005-04-07 ===
 6fda165d 15:15:13 (commit) HEAD@{0}: HEAD back
 e2473e86 15:14:13 (commit) HEAD@{1}: allons linked
 079309f2 15:13:13 (commit) HEAD@{2}: to empty linked
-EOT
-
-! { test "$test_hash_algo" = "sha1" && test -n "$git_231_plus"; } ||
-cat <<\EOT >tgHEAD_linked_new || die
-=== 2005-04-07 ===
-2849f113 15:15:13 (commit) HEAD@{0}: HEAD back
-b63866e5 15:14:13 (commit) HEAD@{1}: allons linked
-b63866e5 15:13:13 (commit) HEAD@{2}: to empty linked
-04eea982 15:20:13 (commit) HEAD@{3}: file 1
-40403e00 15:17:13 (commit) HEAD@{4}: file 4
-2849f113 15:14:13 (commit) HEAD@{5}: file 7
-EOT
-
-! { test "$test_hash_algo" = "sha256" && test -n "$git_231_plus"; } ||
-cat <<\EOT >tgHEAD_linked_new || die
-=== 2005-04-07 ===
-e2473e86 15:15:13 (commit) HEAD@{0}: HEAD back
-079309f2 15:14:13 (commit) HEAD@{1}: allons linked
-079309f2 15:13:13 (commit) HEAD@{2}: to empty linked
-6fda165d 15:20:13 (commit) HEAD@{3}: file 1
-e2552eeb 15:17:13 (commit) HEAD@{4}: file 4
-e2473e86 15:14:13 (commit) HEAD@{5}: file 7
 EOT
 
 test_expect_success 'SETUP GIT_2_5' 'rebuild HEAD log [linked]' '
@@ -1809,7 +1734,7 @@ test_expect_success 'SETUP GIT_2_5' 'rebuild HEAD log [linked]' '
 	test_cmp actual ../tgHEAD_linked_new
 '
 
-! { test "$test_hash_algo" = "sha1" && test -z "$git_231_plus"; } ||
+test "$test_hash_algo" != "sha1" ||
 cat <<\EOT >tgHEAD_main_cleared || die
 commit c18fcef2dd73f7969b45b108d061309b670c886c
 Reflog: HEAD@{0} (Fra mewor k (Committer) <framework@example.org>)
@@ -1822,7 +1747,7 @@ CommitDate: Thu Apr 7 15:14:13 2005 -0700
     file 1
 EOT
 
-! { test "$test_hash_algo" = "sha256" && test -z "$git_231_plus"; } ||
+test "$test_hash_algo" != "sha256" ||
 cat <<\EOT >tgHEAD_main_cleared || die
 commit ecf5cd744123c8f322d61b4a97d18d75f1c25440ca838a9654decff6b8697226
 Reflog: HEAD@{0} (Fra mewor k (Committer) <framework@example.org>)
@@ -1833,32 +1758,6 @@ Commit:     Fra mewor k (Committer) <framework@example.org>
 CommitDate: Thu Apr 7 15:14:13 2005 -0700
 
     file 1
-EOT
-
-! { test "$test_hash_algo" = "sha1" && test -n "$git_231_plus"; } ||
-cat <<\EOT >tgHEAD_main_cleared || die
-commit b63866e540ea13ef92d9eaad23c571912019da41
-Reflog: HEAD@{0} (Fra mewor k (Committer) <framework@example.org>)
-Reflog message: allons master
-Author:     Te s t (Author) <test@example.net>
-AuthorDate: Thu Apr 7 15:13:13 2005 -0700
-Commit:     Fra mewor k (Committer) <framework@example.org>
-CommitDate: Thu Apr 7 15:13:13 2005 -0700
-
-    empty
-EOT
-
-! { test "$test_hash_algo" = "sha256" && test -n "$git_231_plus"; } ||
-cat <<\EOT >tgHEAD_main_cleared || die
-commit 079309f2fa99f1dc84e7d2b40b25766e2e6ff4da86bc8f2be31487085cc9359a
-Reflog: HEAD@{0} (Fra mewor k (Committer) <framework@example.org>)
-Reflog message: allons master
-Author:     Te s t (Author) <test@example.net>
-AuthorDate: Thu Apr 7 15:13:13 2005 -0700
-Commit:     Fra mewor k (Committer) <framework@example.org>
-CommitDate: Thu Apr 7 15:13:13 2005 -0700
-
-    empty
 EOT
 
 test_expect_success SETUP 'tag --clear HEAD' '
@@ -1874,7 +1773,7 @@ test_expect_success SETUP 'tag --clear HEAD' '
 	test_cmp actual ../tgHEAD_main_cleared
 '
 
-! { test "$test_hash_algo" = "sha1" && test -z "$git_231_plus"; } ||
+test "$test_hash_algo" != "sha1" ||
 cat <<\EOT >tgHEAD_linked_cleared || die
 commit 04eea982f4572b35c7cbb6597f5d777661f15e60
 Reflog: HEAD@{0} (Fra mewor k (Committer) <framework@example.org>)
@@ -1887,7 +1786,7 @@ CommitDate: Thu Apr 7 15:20:13 2005 -0700
     file 1
 EOT
 
-! { test "$test_hash_algo" = "sha256" && test -z "$git_231_plus"; } ||
+test "$test_hash_algo" != "sha256" ||
 cat <<\EOT >tgHEAD_linked_cleared || die
 commit 6fda165d8aaa203d2bf9a67dcd750ac6e273489ea89e174866c1170d81cf2f73
 Reflog: HEAD@{0} (Fra mewor k (Committer) <framework@example.org>)
@@ -1898,32 +1797,6 @@ Commit:     Fra mewor k (Committer) <framework@example.org>
 CommitDate: Thu Apr 7 15:20:13 2005 -0700
 
     file 1
-EOT
-
-! { test "$test_hash_algo" = "sha1" && test -n "$git_231_plus"; } ||
-cat <<\EOT >tgHEAD_linked_cleared || die
-commit 2849f113c66cbf3c9521e90be3bc7e39fce8db16
-Reflog: HEAD@{0} (Fra mewor k (Committer) <framework@example.org>)
-Reflog message: HEAD back
-Author:     Te s t (Author) <test@example.net>
-AuthorDate: Thu Apr 7 15:14:13 2005 -0700
-Commit:     Fra mewor k (Committer) <framework@example.org>
-CommitDate: Thu Apr 7 15:14:13 2005 -0700
-
-    file 7
-EOT
-
-! { test "$test_hash_algo" = "sha256" && test -n "$git_231_plus"; } ||
-cat <<\EOT >tgHEAD_linked_cleared || die
-commit e2473e861fd48f0ece81fdbd760dde169c6e00c57b426f85853b59203760214b
-Reflog: HEAD@{0} (Fra mewor k (Committer) <framework@example.org>)
-Reflog message: HEAD back
-Author:     Te s t (Author) <test@example.net>
-AuthorDate: Thu Apr 7 15:14:13 2005 -0700
-Commit:     Fra mewor k (Committer) <framework@example.org>
-CommitDate: Thu Apr 7 15:14:13 2005 -0700
-
-    file 7
 EOT
 
 test_expect_success 'SETUP GIT_2_5' 'tag --clear HEAD [linked]' '
@@ -1949,10 +1822,13 @@ test_expect_success 'SETUP GIT_2_5' 'tag --clear HEAD w/o log fails [linked]' '
 	test_must_fail tg tag --clear HEAD
 '
 
-test_expect_success '!GIT_2_31 LASTOK SETUP GIT_2_5' \
-	'HEAD@{0} fails after tag --clear and --drop @{0} [linked]' '
+test_expect_success 'LASTOK SETUP GIT_2_5' \
+	'HEAD@{0} after tag --clear and --drop @{0} [linked]' '
+	result=test_must_fail &&
+	{ test -z "$git_231_plus" || result=; } &&
 	cd linked &&
-	test_must_fail git rev-parse --verify HEAD@{0} --
+	test_must_fail git rev-parse --verify HEAD@{1} -- &&
+	eval $result git rev-parse --verify HEAD@{0} --
 '
 
 test_expect_success SETUP 'tag --clear HEAD w/o log fails' '
@@ -1965,10 +1841,13 @@ test_expect_success SETUP 'tag --clear HEAD w/o log fails' '
 	test_must_fail tg tag --clear HEAD
 '
 
-test_expect_success '!GIT_2_31 LASTOK SETUP' \
-	'HEAD@{0} fails after tag --clear and --drop @{0}' '
+test_expect_success 'LASTOK SETUP' \
+	'HEAD@{0} after tag --clear and --drop @{0}' '
+	result=test_must_fail &&
+	{ test -z "$git_231_plus" || result=; } &&
 	cd main &&
-	test_must_fail git rev-parse --verify HEAD@{0} --
+	test_must_fail git rev-parse --verify HEAD@{1} -- &&
+	eval $result git rev-parse --verify HEAD@{0} --
 '
 
 test_done
