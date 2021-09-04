@@ -182,7 +182,7 @@ test_expect_success AT0DISTINCT,GIT_2_5 'ref [symref] preserved when dropping di
 	test "$h0p" != "$h0"
 '
 
-test_expect_failure AT0DISTINCT 'ref [actual] preserved when dropping different @{0}' '
+test_expect_success AT0DISTINCT 'ref [actual] preserved when dropping different @{0}' '
 	cd main &&
 	h="$(git rev-parse --verify slithy --)" &&
 	test -n "$h" &&
@@ -198,7 +198,7 @@ test_expect_failure AT0DISTINCT 'ref [actual] preserved when dropping different 
 	test "$h0p" != "$h0"
 '
 
-test_expect_failure AT0DISTINCT,GIT_2_5 'ref [actual] preserved when dropping different @{0} [linked]' '
+test_expect_success AT0DISTINCT,GIT_2_5 'ref [actual] preserved when dropping different @{0} [linked]' '
 	cd linked &&
 	h="$(git rev-parse --verify outgrabe --)" &&
 	test -n "$h" &&

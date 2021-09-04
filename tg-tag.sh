@@ -399,12 +399,14 @@ if [ -n "$drop$clear$delete" ]; then
 		rm -f "$logbase/logs/$refname^-+"
 		printf "Cleared $reftype '%s' reflog to single @{0} entry\n" "$tagname"
 		exit 0
-	else
+	else # -n "$drop"
+		ref="$old"
 		old="$(git rev-parse --verify --short "$refname" -- 2>/dev/null)" || {
 			# if it failed, redo showing STDERR, otherwise suppress STDERR
 			git rev-parse --verify --short "$refname" -- >/dev/null || :
 			exit 1
 		}
+		[ -z "$sfxis0" ] || [ "$ref" = "$old" ] || sfxis0=
 		[ -z "$sfxis0" ] || ! git symbolic-ref -q "${refname%$sfx}" -- >/dev/null 2>&1 || sfxis0=
 		if [ -n "$sfxis0" ]; then
 			[ -f "$logbase/logs/${refname%$sfx}" ] || die "no reflog found for: ${refname%$sfx}"
