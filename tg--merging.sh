@@ -459,3 +459,205 @@ attempt_index_merge() {
 	esac
 	v_attempt_index_merge $_noauto $_mmode "$3" "$@"
 }
+
+# write empty blob and store its hash in the variable named by $1 (if not empty)
+v_write_mt_blob() {
+	__gitmtblob="$(git hash-object -t blob -w --stdin </dev/null 2>/dev/null)" || :
+	[ -n "$__gitmtblob" ] || die "could not write empty blob to object database"
+	[ -z "$1" ] || eval "$1=\"\$__gitmtblob\""
+	return 0
+}
+
+# $1 is variable name to receive written tree (may be empty)
+# $2 is full blob hash to assign to single "blob" file in created tree
+v_write_blob_tree() {
+	_mktreet="$(git mktree <<EOT 2>/dev/null
+100644 blob $2${tab}blob
+EOT
+)" || :
+	[ -n "$_mktreet" ] || return 1
+	[ -z "$1" ] || eval "$1=\"\$_mktreet\""
+	return 0
+}
+
+# $1 is variable name to receive type of object (may be empty)
+# $2 is variable name to receive hash of object (may be empty)
+# $3 is a suitable object name for cat-file --batch-check
+# $4 [optional] if non-empty will be joined to $3 with a ':'
+# if object does not exist status return is not 0
+v_get_object_type() {
+	_goth=
+	_gott=
+	read -r _goth _gott <<EOT || :
+$(git cat-file --batch-check="%(objectname) %(objecttype)" 2>/dev/null <<EOD
+$3${4:+:$4}
+EOD
+)
+EOT
+	case "$_gott" in *"missing")
+		return 1
+	esac
+	[ -n "$_goth" ] && [ -n "$_gott" ] || return 1
+	[ -z "$1" ] || eval "$1=\"\$_gott\""
+	[ -z "$2" ] || eval "$2=\"\$_goth\""
+	return 0
+}
+
+# attempt a 3-way index merge of a single file and return the resulting blob
+# similar to v_attempt_index_merge except there are always exactly two heads
+# and only the specified file will be merged (and if successful a blob created)
+#
+# optional arguments MUST be given in the order shown
+#
+# [optional] '--use-empty' use empty blob if file does not exist in either head
+# [optional] '--non-blob-empty' use empty blob if non-blob found
+# [optional] '--auh' allow unrelated histories (use empty tree if no merge base)
+# $1 => '' to discard result or a varname to receive the blob hash
+# $2 => commit-ish to merge as "ours"
+# $3 => commit-ish to merge as "theirs"
+# $4 => full path to file to merge (as shown by ls-tree -rt --full-tree <tree>)
+# $5 => [optional] full path of file in "theirs" (defaults to $4)
+# $6 => [optional] full path of file in merge base (defaults to $4)
+#
+# if either tree $2 and/or tree $3 is invalid a silent failure always occurs
+# if merge-base $2 $3 fails and --auh has NOT been given a silent failure occurs
+# if either $2 and/or $3 has a non-blob at the specified path, a silent failure
+#   occurs unless --non-blob-empty has been given
+# if either $2 and/or $3 has nothing at the specified path, a silent failure
+#   occurs unless --use-empty has been given
+#
+# With `--auh` $2 and/or $3 can be a tree rather than a commit in which case
+#  the merge base will be an empty tree
+#
+# $6 will always be ignored if no merge base has been found which will also
+#   always be a silent failure unless `--auh` has been given
+#
+# If the "ours" blob is the same as the "theirs" blob it's returned early and
+# the check for a merge base is skipped (--auh is also irrelevant in this case)
+#
+# all merging is done in a separate index (or temporary files for simple merges)
+# if successful the var $1 (if not empty) is updated with the result blob hash
+# otherwise everything is left unchanged and a silent failure occurs
+# the working tree and index ARE LEFT COMPLETELY UNTOUCHED no matter what
+# on success (regardless of whether $1 is empty) the new blob will always be
+# written to the object database even if it's not returned ($1 is empty)
+v_attempt_index_merge_file() {
+	_usemt=
+	_nonmt=
+	_useuh=
+	[ "$1" != "--use-empty" ] || { _usemt=1; shift; }
+	[ "$1" != "--non-blob-empty" ] || { _nonmt=1; shift; }
+	[ "$1" != "--auh" ] || { _useuh=1; shift; }
+	[ $# -eq 4 ] || [ $# -eq 5 ] || [ $# -eq 6 ] ||
+		die "programmer error: wrong number of args ($#) to v_attempt_index_merge_file"
+	[ -n "$4" ] || die "programmer error: empty path for arg \$2 to v_attempt_index_merge_file"
+	_treeo="$(git rev-parse --verify --quiet "$2^{tree}" -- 2>/dev/null)" || :
+	[ -n "$_treeo" ] || return 1
+	_treet="$(git rev-parse --verify --quiet "$3^{tree}" -- 2>/dev/null)" || :
+	[ -n "$_treet" ] || return 1
+	_mtblob=
+	if ! v_get_object_type _blobot _bloboh "$_treeo" "$4"; then
+		[ -n "$_usemt" ] || return 1
+		[ -n "$_mtblob" ] || v_write_mt_blob _mtblob
+		_blobot="blob"
+		_bloboh="$_mtblob"
+	fi
+	if [ "$_blobot" != "blob" ]; then
+		[ -n "$_nonmt" ] || return 1
+		[ -n "$_mtblob" ] || v_write_mt_blob _mtblob
+		_blobot="blob"
+		_bloboh="$_mtblob"
+	fi
+	if ! v_get_object_type _blobtt _blobth "$_treet" "${5:-$4}"; then
+		[ -n "$_usemt" ] || return 1
+		[ -n "$_mtblob" ] || v_write_mt_blob _mtblob
+		_blobtt="blob"
+		_blobth="$_mtblob"
+	fi
+	if [ "$_blobtt" != "blob" ]; then
+		[ -n "$_nonmt" ] || return 1
+		[ -n "$_mtblob" ] || v_write_mt_blob _mtblob
+		_blobtt="blob"
+		_blobth="$_mtblob"
+	fi
+	if [ "$_bloboh" = "$_blobth" ]; then
+		# nothing to do, blobs are the same
+		[ -z "$1" ] || eval "$1=\"\$_bloboh\""
+		return 0
+	fi
+	_mbf="$(git merge-base "$2" "$3" 2>/dev/null)" || :
+	[ -n "$_mbf" ] || [ -n "$_useuh" ] || return 1
+	_mbtmt=
+	if [ -n "$_mbf" ]; then
+		_treeb="$(git rev-parse --verify --quiet "$_mbf^{tree}" -- 2>/dev/null)" || :
+		[ -n "$_treeb" ] || return 1 # somehow the commit doesn't have a tree
+	else
+		_treeb="$mttree"
+		_mbtmt=1
+	fi
+	if
+		test -n "$_mbtmt" ||
+		! v_get_object_type _blobbt _blobbh "$_treeb" "${6:-$4}"
+	then
+		[ -n "$_mbtmt" ] || [ -n "$_usemt" ] || return 1
+		[ -n "$_mtblob" ] || v_write_mt_blob _mtblob
+		_blobbt="blob"
+		_blobbh="$_mtblob"
+	fi
+	if [ "$_blobbt" != "blob" ]; then
+		[ -n "$_nonmt" ] || return 1
+		[ -n "$_mtblob" ] || v_write_mt_blob _mtblob
+		_blobbt="blob"
+		_blobbh="$_mtblob"
+	fi
+	v_write_blob_tree _treeob "$_bloboh" || return 1
+	v_write_blob_tree _treetb "$_blobth" || return 1
+	v_write_blob_tree _treebb "$_blobbh" || return 1
+	inew="$tg_tmp_dir/index.$$"
+	! [ -e "$inew" ] || rm -f "$inew"
+	GIT_INDEX_FILE="$inew" \
+	git read-tree -m --aggressive -i "$_treebb" "$_treeob" "$_treetb" >/dev/null 2>&1 || {
+		rm -f "$inew"
+		return 1
+	}
+	_unmerged="$(GIT_INDEX_FILE="$inew" \
+	git ls-files --unmerged --full-name --abbrev -- :/ 2>/dev/null)" || {
+		rm -f "$inew"
+		return 1
+	}
+	if [ -n "$_unmerged" ]; then
+		# try an automatic merge
+		GIT_INDEX_FILE="$inew" TG_TMP_DIR="$tg_tmp_dir" \
+		git merge-index -q "$TG_INST_CMDDIR/tg--index-merge-one-file" -a >/dev/null 2>&1 || {
+			rm -f "$inew"
+			return 1
+		}
+		_unmerged="$(GIT_INDEX_FILE="$inew" \
+		git ls-files --unmerged --full-name --abbrev -- :/ 2>/dev/null)" || {
+			rm -f "$inew"
+			return 1
+		}
+	fi
+	[ -z "$_unmerged" ] || {
+		# merge failed
+		rm -f "$inew"
+		return 1
+	}
+	_rsltm=
+	_rslth=
+	_rslts=
+	_rsltf=
+	read -r _rsltm _rslth _rslts _rsltf <<EOT || :
+$(GIT_INDEX_FILE="$inew" git ls-files --full-name -s -- :/)
+EOT
+	rm -f "$inew"
+	if
+		[ "$_rsltm" = "100644" ] && [ -n "$_rslth" ] &&
+		[ "$_rslts" = "0" ] && [ "$_rsltf" = "blob" ]
+	then
+		# success
+		[ -z "$1" ] || eval "$1=\"\$_rslth\""
+		return 0
+	fi
+	return 1
+}
