@@ -277,7 +277,9 @@ There are three typical uses for a TopGit branch:
        These are known as "base" TopGit branches (not to be confused with
        the refs/top-bases/... refs).  When such a branch is created on an
        unborn branch (meaning the base has no parent commit), it will typically
-       be named [ROOT] instead of [BASE].
+       be named [ROOT] instead of [BASE].  When the base refers to the release
+       of some external dependency these branches are sometimes named [RELEASE]
+       instead of [BASE].
     3. [STAGE]
        Empty TopGit branches that serve as a staging area to bring together
        several other TopGit branches into one place so they can be used/tested
@@ -1920,7 +1922,7 @@ tg push
 	no dependencies at all will be pushed.
 
 	All TopGit branches to be pushed must be up-to-date unless the
-	``--allow-outdated`` option is given.  Branches `are` checked against
+	``--allow-outdated`` option is given.  Branches *are* checked against
 	the configured TopGit remote (``topgit.remote``) if it's set (as
 	modified by the global ``-u`` and ``-r <remote>`` options).
 
@@ -2627,7 +2629,7 @@ are taken:
 	   has removed one or more direct dependencies, then those
 	   remote-removed dependencies are automatically skipped at this
 	   stage even though the remote branch's .topdeps file will not
-	   actually be merged into the local branch until step 5.
+	   actually be merged into the local branch until step (5).
 
 	3) Each of the branch's direct dependencies (i.e. they are listed in
 	   the branch's ``.topdeps`` file) that was updated in the previous
@@ -2836,6 +2838,8 @@ GLOSSARY
 		used to bring together one or (typically) more independent
 		TopGit ``[PATCH]`` branches into a single branch so that
 		testing and/or evaluation can be performed on the result.
+		Sometimes these are named ``[RELEASE]`` when a full release
+		is being made from the result.
 
 	merge conflict
 		When merging two (or more) heads that touch the same lines in
