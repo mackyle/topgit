@@ -114,7 +114,7 @@ test_expect_success SETUP 'collab2 fetch updates' '
 	git rev-parse --verify --quiet refs/heads/master -- >/dev/null
 '
 
-test_expect_failure LASTOK 'collab2 update stage' '
+test_expect_success LASTOK 'collab2 update stage' '
 	cd collab2 &&
 	git checkout -f stage &&
 	test_tick &&

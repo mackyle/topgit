@@ -614,11 +614,69 @@ do_base_switch() {
 	fi
 }
 
+# $1 varname to hold space-separated+surrounded result(s) (can be empty)
+# $2 is "our" full ref name
+# $3 is "their" full ref name
+# return status is 0 if any removed deps found, non-0 otherwise in which
+#   case $1 will always be set to the empty string
+v_get_removed_deps() {
+	__goneec=1
+	[ -z "$1" ] || eval "$1="
+	if
+		v_attempt_index_merge_file _newdepsblob \
+			"refs/heads/$_update_name" "$_rname" .topdeps
+	then
+		rm -f "$tg_tmp_dir/tgblob.$$"
+		git cat-file blob "refs/heads/$_update_name:.topdeps" >"$tg_tmp_dir/tgblob.$$" 2>/dev/null || :
+		__gonedeps="$(git cat-file blob "$_newdepsblob" 2>/dev/null |
+			awk -v td="$tg_tmp_dir/tgblob.$$" '
+				BEGIN {x=""}
+				function exitnow(c) {x=c;exit x}
+				END {if(x!="")exit x}
+				function init(e,l,a) {
+					while ((e=(getline l<td))>0) {
+						if (split(l,a," ") == 1) t[a[1]] = 1
+					}
+					close(td)
+				}
+				BEGIN {if(td=="")exitnow(2);init()}
+				NF==1 {r[$1]=1}
+				END {
+					n=0
+					for (d in t) {
+						if (!(d in r)) {
+							if (!n) printf " "
+							n+=1
+							printf d " "
+						}
+					}
+					exit (n?0:1)
+				}
+			')" && __goneec=0 || __goneec=$?
+			[ -z "$1" ] || [ "$__goneec" != "0" ] || eval "$1=\"\$__gonedeps\""
+	fi
+	return $__goneec
+}
+
 update_branch_internal() {
 	# We are cacheable until the first change
 	become_cacheable
 
 	_update_name="$1"
+	_rname=
+	_bcrname=
+	_removedeps=
+	if has_remote "$_update_name"; then
+		_rname="refs/remotes/$base_remote/$_update_name"
+		if branch_contains "refs/heads/$_update_name" "$_rname"; then
+			_bcrname=1
+		else
+			# Check for removed dependencies
+			v_get_removed_deps _removedeps "refs/heads/$_update_name" "$_rname" || :
+		fi
+	fi
+
+
 	## First, take care of our base
 
 	_depcheck="$(get_temp tg-depcheck)"
@@ -666,6 +724,10 @@ update_branch_internal() {
 					info "Skipping recursing to missing dependency: $dep"
 					continue
 				esac
+				case " $_removedeps " in *" $dep "*)
+					info "Skipping recursing to remote-removed dependency: $dep"
+					continue
+				esac
 				info "Recursing to $dep..."
 				recursive_update "$dep" || exit 3
 			fi
@@ -680,6 +742,10 @@ update_branch_internal() {
 		while read -r dep; do
 			dep="${dep#?}"
 			case " $missing_deps " in *" $dep "*)
+				# message already shown above
+				continue
+			esac
+			case " $_removedeps " in *" $dep "*)
 				# message already shown above
 				continue
 			esac
@@ -766,9 +832,8 @@ update_branch_internal() {
 	plusextra=
 	merge_with="refs/$topbases/$_update_name"
 	brmmode=
-	if has_remote "$_update_name"; then
-		_rname="refs/remotes/$base_remote/$_update_name"
-		if branch_contains "refs/heads/$_update_name" "$_rname"; then
+	if [ -n "$_rname" ]; then
+		if [ -n "$_bcrname" ]; then
 			info "The $_update_name head is up-to-date wrt. its remote branch."
 		else
 			stash_now_if_requested
