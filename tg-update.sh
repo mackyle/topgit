@@ -679,6 +679,10 @@ update_branch_internal() {
 		set --
 		while read -r dep; do
 			dep="${dep#?}"
+			case " $missing_deps " in *" $dep "*)
+				# message already shown above
+				continue
+			esac
 			case "$dep" in
 			:*)
 				d="${dep#?}"

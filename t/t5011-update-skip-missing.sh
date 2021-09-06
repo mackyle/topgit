@@ -65,7 +65,7 @@ test_expect_success SETUP 'tg update fails with missing dependency' '
 	test_must_fail tg update --no-stash stage
 '
 
-test_expect_failure SETUP,LASTOK 'tg update --skip-missing succeeds with missing dependency' '
+test_expect_success SETUP,LASTOK 'tg update --skip-missing succeeds with missing dependency' '
 	cd fails &&
 	test_might_fail tg update --abort >/dev/null 2>&1 &&
 	git checkout -f stage &&
