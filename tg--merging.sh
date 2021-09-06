@@ -307,6 +307,7 @@ v_attempt_index_merge() {
 					if topff_ok "$_mmode" "$rh" "$1"; then
 						_mmsg="Fast-forward (no commit created)"
 						rh="$1"
+						orh="$rh"
 						shift
 					else
 						break

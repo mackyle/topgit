@@ -131,7 +131,7 @@ test_expect_success LASTOK 'collab2 update stage' '
 	test_when_finished test_tick=$test_tick
 '
 
-test_expect_failure LASTOK 'collab2 stage base contains remote stage base and deps' '
+test_expect_success LASTOK 'collab2 stage base contains remote stage base and deps' '
 	cd collab2 &&
 	topbases="$(tg --top-bases)" &&
 	test -n "$topbases" &&
