@@ -2622,15 +2622,22 @@ are taken:
 
 	2) Each of the branch's direct dependencies (i.e. they are listed in
 	   the branch's ``.topdeps`` file) which is out of date is updated
-	   before proceeding (yup, this is a recursive process).
+	   before proceeding (yup, this is a recursive process).  If the
+	   branch has a corresponding remote branch and that remote branch
+	   has removed one or more direct dependencies, then those
+	   remote-removed dependencies are automatically skipped at this
+	   stage even though the remote branch's .topdeps file will not
+	   actually be merged into the local branch until step 5.
 
 	3) Each of the branch's direct dependencies (i.e. they are listed in
 	   the branch's ``.topdeps`` file) that was updated in the previous
 	   step is now merged into the branch's corresponding base.  If a
 	   remote is involved, and the branch's corresponding base does NOT
-	   contain the remote branch's corresponding base that remote base is
-	   also merged into the branch's base at this time as well (it will be
-	   the first item merged into the branch's base).
+	   contain the remote branch's corresponding base that remote base
+	   is also merged into the branch's base at this time as well (it
+	   will be the first item merged into the branch's base).  As with
+	   the previous step, any remote-removed dependencies, if any, are
+	   automatically skipped at this stage.
 
 	4) If the branch has a corresponding remote branch and the branch
 	   does not already contain it, the branch's base (which was possibly
