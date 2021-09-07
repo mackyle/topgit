@@ -98,7 +98,7 @@ while (<>) {
 				if ($textmode) {
 					printf "%s", join("",map({wrap(78, 12, "$tab$_")."\n"} @usage));
 					@options and printf "${tab}Options:\n%s",
-						join("",map({wrap(78, 24, "$tab       $_")."\n"} @options));
+						join("",map({wrap(78, 32, "$tab    $_")."\n"} @options));
 				} else {
 					printf "%s", join("",map({"$tab| ".'``'.$_.'``'."\n"} @usage));
 					@options and printf "$tab|\n$tab| ".'``Options:``'."\n%s",

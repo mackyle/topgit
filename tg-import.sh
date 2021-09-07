@@ -20,9 +20,9 @@ USAGE="\
 Usage: ${tgname:-tg} [...] import [-d <base-branch>] [<option>...] <range>...
    Or: ${tgname:-tg} [...] import [-d <base-branch>] [<option>...] -s <name> <commit>
 Options:
-       -p <prefix>      prepend <prefix> to branch names (default is 't/')
-       --notes[=<ref>]  import notes ref <ref> to .topmsg --- comment
-       --no-notes       do not import any notes ref --- comment"
+    -p <prefix>         prepend <prefix> to branch names (default is 't/')
+    --notes[=<ref>]     import notes ref <ref> to .topmsg --- comment
+    --no-notes          do not import any notes ref --- comment"
 
 ## Parse options
 

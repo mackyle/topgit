@@ -11,9 +11,9 @@ Usage: ${tgname:-tg} [...] export [--collapse] [--force] [<option>...] <newbranc
    Or: ${tgname:-tg} [...] export --quilt [--force] [-a | --all | -b <branch>...]
                 [--binary] [--flatten] [--numbered] [--strip[=N]] <directory>
 Options:
-       -s <mode>        set subject bracketed [strings] strip mode
-       --notes[=<ref>]  export .topmsg --- comment to notes ref <ref>
-       --no-notes       discard .topmsg --- comment"
+    -s <mode>           set subject bracketed [strings] strip mode
+    --notes[=<ref>]     export .topmsg --- comment to notes ref <ref>
+    --no-notes          discard .topmsg --- comment"
 
 usage()
 {
