@@ -1628,24 +1628,61 @@ do_help()
 
 		## Build available commands list for help output
 
-		cmds=
-		sep=
+		cmds="$({
+		printf '%s\n' 'help' 'st[atus]'
 		for cmd in "$TG_INST_CMDDIR"/tg-[!-]*; do
 			! [ -r "$cmd" ] && continue
 			# strip directory part and "tg-" prefix
 			cmd="${cmd##*/}"
 			cmd="${cmd#tg-}"
-			[ "$cmd" != "migrate-bases" ] || continue
-			[ "$cmd" != "summary" ] || cmd="st[atus]|$cmd"
-			cmds="$cmds$sep$cmd"
-			sep="|"
-		done
+			printf '%s\n' "$cmd"
+		done; } | sort -fu | awk '
+			NF=1 {s[++n]=$1}
+			END {
+				l=0
+				for(i=1;i<=n;++i)
+					if(length(s[i])>l) l=length(s[i])
+				if (n<1 || l<1) exit
+				w=8*int((l+2+7)/8)
+				c=int(78/w); if (c<1) c=1
+				r=int((n+c-1)/c)
+				for (i=1;i<=r;++i) {
+					printf "  "
+					for (j=0;j<c;++j) {
+						t=s[i+j*r]
+						if (t=="")break
+						if ((i+j*r+r) in s)
+							printf "%*s", -w, t
+						else
+							printf "%s", t
+					}
+					printf "\n"
+				}
+			}
+		')"
+		echo "\
+TopGit version $TG_VERSION - A different patch queue manager
 
-		echo "TopGit version $TG_VERSION - A different patch queue manager"
-		echo "Usage: $tgname [-C <dir>] [-r <remote> | -u]" \
-			"[-c <name>=<val>] [--[no-]pager|-p] [-w [:]<tgtag>] ($cmds) ..."
-		echo "   Or: $tgname help [-w] [<command>]"
-		echo "Use \"$tgdisplaydir$tgname help tg\" for overview of TopGit"
+Usage: $tgname [<global-option>...] <command> [<command-option-or-arg>...]
+   Or: $tgname help [-w] [<command>]
+
+Use \"$tgdisplaydir$tgname help tg\" for an overview of TopGit
+Use \"$tgdisplaydir$tgname help -w tg\" for an overview of TopGit in a browser
+
+Global Options:
+    -C <dir>            Change directory to <dir> before doing anything more
+    -r <remote>         Pretend 'topgit.remote' is set to <remote>
+    -u                  Pretend 'topgit.remote' is not set
+    -c <name>=<val>     Pass config option to git (may be repeated)
+    --no-pager / -P     Disable all pagers (by both TopGit and Git)
+    --pager / -p        Enable use of a pager (aka '--paginate')
+    -w [:]<tgtag>       Activate wayback machine using tg tag <tgtag>
+    --top-bases         Show top-bases location for repository and exit
+    --exec-path         Show command scripts location and exit
+
+Available tg commands:
+
+$cmds"
 	elif [ -r "$TG_INST_CMDDIR"/tg-$1 ] || [ -r "$TG_INST_SHAREDIR/tg-$1.txt" ] ; then
 		if [ -n "$_www" ]; then
 			nohtml=
@@ -1673,7 +1710,9 @@ do_help()
 				"$TG_INST_CMDDIR"/tg-$1 -h 2>&1 || :
 				echo
 			elif [ "$1" = "help" ]; then
-				echo "Usage: ${tgname:-tg} help [-w] [<command>]"
+				printf '%s\n' "Usage: ${tgname:-tg} help [-w] [<command>]" \
+					      "Options:" \
+					      "    -w                  view help in browser"
 				echo
 			elif [ "$1" = "status" ] || [ "$1" = "st" ]; then
 				echo "Usage: ${tgname:-tg} @tgsthelpusage@"

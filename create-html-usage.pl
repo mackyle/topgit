@@ -33,7 +33,8 @@ sub get_tg_usage($)
 		$opts =~ s/^: //mig;
 		return ([split "\n", $usage],[split "\n", $opts]);
 	} elsif ($name eq "help") {
-		return "tg help [-w] [<command>]";
+		return (["tg help [-w] [<command>]"],
+			["-w                  view help in browser"]);
 	} elsif ($name eq "status") {
 		my $tgsthelp = $ENV{TG_STATUS_HELP_USAGE} || "status";
 		return "tg $tgsthelp";
