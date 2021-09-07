@@ -5,7 +5,7 @@ test_description='use of -i/-w options with tg commands that support them
 These are the -i and -w options that cause the index or working tree to be
 used, respectively, not any other meanings they might have.
 
-Specifically files, mail, next, patch, prev and summary subcommands.
+Specifically files, mail, next, patch, prev and summary commands.
 '
 
 . ./test-lib.sh

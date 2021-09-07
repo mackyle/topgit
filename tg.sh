@@ -2863,7 +2863,7 @@ else
 			break;;
 
 		-*)
-			echo "Invalid option $1 (subcommand options must appear AFTER the subcommand)." >&2
+			echo "Invalid option $1 (command options must appear AFTER the command)." >&2
 			do_help
 			exit 1;;
 
@@ -2968,7 +2968,7 @@ else
 					if [ "$cmd" = "goto" ]; then
 						tgalias="checkout goto"
 					else
-						echo "Unknown subcommand: $cmd" >&2
+						echo "Unknown command: $cmd" >&2
 						do_help
 						exit 1
 					fi
@@ -3012,7 +3012,7 @@ else
 
 			if [ -n "$wayback" ] && [ -z "$showing_help" ]; then
 				[ -n "$nomergesetup" ] ||
-				die "the wayback machine cannot be used with the \"$cmd\" subcommand"
+				die "the wayback machine cannot be used with the \"$cmd\" command"
 				if [ "$cmd" = "shell" ]; then
 					# this is ugly; `tg shell` should handle this but it's too
 					# late there so we have to do it here

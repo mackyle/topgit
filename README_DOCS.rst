@@ -863,7 +863,7 @@ same repository).
 
 USAGE
 -----
-``tg [global options] <subcommand> [<subcommand option/argument>...]``
+``tg [global options] <command> [<command option/argument>...]``
 
 Global options:
 
@@ -877,10 +877,10 @@ Global options:
 	--no-pager	Disable all pagers (by both TopGit and Git aka ``-P``)
 	--pager		Enable use of a pager (aka ``-p`` aka ``--paginate``)
 	--top-bases	Show full ``top-bases`` ref prefix and exit
-	--exec-path	Show path to subcommand scripts location and exit
+	--exec-path	Show path to command scripts location and exit
 	--help		Show brief usage help and exit (aka ``-h``)
 
-The ``tg`` tool has several subcommands:
+The ``tg`` tool has several commands:
 
 	:`tg annihilate`_:    Mark a TopGit-controlled branch as defunct
 	:`tg base`_:          Show base commit for one or more TopGit branches
@@ -2253,7 +2253,7 @@ tg shell
 	Enter extended `wayback machine`_ mode.
 
 	The global ``-w <tgtag>`` option must be specified (but as a special
-	case for the ``shell`` subcommand a <tgtag> destination of ``:`` may be
+	case for the ``shell`` command a <tgtag> destination of ``:`` may be
 	used to get a shell with no wayback ref changes).
 
 	The "<tgtag>" value must be the name of a tag created by (or known to)
@@ -2318,7 +2318,7 @@ tg shell
 	And since it will be non-bare and writable, commands that may not have
 	been allowed in the original repository will work too.
 
-	When the shell spawned by this subcommand exits, the temporary wayback
+	When the shell spawned by this command exits, the temporary wayback
 	repository and all newly created objects and ref changes made in it, if
 	any, *will be lost*.  If work has been done in it that needs to be
 	saved, it must be pushed somewhere (even if only back to the original
@@ -2338,7 +2338,7 @@ tg shell
 	to the new "wayback repository") when using the ``--directory`` option
 	if the sole purpose is just to create the wayback repository for use.
 	Note that the ``--directory`` option *must* be listed as the first
-	option after the ``shell`` subcommand name if used.
+	option after the ``shell`` command name if used.
 
 tg prev
 ~~~~~~~
@@ -2505,8 +2505,8 @@ case local changes happen to be diverging more than the remote ones.
 All commands by default refer to the remote that ``tg remote --populate``
 was called on the last time (stored in the ``topgit.remote`` git
 configuration variable). You can manually run any command with a
-different base remote by passing ``-r REMOTE`` *before* the subcommand
-name or passing ``-u`` *before* the subcommand to run without one.
+different base remote by passing ``-r REMOTE`` *before* the command
+name or passing ``-u`` *before* the command to run without one.
 
 
 TESTING TOPGIT
@@ -2928,7 +2928,7 @@ REFERENCES
 ----------
 
 The following references are useful to understand the development of
-topgit and its subcommands.
+topgit and its commands.
 
 * tg depend:
   https://lore.kernel.org/git/36ca99e90904091034m4d4d31dct78acb333612e678@mail.gmail.com/T/#u
