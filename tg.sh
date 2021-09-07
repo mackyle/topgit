@@ -1610,9 +1610,17 @@ run_editor()
 do_help()
 {
 	_www=
+	if { [ "$1" = "-h" ] || [ "$1" = "--help" ]; } && [ "$2" = "-w" ]; then
+		shift 2
+		set -- -w -h "$@"
+	fi
 	if [ "$1" = "-w" ]; then
 		_www=1
 		shift
+	fi
+	if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+		shift
+		set -- "help" "$@"
 	fi
 	if [ "$1" = "st" ]; then
 		shift
