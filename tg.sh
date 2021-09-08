@@ -2442,14 +2442,12 @@ initial_setup()
 	basic_setup $1
 	iowopt=
 	! vcmp "$git_version" '>=' "2.5" || iowopt="--ignore-other-worktrees"
-	gcfbopt=
-	! vcmp "$git_version" '>=' "2.6" || gcfbopt="--buffer"
+	gcfbopt= crlopt=
+	! vcmp "$git_version" '>=' "2.6" || { gcfbopt="--buffer"; crlopt="--create-reflog"; }
 	gferc=
 	! vcmp "$git_version" '>=' "2.7" || gferc=1
 	auhopt=
 	! vcmp "$git_version" '>=' "2.9" || auhopt="--allow-unrelated-histories"
-	crlopt=
-	! vcmp "$git_version" '>=' "2.10" || crlopt="--create-reflog"
 	v_get_show_cdup root_dir
 	root_dir="${root_dir:-.}"
 	logrefupdates="$(git config --bool core.logallrefupdates 2>/dev/null)" || :
