@@ -505,14 +505,14 @@ if [ -n "$reflog" ]; then
 			while read -r newrev type rest; do
 				stashnum=$(( $stashnum + 1 ))
 				[ "$type" != "missing" ] || continue
-				IFS="$tab" read -r cmmttr msg <<-~EOT~
-					$rest
+				ne= rest2=
+				IFS=">" read -r ne rest2 <<-~EOT~ || :
+					${rest}X
 					~EOT~
-				ne="${cmmttr% *}"
-				ne="${ne% *}"
-				es="${cmmttr#$ne}"
-				es="${es% *}"
-				es="${es# }"
+				es= ez= msg=
+				read -r es ez msg <<-~EOT~ || :
+					${rest2%X}
+					~EOT~
 				obj="$(git rev-parse --verify --quiet --short "$newrev" --)"
 				extra=
 				[ "$type" = "tag" ] || [ -n "$notype" ] ||

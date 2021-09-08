@@ -113,7 +113,7 @@ test_expect_success 'setup main' '
 	test_when_finished test_set_prereq SETUP
 '
 
-test_expect_failure SETUP 'tg tag -g log' '
+test_expect_success SETUP 'tg tag -g log' '
 	cd main &&
 	squish <<-EOT >../expected &&
 		=== 2005-04-07 ===
@@ -135,7 +135,7 @@ test_expect_success LASTOK,SETUP 'tg tag -g --reflog-message matches' '
 	test_cmp ../actual ../expected
 '
 
-test_expect_failure SETUP 'tg tag -g --commit-message log' '
+test_expect_success SETUP 'tg tag -g --commit-message log' '
 	cd main &&
 	squish <<-EOT >../expected2 &&
 		=== 2005-04-07 ===
