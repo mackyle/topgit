@@ -1,9 +1,52 @@
 #!/bin/sh
 # TopGit - A different patch queue manager
 # Copyright (C) Petr Baudis <pasky@suse.cz>  2008
-# Copyright (C) Kyle J. McKay <mackyle@gmail.com>  2015,2016,2017,2018
-# All rights reserved.
+# Copyright (C) Kyle J. McKay <mackyle@gmail.com>  2015,2016,2017,2018,2021
+# All rights reserved
 # GPLv2
+
+USAGE="\
+Usage: ${tgname:-tg} [...] summary [<option>...] [--all | <branch>...]
+   Or: ${tgname:-tg} [...] summary [--terse | --list] [<option>...] [--all | <branch>...]
+   Or: ${tgname:-tg} [...] summary --rdeps[-full] [<option>...] [--all | <branch>...]
+   Or: ${tgname:-tg} [...] summary --heads[-independent] [<option>...] [--all | <branch>...]
+   Or: ${tgname:-tg} [...] summary --deps [<option>...] [--all | <branch>...]
+   Or: ${tgname:-tg} [...] summary --deps-only [<option>...] [--all | <branch>...]
+   Or: ${tgname:-tg} [...] summary --sort [<option>...] [--all | <branch>...]
+   Or: ${tgname:-tg} [...] summary --graphviz [<option>...] [--all | <branch>...]
+Options:
+    --terse / --list    list TopGit branches (aka '-t' / '-l')
+    --rdeps[-once]      show branch dependencies as multi-indented list
+    --rdeps-full        like '--rdeps' but do not collapse repeated items
+    --rdeps --heads     use '--rdeps' and \$('--heads of <branch>...)
+    --[topgit]-heads    list only independent TopGit branch heads
+    --heads-independent list only merge-base --independent heads
+    --deps              list all .topdeps branch dependencies
+    --deps-only         list sorted unique .topdeps branches + dependencies
+    --sort              feed output of '--deps' through 'tsort'
+    --graphviz          generate dependency graph description in DOT format
+    --verbose / -v      include subjects with '-l' (twice shows annihilated)
+    --exclude <branch>  exclude <branch> during operation (may be repeated)
+    --tgish-only        exclude non-TopGit branches (aka '--tgish')
+    --with-deps         include dependencies of given <branch>... (default)
+    --without-deps      do not include dependencies of given <branch>...
+    --with-related      use '--with-deps' and \$('--heads' of <branch>...)
+    --without-related   do not use '--with-related' processing
+    --heads-only        use '--without-deps' and \$('--heads' of <branch>...)
+    -i                  use TopGit metadata from index instead of HEAD branch
+    -w                  use metadata from working directory instead of branch"
+
+usage()
+{
+	if [ "${1:-0}" != 0 ]; then
+		printf '%s\n' "$USAGE" >&2
+	else
+		printf '%s\n' "$USAGE"
+	fi
+	exit ${1:-0}
+}
+
+## Parse options
 
 terse=
 graphviz=
@@ -25,15 +68,11 @@ verbose=0
 
 ## Parse options
 
-usage()
-{
-	echo "Usage: ${tgname:-tg} [...] summary [-t | --list | --heads[-only] | --sort | --deps[-only] | --rdeps | --graphviz] [-i | -w] [--tgish-only] [--with[out]-(deps|related)] [--exclude branch]... [--all | branch...]" >&2
-	exit 1
-}
-
 while [ -n "$1" ]; do
 	arg="$1"
 	case "$arg" in
+	-h|--help)
+		usage;;
 	-i|-w)
 		[ -z "$head_from" ] || die "-i and -w are mutually exclusive"
 		head_from="$arg";;
@@ -94,7 +133,7 @@ while [ -n "$1" ]; do
 		[ -n "$1" ] && [ "$1" != "--all" ] || die "--exclude requires a branch name"
 		exclude="$exclude $1";;
 	-*)
-		usage;;
+		usage 1;;
 	*)
 		break;;
 	esac

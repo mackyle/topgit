@@ -1,12 +1,31 @@
 #!/bin/sh
 # TopGit revert command
-# Copyright (C) 2015 Kyle J. McKay <mackyle@gmail.com>
-# All rights reserved.
+# Copyright (C) 2015,2021 Kyle J. McKay <mackyle@gmail.com>
+# All rights reserved
 # GPLv2
 
 USAGE="\
-Usage: ${tgname:-tg} [...] revert (-f | -i | -n) [-q] [--tgish-only] [--no-deps] [--no-stash] [--exclude <ref>...] (<tagname> | --stash) [<ref>...]
-   Or: ${tgname:-tg} [...] revert [-l] [--no-short] [--hash] [--tgish-only] [(--deps | --rdeps)] [--exclude <ref>...] (<tagname> | --stash) [(--[topgit-]heads] | <ref>...)]"
+Usage: ${tgname:-tg} [...] revert (-f | -i | -n) [<opt>...] (<tagname> | --stash) [<ref>...]
+   Or: ${tgname:-tg} [...] revert [<opt>...] (<tagname> | --stash) [(--[topgit-]heads] | <ref>...)]
+Options:
+    --quiet / -q        suppress non-dry-run ref change messages
+    --force / -f        force revert operation to make changes
+    --dry-run / -n      show '-f' changes but don't actually make them
+    --interactive / -i  edit revert instruction sheet before proceeding
+    --list / -l         list mode (default if no -f, -n or -i present)
+    --short[=<n>]       display shortened hashes (default unless --hash)
+    --no-short          display full hashes (default for --hash-only)
+    --hash-only         show only hashes in list mode (aka '--hash')
+    --no-stash          skip preliminary stash before making changes
+    --exclude <ref>     exclude <ref> during operation (may be repeated)
+    --tgish-only        exclude non-TopGit branches (aka '--tgish')
+    --no-deps           do not include dependencies in revert mode
+    --deps              include dependencies in list mode
+    --rdeps             list relationships like 'tg summary --rdeps'
+    --stash             specifies a <tagname> of refs/tgstash
+    --heads             list only merge-base --independent heads
+    --heads-independent alternate spelling of '--heads'
+    --topgit-heads      list only independent TopGit branch heads"
 
 usage()
 {

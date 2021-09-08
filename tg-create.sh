@@ -1,7 +1,7 @@
 #!/bin/sh
 # TopGit - A different patch queue manager
 # Copyright (C) 2008 Petr Baudis <pasky@suse.cz>
-# Copyright (C) 2015,2016,2017 Kyle J. McKay <mackyle@gmail.com>
+# Copyright (C) 2015,2016,2017,2021 Kyle J. McKay <mackyle@gmail.com>
 # All rights reserved
 # GPLv2
 
@@ -25,7 +25,25 @@ quiet=
 branchtype=PATCH
 branchdesc=patch
 
-USAGE="Usage: ${tgname:-tg} [... -r remote] create [-q] [-m <msg> | -F <file>] [--topmsg <msg> | --topmsg-file <file>] [--no-edit] [--no-commit | --no-update] [--base] [<name> [<dep>...|-r [<rname>]] ]"
+USAGE="\
+Usage: ${tgname:-tg} [...] create [<option>...] [<name> [<dep>...]]
+   Or: ${tgname:-tg} [...] create [<option>...] --base <name> [<committish>]
+   Or: ${tgname:-tg} [-r <remote>] create [<option>...] <name> -r [<rbranch>]
+Options:
+    --no-deps           alternate spelling of '--base'
+    --quiet / -q        suppress most informational messages
+    --message <msg>     replace default commit message
+    -m <msg>            (default message is \"tg create <name>\")
+    --file <file>       replace default commit message
+    -F <file>           with contents of <file>
+    --topmsg <msg>      use <msg> as .topmsg and skip editor
+    --tm <msg>          (<msg> may be reformatted with a warning)
+    --topmsg-file <f>   use contents of file <f> as --topmsg
+    --tF <file>         alias for --topmsg-file <file>
+    --force / -f        ignore tag with same name as new branch
+    --no-edit           do not run the editor on default .topmsg
+    --no-commit / -n    stop before actually making the commit
+    --no-update         do not run 'tg update' (implied by -n)"
 
 usage()
 {

@@ -1,16 +1,24 @@
 #!/bin/sh
 # TopGit - A different patch queue manager
 # Copyright (C) 2013 Per Cederqvist <ceder@lysator.liu.se>
-# Copyright (C) 2015,2017,2018 Kyle J. McKay <mackyle@gmail.com>
-# All rights reserved.
+# Copyright (C) 2015,2017,2018,2021 Kyle J. McKay <mackyle@gmail.com>
+# All rights reserved
 # GPLv2
 
 ## Parse options
 
 USAGE="\
-Usage: ${tgname:-tg} [...] checkout [--iow] [-f] [-b <branch>] (next | prev) [<steps>]
-   Or: ${tgname:-tg} [...] checkout [--iow] [-f] (next | prev) -a
-   Or: ${tgname:-tg} [...] checkout [--iow] [-f] [goto] [--] <pattern> | --series[=<head>]"
+Usage: ${tgname:-tg} [...] checkout [<opt>...] [-b <branch>] (next | prev) [<steps>]
+   Or: ${tgname:-tg} [...] checkout [<opt>...] (next | prev) -a
+   Or: ${tgname:-tg} [...] checkout [<opt>...] [goto] [--] <pattern> | --series[=<head>]
+Options:
+    --iow               pass '--ignore-other-worktrees' to git >= v2.5.0
+    --force / -f        pass '--force' option to git
+    --merge / -m        pass '--merge' option to git
+    --quiet / -q        pass '--quiet' option to git
+    --branch <branch>   start at branch <branch> instead of HEAD
+    -b <branch>         alias for --branch <branch>
+    --all / -a          step as many times as possible"
 
 usage()
 {

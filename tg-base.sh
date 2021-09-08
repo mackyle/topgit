@@ -2,11 +2,15 @@
 # TopGit - A different patch queue manager
 # (C) Petr Baudis <pasky@suse.cz>  2008
 # (C) Per Cederqvist <ceder@lysator.liu.se>  2010
-# (C) Kyle J. McKay <mackyle@gmail.com>  2017
-# All rights reserved.
+# (C) Kyle J. McKay <mackyle@gmail.com>  2017, 2021
+# All rights reserved
 # GPLv2
 
-USAGE="Usage: ${tgname:-tg} [...] base [--short[=n] | --no-short] [--] [branch...]"
+USAGE="\
+Usage: ${tgname:-tg} [...] base [--short[=<n>] | --no-short] [--] [branch...]
+Options:
+    --short[=<n>]       display shortened hashes (default)
+    --no-short          display full hashes"
 
 usage()
 {

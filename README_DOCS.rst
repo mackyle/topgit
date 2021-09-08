@@ -1032,13 +1032,14 @@ tg create
 	probably what you normally want to do in this case anyway so you can
 	just run ``tg create --base HEAD`` to accomplish that).
 
-	In an alternative use case, if ``-r <branch>`` is given instead of a
+	In an alternative use case, if ``-r <rbranch>`` is given instead of a
 	dependency list, the topic branch is created based on the given
 	remote branch.  With just ``-r`` the remote branch name is assumed
 	to be the same as the local topic branch being created.  Since no
 	new commits are created in this mode (only two refs will be updated)
 	the editor will never be run for this use case.  Note that no other
-	options may be combined with ``-r``.
+	options may be combined with ``-r`` although a global ``-r`` option
+	can be used to alter which remote ``<rbranch>`` refers to.
 
 	The ``--quiet`` (or ``-q``) option suppresses most informational
 	messages.
@@ -1127,10 +1128,6 @@ tg files
 ~~~~~~~~
 	List files changed by the current or specified topic branch.
 
-	Options:
-	  -i		list files based on index instead of branch
-	  -w		list files based on working tree instead of branch
-
 tg info
 ~~~~~~~
 	Show summary information about the current or specified topic
@@ -1191,10 +1188,6 @@ tg info
 	The patches shown in the series in the order they are shown form the
 	basis for the ``tg next`` and ``tg prev`` operations with the first
 	patch shown being considered the first and so on up to the last.
-
-	Options:
-	  -i		Use TopGit metadata from the index instead of the branch
-	  -w		Use TopGit metadata from the working tree instead of the branch
 
 tg patch
 ~~~~~~~~
@@ -1260,10 +1253,6 @@ tg mail
 
 	to let ``git send-email`` ask for confirmation before sending any
 	mail.
-
-	Options:
-	  -i		base patch generation on index instead of branch
-	  -w		base patch generation on working tree instead of branch
 
 	| TODO: ``tg mail patchfile`` to mail an already exported patch
 	| TODO: mailing patch series
@@ -1434,10 +1423,6 @@ tg summary
 	shortcut for the TopGit-controlled branch that ``HEAD`` is a
 	symbolic ref to.  The ``tg summary @`` and ``tg summary @ @`` commands
 	can be quite useful.
-
-	Options:
-	  -i		Use TopGit metadata from the index instead of the branch
-	  -w		Use TopGit metadata from the working tree instead of the branch
 
 tg contains
 ~~~~~~~~~~~

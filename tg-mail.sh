@@ -2,17 +2,34 @@
 # TopGit - A different patch queue manager
 # GPLv2
 
+USAGE="\
+Usage: ${tgname:-tg} [...] mail [-s <send-email-args>] [-r <reference-msgid>] [-i | -w] [<name>]
+Options:
+    -i                  use TopGit metadata from index instead of HEAD branch
+    -w                  use metadata from working directory instead of branch"
+
+usage()
+{
+	if [ "${1:-0}" != 0 ]; then
+		printf '%s\n' "$USAGE" >&2
+	else
+		printf '%s\n' "$USAGE"
+	fi
+	exit ${1:-0}
+}
+
 name=
 head_from=
 send_email_args=
 in_reply_to=
-
 
 ## Parse options
 
 while [ -n "$1" ]; do
 	arg="$1"; shift
 	case "$arg" in
+	-h|--help)
+		usage;;
 	-i|-w)
 		[ -z "$head_from" ] || die "-i and -w are mutually exclusive"
 		head_from="$arg";;
@@ -21,8 +38,7 @@ while [ -n "$1" ]; do
 	-r)
 		in_reply_to="$1"; shift;;
 	-*)
-		echo "Usage: ${tgname:-tg} [...] mail [-s <send-email-args>] [-r <reference-msgid>] [-i | -w] [<name>]" >&2
-		exit 1;;
+		usage 1;;
 	*)
 		[ -z "$name" ] || die "name already specified ($name)"
 		name="$arg";;

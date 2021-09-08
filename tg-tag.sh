@@ -1,14 +1,43 @@
 #!/bin/sh
 # TopGit tag command
-# Copyright (C) 2015,2017,2018 Kyle J. McKay <mackyle@gmail.com>
-# All rights reserved.
+# Copyright (C) 2015,2017,2018,2021 Kyle J. McKay <mackyle@gmail.com>
+# All rights reserved
 # GPLv2
 
 USAGE="\
-Usage: ${tgname:-tg} [...] tag [-s | -u <key-id>] [-f] [-q] [--no-edit] [-m <msg> | -F <file>] [--tree <treeish>] (<tagname> | --refs) [<branch>...]
-   Or: ${tgname:-tg} [...] tag (-g | --reflog) [--reflog-message | --commit-message] [--no-type] [-n <number> | -number] [<tagname>]
-   Or: ${tgname:-tg} [...] tag (--clear | --delete) <tagname>
-   Or: ${tgname:-tg} [...] tag --drop <tagname>@{n}"
+Usage: ${tgname:-tg} [...] tag [<option>...] <tagname> [<branch>...]
+   Or: ${tgname:-tg} [...] tag [<option>...] --refs [<branch>...]
+   Or: ${tgname:-tg} [...] tag [<option>...] (-g | --reflog) [<tagname>]
+   Or: ${tgname:-tg} [...] tag --clear <tagname>
+   Or: ${tgname:-tg} [...] tag --delete <tagname>
+   Or: ${tgname:-tg} [...] tag --drop <tagname>@{n}
+Options:
+    --refs[-only]       show TOPGIT REFS but do not actually create a tag
+    --reflog / -g       show tag reflog instead of creating a tag
+    --walk-reflogs      alias for --reflog
+    --clear             clear tag's reflog to @{0} instead of creating a tag
+    --delete            delete the tag and its reflog instead of creating
+    --drop              drop the tag's specified reflog entry (no create)
+    --quiet / -q        suppress info messages (repeating suppresses more)
+    --sign / -s         create a signed tag
+    --force / -f        replace existing tag with same name
+    -u <keyid>          sign with <keyid> (implies '--sign')
+    --local-user <k>    alias for '-u <k>'
+    --message <msg>     replace default tag message
+    -m <msg>            (default message is \"tag ... branches ...\")
+    --file <file>       replace default tag message
+    -F <file>           with contents of <file>
+    --edit              run the editor on the default tag message (default)
+    --no-edit           do not run the editor on the default tag message
+    --tree <treeish>    force created <tagname>^{tree} to be <treeish>
+    --all               use all branches for <branch>... (default is HEAD)
+    --allow-outdated    allow outdated TopGit branches to be included
+    --stash             use refs/tgstash for <tagname> (implies '--all')
+    --reflog-message    use reflog message for '--walk-reflogs'
+    --commit-message    use commit message for '--walk-reflogs'
+    --no-type           omit non-tag annotation in '--walk-reflogs' mode
+    --max-count <n>     show at most <n> reflog entries in '-g' mode
+    -n <n> / -<n>       alias for '--max-count <n>'"
 
 usage()
 {
@@ -111,6 +140,7 @@ while [ $# -gt 0 ]; do case "$1" in
 		fi
 		shift
 		keyid="$1"
+		signed=1
 		;;
 	-f|--force)
 		force=1

@@ -22,7 +22,7 @@ Usage: ${tgname:-tg} [...] import [-d <base-branch>] [<option>...] <range>...
 Options:
     -p <prefix>         prepend <prefix> to branch names (default is 't/')
     --notes[=<ref>]     import notes ref <ref> to .topmsg --- comment
-    --no-notes          do not import any notes ref --- comment"
+    --no-notes          do not import any notes ref --- comment (default)"
 
 ## Parse options
 

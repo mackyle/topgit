@@ -13,7 +13,7 @@ Usage: ${tgname:-tg} [...] export [--collapse] [--force] [<option>...] <newbranc
 Options:
     -s <mode>           set subject bracketed [strings] strip mode
     --notes[=<ref>]     export .topmsg --- comment to notes ref <ref>
-    --no-notes          discard .topmsg --- comment"
+    --no-notes          discard .topmsg --- comment (default)"
 
 usage()
 {

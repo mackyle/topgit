@@ -1,12 +1,15 @@
 #!/bin/sh
 # TopGit - A different patch queue manager
 # Copyright (C) Petr Baudis <pasky@suse.cz>  2008
-# Copyright (C) Kyle J. McKay <mackyle@gmail.com>  2015, 2016, 2017, 2018
+# Copyright (C) Kyle J. McKay <mackyle@gmail.com>  2015, 2016, 2017, 2018, 2021
 # GPLv2
 
 USAGE="\
 Usage: ${tgname:-tg} [...] info [-i | -w] [--heads | --leaves | --series[=<head>]] [<name>]
-   Or: ${tgname:-tg} [...] info [-i | -w] [--deps | --dependencies | --dependents] [<name>]"
+   Or: ${tgname:-tg} [...] info [-i | -w] [--deps | --dependencies | --dependents] [<name>]
+Options:
+    -i                  use TopGit metadata from index instead of HEAD branch
+    -w                  use metadata from working directory instead of branch"
 
 usage()
 {

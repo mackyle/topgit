@@ -1,29 +1,46 @@
 #!/bin/sh
 # TopGit - A different patch queue manager
-# (c) Petr Baudis <pasky@suse.cz>  2008
+# Copyright (C) Petr Baudis <pasky@suse.cz>  2008
+# Copyright (C) 2021 Kyle J. McKay <mackyle@gmail.com>
+# All rights reserved
 # GPLv2
+
+USAGE="\
+Usage: ${tgname:-tg} [...] files [-i | -w] [<name>]
+Options:
+    -i                  use TopGit metadata from index instead of HEAD branch
+    -w                  use metadata from working directory instead of branch"
+
+usage()
+{
+	if [ "${1:-0}" != 0 ]; then
+		printf '%s\n' "$USAGE" >&2
+	else
+		printf '%s\n' "$USAGE"
+	fi
+	exit ${1:-0}
+}
 
 name=
 head_from=
-
 
 ## Parse options
 
 while [ -n "$1" ]; do
 	arg="$1"; shift
 	case "$arg" in
+	-h|--help)
+		usage;;
 	-i|-w)
 		[ -z "$head_from" ] || die "-i and -w are mutually exclusive"
 		head_from="$arg";;
 	-*)
-		echo "Usage: ${tgname:-tg} [...] files [-i | -w] [<name>]" >&2
-		exit 1;;
+		usage 1;;
 	*)
 		[ -z "$name" ] || die "name already specified ($name)"
 		name="$arg";;
 	esac
 done
-
 
 head="$(git symbolic-ref -q HEAD)" || :
 head="${head#refs/heads/}"
@@ -44,6 +61,3 @@ v_pretty_tree b_tree -t "$name" -b
 v_pretty_tree t_tree -t "$name" $head_from
 
 git diff-tree --name-only -r $b_tree $t_tree
-
-# vim:noet
-
