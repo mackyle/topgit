@@ -64,7 +64,7 @@ DEPFILE="Makefile.dep"
 
 : "${SHELL_PATH:=/bin/sh}" "${AWK_PATH:=awk}"
 version="$(
-	test -d .git && git describe --match "topgit-[0-9]*" --abbrev=4 --dirty 2>/dev/null |
+	test -d .git && git describe --match "topgit-[0-9]*" --abbrev=8 --dirty 2>/dev/null |
 	sed -e 's/^topgit-//')" || :
 
 # config.sh is wrapped up for return safety
