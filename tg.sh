@@ -1,11 +1,11 @@
 #!/bin/sh
 # TopGit - A different patch queue manager
 # Copyright (C) 2008 Petr Baudis <pasky@suse.cz>
-# Copyright (C) 2014-2019 Kyle J. McKay <mackyle@gmail.com>
+# Copyright (C) 2014-2021 Kyle J. McKay <mackyle@gmail.com>
 # All rights reserved.
 # GPLv2
 
-TG_VERSION="0.19.13-PRE"
+TG_VERSION="0.19.13"
 
 # Update in Makefile if you add any code that requires a newer version of git
 GIT_MINIMUM_VERSION="@mingitver@"
