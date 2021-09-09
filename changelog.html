@@ -1,188 +1,385 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
+<title>TopGit &#x2013; A Different Patch Queue Manager</title>
 <meta charset="utf-8" />
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-<title>TopGit-0.19.12 - Compatibility Conundrum</title>
 <style type="text/css">
-/* <![CDATA[ */
+/* <![CDATA[
+ *
+ * Style sheet for TopGit ChangeLog documentation
+ * Copyright (C) 2021 Kyle J. McKay
+ * All rights reserved
+ * License GPL2
+ *
+ */
 
-/* Markdown.pl fancy style sheet
-** Copyright (C) 2017,2018 Kyle J. McKay.
-** All rights reserved.
-**
-** Redistribution and use in source and binary forms, with or without
-** modification, are permitted provided that the following conditions are met:
-**
-**   1. Redistributions of source code must retain the above copyright notice,
-**      this list of conditions and the following disclaimer.
-**
-**   2. Redistributions in binary form must reproduce the above copyright
-**      notice, this list of conditions and the following disclaimer in the
-**      documentation and/or other materials provided with the distribution.
-**
-**   3. Neither the name of the copyright holder nor the names of its
-**      contributors may be used to endorse or promote products derived from
-**      this software without specific prior written permission.
-**
-** THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-** AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-** IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-** ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-** LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-** CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-** SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-** INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-** CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-** ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-** POSSIBILITY OF SUCH DAMAGE.
-*/
-
-div._markdown-code-bt > pre, div._markdown-code > pre {
+body {
+	font-family: Times, serif;
+	font-size: medium;
+	font-weight: normal;
+}
+h1, h2, h3 {
+	font-family: Helvetica, sans-serif;
+	font-weight: normal;
+}
+h1 {
+	font-size: xx-large;
+	margin-top: 1.25em;
+	margin-bottom: 0.75em;
+}
+h2 {
+	font-size: x-large;
+	margin-top: 1.25em;
+	margin-bottom: 0.75em;
+}
+h3 {
+	font-size: large;
+	margin-top: 1em;
+	margin-bottom: 1em;
+	font-variant: small-caps;
+}
+h4 {
+	font-size: medium;
+	margin-top: 1em;
+	margin-bottom: 1em;
+}
+div {
 	margin: 0;
-	padding: 0;
+}
+pre, tt, code {
+	font-family: Menlo, Consolas, Courier, monospace;
+	font-size: smaller;
+	font-weight: normal;
+}
+pre {
+	margin: 0;
+	margin-bottom: 1em;
+	border-top: thin dotted;
+	padding: 0.5em 1ex;
 	overflow: auto;
 }
-
-div._markdown-code-bt > pre > code, div._markdown-code > pre > code {
-	display: inline-block;
-	margin: 0;
-	padding: 0.5em 0;
-	border-top: thin dotted;
-	border-bottom: thin dotted;
+tt, code {
+	white-space: nowrap;
+	padding: 0 0.5ex;
 }
-
-table._markdown-table {
+pre > code {
+	font-size: inherit;
+	white-space: inherit;
+	padding: 0;
+}
+p {
+	text-align: justify;
+	margin-top: 0.5em;
 	margin-bottom: 0.5em;
 }
-table._markdown-table, table._markdown-table th, table._markdown-table td {
-	border-collapse: collapse;
-	border-spacing: 0;
-	border: thin solid;
+ol {
+	margin-top: 1em;
+}
+ol > li, ul {
+	margin-top: 0.5em;
 }
 
-ol._markdown-ol {
-	counter-reset: _markdown-item;
-}
-ol._markdown-ol[start="0"] {
-	counter-reset: _markdown-item -1;
-}
-ol._markdown-ol[start="5"] {
-	counter-reset: _markdown-item 4;
-}
-ol._markdown-ol[start="10"] {
-	counter-reset: _markdown-item 9;
-}
-ol._markdown-ol > span._markdown-ol-incr {
-	counter-increment: _markdown-item;
-}
-ol._markdown-ol > span._markdown-ol-incr-2 {
-	counter-increment: _markdown-item 2;
-}
-ol._markdown-ol > span._markdown-ol-incr-5 {
-	counter-increment: _markdown-item 5;
-}
-ol._markdown-ol > span._markdown-ol-incr-10 {
-	counter-increment: _markdown-item 10;
-}
-ol._markdown-lc-greek, li._markdown-lc-greek {
-	list-style-type: lower-greek;
-}
-ol._markdown-ol > li {
-	counter-increment: _markdown-item;
-}
-ol._markdown-ol > li._markdown-li,
-ol._markdown-ol > li._markdown-li-lc,
-ol._markdown-ol > li._markdown-li-lc-greek,
-ol._markdown-ol > li._markdown-li-uc {
-	list-style-type: none;
-	display: block;
-}
-ol._markdown-ol > li._markdown-li:before,
-ol._markdown-ol > li._markdown-li-lc:before,
-ol._markdown-ol > li._markdown-li-lc-greek:before,
-ol._markdown-ol > li._markdown-li-uc:before {
-	position: absolute;
-	text-align: right;
-	white-space: nowrap;
-	margin-left: -9ex;
-	width: 9ex;
-}
-ol._markdown-ol > li._markdown-li[type="1"]:before {
-	content: counter(_markdown-item, decimal) ")\A0 \A0 ";
-}
-ol._markdown-ol > li._markdown-li-lc[type="i"]:before,
-ol._markdown-ol > li._markdown-li-lc[type="I"]:before {
-	content: counter(_markdown-item, lower-roman) ")\A0 \A0 ";
-}
-ol._markdown-ol > li._markdown-li-uc[type="I"]:before,
-ol._markdown-ol > li._markdown-li-uc[type="i"]:before {
-	content: counter(_markdown-item, upper-roman) ")\A0 \A0 ";
-}
-ol._markdown-ol > li._markdown-li-lc[type="a"]:before,
-ol._markdown-ol > li._markdown-li-lc[type="A"]:before {
-	content: counter(_markdown-item, lower-alpha) ")\A0 \A0 ";
-}
-ol._markdown-ol > li._markdown-li-lc-greek[type="a"]:before,
-ol._markdown-ol > li._markdown-li-lc-greek[type="A"]:before {
-	content: counter(_markdown-item, lower-greek) ")\A0 \A0 ";
-}
-ol._markdown-ol > li._markdown-li-uc[type="A"]:before,
-ol._markdown-ol > li._markdown-li-uc[type="a"]:before {
-	content: counter(_markdown-item, upper-alpha) ")\A0 \A0 ";
-}
-
-li._markdown-checkbox-on,
-li._markdown-checkbox-off {
-	list-style-type: none;
-	display: block;
-}
-li._markdown-checkbox-on > span:first-child + span + span,
-li._markdown-checkbox-off > span:first-child + span + span {
-	position: absolute;
-	clip: rect(0,0,0,0);
-}
-li._markdown-checkbox-on > span:first-child,
-li._markdown-checkbox-off > span:first-child,
-li._markdown-checkbox-on > span:first-child + span,
-li._markdown-checkbox-off > span:first-child + span {
-	display: block;
-	position: absolute;
-	margin-left: -3ex;
-	width: 1em;
-	height: 1em;
-}
-li._markdown-checkbox-on > span:first-child > span:first-child,
-li._markdown-checkbox-off > span:first-child > span:first-child {
-	display: block;
-	position: absolute;
-	left: 0.75pt; top: 0.75pt; right: 0.75pt; bottom: 0.75pt;
-}
-li._markdown-checkbox-on > span:first-child > span:first-child:before,
-li._markdown-checkbox-off > span:first-child > span:first-child:before {
-	display: inline-block;
-	position: relative;
-	right: 1pt;
-	width: 100%;
-	height: 100%;
-	border: 1pt solid;
-	content: "";
-}
-li._markdown-checkbox-on > span:first-child + span:before {
-	position: relative;
-	left: 2pt;
-	bottom: 1pt;
-	font-size: 125%;
-	line-height: 80%;
-	content: "\2713";
-}
-
-/* ]]> */
+/*
+ * ]]>
+ */
 </style>
 </head>
 <body style="text-align:center">
-<div style="display:inline-block;text-align:left;max-width:42pc">
+<div style="display:inline-block;text-align:left;max-width:44pc">
 <!-- git-changelog-smudge.pl -\-smudge -\- ChangeLog -->
+
+<h1 id="_topgit-0_19_13_-_infernally_internal_">TopGit-0.19.13 - Infernally Internal</h1>
+
+<h2 id="_2021-09-09_">2021-09-09</h2>
+
+<p><em>Reminder</em></p>
+
+<blockquote>
+<p>TopGit 0.19.4 (2017-02-14) introduced support for a new top-bases location
+   under heads.  This new location will become the default as of the TopGit
+   0.20.0 release.  The current location under refs will continue to be
+   supported in the future.  See <code>tg help migrate-bases</code> for more details.</p>
+</blockquote>
+
+<h3 id="_basics_">Basics</h3>
+
+<p>A great deal of behind-the-scenes work has been completed in this release.</p>
+
+<p>Core awk functionality now has full test coverage.  Some code refactoring
+needed to move forward with some other improvements has been done (and tests
+added for it).  There are only a very few end-user visible changes:</p>
+
+<ol>
+<li><code>tg goto</code> is an implicit alias for <code>tg checkout goto</code>, but only if no
+<code>topgit.alias.goto</code> has been explicitly configured.</li>
+<li>Both <code>tg export</code> and <code>tg import</code> accept a new <code>--notes</code> option.</li>
+<li>Much of the help has been cleaned up and the text-only versions polished
+to make them more readable and more digestible (there's still plenty of
+room for future improvements though).</li>
+</ol>
+
+<h3 id="_details_">Details</h3>
+
+<p>There are several accomodations and updates to handle the idiosyncrasies
+of more recent Git versions.  Of particular note, <code>--object-format=sha256</code>
+repositories (available since Git 2.29.0) are handled properly and all the
+tests are automatically run against both the sha1 and sha256 formats when
+testing with a version of Git that is version 2.29.0 or later.</p>
+
+<p>There are several bug fixes included in this release.</p>
+
+<p>All users of TopGit are strongly encouraged to update to this release
+due to the various bugs that it squashes.</p>
+
+<p>Of particular note is a bug that had been present since 0.19.4 that may have
+resulted in a <code>tg update</code> finishing but then <code>tg summary</code> still showing that
+things were out-of-date.  Most often seen when dealing with TopGit remotes.
+A second <code>tg update</code> did correct the issue and although nothing was actually
+incorrectly merged, the bug, when triggered, did cause several unnecessary
+merge commits to be entered into the repository's history.</p>
+
+<p>Another corrected bug involves use of branch names that contain characters
+with an ASCII value less than 0x2F (<code>/</code>).  When certain combinations of
+such names were encountered, incorrect operation could have resulted.</p>
+
+<p>Other notable bug fixes are highlighted in the next section.</p>
+
+<h3 id="_corrections_">Corrections</h3>
+
+<ul>
+<li>tg-info: make --leaves "describe" lightweight --tags</li>
+<li>t6120-tag-stash.sh: accomodate gpg2</li>
+<li>tg--merging.sh: accomodate Git v2.30.0 checkout-index breakage</li>
+<li>t/t6100: accomodate git symbolic-ref brokenness since v2.29.0</li>
+<li>t/various: introduce git_init function and switch to it</li>
+<li>tg-push: make all pushes atomic</li>
+<li>tg-contains: correctly match all possible tg remotes with -r</li>
+<li>hooks/pre-commit: handle alternate index sequestration</li>
+<li>tg-update: exclude .top* files when using --base</li>
+<li>t6100: compensate for Git v2.31.0+ reflog brokenness</li>
+<li>tg-update: avoid updating remote-removed dependencies</li>
+</ul>
+
+<div class="_markdown-code-bt"><pre style="display:none"></pre><pre><code>Kyle J. McKay (214):
+    tg.sh: next version is 0.19.13
+    t/.gitattributes: add some binary attributes
+    INSTALL: add missing end-of-line
+    README: correct typo in ref name
+    t/README-TESTLIB: fix five typos and two grammos
+    t/README: remove internal 's from sample
+    t/README-WRITING-TESTS: correct typo
+    test-lib-functions.sh: pass --git-dir for git based test_diff
+    topgit_deps.awk: omit self loop lines
+    topgit_deps.awk: omit duplicated .topdeps lines
+    topgit_deps.awk: clarify and refine exclbr/inclbr operation
+    topgit_deps.awk: always remove files when requested
+    topgit_deps.awk: omit annihilated self deps
+    t1370: test topgit_deps.awk functionality
+    tg--awksome.sh: mention ref_match in more require lines
+    topgit_recurse.awk: improve operation description
+    topgit_recurse.awk: always remove files when requested
+    tg-update.sh: correct typo in function comment
+    ref_prefixes.awk: minor efficiency
+    ref_prepare.awk: minor efficiency
+    topgit_branches.awk: minor efficiency
+    topgit_msg.awk: minor efficiency
+    t0001-sanity.sh: add function word count test
+    topgit_recurse.awk: init even with no input
+    topgit_recurse.awk: elaborate on functionality
+    topgit_recurse.awk: make multib mode ignore dupes
+    t0001: add a sanity test for `cat -` just in case
+    topgit_recurse.awk: clarify and refine exclbr/inclbr operation
+    t1380: test topgit_recurse.awk functionality
+    topgit_navigate.awk: correct typos and elaborate
+    topgit_navigate.awk: always remove files when requested
+    tg--awksome.sh: correct typo in error message
+    topgit_navigate.awk: disallow outgoing links from annihilated
+    tg-info: make --leaves "describe" lightweight --tags
+    topgit_navigate.awk: elaborate and correct text comments
+    topgit_navigate.awk: clarify and refine exclbr/inclbr operation
+    topgit_navigate.awk: count the step off of nil
+    topgit_navigate.awk: roots not always equal to starts
+    tg: add implicit topgit.alias.goto="checkout goto"
+    ChangeLog: use correct name of smudger in comment
+    topgit_navigate.awk: after prune recalculate incoming and outgoing
+    t1390: test topgit_navigate.awk functionality
+    t0001: advance some awk checks to "expect success"
+    Makefile.mak: correct typo in comment
+    Makefile: cleanup and polish
+    Makefile.mak: mention a few more settings
+    create-html.sh: minor nit use double-quotes
+    t/Makefile.mak: use TESTLIB_TEST_LINT not TEST_LINT
+    check-non-portable-shell.pl: update from Git
+    test-lib-main.sh: expunge use of perl
+    test-lib-functions.sh: add awk() function redirect
+    t/t1200/maketable: replace perl version with awk version
+    tg.sh: do not pass arguments to dot command
+    tg-update: factor out merging code
+    tg.sh: introduce a show-toplevel helper function
+    t6120-tag-stash.sh: accomodate gpg2
+    README: rename to README_DOCS.rst
+    Makefile.mak: improve html generation
+    README: add a descriptive Read Me
+    README: expand README with example
+    check-non-portable-shell.pl: update from Git
+    Merge branch 'show-toplevel-helper'
+    tg.sh: make .topdeps/.topmsg cache write atomic
+    comments: eliminate clumsy grammos
+    t/test-lib.sh: correct typo in comment
+    test-lib-main.sh: make GIT_PATH test setting actually work
+    tg.sh: initialize TRAPEXIT_ to empty
+    tg--merging.sh: accomodate Git v2.30.0 checkout-index breakage
+    t/t0002: add an explicit test for GIT_CONFIG_PARAMETERS
+    t/t2000: add --quiet option to `git init`
+    t/t6100: accomodate git symbolic-ref brokenness since v2.29.0
+    t/various: introduce git_init function and switch to it
+    README: future proof example against Git version 2.28.0 and later
+    README: add topgit.top-bases setting to example
+    t/README: correct yet more typos
+    t/README: quote the TAP regex's and mention they are PCRE
+    t/t6100: add more reflog verify-ref tests
+    tg-*.txt: improve the readability of the .txt help
+    README_DOCS.rst: update git mailing list archive link
+    t/test-lib-functions.sh: minor checkbashisms adjustments
+    t/test-lib-main.sh: minor checkbashisms adjustments
+    README_DOCS.rst: include custom tg tag color config info
+    README_DOCS.rst: update synopsis output
+    README_DOCS.rst: correct tg tag help for --clear
+    Makefile: trivial whitespace change
+    awk/ref_match.awk: do not choke on '&amp;' in ref names
+    awk/ref_match.awk: always sort refs without trailing '/'
+    README_DOCS.rst: correct spelling error
+    README-TESTLIB: correct yet another typo
+    awk/topgit_navigate.awk: typo be gone
+    awk/ref_prepare.awk: grammo be gone
+    awk/ref_prefixes.awk: bring comments up to date
+    t1301: test special ref name characters with ref_match.awk
+    tg*.sh: use git mktree instead of git hash-object -t tree
+    README: mention tg push and fuss with docs mention
+    README_DOCS.rst: do not split ``code text`` across lines
+    t/Makefile.mak: add trap on INT for non-prove aggregate results
+    t/test-lib-main.sh: make sure test_auh is correct
+    t/test-lib-main.sh: use POSIX for TESTLIB_TEST_PARENT_INT_ON_ERROR
+    t/test-lib-{main,functions}.sh: prohibit perl in tests
+    test-lib*.sh: remove the last use of PERL_PATH
+    test framework: add underpinnings for Git sha256 support
+    t0002: update for Git hash algorithm sha256
+    test-lib-*.sh: make sure GIT_DEFAULT_HASH gets into the test cache
+    t1050: add Git sha256 support
+    tg: initial Git sha256 hash algorithm support
+    t1200: add support for Git sha256 hash algorithm
+    tg: improve Git sha256 hash algorithm support
+    t4400: update for Git hash algorithm sha256
+    t8100: update for Git hash algorithm sha256
+    t8300: compensate for Git sha256 patch-id behavior
+    t6120: update for Git hash algorithm sha256
+    t6100: update for Git 2.31+ and hash algorithm sha256
+    t6100: expunge test_tolerate_failure items
+    tg-update.sh: issue more messages when post-update checkout fails
+    tg-update.sh: avoid false positive git checkout complaints
+    t/t*.sh: do not ignore failures in for loops
+    tg-push: make all pushes atomic
+    README_DOCS.rst: include hint about gc.rerereResolved
+    README_DOCS.rst: use t/release instead of release
+    README_DOCS.rst: update URL from http: to https:
+    t1060: update rev-parse --git-common-dir test
+    tg.sh: accept -P as alternative for --no-pager
+    tg-update.sh: correct typo in help
+    README_DOCS.rst: mention --paginate and -P options
+    README_DOCS.rst: replace man git-config with git help config
+    tg-push: pass --follow-tags and --no-follow-tags options to git
+    tg-revert.sh: make -h output accessible without tg.sh
+    tg-update: keep state in tg-state directory
+    t/README-TESTLIB-TG: add missing closing formatting character
+    README_DOCS.rst: correct tg update post-update state
+    t5060: test tg update --continue functionality
+    README_DOCS.rst: add mention of [ROOT] branches
+    tg-depend.sh: match tg status terminology
+    README_DOCS.rst: use "working directory" terminology
+    README_DOCS.rst: add missing punctuation
+    tg-{push,revert,summary}: accept --tgish for --tgish-only
+    README_DOCS.rst: update tg prev and tg next usage summary
+    tg.sh: also unset GIT_OBJECT_DIRECTORY when using -C
+    README_DOCS.rst: mention source of tg tag -g date and time
+    tg.sh: improve cherry-pick/revert detection
+    README_DOCS.rst: update tg import -s docs
+    tg.sh: disallow alternate refStorage backends
+    tg-migrate-bases.sh: become POSIX compliant
+    tg.sh: add fer_branch_contains utility function
+    tg-{contains,info}.sh: adopt fer_branch_contains
+    t/test-lib-main.sh: remove extraneous line
+    t/helper/test_have_prereq.sh: make test_have_prereq available
+    Makefile.mak: add test-sha1 and test-sha256 and update test target
+    Makefile.sh: sort -u Makefile.dep
+    Makefiles: remove __file_which_should_not_exist
+    t0002: correct typo in unit test description
+    README-TESTLIB-TG: eliminate typo in description
+    t4500: test tg contains functionality
+    t/helper/git_version.sh: make git_version available
+    t/Makefile.mak: show git version being used for tests
+    t/test-lib-functions-tg.sh: rectify grammo in description
+    t4200/t6120: make tests work with new bases location
+    tg-contains.sh: accomodate new bases location
+    t4501: test tg contains with multi-level names
+    test-lib-tg: grok default --top-bases of tg being tested
+    t1020: automatically adapt to tg version &gt;= 0.19.20
+    tg-contains: correctly match all possible tg remotes with -r
+    tg-info.sh: add a few "sort" filters
+    t2031: test sequestration with git commit -a
+    hooks/pre-commit: handle alternate index sequestration
+    t5001: test tg update --base fast forwards some more
+    tg--merging.sh: support --no-commit option
+    tg-update: exclude .top* files when using --base
+    tg.sh: replace marc.info URL with lore.kernel.org URL
+    various: update a few outdated URLs
+    tg-*.sh: make sure stripspace uses the correct comment char
+    t5002: explicitly test the issue 11 problem
+    create-html-usage.pl: improve wrapping and options support
+    tg-export: support --notes option
+    tg-import: support --notes option
+    tg-create.sh: handle @ alias for HEAD with --no-deps
+    tg.sh: ensure ensure_clean_tree works on unborn branches
+    tg-import: pass --no-deps to tg create when appropriate
+    README_DOCS.rst: squash another typo
+    topgit.html: generate using a consistent style
+    README_DOCS.rst: reword incoherent conventions paragraph
+    README_DOCS.rst: add 3-way merge glossary reference
+    tg-export.sh: correct fatal wayback message
+    README_DOCS.rst: update the out-of-date glossary entry
+    README*: minor nits and alternate stub
+    README_DOCS.rst: tweak tg tag -g date comments
+    tg-tag.sh: discard irrelevant spam when using --drop
+    t6100: compensate for Git v2.31.0+ reflog brokenness
+    t6101: perform a few more tg tag --drop tests
+    tg-tag: do not update ref when dropping @{0} if different
+    tg--merging.sh: add single file merge utility function
+    t5011: test tg update --skip-missing
+    tg-update: do not attempt to merge missing depedency
+    t5012: test tg update with remote .topdeps removal
+    tg-update: avoid updating remote-removed dependencies
+    README_DOCS.rst: expand the update process description
+    t5021: test partial fast-forward dependency updates
+    tg--merging: use correct first parent when fast-forwarding
+    README_DOCS.rst: minor documentation nits
+    t2200: add very basic tg depend add multiple tests
+    t2300: test tg annihilate including tg update action
+    docs: yet another alternate stub
+    create-html-usage.pl: fuss with options indentation
+    various: use "command" instead of "subcommand"
+    tg: clean up generic help output
+    tg.sh: handle help -h
+    tg: clean up help usage output
+    Makefile.sh: use --abbrev=8 instead of --abbrev=4
+    tg.sh: adjust use of --create-reflog option
+    t6102: test tg tag -g with tabs present
+    tg-tag: handle reflog entries with extra tabs
+    README_DOCS.rst: wordsmith some of the commentary
+    topgit: version 0.19.13
+
+Adam Mizerski (1):
+    Update INSTALL
+</code></pre></div>
 
 <h1 id="_topgit-0_19_12_-_compatibility_conundrum_">TopGit-0.19.12 - Compatibility Conundrum</h1>
 
@@ -191,10 +388,10 @@ li._markdown-checkbox-on > span:first-child + span:before {
 <p><em>Reminder</em></p>
 
 <blockquote>
-  <p>TopGit 0.19.4 (2017-02-14) introduced support for a new top-bases location
-     under heads.  This new location will become the default as of the TopGit
-     0.20.0 release.  The current location under refs will continue to be
-     supported in the future.  See <code>tg help migrate-bases</code> for more details.</p>
+<p>TopGit 0.19.4 (2017-02-14) introduced support for a new top-bases location
+   under heads.  This new location will become the default as of the TopGit
+   0.20.0 release.  The current location under refs will continue to be
+   supported in the future.  See <code>tg help migrate-bases</code> for more details.</p>
 </blockquote>
 
 <p>Tiny tweaks to provide improved compatibility with various earlier Git
@@ -216,7 +413,7 @@ until a bug fix for it was included in Git 1.9.2.</li>
 that is greater than or equal to 2.10.0.  Users of Git versions that are
 greater than or equal to 1.9.2 but less than 2.10.0 probably want this update.</p>
 
-<h3 id="_corrections_">Corrections</h3>
+<h3>Corrections</h3>
 
 <ul>
 <li>Don't use <code>--create-reflog</code> before Git 2.10.0 (which added it)</li>
@@ -239,10 +436,10 @@ greater than or equal to 1.9.2 but less than 2.10.0 probably want this update.</
 <p><em>Reminder</em></p>
 
 <blockquote>
-  <p>TopGit 0.19.4 (2017-02-14) introduced support for a new top-bases location
-     under heads.  This new location will become the default as of the TopGit
-     0.20.0 release.  The current location under refs will continue to be
-     supported in the future.  See <code>tg help migrate-bases</code> for more details.</p>
+<p>TopGit 0.19.4 (2017-02-14) introduced support for a new top-bases location
+   under heads.  This new location will become the default as of the TopGit
+   0.20.0 release.  The current location under refs will continue to be
+   supported in the future.  See <code>tg help migrate-bases</code> for more details.</p>
 </blockquote>
 
 <p>A small speed bump most noticeable with <code>tg summary</code>, a few regression fixes,
@@ -347,10 +544,10 @@ minor enhancements and more tests.</p>
 <p><em>Reminder</em></p>
 
 <blockquote>
-  <p>TopGit 0.19.4 (2017-02-14) introduced support for a new top-bases location
-     under heads.  This new location will become the default as of the TopGit
-     0.20.0 release.  The current location under refs will continue to be
-     supported in the future.  See <code>tg help migrate-bases</code> for more details.</p>
+<p>TopGit 0.19.4 (2017-02-14) introduced support for a new top-bases location
+   under heads.  This new location will become the default as of the TopGit
+   0.20.0 release.  The current location under refs will continue to be
+   supported in the future.  See <code>tg help migrate-bases</code> for more details.</p>
 </blockquote>
 
 <p>Minor nits and updates, but nothing earth shattering.  Some "deprecated"
@@ -407,10 +604,10 @@ the test suite!</p>
 <p><em>Reminder</em></p>
 
 <blockquote>
-  <p>TopGit 0.19.4 (2017-02-14) introduced support for a new top-bases location
-     under heads.  This new location will become the default as of the TopGit
-     0.20.0 release.  The current location under refs will continue to be
-     supported in the future.  See <code>tg help migrate-bases</code> for more details.</p>
+<p>TopGit 0.19.4 (2017-02-14) introduced support for a new top-bases location
+   under heads.  This new location will become the default as of the TopGit
+   0.20.0 release.  The current location under refs will continue to be
+   supported in the future.  See <code>tg help migrate-bases</code> for more details.</p>
 </blockquote>
 
 <p>This release is a bug fix and maintenance release primarily intended to
@@ -443,10 +640,10 @@ improve test coverage of both local and remote updating.</p>
 <p><em>Reminder</em></p>
 
 <blockquote>
-  <p>TopGit 0.19.4 (2017-02-14) introduced support for a new top-bases location
-     under heads.  This new location will become the default as of the TopGit
-     0.20.0 release.  The current location under refs will continue to be
-     supported in the future.  See <code>tg help migrate-bases</code> for more details.</p>
+<p>TopGit 0.19.4 (2017-02-14) introduced support for a new top-bases location
+   under heads.  This new location will become the default as of the TopGit
+   0.20.0 release.  The current location under refs will continue to be
+   supported in the future.  See <code>tg help migrate-bases</code> for more details.</p>
 </blockquote>
 
 <p>This release is primarily a bug fix and maintenance release.  A few extra
@@ -730,7 +927,7 @@ somewhere else so that it can persist and be reused.</p>
 
 <h2 id="_2017-04-06_">2017-04-06</h2>
 
-<h2 id="_awking_awesome_acceleration__">Awking Awesome Acceleration!</h2>
+<h2 id="_awking_awesome_acceleration_">Awking Awesome Acceleration!</h2>
 
 <p>It was supposed to be such a quick and simple update, surely it
 would be done in no time at all.  And then it started growing...</p>
@@ -1038,7 +1235,7 @@ tg options and setup (and the broken rev-parse --git-common-dir issue).</p>
 
 <h2 id="_2017-02-14_">2017-02-14</h2>
 
-<h2 id="_there_be_octopuses_here__">There be octopuses here!</h2>
+<h2 id="_there_be_octopuses_here_">There be octopuses here!</h2>
 
 <p>tg update now prefers to perform index-only merges where possible
 and will now make octopus merges when only simple in-index merge

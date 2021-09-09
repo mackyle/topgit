@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>TopGit &#x2013; A Different Patch Queue Manager</title>
+<meta charset="utf-8" />
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<style type="text/css">
+/* <![CDATA[
+ *
+ * Style sheet for TopGit README documentation
+ * Copyright (C) 2021 Kyle J. McKay
+ * All rights reserved
+ * License GPL2
+ *
+ */
+
+body {
+	font-family: Times, serif;
+	font-size: medium;
+	font-weight: normal;
+}
+h1, h2, h3 {
+	font-family: Helvetica, sans-serif;
+	font-weight: normal;
+}
+body > div:first-child > h1:first-child {
+	font-size: xx-large;
+	text-align: center;
+	margin-top: 1em;
+	margin-bottom: 1em;
+}
+h1 {
+	font-size: x-large;
+	margin-top: 1.25em;
+	margin-bottom: 0.75em;
+}
+h2 {
+	font-size: large;
+	margin-top: 1.25em;
+	margin-bottom: 0.75em;
+}
+h3 {
+	font-size: medium;
+	margin-top: 1em;
+	margin-bottom: 1em;
+	font-variant: small-caps;
+}
+h4 {
+	font-size: medium;
+	margin-top: 1em;
+	margin-bottom: 1em;
+}
+div {
+	margin: 0;
+}
+pre, tt, code {
+	font-family: Menlo, Consolas, Courier, monospace;
+	font-size: smaller;
+	font-weight: normal;
+}
+pre {
+	margin: 0 3ex;
+	border: thin dotted;
+	padding: 0.5em 1ex;
+}
+tt, code {
+	white-space: nowrap;
+	padding: 0 0.5ex;
+}
+pre > code {
+	font-size: inherit;
+	white-space: inherit;
+	padding: 0;
+}
+p {
+	text-align: justify;
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+}
+ol {
+	margin-top: 1em;
+}
+
+/*
+ * ]]>
+ */
+</style>
+</head>
+<body style="text-align:center">
+<div style="display:inline-block;text-align:left;max-width:44pc">
+<h1 id="_topgit_--_a_different_patch_queue_manager_">TopGit &#x2013; A Different Patch Queue Manager</h1>
+
+<h2 id="_overview_">Overview</h2>
+
+<p>TopGit manages one or more "patch queue"s (aka "patch set"s) using
+Git.</p>
+
+<p>Whereas a utility such as <code>quilt</code> maintains each individual patch
+as a "diff" file on disk, TopGit (the <code>tg</code> command) maintains each
+individual patch as <em>two</em> branches in Git &#x2013; the patch's "branch"
+and the patch's "base branch".  The patch itself is simply the
+"diff" from the patch's "base branch" to the patch's "branch".</p>
+
+<p>Whereas a utilty such as <code>quilt</code> maintains the list of active patch
+"diff" files and the correct order to apply them in a file (the
+<code>series</code> file), TopGit maintains this information in a <code>.topdeps</code>
+file that is part of each patch's "branch".</p>
+
+<p>TopGit maintains any desired "documentation" (aka the patch header)
+in a <code>.topmsg</code> file that is also part of each patch's "branch" and
+prepends it when generating a patch "diff".</p>
+
+<h2 id="_simplistic_quilt_vs_topgit_example_">Simplistic Quilt vs. TopGit Example</h2>
+
+<p>Consider the following files:</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>frabjous.tar.gz    # tarball of "frabjous" sources
+0001-brillig.diff  # first patch to apply
+0002-gimble.diff   # second patch to apply
+</code></pre></div>
+
+<p>With Quilt they might be used like so:</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>$ tar -xzf frabjous.tar.gz
+$ cd frabjous
+$ quilt import ../0001-brillig.diff &amp;&amp; quilt push
+$ quilt import ../0002-gimble.diff &amp;&amp; quilt push
+$ quilt applied
+patches/0001-brillig.diff
+patches/0002-gimble.diff
+</code></pre></div>
+
+<p>With TopGit they might be used like so:</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>$ tar -xzf frabjous.tar.gz
+$ cd frabjous
+$ git -c init.defaultBranch=master init &amp;&amp; git add -A
+$ git -c user.name=- -c user.email=- commit -qm frabjous
+$ git checkout -b patches
+$ git -c user.name=- -c user.email=- am ../0001-brillig.diff
+$ git -c user.name=- -c user.email=- am ../0002-gimble.diff
+$ git checkout master
+$ git config topgit.top-bases heads # not the default...yet!
+$ tg -c user.name=- -c user.email=- import ..patches
+$ git branch
+  master
+  patches
+  t/brillig
+* t/gimble
+  {top-bases}/t/brillig
+  {top-bases}/t/gimble
+$ tg summary
+  t/brillig  [PATCH] brillig
+&gt; t/gimble   [PATCH] gimble
+$ tg summary --rdeps --heads
+t/gimble
+  t/brillig
+    master
+</code></pre></div>
+
+<p>Whereas with Quilt, the "0001-brillig.diff" patch is maintained as
+the original patch file (in <code>patches/0001-brillig.diff</code>), with
+TopGit, the "0001-brillig.diff" patch becomes <em>two</em> Git branches,
+<code>{top-bases}/t/brillig</code> which represents the sources before the
+"0001-brillig.diff" patch has been applied and <code>t/brillig</code> which
+represents the sources after the "0001-brillig.diff" patch has been
+applied.</p>
+
+<p>The original "0001-brillig.diff" patch can be re-generated with this
+TopGit command:</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>$ tg patch t/brillig
+</code></pre></div>
+
+<p>And is roughly equivalent to the diff from the <code>{top-bases}/t/brillig</code>
+branch to the <code>t/brillig</code> branch.  (It's the diff excluding the two
+TopGit metadata files with the patch header prepended to the result.)</p>
+
+<p>To work on the "brillig" patch, one simply does a checkout of the
+<code>t/brillig</code> branch and makes and commits changes as normal using
+regular Git commands.  After the changes have been made, the "gimble"
+patch may need updating if any of the changes made to the "brillig"
+patch modified the same files affected by the "gimble" patch.  That
+can be accomplished with this command:</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>$ tg update --all
+</code></pre></div>
+
+<p>Finally, when a new set of ".diff" patch files needs to be generated,
+these commands can be used:</p>
+
+<div class="_markdown-code"><pre style="display:none"></pre><pre><code>$ git checkout t/gimble
+$ tg export --quilt --strip --numbered patchdir
+$ ls -1 patchdir
+0001-brillig.diff
+0002-gimble.diff
+series
+</code></pre></div>
+
+<h2 id="_topgit_advantages_">TopGit Advantages</h2>
+
+<h3 id="_patch_dependency_topology_">Patch Dependency Topology</h3>
+
+<p>Whereas the <code>series</code> file in Quilt is (obviously) limited to a
+"linear" topology, TopGit's <code>.topdeps</code> file is not.</p>
+
+<p>For example, consider that you have three patches:</p>
+
+<ol>
+<li>add "feature A"</li>
+<li>add "feature B"</li>
+<li>add "feature C" that requires both feature A and feature B</li>
+</ol>
+
+<p>If "feature A" and "feature B" are completely independent features,
+then the order that the "feature A" and "feature B" patches are
+applied does not matter as long as they are both applied before the
+"feature C" patch.</p>
+
+<p>TopGit can represent this by listing both the "feature A" and
+"feature B" patches in the <code>.topdeps</code> file for the "feature C"
+patch.</p>
+
+<h3 id="_patch_change_history_">Patch Change History</h3>
+
+<p>Whereas with Quilt there is no history of changes (aka edits) to a
+patch (unless explicit backups are made along the way), all changes
+to a patch in TopGit are made via regular Git commands.</p>
+
+<p>This means all the standard Git introspection commands (e.g. "log",
+"diff", "bisect", "blame", etc.) are available to view the history
+of an individual patch.</p>
+
+<h3 id="_patch_updating_">Patch Updating</h3>
+
+<p>With Quilt when the "upstream" sources are updated (or even an early
+patch in the series is updated) in such a way as to cause a patch
+to no longer apply cleanly, the patch must be fixed by hand.</p>
+
+<p>With TopGit, the full Git merge machinery is used to merge the
+"upstream" changes (or changes to an earlier patch) into the patches
+in dependency topological order.  This can often avoid patch
+conflicts.</p>
+
+<p>In the case where a patch must be fixed by hand (yes, this still
+can happen in TopGit), the Git <code>rerere</code> (reuse recorded resolution)
+mechanism can be used to record the hand-crafted fix and later
+automatically reuse that fix when needed.</p>
+
+<h3 id="_patch_identification_">Patch Identification</h3>
+
+<p>When there are a very large number of patches in a patch set, it
+may be difficult to remember (especially if you're not the original
+author) which individual patch of a "patch set" contains a particular
+change.</p>
+
+<p>After using the various Git introspection commands (e.g. "log",
+"diff", "bisect", "blame", etc.) to locate a commit containing a
+particular change, the TopGit <code>tg contains</code> command can be used to
+identify the individual patch of a "patch set" that logically
+contains that commit.</p>
+
+<p>In other words, <code>tg contains</code> identifies which TopGit branch would
+produce a patch "diff" file that makes the change introduced by the
+given commit.</p>
+
+<h3 id="_collaboration_">Collaboration</h3>
+
+<p>Because TopGit stores all information directly in Git, all of Git's
+normal push/pull/remote functionality can be used to collaborate
+on and/or share TopGit "patch set"s with others.  The <code>tg push</code>
+command facilitates pushing all branches in one or more TopGit
+"patch set"s at once.</p>
+
+<h2 id="_topgit_features_">TopGit Features</h2>
+
+<h3 id="_multiple_patch_sets_">Multiple Patch Sets</h3>
+
+<p>With Quilt it is possible to use different <code>series</code> files to combine
+patch "diff" files into different arrangements (e.g. for different
+machine architectures or development branches).</p>
+
+<p>TopGit also allows multiple "patch set"s to exist at the same time
+where a single "patch" may be used by more than one "patch set".</p>
+
+<h3 id="_patch_set_history_">Patch Set History</h3>
+
+<p>As an alternative to maintaining two or more different versions of
+the same patch (e.g. for different development branches) under
+different names such as, for example, "patch1-oldstable", "patch1-stable"
+and "patch1-unstable", it's possible to use a TopGit tag to record
+the state of a "patch set" (via the <code>tg tag</code> command) and then later
+go back to that state (via the <code>tg shell</code> command) to, for example,
+produce an updated patch set for an older software version and
+record that new state of the older software version "patch set"
+without disturbing the current version of the "patch set".</p>
+
+<p>The advantage of using this mechanism is that the branch names for
+the individual patches always remain the same no matter how many
+different versions are being kept.</p>
+
+<h3 id="_import_and_export_">Import and Export</h3>
+
+<p>TopGit can import and export "patch set"s to other formats.  This
+includes the one "diff" file per patch and one "commit" per patch
+formats.</p>
+
+<p>This makes it easy to produce a set of "diff" patch files on demand
+for external (e.g. non-Git) use for a "patch set".</p>
+
+<h2 id="_topgit_downsides_">TopGit Downsides</h2>
+
+<p>Forget about using <code>git rebase</code> on a TopGit branch (either a patch's
+"branch" or its "base branch").  With the exception being commits
+that have not yet been merged into any other patch's "branch" or
+"base branch".  (TopGit does, however, have its own <code>tgstash</code> that
+provides a kind of "undo" after unfortunate update accidents.)</p>
+
+<p>The merge history for a "patch set" can become rather complex as a
+"patch set" is maintained over time (via the <code>tg update</code> command)
+since nothing is ever thrown away.</p>
+
+<p>TopGit has a learning curve and those unfamiliar with Git will need
+to become comfortable with Git too.</p>
+
+<h2 id="_additional_information_">Additional Information</h2>
+
+<p><a href="https://mackyle.github.io/topgit">Full documentation</a> is available including a <a href="https://mackyle.github.io/topgit/topgit.html">fully formatted
+version of the manual</a> (created from <code>README_DOCS.rst</code> which
+incorporates a few <a href="https://mackyle.github.io/topgit/topgit.html#synopsis">examples</a>) and the <a href="https://mackyle.github.io/topgit/changelog.html">TopGit changelog</a>.</p>
+</div>
+</body>
+</html>
