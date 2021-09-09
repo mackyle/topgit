@@ -2062,13 +2062,12 @@ tg tag
 
 	TopGit tags are created with a reflog if core.logallrefupdates is
 	enabled (the default for non-bare repositories).  Unfortunately Git
-	is incapable of showing an annotated/signed tag's reflog
-	(using git log -g) as it will first resolve the tag before checking to
-	see if it has a reflog.  Git can, however, show reflogs for lightweight
-	tags (using git log -g) just fine but that's not helpful here.  Use
-	``tg tag`` with the ``-g`` or ``--reflog`` option to see the reflog for
-	an actual tag object.  This also works on non-TopGit annotated/signed
-	tags as well provided they have a reflog.
+	is incapable of showing an annotated/signed tag's reflog (using either
+	``git log -g`` or ``git reflog show``).  Git can, however, show
+	reflogs for lightweight tags just fine but that's not helpful here.
+	Use ``tg tag`` with the ``-g`` or ``--reflog`` option to see the
+	reflog for an actual tag object.  This also works on non-TopGit
+	annotated/signed tags as well provided they have a reflog.
 
 	Note that the time and date shown for reflog entries by ``tg tag -g``
 	is the actual time and date recorded in that reflog entry itself which
