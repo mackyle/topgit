@@ -62,7 +62,7 @@
 ##            -- provided as options to all tests (undergoes field splitting)
 ##               might be set to, for example: --verbose -debug
 ##
-## T          -- space-sparated list of tests to run, must be full filename
+## TESTSUITE  -- space-sparated list of tests to run, must be full filename
 ##               WITHOUT any directory part of the test INCLUDING the .sh
 ##               suffix.  The default is all t\d{4}-*.sh files in this dir.
 ##
@@ -117,11 +117,11 @@ test: pre-clean TG-TEST-SETTINGS $(TESTLIB_TEST_LINT) FORCE
 	$(Q)helper/git_version "*** testing using" && set -m && $(CACHE_SETUP_TTY) $(MAKE) $${GNO_PD_OPT} -f Makefile.mak aggregate-results-and-cleanup
 
 prove: pre-clean TG-TEST-SETTINGS $(TESTLIB_TEST_LINT) FORCE
-	@helper/git_version "*** testing using" && echo "*** prove ***" && set -m && $(CACHE_SETUP) $(PROVE) --exec $(SHELL_PATH_SQ)'' $(TESTLIB_PROVE_OPTS) $(T) :: $(TESTLIB_TEST_OPTS)
+	@helper/git_version "*** testing using" && echo "*** prove ***" && set -m && $(CACHE_SETUP) $(PROVE) --exec $(SHELL_PATH_SQ)'' $(TESTLIB_PROVE_OPTS) $(TESTSUITE) :: $(TESTLIB_TEST_OPTS)
 	$(Q)$(NOCLEANCMT)$(MAKE) $${GNO_PD_OPT} -f Makefile.mak -s post-clean-except-prove-cache
 
-.PRECIOUS: $(T)
-$(T): FORCE
+.PRECIOUS: $(TESTSUITE)
+$(TESTSUITE): FORCE
 	@echo "*** $@ ***"; $(SHELL_PATH_SQ)'' $@ $(TESTLIB_TEST_OPTS)
 
 # How to clean up
@@ -170,7 +170,7 @@ test-lint-filenames:
 
 # Run the tests without using prove
 
-run-individual-tests: $(T)
+run-individual-tests: $(TESTSUITE)
 
 aggregate-results-and-cleanup:
 	$(Q)set -m && ec=0 && trap : INT && \
