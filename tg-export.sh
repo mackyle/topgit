@@ -11,12 +11,24 @@ Usage: ${tgname:-tg} [...] export [--collapse] [--force] [<option>...] <newbranc
    Or: ${tgname:-tg} [...] export --quilt [--force] [-a | --all | -b <branch>...]
                 [--binary] [--flatten] [--numbered] [--strip[=N]] <directory>
    Or: ${tgname:-tg} [...] export --rebase --from-to <old_base> <new_base>
-                                  [--prefix <prefix>] [--drop-prefix <prefix>]
+                                  [--prefix <prefix>] [--drop-prefix <prefix>] -b <branch> -b <branch>
                            rebase topgit branches from old_base to new_base.
                            This is useful if you need to maintain topgit
                            branches on multiple releases of a project
-                           Example: tg export --from-to release-1.0 release-1.1
-                                              --prefix release-1.1-topgit-patches/ --drop-prefix release-1.0-topgit-patches/
+                           Example:
+                              2) Assuming the old base is release-1.0 the new base will be release-1.1
+                                 the old topic branches have been prefixed by release-1.0-topgit-patches/
+                                 and new topic branches should be prefixed by release-1.1-topgit-patches/
+                                 start the rebase with
+
+                                 tg export --from-to release-1.0  release-1.1 \
+                                    --drop-prefix release-1.0-topgit-patches/ \
+                                    --prefix release-1.1-topgit-patches/ \
+                                    release-1.0-topgit-patches/topic-summing-up-other-topics
+
+                                 Looks like there is still a problem with the
+                                 final tg create. Just exit shell/ignore and
+                                 run tg update yourself to see it worked (?)
 
 Options:
     -s <mode>           set subject bracketed [strings] strip mode
@@ -113,12 +125,11 @@ while [ -n "$1" ]; do
 	--from-to)
                 declare -A REBASE_FROM_TO
                 REBASE_FROM_TO["$1"]="$2"
-                shift; shift;;
+                shift 2;;
 	--drop-prefix)
 		REBASE_DROP_PREFIX="$1"; shift;;
 	--prefix)
 		REBASE_PREFIX="$1"; shift;;
-
 	--quilt)
 		driver=quilt;;
 	--collapse)
@@ -171,7 +182,10 @@ if [ "$driver" != "quilt" ]; then
 	fi
 fi
 
-if [ "$driver" != "rebase" ]; then
+if [ "$driver" == "rebase" ]; then
+  name=$output
+  output=
+else
   if [ -n "$REBASE_FROM_TO" -o -n "$REBASE_DROP_PREFIX" -o -n "$REBASE_PREFIX" ]; then
 	die "--onto and --drop-prefix can only be used in --rebase mode"
   fi
@@ -207,7 +221,7 @@ if [ "$driver" = "linearize" ]; then
 	fi
 fi
 
-if [ -z "$branches" ] && [ -z "$allbranches" ]; then
+if [ -z "$branches" ] && [ -z "$allbranches" ] && [ "$driver" != "rebase" ]; then
 	# this check is only needed when no branches have been passed
 	v_verify_topgit_branch name HEAD
 fi
@@ -469,7 +483,8 @@ EOF
                 git show "$_dep":.topmsg > $playground/.topmsg
                 echo "creating topgit branch $new_branch_name with deps ${target_deps[@]}"
                 git checkout "${target_deps[0]}" || die 'checking out failed'
-                tg create --topmsg-file $playground/.topmsg -m  "new tg branch $new_branch_name" "${new_branch_name}" "${target_deps[@]}" || {
+                # sourcing tg-create doesn't work cause it calls exit
+                "$TG_INST_CMDDIR"/../../bin/tg create --topmsg-file $playground/.topmsg -m  "new tg branch $new_branch_name" "${new_branch_name}" "${target_deps[@]}" || {
                   echo 'tg create failed';
                   "${SHELL:-@SHELL_PATH@}" -i </dev/tty || { echo "user abort"; return ; }
                 }
