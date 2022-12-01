@@ -185,6 +185,7 @@ fi
 if [ "$driver" == "rebase" ]; then
   name=$output
   output=
+  echo "!! You've chosen the experimental rebase feature. the tg export --rebase command fails with non zero exit code check the result. It might have worked :-/"
 else
   if [ -n "$REBASE_FROM_TO" -o -n "$REBASE_DROP_PREFIX" -o -n "$REBASE_PREFIX" ]; then
 	die "--onto and --drop-prefix can only be used in --rebase mode"
