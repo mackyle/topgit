@@ -260,7 +260,7 @@ test: all FORCE
 		TESTLIB_GIT_DEFAULT_HASH=sha1 $(MAKE) all; \
 	fi
 
-FORCE: Makefile.mak/phony
+FORCE all: Makefile.mak/phony
 
 # This "phony" target must have at least one command otherwise it will not
 # actually run anything and so will not actually trigger the rules that depend

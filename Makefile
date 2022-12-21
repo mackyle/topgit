@@ -30,6 +30,33 @@ TARGETS = \
 	test \
 #TARGETS
 
+# These should not pass through from the environment
+# But instead must be specified on the make command line
+# For example "make V=1" or "make DESTDIR=/some/dir"
+V =
+DESTDIR =
+RST2HTML =
+GIT_MINIMUM_VERSION =
+MKTOP =
+MAKEFILESH_DEBUG =
+T =
+SHELL_PATH =
+PERL_PATH =
+AWK_PATH =
+GIT_PATH =
+DIFF =
+PROVE =
+TESTLIB_PROVE_OPTS =
+TESTLIB_MAKE_OPTS =
+DEFAULT_TEST_TARGET =
+TESTLIB_TEST_LINT =
+TESTLIB_NO_CLEAN =
+TESTLIB_NO_CACHE =
+TESTLIB_SKIP_TESTS =
+TESTLIB_NO_TOLERATE =
+TESTLIB_TEST_OPTS =
+TG_TEST_INSTALLED =
+
 Makefile/default: Makefile/phony
 	+@set -- && set -ae && MAKE="$(MAKE)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak
 

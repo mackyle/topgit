@@ -4,7 +4,7 @@
 # License GPL2
 
 # Set MAKEFILESH_DEBUG to get:
-#  1. All defined environment variales saved to Makefile.var
+#  1. All defined environment variables saved to Makefile.var
 #  2. set -x
 #  3. set -v if MAKEFILESH_DEBUG contains "v"
 
