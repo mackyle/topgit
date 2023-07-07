@@ -10,6 +10,26 @@ Usage: ${tgname:-tg} [...] export [--collapse] [--force] [<option>...] <newbranc
    Or: ${tgname:-tg} [...] export --linearize [--force] [<option>...] <newbranch>
    Or: ${tgname:-tg} [...] export --quilt [--force] [-a | --all | -b <branch>...]
                 [--binary] [--flatten] [--numbered] [--strip[=N]] <directory>
+   Or: ${tgname:-tg} [...] export --rebase --from-to <old_base> <new_base>
+                                  [--prefix <prefix>] [--drop-prefix <prefix>] -b <branch> -b <branch>
+                           rebase topgit branches from old_base to new_base.
+                           This is useful if you need to maintain topgit
+                           branches on multiple releases of a project
+                           Example:
+                              2) Assuming the old base is release-1.0 the new base will be release-1.1
+                                 the old topic branches have been prefixed by release-1.0-topgit-patches/
+                                 and new topic branches should be prefixed by release-1.1-topgit-patches/
+                                 start the rebase with
+
+                                 tg export --from-to release-1.0  release-1.1 \
+                                    --drop-prefix release-1.0-topgit-patches/ \
+                                    --prefix release-1.1-topgit-patches/ \
+                                    release-1.0-topgit-patches/topic-summing-up-other-topics
+
+                                 Looks like there is still a problem with the
+                                 final tg create. Just exit shell/ignore and
+                                 run tg update yourself to see it worked (?)
+
 Options:
     -s <mode>           set subject bracketed [strings] strip mode
     --notes[=<ref>]     export .topmsg --- comment to notes ref <ref>
@@ -97,6 +117,19 @@ while [ -n "$1" ]; do
 	-s)
 		test $# -gt 0 && test -n "$1" || die "-s requires an argument"
 		smode="$1"; shift;;
+
+	--rebase)
+		driver=rebase;;
+	--from)
+		REBASE_FROM="$1"; shift;;
+	--from-to)
+                declare -A REBASE_FROM_TO
+                REBASE_FROM_TO["$1"]="$2"
+                shift 2;;
+	--drop-prefix)
+		REBASE_DROP_PREFIX="$1"; shift;;
+	--prefix)
+		REBASE_PREFIX="$1"; shift;;
 	--quilt)
 		driver=quilt;;
 	--collapse)
@@ -149,6 +182,16 @@ if [ "$driver" != "quilt" ]; then
 	fi
 fi
 
+if [ "$driver" == "rebase" ]; then
+  name=$output
+  output=
+  echo "!! You've chosen the experimental rebase feature. the tg export --rebase command fails with non zero exit code check the result. It might have worked :-/"
+else
+  if [ -n "$REBASE_FROM_TO" -o -n "$REBASE_DROP_PREFIX" -o -n "$REBASE_PREFIX" ]; then
+	die "--onto and --drop-prefix can only be used in --rebase mode"
+  fi
+fi
+
 [ -z "$branches" ] || [ "$driver" = "quilt" ] ||
 	die "-b works only with the quilt driver"
 
@@ -179,7 +222,7 @@ if [ "$driver" = "linearize" ]; then
 	fi
 fi
 
-if [ -z "$branches" ] && [ -z "$allbranches" ]; then
+if [ -z "$branches" ] && [ -z "$allbranches" ] && [ "$driver" != "rebase" ]; then
 	# this check is only needed when no branches have been passed
 	v_verify_topgit_branch name HEAD
 fi
@@ -381,6 +424,88 @@ collapse()
 	echo "$commit	$_dep" >>"$playground/$_name^parents"
 }
 
+
+## REBASE driver
+
+rebase()
+{
+
+
+	if [ -s "$playground/$_dep^commit" ]; then
+		# We've already seen this dep
+		commit="$(cat "$playground/$_dep^commit")"
+
+	elif [ -z "$_dep_is_tgish" ]; then
+		# This dep is not for rewrite
+		commit="$(git rev-parse --verify "refs/heads/$_dep^0" --)"
+
+	else
+		# First time hitting this dep; the common case
+
+		test -d "$playground/${_dep%/*}" || mkdir -p "$playground/${_dep%/*}"
+		commit="$(collapsed_commit "$_dep")"
+		bump_timestamp
+		echol "$commit" >"$playground/$_dep^commit"
+
+                cp .git/HEAD $playground/HEAD-tmp
+                new_branch_name="${REBASE_PREFIX}${_dep##$REBASE_DROP_PREFIX}"
+
+                REBASE_FROM_TO[$_dep]="${new_branch_name}"
+
+                if git rev-parse --abbrev-ref "$new_branch_name" -- &> /dev/null; then
+                  echo "---"
+                  echo "branch $new_branch_name already exists"; return;
+                else
+                  echo "---"
+                  echo "trying to rebase $_dep new name $new_branch_name"
+                  echo "head is $(cat .git/HEAD)"
+                fi
+
+                declare -a target_deps
+                target_deps=()
+
+                echo git show $_dep:.topdeps
+                echo $(git show $_dep:.topdeps)
+                while read dep; do
+                  if [ -z "$dep" ]; then continue; fi
+                  n="${REBASE_FROM_TO[$dep]}"
+                  echo "found dep $dep, n $n"
+                  if [ -n "$n" ]; then
+                    echo "adding dep $n"
+                    target_deps=("${target_deps[@]}" "$n")
+                  else
+                    die "$_dep has bad .topdep line $dep which has no target branch yet !? BUG"
+                  fi
+                done <<-EOF
+                $(git show $_dep:.topdeps)
+EOF
+
+
+                git show "$_dep":.topmsg > $playground/.topmsg
+                echo "creating topgit branch $new_branch_name with deps ${target_deps[@]}"
+                git checkout "${target_deps[0]}" || die 'checking out failed'
+                # sourcing tg-create doesn't work cause it calls exit
+                "$TG_INST_CMDDIR"/../../bin/tg create --topmsg-file $playground/.topmsg -m  "new tg branch $new_branch_name" "${new_branch_name}" "${target_deps[@]}" || {
+                  echo 'tg create failed';
+                  "${SHELL:-@SHELL_PATH@}" -i </dev/tty || { echo "user abort"; return ; }
+                }
+                # git add .topmsg .topdeps
+                # git commit -m "$new_branch_name dotfiles"
+
+                git cherry-pick $commit || {
+                  echo "cherry-picking the commit failed, please fix and commit and exit shell. use status !=0 to abort rebase"
+                  "${SHELL:-@SHELL_PATH@}" -i </dev/tty || { echo "user abort"; return ; }
+                }
+
+                echo "head is $(cat .git/HEAD)"
+
+
+	fi
+
+	# Propagate our work through the dependency chain
+	test -d "$playground/${_name%/*}" || mkdir -p "$playground/${_name%/*}"
+	echo "$commit	$_dep" >>"$playground/$_name^parents"
+}
 
 ## Quilt driver
 
