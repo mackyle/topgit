@@ -137,7 +137,7 @@ git_topmerge()
 			printf '%s\n\n# Conflicts:\n' "$_msg"
 			sed -n "/$tab/s/^[^$tab]*/#/p" <"$tmpstdout" | sort -u
 		} >"$git_dir/MERGE_MSG"
-		git update-ref MERGE_HEAD "$_theirs" || :
+		printf '%s\n' "$_theirs" >"$git_dir/MERGE_HEAD" || :
 		echo 'Automatic merge failed; fix conflicts and then commit the result.'
 		rm -f "$tmpstdout"
 		return $_ret
@@ -145,7 +145,7 @@ git_topmerge()
 	if [ -n "$_ncmode" ]; then
 		# merge succeeded, but --no-commit requested, enter "merge" mode and return
 		printf '%s\n' "$_msg" >"$git_dir/MERGE_MSG"
-		git update-ref MERGE_HEAD "$_theirs" || :
+		printf '%s\n' "$_theirs" >"$git_dir/MERGE_HEAD" || :
 		echo 'Automatic merge went well; stopped before committing as requested.'
 		rm -f "$tmpstdout"
 		return $_ret
