@@ -89,7 +89,7 @@ test_description                | must be non-empty before `. ./test-lib.sh`
 test_external_has_tap           | avoid changing -- will suppress TAP lines
 test_hash_algo                  | either `sha1` or `sha256` (only if supported)
 test_tick                       | last commit timestamp used see same function
-this_test                       | basename $0 | sed 's/-*//' (usually tNNNN)
+this_test                       | basename $0 | sed 's/-.*//' (usually tNNNN)
 
 TAP function                    | Description
 --------------------------------|----------------------------------------------
@@ -335,7 +335,7 @@ Variables
 
     Will automatically be set to empty unless the detected Git version is at
     least version 2.9 in which case it will be set to the value
-    `--allow-unrelated-histories`.  Inteded for use with `git merge`.  The
+    `--allow-unrelated-histories`.  Intended for use with `git merge`.  The
     `test_merge` function automatically supplies this.
 
 - test_description

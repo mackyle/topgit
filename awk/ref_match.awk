@@ -1,7 +1,7 @@
 #!/usr/bin/awk -f
 
 # ref_match - TopGit awk utility script used by tg--awksome
-# Copyright (C) 2017 Kyle J. McKay <mackyle@gmail.com>
+# Copyright (C) 2017,2025 Kyle J. McKay <mackyle@gmail.com>
 # All rights reserved.
 # License GPLv2
 
@@ -26,7 +26,7 @@
 #
 # hash values are always converted to lowercase
 #
-# output is each matching ref shown using the output matchfmt format whcih
+# output is each matching ref shown using the output matchfmt format which
 # is a limited form of the for-each-ref format in that the default is similar
 # to for-each-ref and only fields "%(refname)" and "%(objectname)" are
 # supported along with "%%" and "%xx" EXCEPT "%00" (it will try don't expect
@@ -36,9 +36,9 @@
 #
 #   --format="%(objectname) object%09%(refname)"
 #
-# while this is similar the for-each-ref default it uses "object" for the object
-# type since one is not available and, in fact, %(objecttype) will indeed also
-# be replaced with "object"
+# while this is similar to the for-each-ref default it uses "object" for the
+# object type since one is not available and, in fact, %(objecttype) will
+# indeed also be replaced with "object"
 #
 # output will be sorted by "refname" by default (it's always sorted somehow)
 # and for the two-key form, the LAST key is the primary key; if the leading

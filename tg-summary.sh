@@ -18,8 +18,8 @@ Options:
     --terse / --list    list TopGit branches (aka '-t' / '-l')
     --rdeps[-once]      show branch dependencies as multi-indented list
     --rdeps-full        like '--rdeps' but do not collapse repeated items
-    --rdeps --heads     use '--rdeps' and \$('--heads of <branch>...)
-    --[topgit]-heads    list only independent TopGit branch heads
+    --rdeps --heads     use '--rdeps' and \$('--heads' of <branch>...)
+    --[topgit-]heads    list only independent TopGit branch heads
     --heads-independent list only merge-base --independent heads
     --deps              list all .topdeps branch dependencies
     --deps-only         list sorted unique .topdeps branches + dependencies

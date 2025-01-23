@@ -1851,7 +1851,7 @@ tg update
 	been set to ``true`` it won't make any difference).
 
 	When ``-a`` (or ``--all``) is specified, updates all topic branches
-	matched by ``<pattern>``'s (see ``git-for-each-ref(1)`` for details),
+	matched by ``<pattern>``'s (see ``git help for-each-ref`` for details),
 	or all if no ``<pattern>`` is given.  Any topic branches with missing
 	dependencies will be skipped entirely unless ``--skip-missing`` is
 	specified.
@@ -2406,8 +2406,8 @@ namespace (so we recommend distinguishing them with the ``t/`` prefix).
 Apart from that, TopGit also maintains a set of auxiliary refs in
 ``refs/top-*``.  Currently, only ``refs/top-bases/`` is used, containing the
 current *base* of the given topic branch -- this is basically a merge of
-all the branches the topic branch depends on; it is updated during ``tg
-update`` and then merged to the topic branch, and it is the base of a
+all the branches the topic branch depends on; it is updated during ``tg update``
+and then merged to the topic branch, and it is the base of a
 patch generated from the topic branch by ``tg patch``.
 
 All the metadata is tracked within the source tree and history of the
@@ -2470,7 +2470,7 @@ There are two somewhat contradictory design considerations here:
 	(b) Having a self-contained topic system in local refs space
 
 To us, (a) does not appear to be very convincing, while (b) is quite
-desirable for ``git-log topic`` etc. working, and increased conceptual
+desirable for ``git log topic`` etc. working, and increased conceptual
 simplicity.
 
 Thus, we choose to instantiate all the topic branches of given remote
@@ -2588,7 +2588,6 @@ There is copious documentation on the testing library and other options in
 the various ``README`` files located in the ``t`` subdirectory.  The
 ``Makefile.mak`` file in the ``t`` subdirectory contains plenty of comments
 about possible makefile variable settings as well.
-
 
 
 TECHNICAL
