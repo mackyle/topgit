@@ -12,9 +12,32 @@ if vcmp "$git_version" '>=' "2.5"; then
 	test_set_prereq "GIT_2_5"
 fi
 
-git_231_plus=
+# if non-zero, expect n entry reflog @{n} to use 'old' field of entry @{n-1}
+reflog_n_old=
+
+# if non-zero, expect reflog @{x} to use 'old' field of entry @{x-1} for x >= 1
+reflog_n_minus1=
+
+# if non-zero, expect @{0} to return the real 'new' field of entry @{0}
+reflog_real_0=
+
+# if non-zero, expect @{0} to return the <ref> for existing but empty reflog
+reflog_mtok=
+
+git_231_mode=
 if vcmp "$git_version" '>=' "2.31"; then
-	git_231_plus=1
+	if vcmp "$git_version" '<' "2.45"; then
+		# >= 2.31.0 and < 2.45.0
+		git_231_mode=1
+		reflog_n_old=1
+		reflog_n_minus1=1
+		reflog_real_0=1
+		reflog_mtok=1
+	else
+		# >= 2.45.0
+		reflog_n_old=1
+		reflog_mtok=1
+	fi
 fi
 
 test_plan 50
@@ -1399,7 +1422,7 @@ test_expect_success SETUP 'tag --drop symref HEAD@{0}' '
 	h0="$(git rev-parse --verify HEAD@{0})" && test -n "$h0" &&
 	h1="$(git rev-parse --verify HEAD@{1})" && test -n "$h1" &&
 	h="$(git rev-parse --verify HEAD)" && test -n "$h" &&
-	if test -n "$git_231_plus"; then
+	if test -n "$git_231_mode"; then
 		test "$h" != "$h0" &&
 		test "$h0" = "$h1"
 	else
@@ -1409,7 +1432,7 @@ test_expect_success SETUP 'tag --drop symref HEAD@{0}' '
 	tg tag --drop HEAD@{0} &&
 	h0new="$(git rev-parse --verify HEAD@{0})" && test -n "$h0new" &&
 	hnew="$(git rev-parse --verify HEAD)" && test -n "$hnew" &&
-	if test -n "$git_231_plus"; then
+	if test -n "$git_231_mode"; then
 		test "$hnew" != "$h0new"
 	else
 		test "$hnew" = "$h0new"
@@ -1423,7 +1446,7 @@ test_expect_success 'SETUP GIT_2_5' 'tag --drop symref HEAD@{0} [linked]' '
 	h0="$(git rev-parse --verify HEAD@{0})" && test -n "$h0" &&
 	h1="$(git rev-parse --verify HEAD@{1})" && test -n "$h1" &&
 	h="$(git rev-parse --verify HEAD)" && test -n "$h" &&
-	if test -n "$git_231_plus"; then
+	if test -n "$git_231_mode"; then
 		test "$h" != "$h0" &&
 		test "$h0" = "$h1"
 	else
@@ -1433,7 +1456,7 @@ test_expect_success 'SETUP GIT_2_5' 'tag --drop symref HEAD@{0} [linked]' '
 	tg tag --drop HEAD@{0} &&
 	h0new="$(git rev-parse --verify HEAD@{0})" && test -n "$h0new" &&
 	hnew="$(git rev-parse --verify HEAD)" && test -n "$hnew" &&
-	if test -n "$git_231_plus"; then
+	if test -n "$git_231_mode"; then
 		test "$hnew" != "$h0new"
 	else
 		test "$hnew" = "$h0new"
@@ -1449,7 +1472,7 @@ test_expect_success SETUP 'tag --drop detached HEAD@{0}' '
 	h1="$(git rev-parse --verify HEAD@{1})" && test -n "$h1" &&
 	h="$(git rev-parse --verify HEAD)" && test -n "$h" &&
 	test "$h" = "$h0" &&
-	if test -n "$git_231_plus"; then
+	if test -n "$git_231_mode"; then
 		test "$h0" = "$h1"
 	else
 		test "$h0" != "$h1"
@@ -1457,7 +1480,7 @@ test_expect_success SETUP 'tag --drop detached HEAD@{0}' '
 	tg tag --drop HEAD@{0} &&
 	h0new="$(git rev-parse --verify HEAD@{0})" && test -n "$h0new" &&
 	hnew="$(git rev-parse --verify HEAD)" && test -n "$hnew" &&
-	if test -n "$git_231_plus"; then
+	if test -n "$git_231_mode"; then
 		test "$h0new" != "$h1"
 	else
 		test "$h0new" = "$h1"
@@ -1472,7 +1495,7 @@ test_expect_success 'SETUP GIT_2_5' 'tag --drop detached HEAD@{0} [linked]' '
 	h1="$(git rev-parse --verify HEAD@{1})" && test -n "$h1" &&
 	h="$(git rev-parse --verify HEAD)" && test -n "$h" &&
 	test "$h" = "$h0" &&
-	if test -n "$git_231_plus"; then
+	if test -n "$git_231_mode"; then
 		test "$h0" = "$h1"
 	else
 		test "$h0" != "$h1"
@@ -1480,7 +1503,7 @@ test_expect_success 'SETUP GIT_2_5' 'tag --drop detached HEAD@{0} [linked]' '
 	tg tag --drop HEAD@{0} &&
 	h0new="$(git rev-parse --verify HEAD@{0})" && test -n "$h0new" &&
 	hnew="$(git rev-parse --verify HEAD)" && test -n "$hnew" &&
-	if test -n "$git_231_plus"; then
+	if test -n "$git_231_mode"; then
 		test "$h0new" != "$h1"
 	else
 		test "$h0new" = "$h1"
@@ -1665,7 +1688,7 @@ EOT
 
 test_expect_success 'SETUP GIT_2_5' 'tag --drop detached HEAD@{0} [linked] all stale' '
 	result=test_must_fail &&
-	{ test -z "$git_231_plus" || result=; } &&
+	{ test -z "$reflog_mtok" || result=; } &&
 	cd linked &&
 	tg tag --drop HEAD@{6} &&
 	tg tag --drop HEAD@{5} &&
@@ -1825,7 +1848,7 @@ test_expect_success 'SETUP GIT_2_5' 'tag --clear HEAD w/o log fails [linked]' '
 test_expect_success 'LASTOK SETUP GIT_2_5' \
 	'HEAD@{0} after tag --clear and --drop @{0} [linked]' '
 	result=test_must_fail &&
-	{ test -z "$git_231_plus" || result=; } &&
+	{ test -z "$reflog_mtok" || result=; } &&
 	cd linked &&
 	test_must_fail git rev-parse --verify HEAD@{1} -- &&
 	eval $result git rev-parse --verify HEAD@{0} --
@@ -1844,7 +1867,7 @@ test_expect_success SETUP 'tag --clear HEAD w/o log fails' '
 test_expect_success 'LASTOK SETUP' \
 	'HEAD@{0} after tag --clear and --drop @{0}' '
 	result=test_must_fail &&
-	{ test -z "$git_231_plus" || result=; } &&
+	{ test -z "$reflog_mtok" || result=; } &&
 	cd main &&
 	test_must_fail git rev-parse --verify HEAD@{1} -- &&
 	eval $result git rev-parse --verify HEAD@{0} --
