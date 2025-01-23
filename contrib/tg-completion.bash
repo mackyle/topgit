@@ -203,7 +203,7 @@ __tg_commands ()
 		return
 	fi
 	local i IFS=" "$'\n'
-	for i in $(tg help | sed -n 's/^Usage:.*(\([^)]*\)).*/\1/p' | tr '|' ' ')
+	for i in $(tg help | sed -e '1,/^Available tg commands/d' -e 's/st\[atus\]/st status/')
 	do
 		case $i in
 		*--*)             : helper pattern;;
