@@ -1,5 +1,5 @@
 # Makefile - POSIX Makefile for TopGit
-# Copyright (C) 2017,2021 Kyle J. McKay
+# Copyright (C) 2017,2021,2025 Kyle J. McKay
 # All rights reserved
 # License GPL2
 
@@ -58,16 +58,16 @@ TESTLIB_TEST_OPTS =
 TG_TEST_INSTALLED =
 
 Makefile/default: Makefile/phony
-	+@set -- && set -ae && MAKE="$(MAKE)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak
+	+@set -- && set -ae && MAKE="$(MAKE)" T="$(T)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak
 
 .DEFAULT:
-	+@set -- "$@" && set -ae && MAKE="$(MAKE)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak "$$@"
+	+@set -- "$@" && set -ae && MAKE="$(MAKE)" T="$(T)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak "$$@"
 
 target: Makefile/phony
-	+@set -- $(TARGET) && set -ae && MAKE="$(MAKE)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak "$$@"
+	+@set -- $(TARGET) && set -ae && MAKE="$(MAKE)" T="$(T)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak "$$@"
 
 Makefile/any $(TARGETS): Makefile/phony
-	+@set -- "$@" && set -ae && MAKE="$(MAKE)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak "$$@"
+	+@set -- "$@" && set -ae && MAKE="$(MAKE)" T="$(T)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak "$$@"
 
 # Very important rule to avoid "accidents" caused by Makefile.sh's existence
 # Some ridiculous "make" implementations will always implicitly "make Makefile"
@@ -95,13 +95,13 @@ Makefile Makefile.mak Makefile.mt Makefile.dep Makefile.sh:
 # trying to make a specific target, these will often avoid the "up to date"
 # output that would otherwise occur for existing files with no dependencies
 .sh:
-	+@set -- "$@" && set -ae && MAKE="$(MAKE)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak "$$@"
+	+@set -- "$@" && set -ae && MAKE="$(MAKE)" T="$(T)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak "$$@"
 .awk:
-	+@set -- "$@" && set -ae && MAKE="$(MAKE)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak "$$@"
+	+@set -- "$@" && set -ae && MAKE="$(MAKE)" T="$(T)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak "$$@"
 .sh.txt:
-	+@set -- "$@" && set -ae && MAKE="$(MAKE)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak "$$@"
+	+@set -- "$@" && set -ae && MAKE="$(MAKE)" T="$(T)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak "$$@"
 .sh.html:
-	+@set -- "$@" && set -ae && MAKE="$(MAKE)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak "$$@"
+	+@set -- "$@" && set -ae && MAKE="$(MAKE)" T="$(T)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak "$$@"
 
 # This "phony" target must have at least one command otherwise it will not
 # actually run anything and so will not actually trigger the rules that depend

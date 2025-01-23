@@ -1,5 +1,5 @@
 # Makefile - POSIX Makefile for TopGit tests
-# Copyright (C) 2017,2021 Kyle J. McKay
+# Copyright (C) 2017,2021,2025 Kyle J. McKay
 # All rights reserved
 # License GPL2
 
@@ -56,16 +56,16 @@ TESTLIB_TEST_OPTS =
 TG_TEST_INSTALLED =
 
 Makefile/default: Makefile/phony
-	+@set -- && set -ae && MAKE="$(MAKE)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak
+	+@set -- && set -ae && MAKE="$(MAKE)" T="$(T)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak
 
 .DEFAULT:
-	+@set -- "$@" && set -ae && MAKE="$(MAKE)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak "$$@"
+	+@set -- "$@" && set -ae && MAKE="$(MAKE)" T="$(T)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak "$$@"
 
 target: Makefile/phony
-	+@set -- $(TARGET) && set -ae && MAKE="$(MAKE)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak "$$@"
+	+@set -- $(TARGET) && set -ae && MAKE="$(MAKE)" T="$(T)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak "$$@"
 
 Makefile/any $(TARGETS): Makefile/phony
-	+@set -- "$@" && set -ae && MAKE="$(MAKE)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak "$$@"
+	+@set -- "$@" && set -ae && MAKE="$(MAKE)" T="$(T)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak "$$@"
 
 # Very important rule to avoid "accidents" caused by Makefile.sh's existence
 # Some ridiculous "make" implementations will always implicitly "make Makefile"
