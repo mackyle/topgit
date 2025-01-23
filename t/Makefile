@@ -56,16 +56,16 @@ TESTLIB_TEST_OPTS =
 TG_TEST_INSTALLED =
 
 Makefile/default: Makefile/phony
-	+@set -- && set -ae && MAKE="$(MAKE)" T="$(T)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak
+	+@set -- && set -ae && MAKE="$(MAKE)" T="$(T)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak T="$$T"
 
 .DEFAULT:
-	+@set -- "$@" && set -ae && MAKE="$(MAKE)" T="$(T)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak "$$@"
+	+@set -- "$@" && set -ae && MAKE="$(MAKE)" T="$(T)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak T="$$T" "$$@"
 
 target: Makefile/phony
-	+@set -- $(TARGET) && set -ae && MAKE="$(MAKE)" T="$(T)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak "$$@"
+	+@set -- $(TARGET) && set -ae && MAKE="$(MAKE)" T="$(T)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak T="$$T" "$$@"
 
 Makefile/any $(TARGETS): Makefile/phony
-	+@set -- "$@" && set -ae && MAKE="$(MAKE)" T="$(T)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak "$$@"
+	+@set -- "$@" && set -ae && MAKE="$(MAKE)" T="$(T)" && . ./Makefile.sh && $(MAKE) $${GNO_PD_OPT} -e -f Makefile.mak T="$$T" "$$@"
 
 # Very important rule to avoid "accidents" caused by Makefile.sh's existence
 # Some ridiculous "make" implementations will always implicitly "make Makefile"

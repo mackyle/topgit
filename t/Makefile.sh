@@ -1,5 +1,5 @@
 # Makefile.sh - POSIX Makefile scripting adjunct for TopGit tests
-# Copyright (C) 2017 Kyle J. McKay
+# Copyright (C) 2017,2025 Kyle J. McKay
 # All rights reserved
 # License GPL2
 
@@ -35,7 +35,13 @@ quotevar TEST_RESULTS_DIRECTORY TEST_RESULTS_DIRECTORY_SQ
 
 v_wildcard ALLT 't[0-9][0-9][0-9][0-9]-*.sh'
 v_sort ALLT $ALLT
-[ -n "$T" ] || T="$ALLT"
+if [ -n "$T" ]; then
+	expand_T_() { T="$*"; }
+	expand_T_ $T
+else
+	T="$ALLT"
+fi
+export T
 [ -n "$LINTTESTS" ] || LINTTESTS="$T"
 
 # Extra shell scripts to run through check-non-portable-shell.pl
