@@ -82,22 +82,22 @@ test_expect_success SETUP 'badenv tg contains non-topgit alfa' '
 	test "$tc" = ""
 '
 
-test_expect_failure SETUP 'badenv tg contains bravo' '
+test_expect_success SETUP 'badenv tg contains bravo' '
 	tc="$(tg contains bravo)" &&
 	test "$tc" = "t/alpha"
 '
 
-test_expect_failure SETUP 'badenv tg contains charlie' '
+test_expect_success SETUP 'badenv tg contains charlie' '
 	tc="$(tg contains charlie)" &&
 	test "$tc" = "t/beta"
 '
 
-test_expect_failure SETUP 'badenv tg contains foxtrot' '
+test_expect_success SETUP 'badenv tg contains foxtrot' '
 	tc="$(tg contains foxtrot)" &&
 	test "$tc" = "t/gamma"
 '
 
-test_expect_failure SETUP 'badenv tg contains golf' '
+test_expect_success SETUP 'badenv tg contains golf' '
 	tc="$(tg contains golf)" &&
 	test "$tc" = "t/epsilon"
 '

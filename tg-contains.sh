@@ -1,6 +1,6 @@
 #!/bin/sh
 # TopGit contains command
-# (C) 2017 Kyle J. McKay <mackyle@gmail.com>
+# (C) 2017,2025 Kyle J. McKay <mackyle@gmail.com>
 # All rights reserved
 # GPLv2
 
@@ -218,6 +218,7 @@ else
 	minwide=$remotewide
 fi
 
+mindepth=
 sort -k1,1n "$process" |
 while read -r depth ref; do
 	[ -n "$mindepth" ] || mindepth="$depth"
