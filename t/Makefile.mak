@@ -3,7 +3,7 @@
 # Many parts shamelessly swiped from Git's t directory since that works
 # and is GPL2 just like TopGit
 
-# Copyright (C) 2016,2017,2021 Kyle J. McKay
+# Copyright (C) 2016,2017,2021,2025 Kyle J. McKay
 # The lines swiped from Git are Copyright (C) 2005 Junio C Hamano et al.
 
 #
@@ -184,8 +184,8 @@ aggregate-results-and-cleanup:
 	$(Q)$(NOCLEANCMT)$(MAKE) $${GNO_PD_OPT} -f Makefile.mak -s post-clean
 
 aggregate-results:
-	$(Q)for f in $(TEST_RESULTS_DIRECTORY_SQ)/t*-*.counts; do \
-		[ "$$f" = '$(TEST_RESULTS_DIRECTORY_SQ)/t*-*.counts' ] || echo "$$f"; \
+	$(Q)for f in $(TEST_RESULTS_DIRECTORY_SQ)/*.counts; do \
+		[ "$$f" = '$(TEST_RESULTS_DIRECTORY_SQ)/*.counts' ] || echo "$$f"; \
 	done | $(SHELL_PATH_SQ)'' ./aggregate-results.sh
 
 # Provide Makefile-determined settings in a test-available format
