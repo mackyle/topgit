@@ -1,7 +1,7 @@
 #!/bin/sh
 # TopGit - A different patch queue manager
 # Copyright (C) 2008 Petr Baudis <pasky@suse.cz>
-# Copyright (C) 2014-2021 Kyle J. McKay <mackyle@gmail.com>
+# Copyright (C) 2014-2025 Kyle J. McKay <mackyle@gmail.com>
 # All rights reserved.
 # GPLv2
 
@@ -1590,6 +1590,39 @@ fer_branch_contains()
 			git branch --no-color -r --contains "$@" |
 			awk '{x=substr($0,3);if(x!~/[ \t]/)print"refs/remotes/"x}'
 	fi
+}
+
+# update_dotgit_ref <single-level-ref> <oid>
+#
+# perform the equivalent of `git update-ref --no-deref <single-level-ref> <oid>`
+# where <single-level-ref> MUST NOT contain any '/' characters
+# starting with Git v2.46.0, a few top-level refs (files located in $git_dir)
+# can no longer be set using `git update-ref`.  But only a few, others continue
+# to work just fine.  Crazy!
+# <single-level-ref> must start with an UPPER alpha, end with an UPPER alphanumeric
+# and contain only UPPER alphanumericunderscore.  It must also be 4-22 chars long.
+# <oid> must be something resolveable to an object that exists in the repository.
+#
+# return status is 0 on success, non-zero otherwise
+update_dotgit_ref()
+{
+	if
+		[ "${1#[A-Z]}" = "$1" ] ||
+		[ "${1%[A-Z0-9]}" = "$1" ] ||
+		[ "${1#*[!A-Z0-9_]}" != "$1" ] ||
+		[ "${#1}" -lt 4 ] || [ "${#1}" -gt 22 ]
+	then
+		fatal "Wrong single-level ref argument to update_dotgit_ref: '$1'"
+		return 1
+	fi
+	[ -n "$2" ] || { fatal "Wrong oid argument to update_dotgit_ref: '$2'"; return 1; }
+	_udgroid="$(git rev-parse --quiet --verify "$2^{object}")" && [ -n "$_udgroid" ] ||
+		{ fatal "Unknown/invalid oid argument to update_dotgit_ref: '$2'"; return 1; }
+	rm -f "$git_dir/$1" >/dev/null 2>&1 || :
+	printf '%s\n' "$_udgroid" > "$git_dir/$1" ||
+		{ fatal "Unable to update single-level ref '$1' to '$_udgroid'"; return 1; }
+	_udgroid=
+	return 0
 }
 
 # run editor with arguments
