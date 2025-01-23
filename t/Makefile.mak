@@ -114,10 +114,14 @@ settings: TG-TEST-SETTINGS
 	-@true # avoids the "Nothing to be done" message
 
 test: pre-clean TG-TEST-SETTINGS $(TESTLIB_TEST_LINT) FORCE
-	$(Q)helper/git_version "*** testing using" && set -m && $(CACHE_SETUP_TTY) $(MAKE) $${GNO_PD_OPT} -f Makefile.mak aggregate-results-and-cleanup
+	$(Q)helper/git_version "*** testing using" && set -m && ec_=0 && { \
+	 $(CACHE_SETUP_TTY) $(MAKE) $${GNO_PD_OPT} -f Makefile.mak aggregate-results-and-cleanup || ec_=$$?; } && \
+	 wait && setec_() { return "$$1"; } && setec_ "$$ec_"
 
 prove: pre-clean TG-TEST-SETTINGS $(TESTLIB_TEST_LINT) FORCE
-	@helper/git_version "*** testing using" && echo "*** prove ***" && set -m && $(CACHE_SETUP) $(PROVE) --exec $(SHELL_PATH_SQ)'' $(TESTLIB_PROVE_OPTS) $(T) :: $(TESTLIB_TEST_OPTS)
+	@helper/git_version "*** testing using" && echo "*** prove ***" && set -m && ec_=0 && { \
+	 $(CACHE_SETUP) $(PROVE) --exec $(SHELL_PATH_SQ)'' $(TESTLIB_PROVE_OPTS) $(T) :: $(TESTLIB_TEST_OPTS) || ec_=$$?; } && \
+	 wait && setec_() { return "$$1"; } && setec_ "$$ec_"
 	$(Q)$(NOCLEANCMT)$(MAKE) $${GNO_PD_OPT} -f Makefile.mak -s post-clean-except-prove-cache
 
 .PRECIOUS: $(T)
@@ -173,10 +177,10 @@ test-lint-filenames:
 run-individual-tests: $(T)
 
 aggregate-results-and-cleanup:
-	$(Q)set -m && ec=0 && trap : INT && \
-	$(SHELL_PATH_SQ)'' -c 'TESTLIB_TEST_PARENT_INT_ON_ERROR=$$$$ exec "$$@"' $(SHELL_PATH_SQ)'' \
-	$(MAKE) $${GNO_PD_OPT} -f Makefile.mak -k $(TESTLIB_MAKE_OPTS) run-individual-tests || ec=$$? && \
-	test -e $(TEST_RESULTS_DIRECTORY_SQ)/bailout || { $(MAKE) $${GNO_PD_OPT} -f Makefile.mak aggregate-results || exit; } && exit $$ec
+	$(Q)set -m && ec_=0 && trap : INT && { \
+	 $(SHELL_PATH_SQ)'' -c 'TESTLIB_TEST_PARENT_INT_ON_ERROR=$$$$ exec "$$@"' $(SHELL_PATH_SQ)'' \
+	 $(MAKE) $${GNO_PD_OPT} -f Makefile.mak -k $(TESTLIB_MAKE_OPTS) run-individual-tests || ec_=$$?; } && wait && \
+	 test -e $(TEST_RESULTS_DIRECTORY_SQ)/bailout || { $(MAKE) $${GNO_PD_OPT} -f Makefile.mak aggregate-results || exit; } && setec_() { return "$$1"; } && setec_ "$$ec_"
 	$(Q)$(NOCLEANCMT)$(MAKE) $${GNO_PD_OPT} -f Makefile.mak -s post-clean
 
 aggregate-results:
