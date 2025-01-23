@@ -47,13 +47,20 @@ test_expect_success 'git mailinfo -b double [PATCH]' '
 	test z"$subj" = z"Subject: message"
 '
 
-test_expect_failure 'git mailinfo -b trailing [PATCH]' '
+# git v2.38.2 and later have fixed these two
+# see git commit 3ef1494685dea925
+# "mailinfo -b: fix an out of bounds access" 2022-10-03
+
+test_2382_success='test_expect_success'
+vcmp "$git_version" '>=' "2.38.2" || test_2382_success='test_expect_failure'
+
+$test_2382_success 'git mailinfo -b trailing [PATCH]' '
 	subj="$(echo "Subject: [other] [PATCH] message" |
 		git mailinfo -b /dev/null /dev/null)" &&
 	test z"$subj" = z"Subject: [other] message"
 '
 
-test_expect_failure 'git mailinfo -b separated double [PATCH]' '
+$test_2382_success 'git mailinfo -b separated double [PATCH]' '
 	subj="$(echo "Subject: [PATCH] [other] [PATCH] message" |
 		git mailinfo -b /dev/null /dev/null)" &&
 	test z"$subj" = z"Subject: [other] message"
