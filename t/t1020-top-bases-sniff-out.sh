@@ -9,7 +9,7 @@ TEST_NO_CREATE_REPO=1
 
 . ./test-lib.sh
 
-if vcmp "$tg_version" '>=' '0.19.20'; then
+if vcmp "$tg_version" '>=' '0.20'; then
 	deftopbases='refs/heads/{top-bases}'
 else
 	deftopbases='refs/top-bases'
