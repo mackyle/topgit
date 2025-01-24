@@ -1173,7 +1173,10 @@ tg info
 
 	A linearized patch series can only be automatically created for a
 	TopGit topic branch (including its recursive dependencies) when exactly
-	one line is output by ``tg info --leaves <topic-branch>``.
+	one line is output by ``tg info --leaves <topic-branch>`` unless it's
+	always possible to merge all the leaves using a trivial aggressive
+	(exactly 2 leaves) or trivial aggressive octopus (3 or more leaves)
+	merge with an empty tree as the common base (aka tree1).
 
 	With ``--series`` the list of TopGit branches in the order they would
 	be linearized into a patch series is shown along with the description
