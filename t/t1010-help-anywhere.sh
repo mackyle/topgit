@@ -76,7 +76,7 @@ test_expect_success 'sane help line counts' '
 	test_line_count -ge 1 "$briefout" &&
 	test_line_count -le 5 "$briefout" &&
 	test_line_count -ge 10 "$fullout" &&
-	test_line_count -lt 100 "$fullout" &&
+	test_line_count -lt 150 "$fullout" &&
 	test_line_count -gt 1000 "$totalout"
 '
 

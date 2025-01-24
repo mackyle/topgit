@@ -1892,6 +1892,45 @@ tg update
 
 	This mode makes updates to ``[BASE]`` branches quick and easy.
 
+	When ``tg update`` has stopped as a result of a merge conflict,
+	there are four possible ways to handle this situation:
+
+	    ``tg update --continue``
+				Once the merge conflict has been resolved
+				and committed, this will resume the
+				``tg update`` operation that was interrupted
+				by encountering the merge conflict.
+
+	    ``tg update --abort``
+				This aborts the entire ``tg update``
+				operation that led to the merge conflict
+				and undoes everything that's been changed
+				since that ``tg update`` started.  In other
+				words, after ``tg update --abort`` it's as
+				though the ``tg update`` that led to the
+				merge conflict was never executed at all.
+
+	    ``tg update --skip``
+				This will attempt to resume the ``tg update``
+				operation that was interrupted by encountering
+				the merge conflict by skipping the current
+				branch that's being updated that encountered
+				the merge conflict.  The branch causing the
+				merge conflict will still be out-of-date (since
+				it's skipped by this command) and can still be
+				updated by a future ``tg update`` command.
+
+	    ``tg update --stop``
+				This stops the ``tg update`` that's been
+				interrupted by the merge conflict by simply
+				removing the tg-update-in-progress state.
+				Everything else will be *left as-is!*  In other
+				words, if there's a current unresolved merge
+				conflict, it will still be present.  The
+				``HEAD`` state may be detached, etc. etc.
+				Use of ``tg update --stop`` is not generally
+				helpful except in unusual circumstances.
+
 	| TODO:	``tg update -a -c`` to autoremove (clean) up-to-date branches
 
 tg push
