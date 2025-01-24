@@ -1518,16 +1518,16 @@ tg checkout
 	The following subcommands are available:
 
 	    ``tg checkout next [<steps>]``
-				Check out a branch that directly
-				depends on your current branch.
+				Check out a subsequent branch in the
+				dependency graph (see ``tg info --series``).
 				Move ``<steps>`` (default 1) step(s) in
 				the "next" direction (AKA ``n``).
 
 	    ``tg checkout prev [<steps>]``
-				Check out a branch that this branch
-				directly depends on.  Move ``<steps>``
-				(default 1) step(s) in the "previous"
-				direction (AKA ``p`` or ``previous``).
+				Check out a preceding branch in the
+				dependency graph (see ``tg info --series``).
+				Move ``<steps>`` (default 1) step(s) in the
+				"previous" direction (AKA ``p`` or ``previous``).
 
 	    ``tg checkout [goto] [--] <pattern>``
 				Check out a topic branch that
@@ -1599,12 +1599,12 @@ tg checkout
 	Normally, the ``next`` and ``prev`` commands move one step in
 	the dependency graph of the topic branches.  The ``-a`` option
 	causes them (and their aliases) to move as far as possible.
-	That is, ``tg checkout next -a`` moves to a topic branch that
-	depends (directly or indirectly) on the current branch and
-	that no other branch depends on.  ``tg checkout prev -a``
-	moves to a topic branch that the current topic branch
-	depends on (directly or indirectly).  If there is more than
-	one possibility, you will be prompted for your selection.
+	That is, ``tg checkout next -a`` moves to the final topic branch
+	in the dependency graph (see ``tg info --series``) for the
+	current branch.  ``tg checkout prev -a`` moves to the first
+	topic branch in the dependency graph (see ``tg info --series``)
+	for the current branch.  If there is more than one
+	possibility, you will be prompted for your selection.
 
 	See also NAVIGATION_.
 
