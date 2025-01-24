@@ -2374,8 +2374,8 @@ tg prev
 	away by default.
 
 	Options:
-	  -i		show dependencies based on index instead of branch
-	  -w		show dependencies based on working tree instead of branch
+	  -i		use dependencies from index instead of branch
+	  -w		use dependencies from working tree instead of branch
 	  -n <steps>	take ``<steps>`` "previous" steps (default 1)
 	  --all		take as many "previous" steps as possible (aka ``-a``)
 	  --verbose	show containing series name(s) (aka ``-v``)
@@ -2393,8 +2393,8 @@ tg next
 	or named branch.  The "next" branch(es) being one step away by default.
 
 	Options:
-	  -i		show dependencies based on index instead of branch
-	  -w		show dependencies based on working tree instead of branch
+	  -i		use dependencies from index instead of branch
+	  -w		use dependencies from working tree instead of branch
 	  -n <steps>	take ``<steps>`` "next" steps (default 1)
 	  --all		take as many "next" steps as possible (aka ``-a``)
 	  --verbose	show containing series name(s) (aka ``-v``)
