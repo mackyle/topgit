@@ -2535,8 +2535,8 @@ name or passing ``-u`` *before* the command to run without one.
 TESTING TOPGIT
 --------------
 
-Running the TopGit test suite only requires POSIX compatibile utilities (just
-a POSIX compatibile ``make`` will do) AND a ``perl`` binary.
+Running the TopGit test suite only requires POSIX compatible utilities (just
+a POSIX compatible ``make`` will do) AND a ``perl`` binary.
 
 It is *not* necessary to install TopGit in order to run the TopGit test suite.
 
