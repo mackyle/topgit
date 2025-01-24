@@ -8,19 +8,19 @@
 /* <![CDATA[
  *
  * Style sheet for TopGit topgit.html documentation
- * Copyright (C) 2021 Kyle J. McKay
+ * Copyright (C) 2021,2025 Kyle J. McKay
  * All rights reserved
  * License GPL2
  *
  */
 
 body {
-	font-family: Times, serif;
+	font-family: Times, Liberation Serif, Times New Roman, Source Serif 4, serif;
 	font-size: medium;
 	font-weight: normal;
 }
 h1, h2, h3, th.field-name, a.reference.internal {
-	font-family: Helvetica, sans-serif;
+	font-family: Helvetica, Liberation Sans, Arial, Public Sans, sans-serif;
 	font-weight: normal;
 }
 h1 {
@@ -59,7 +59,7 @@ div {
 	margin: 0;
 }
 pre, tt {
-	font-family: Menlo, Consolas, Courier, monospace;
+	font-family: Menlo, DejaVu Sans Mono, Liberation Mono, Consolas, Courier, Courier New, monospace;
 	font-size: smaller;
 	font-weight: normal;
 }
@@ -96,7 +96,7 @@ div#usage p, div#merge-strategies ol * {
 dl, ol {
 	margin-top: 1em;
 }
-li > dl, dt, div#conventions li {
+li > dl, dt, div#conventions li, div#the-update-process li {
 	margin-top: 0.5em;
 }
 dd > p {
