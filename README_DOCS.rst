@@ -1532,7 +1532,7 @@ tg checkout
 	    ``tg checkout [goto] [--] <pattern>``
 				Check out a topic branch that
 				matches ``<pattern>``.  ``<pattern>``
-				is used as a grep ERE pattern to filter
+				is used as a grep BRE pattern to filter
 				all the topic branches.  Both ``goto`` and
 				``--`` may be omitted provided ``<pattern>``
 				is not ``-a``, ``--all``, ``-h``, ``--help``,
@@ -1592,9 +1592,10 @@ tg checkout
 	The ``--quiet`` (or ``-q``) option, when given, gets passed through to
 	the ``git checkout`` command.
 
-	The ``<pattern>`` of ``tg checkout goto`` is optional.  If you don't
-	supply it, all the available topic branches are listed and you
-	can select one of them.
+	The ``<pattern>`` of ``tg checkout goto`` is not optional and is
+	intepreted as a BRE pattern (basic regular expression).  To select
+	from all the available topic branches, supply ``.`` as the pattern.
+	(In other words ``tg checkout goto .``)
 
 	Normally, the ``next`` and ``prev`` commands move one step in
 	the dependency graph of the topic branches.  The ``-a`` option
