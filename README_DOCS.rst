@@ -2817,7 +2817,7 @@ GLOSSARY
 		A Git branch that records the base upon which a TopGit branch's
 		single conceptual "patch" is built.  The name of the Git branch
 		is derived from the TopGit branch name by stripping off the
-		leading ``refs/heads/`` and appending the correct prefix where
+		leading ``refs/heads/`` and prepending the correct prefix where
 		all TopGit bases are stored (typically either
 		``refs/top-bases/`` or ``refs/heads/{top-bases}/`` -- the
 		prefix for any given repository can be shown by using the
