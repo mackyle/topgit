@@ -168,8 +168,8 @@ tg-tg.txt: README_DOCS.rst create-html-usage.pl $(commands_in)
 
 TOPGIT_HTML_SRCS = \
 	README_DOCS.rst \
+	rsrc/stub0.bin \
 	rsrc/stub1.bin \
-	rsrc/stub2.bin \
 	Makefile.mt
 #TOPGIT_HTML_SRCS
 
@@ -185,7 +185,7 @@ topgit.html: $(TOPGIT_HTML_SRCS) Makefile.mak create-html-usage.pl $(commands_in
 		-e 's/<ol class="lowerroman/<ol type="i" class="lowerroman/g' \
 		-e 's/<ol class="loweralpha/<ol type="a" class="loweralpha/g' <$@.tmp | \
 	LC_ALL=C awk '/^<body/{p=1;next}/^<\/body/{p=0;next}p{print}' && \
-	cat rsrc/stub2.bin; } >$@ && rm -f $@.tmp
+	cat rsrc/stub0.bin; } >$@ && rm -f $@.tmp
 
 $(html_out): create-html.sh
 	$(QHTML)CMD="$@" && CMD="$${CMD#tg-}" && CMD="$${CMD%.html}" && \

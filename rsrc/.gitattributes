@@ -1,4 +1,1 @@
-/stub1.bin	-text
-/stub2.bin	-text
-/stub3.bin	-text
-/stub4.bin	-text
+/stub*.bin	-text

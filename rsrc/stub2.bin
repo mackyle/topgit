@@ -1,3 +1,90 @@
-</div>
-</body>
-</html>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>TopGit &#x2013; A Different Patch Queue Manager</title>
+<meta charset="utf-8" />
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<style type="text/css">
+/* <![CDATA[
+ *
+ * Style sheet for TopGit README documentation
+ * Copyright (C) 2021 Kyle J. McKay
+ * All rights reserved
+ * License GPL2
+ *
+ */
+
+body {
+	font-family: Times, serif;
+	font-size: medium;
+	font-weight: normal;
+}
+h1, h2, h3 {
+	font-family: Helvetica, sans-serif;
+	font-weight: normal;
+}
+body > div:first-child > h1:first-child {
+	font-size: xx-large;
+	text-align: center;
+	margin-top: 1em;
+	margin-bottom: 1em;
+}
+h1 {
+	font-size: x-large;
+	margin-top: 1.25em;
+	margin-bottom: 0.75em;
+}
+h2 {
+	font-size: large;
+	margin-top: 1.25em;
+	margin-bottom: 0.75em;
+}
+h3 {
+	font-size: medium;
+	margin-top: 1em;
+	margin-bottom: 1em;
+	font-variant: small-caps;
+}
+h4 {
+	font-size: medium;
+	margin-top: 1em;
+	margin-bottom: 1em;
+}
+div {
+	margin: 0;
+}
+pre, tt, code {
+	font-family: Menlo, Consolas, Courier, monospace;
+	font-size: smaller;
+	font-weight: normal;
+}
+pre {
+	margin: 0 3ex;
+	border: thin dotted;
+	padding: 0.5em 1ex;
+}
+tt, code {
+	white-space: nowrap;
+	padding: 0 0.5ex;
+}
+pre > code {
+	font-size: inherit;
+	white-space: inherit;
+	padding: 0;
+}
+p {
+	text-align: justify;
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+}
+ol {
+	margin-top: 1em;
+}
+
+/*
+ * ]]>
+ */
+</style>
+</head>
+<body style="text-align:center">
+<div style="display:inline-block;text-align:left;max-width:44pc">

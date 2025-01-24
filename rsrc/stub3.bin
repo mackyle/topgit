@@ -7,7 +7,7 @@
 <style type="text/css">
 /* <![CDATA[
  *
- * Style sheet for TopGit README documentation
+ * Style sheet for TopGit ChangeLog documentation
  * Copyright (C) 2021 Kyle J. McKay
  * All rights reserved
  * License GPL2
@@ -23,24 +23,18 @@ h1, h2, h3 {
 	font-family: Helvetica, sans-serif;
 	font-weight: normal;
 }
-body > div:first-child > h1:first-child {
-	font-size: xx-large;
-	text-align: center;
-	margin-top: 1em;
-	margin-bottom: 1em;
-}
 h1 {
-	font-size: x-large;
+	font-size: xx-large;
 	margin-top: 1.25em;
 	margin-bottom: 0.75em;
 }
 h2 {
-	font-size: large;
+	font-size: x-large;
 	margin-top: 1.25em;
 	margin-bottom: 0.75em;
 }
 h3 {
-	font-size: medium;
+	font-size: large;
 	margin-top: 1em;
 	margin-bottom: 1em;
 	font-variant: small-caps;
@@ -59,9 +53,11 @@ pre, tt, code {
 	font-weight: normal;
 }
 pre {
-	margin: 0 3ex;
-	border: thin dotted;
+	margin: 0;
+	margin-bottom: 1em;
+	border-top: thin dotted;
 	padding: 0.5em 1ex;
+	overflow: auto;
 }
 tt, code {
 	white-space: nowrap;
@@ -79,6 +75,9 @@ p {
 }
 ol {
 	margin-top: 1em;
+}
+ol > li, ul {
+	margin-top: 0.5em;
 }
 
 /*
