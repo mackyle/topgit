@@ -8,19 +8,19 @@
 /* <![CDATA[
  *
  * Style sheet for TopGit ChangeLog documentation
- * Copyright (C) 2021 Kyle J. McKay
+ * Copyright (C) 2021,2025 Kyle J. McKay
  * All rights reserved
  * License GPL2
  *
  */
 
 body {
-	font-family: Times, serif;
+	font-family: Times, Liberation Serif, Times New Roman, Source Serif 4, serif;
 	font-size: medium;
 	font-weight: normal;
 }
 h1, h2, h3 {
-	font-family: Helvetica, sans-serif;
+	font-family: Helvetica, Liberation Sans, Arial, Public Sans, sans-serif;
 	font-weight: normal;
 }
 h1 {
@@ -48,7 +48,7 @@ div {
 	margin: 0;
 }
 pre, tt, code {
-	font-family: Menlo, Consolas, Courier, monospace;
+	font-family: Menlo, DejaVu Sans Mono, Liberation Mono, Consolas, Courier, Courier New, monospace;
 	font-size: smaller;
 	font-weight: normal;
 }
@@ -89,6 +89,103 @@ ol > li, ul {
 <div style="display:inline-block;text-align:left;max-width:44pc">
 <!-- git-changelog-smudge.pl -\-smudge -\- ChangeLog -->
 
+<h1 id="_topgit-0_19_14_-_typically_tawdry_">TopGit-0.19.14 - Typically Tawdry</h1>
+
+<h2 id="_2025-01-24_">2025-01-24</h2>
+
+<p><em>Reminder</em></p>
+
+<blockquote>
+<p>TopGit 0.19.4 (2017-02-14) introduced support for a new top-bases location
+   under heads.  This new location will become the default as of the TopGit
+   0.20.0 release.  The current location under refs will continue to be
+   supported in the future.  See <code>tg help migrate-bases</code> for more details.</p>
+</blockquote>
+
+<h3 id="_basics_">Basics</h3>
+
+<p>This is a maintenance release.</p>
+
+<p>Git 2.45.0 changed the way ref logs work (again).  Git 2.46.0 broke
+updating <code>MERGE_HEAD</code> which broke <code>tg update</code> whenever a manual
+merge resolution is required.</p>
+
+<ol>
+<li>Git versions 2.46.0 and newer are now supported</li>
+<li>Running <code>make test</code> works more robustly</li>
+<li>contrib/tg-completion.bash now lists all tg subcommands again</li>
+</ol>
+
+<p>As always, there are some documentation updates to correct various
+typos and so forth.</p>
+
+<h3 id="_details_">Details</h3>
+
+<p>The ref log changes in Git 2.45.0 caused some test failures even
+though TopGit itself continued to work properly.  The test has been
+updated to accomodate Git versions 2.45.0 and newer.</p>
+
+<p>Starting with Git 2.46.0, it's no longer possible to use a "git"
+command to update <code>MERGE_HEAD</code> (nor <code>FETCH_HEAD</code>, but others such
+as <code>CHERRY_PICK_HEAD</code> continue to work just fine).  This impacted
+<code>tg update</code> whenever a manual merge resolution was required.  The
+<code>MERGE_HEAD</code> file is now modified directly to bypass this problem.</p>
+
+<p>When running the TopGit test suite (via <code>make test</code>), if there is
+a pre-existing exported environment variable "T", it will no longer
+interfere with running the test suite.  (As always, the tests to
+be run can be limited by using <code>make T=&lt;tests_to_run&gt; test</code>.)</p>
+
+<p>Furthermore, there was a peculiar interaction with some shells on
+some platforms when running the tests in parallel (a "jobs" value
+greater than 1) that could result in the <code>make test</code> process ending
+up suspended as a result of a <code>SIGTTIN</code> signal right after the last
+test in the test suite was run.</p>
+
+<p>All users of TopGit running Git version 2.46.0 or newer need this
+update in order for <code>tg update</code> to work correctly.</p>
+
+<h3 id="_corrections_">Corrections</h3>
+
+<ul>
+<li>tg-completion.bash: update tg command list extraction</li>
+<li>t6100: adjust for Git v2.45.0+ sane reflog behavior reaffirmation</li>
+<li>tg--merging.sh: use update_dotgit_ref wrapper to update MERGE_HEAD</li>
+<li>t/Makefile.mak: <code>wait</code> after <code>set -m</code> for parallel tests</li>
+<li>t/aggregate-results.sh: exit with non-zero status if failed tests</li>
+<li>Makefile: avoid accidents with environment variable "T"</li>
+</ul>
+
+<div class="_markdown-code-bt"><pre style="display:none"></pre><pre><code>Kyle J. McKay (27):
+    Makefiles: minor clean ups and avoid environment contamination
+    t1020: use version &gt;= 0.20 for top-bases default change
+    t4502: add tg contains test with unexpected environment
+    tg-contains.sh: initialize mindepth to empty
+    tg-completion.bash: update tg command list extraction
+    various: correct several nits and typographical errors
+    t8000: expect success for last two tests with Git v2.38.2+
+    t6100: adjust for Git v2.45.0+ sane reflog behavior reaffirmation
+    tg.sh: provide utility function update_dotgit_ref
+    tg--merging.sh: use update_dotgit_ref wrapper to update MERGE_HEAD
+    check-non-portable-shell.pl: update from Git
+    t/Makefile.mak: `wait` after `set -m` for parallel tests
+    t/aggregate-results.sh: exit with non-zero status if failed tests
+    Makefile: avoid accidents with environment variable "T"
+    t/Makefile.sh: make sure T is expanded early
+    t/Makefile.mak: aggregate all .counts results
+    README_DOCS.rst: add tg update --continue/--abort/--skip/--stop docs
+    README_DOCS.rst: correct a few typographical errors
+    README_DOCS.rst: prefixes are prepended not appended
+    README_DOCS.rst: clarify automatic linearized patch series req's
+    README_DOCS.rst: update rest of tg prev and tg next docs
+    README_DOCS.rst: update `tg checkout goto &lt;pattern&gt;` docs
+    docs: tidy up build of topgit.html
+    docs: fuss with typography
+    COPYING: replace "git-commit" with "git commit"
+    README_DOCS.rst: fine tune -i/-w description for next/prev
+    topgit: version 0.19.14
+</code></pre></div>
+
 <h1 id="_topgit-0_19_13_-_infernally_internal_">TopGit-0.19.13 - Infernally Internal</h1>
 
 <h2 id="_2021-09-09_">2021-09-09</h2>
@@ -102,7 +199,7 @@ ol > li, ul {
    supported in the future.  See <code>tg help migrate-bases</code> for more details.</p>
 </blockquote>
 
-<h3 id="_basics_">Basics</h3>
+<h3>Basics</h3>
 
 <p>A great deal of behind-the-scenes work has been completed in this release.</p>
 
@@ -119,7 +216,7 @@ to make them more readable and more digestible (there's still plenty of
 room for future improvements though).</li>
 </ol>
 
-<h3 id="_details_">Details</h3>
+<h3>Details</h3>
 
 <p>There are several accomodations and updates to handle the idiosyncrasies
 of more recent Git versions.  Of particular note, <code>--object-format=sha256</code>
@@ -145,7 +242,7 @@ such names were encountered, incorrect operation could have resulted.</p>
 
 <p>Other notable bug fixes are highlighted in the next section.</p>
 
-<h3 id="_corrections_">Corrections</h3>
+<h3>Corrections</h3>
 
 <ul>
 <li>tg-info: make --leaves "describe" lightweight --tags</li>

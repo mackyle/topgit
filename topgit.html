@@ -8,19 +8,19 @@
 /* <![CDATA[
  *
  * Style sheet for TopGit topgit.html documentation
- * Copyright (C) 2021 Kyle J. McKay
+ * Copyright (C) 2021,2025 Kyle J. McKay
  * All rights reserved
  * License GPL2
  *
  */
 
 body {
-	font-family: Times, serif;
+	font-family: Times, Liberation Serif, Times New Roman, Source Serif 4, serif;
 	font-size: medium;
 	font-weight: normal;
 }
 h1, h2, h3, th.field-name, a.reference.internal {
-	font-family: Helvetica, sans-serif;
+	font-family: Helvetica, Liberation Sans, Arial, Public Sans, sans-serif;
 	font-weight: normal;
 }
 h1 {
@@ -59,7 +59,7 @@ div {
 	margin: 0;
 }
 pre, tt {
-	font-family: Menlo, Consolas, Courier, monospace;
+	font-family: Menlo, DejaVu Sans Mono, Liberation Mono, Consolas, Courier, Courier New, monospace;
 	font-size: smaller;
 	font-weight: normal;
 }
@@ -96,7 +96,7 @@ div#usage p, div#merge-strategies ol * {
 dl, ol {
 	margin-top: 1em;
 }
-li > dl, dt, div#conventions li {
+li > dl, dt, div#conventions li, div#the-update-process li {
 	margin-top: 0.5em;
 }
 dd > p {
@@ -1358,7 +1358,10 @@ as <tt class="docutils literal"><span class="pre">--dependencies</span></tt> for
 branch to operate on is again <tt class="docutils literal">HEAD</tt>.</p>
 <p>A linearized patch series can only be automatically created for a
 TopGit topic branch (including its recursive dependencies) when exactly
-one line is output by <tt class="docutils literal">tg info <span class="pre">--leaves</span> <span class="pre">&lt;topic-branch&gt;</span></tt>.</p>
+one line is output by <tt class="docutils literal">tg info <span class="pre">--leaves</span> <span class="pre">&lt;topic-branch&gt;</span></tt> unless it's
+always possible to merge all the leaves using a trivial aggressive
+(exactly 2 leaves) or trivial aggressive octopus (3 or more leaves)
+merge with an empty tree as the common base (aka tree1).</p>
 <p>With <tt class="docutils literal"><span class="pre">--series</span></tt> the list of TopGit branches in the order they would
 be linearized into a patch series is shown along with the description
 of each branch.  If the branch name passed to <tt class="docutils literal">tg info</tt> is not the
@@ -1514,8 +1517,8 @@ git configuration variable to be set to the given remote name.</p>
 <div class="line"><tt class="docutils literal"><span class="pre">&#160;&#160;--terse</span> / <span class="pre">--list</span>&#160;&#160;&#160; list TopGit branches (aka <span class="pre">'-t'</span> / <span class="pre">'-l')</span></tt></div>
 <div class="line"><tt class="docutils literal"><span class="pre">&#160;&#160;--rdeps[-once]</span>&#160;&#160;&#160;&#160;&#160; show branch dependencies as <span class="pre">multi-indented</span> list</tt></div>
 <div class="line"><tt class="docutils literal"><span class="pre">&#160;&#160;--rdeps-full</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; like <span class="pre">'--rdeps'</span> but do not collapse repeated items</tt></div>
-<div class="line"><tt class="docutils literal"><span class="pre">&#160;&#160;--rdeps</span> <span class="pre">--heads</span>&#160;&#160;&#160;&#160; use <span class="pre">'--rdeps'</span> and <span class="pre">$('--heads</span> of <span class="pre">&lt;branch&gt;...)</span></tt></div>
-<div class="line"><tt class="docutils literal"><span class="pre">&#160;&#160;--[topgit]-heads</span>&#160;&#160;&#160; list only independent TopGit branch heads</tt></div>
+<div class="line"><tt class="docutils literal"><span class="pre">&#160;&#160;--rdeps</span> <span class="pre">--heads</span>&#160;&#160;&#160;&#160; use <span class="pre">'--rdeps'</span> and <span class="pre">$('--heads'</span> of <span class="pre">&lt;branch&gt;...)</span></tt></div>
+<div class="line"><tt class="docutils literal"><span class="pre">&#160;&#160;--[topgit-]heads</span>&#160;&#160;&#160; list only independent TopGit branch heads</tt></div>
 <div class="line"><tt class="docutils literal"><span class="pre">&#160;&#160;--heads-independent</span> list only <span class="pre">merge-base</span> <span class="pre">--independent</span> heads</tt></div>
 <div class="line"><tt class="docutils literal"><span class="pre">&#160;&#160;--deps</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; list all .topdeps branch dependencies</tt></div>
 <div class="line"><tt class="docutils literal"><span class="pre">&#160;&#160;--deps-only</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; list sorted unique .topdeps branches + dependencies</tt></div>
@@ -1762,19 +1765,19 @@ up yourself).</p>
 <blockquote>
 <dl class="docutils">
 <dt><tt class="docutils literal">tg checkout next [&lt;steps&gt;]</tt></dt>
-<dd>Check out a branch that directly
-depends on your current branch.
+<dd>Check out a subsequent branch in the
+dependency graph (see <tt class="docutils literal">tg info <span class="pre">--series</span></tt>).
 Move <tt class="docutils literal">&lt;steps&gt;</tt> (default 1) step(s) in
 the &quot;next&quot; direction (AKA <tt class="docutils literal">n</tt>).</dd>
 <dt><tt class="docutils literal">tg checkout prev [&lt;steps&gt;]</tt></dt>
-<dd>Check out a branch that this branch
-directly depends on.  Move <tt class="docutils literal">&lt;steps&gt;</tt>
-(default 1) step(s) in the &quot;previous&quot;
-direction (AKA <tt class="docutils literal">p</tt> or <tt class="docutils literal">previous</tt>).</dd>
+<dd>Check out a preceding branch in the
+dependency graph (see <tt class="docutils literal">tg info <span class="pre">--series</span></tt>).
+Move <tt class="docutils literal">&lt;steps&gt;</tt> (default 1) step(s) in the
+&quot;previous&quot; direction (AKA <tt class="docutils literal">p</tt> or <tt class="docutils literal">previous</tt>).</dd>
 <dt><tt class="docutils literal">tg checkout [goto] <span class="pre">[--]</span> &lt;pattern&gt;</tt></dt>
 <dd>Check out a topic branch that
 matches <tt class="docutils literal">&lt;pattern&gt;</tt>.  <tt class="docutils literal">&lt;pattern&gt;</tt>
-is used as a grep ERE pattern to filter
+is used as a grep BRE pattern to filter
 all the topic branches.  Both <tt class="docutils literal">goto</tt> and
 <tt class="docutils literal"><span class="pre">--</span></tt> may be omitted provided <tt class="docutils literal">&lt;pattern&gt;</tt>
 is not <tt class="docutils literal"><span class="pre">-a</span></tt>, <tt class="docutils literal"><span class="pre">--all</span></tt>, <tt class="docutils literal"><span class="pre">-h</span></tt>, <tt class="docutils literal"><span class="pre">--help</span></tt>,
@@ -1820,18 +1823,19 @@ the <tt class="docutils literal">git checkout</tt> command.</p>
 the <tt class="docutils literal">git checkout</tt> command.</p>
 <p>The <tt class="docutils literal"><span class="pre">--quiet</span></tt> (or <tt class="docutils literal"><span class="pre">-q</span></tt>) option, when given, gets passed through to
 the <tt class="docutils literal">git checkout</tt> command.</p>
-<p>The <tt class="docutils literal">&lt;pattern&gt;</tt> of <tt class="docutils literal">tg checkout goto</tt> is optional.  If you don't
-supply it, all the available topic branches are listed and you
-can select one of them.</p>
+<p>The <tt class="docutils literal">&lt;pattern&gt;</tt> of <tt class="docutils literal">tg checkout goto</tt> is not optional and is
+intepreted as a BRE pattern (basic regular expression).  To select
+from all the available topic branches, supply <tt class="docutils literal">.</tt> as the pattern.
+(In other words <tt class="docutils literal">tg checkout goto .</tt>)</p>
 <p>Normally, the <tt class="docutils literal">next</tt> and <tt class="docutils literal">prev</tt> commands move one step in
 the dependency graph of the topic branches.  The <tt class="docutils literal"><span class="pre">-a</span></tt> option
 causes them (and their aliases) to move as far as possible.
-That is, <tt class="docutils literal">tg checkout next <span class="pre">-a</span></tt> moves to a topic branch that
-depends (directly or indirectly) on the current branch and
-that no other branch depends on.  <tt class="docutils literal">tg checkout prev <span class="pre">-a</span></tt>
-moves to a topic branch that the current topic branch
-depends on (directly or indirectly).  If there is more than
-one possibility, you will be prompted for your selection.</p>
+That is, <tt class="docutils literal">tg checkout next <span class="pre">-a</span></tt> moves to the final topic branch
+in the dependency graph (see <tt class="docutils literal">tg info <span class="pre">--series</span></tt>) for the
+current branch.  <tt class="docutils literal">tg checkout prev <span class="pre">-a</span></tt> moves to the first
+topic branch in the dependency graph (see <tt class="docutils literal">tg info <span class="pre">--series</span></tt>)
+for the current branch.  If there is more than one
+possibility, you will be prompted for your selection.</p>
 <p>See also <a class="reference internal" href="#navigation">NAVIGATION</a>.</p>
 </blockquote>
 </div>
@@ -2103,7 +2107,7 @@ TopGit automatically set <tt class="docutils literal">rerere.autoUpdate</tt> to 
 <tt class="docutils literal">tg update</tt> is running (but remember, unless <tt class="docutils literal">rerere.enabled</tt> has
 been set to <tt class="docutils literal">true</tt> it won't make any difference).</p>
 <p>When <tt class="docutils literal"><span class="pre">-a</span></tt> (or <tt class="docutils literal"><span class="pre">--all</span></tt>) is specified, updates all topic branches
-matched by <tt class="docutils literal">&lt;pattern&gt;</tt>'s (see <tt class="docutils literal"><span class="pre">git-for-each-ref(1)</span></tt> for details),
+matched by <tt class="docutils literal">&lt;pattern&gt;</tt>'s (see <tt class="docutils literal">git help <span class="pre">for-each-ref</span></tt> for details),
 or all if no <tt class="docutils literal">&lt;pattern&gt;</tt> is given.  Any topic branches with missing
 dependencies will be skipped entirely unless <tt class="docutils literal"><span class="pre">--skip-missing</span></tt> is
 specified.</p>
@@ -2136,6 +2140,44 @@ If no message is specified on the command line, an editor will open.
 Unless <tt class="docutils literal"><span class="pre">--force</span></tt> is used the new value for the base must contain
 the old value (i.e. be a fast-forward update).  This is for safety.</p>
 <p>This mode makes updates to <tt class="docutils literal">[BASE]</tt> branches quick and easy.</p>
+<p>When <tt class="docutils literal">tg update</tt> has stopped as a result of a merge conflict,
+there are four possible ways to handle this situation:</p>
+<blockquote>
+<dl class="docutils">
+<dt><tt class="docutils literal">tg update <span class="pre">--continue</span></tt></dt>
+<dd>Once the merge conflict has been resolved
+and committed, this will resume the
+<tt class="docutils literal">tg update</tt> operation that was interrupted
+by encountering the merge conflict.</dd>
+<dt><tt class="docutils literal">tg update <span class="pre">--abort</span></tt></dt>
+<dd>This aborts the entire <tt class="docutils literal">tg update</tt>
+operation that led to the merge conflict
+and undoes everything that's been changed
+since that <tt class="docutils literal">tg update</tt> started.  In other
+words, after <tt class="docutils literal">tg update <span class="pre">--abort</span></tt> it's as
+though the <tt class="docutils literal">tg update</tt> that led to the
+merge conflict was never executed at all.</dd>
+<dt><tt class="docutils literal">tg update <span class="pre">--skip</span></tt></dt>
+<dd>This will attempt to resume the <tt class="docutils literal">tg update</tt>
+operation that was interrupted by encountering
+the merge conflict by skipping the current
+branch that's being updated that encountered
+the merge conflict.  The branch causing the
+merge conflict will still be out-of-date (since
+it's skipped by this command) and can still be
+updated by a future <tt class="docutils literal">tg update</tt> command.</dd>
+<dt><tt class="docutils literal">tg update <span class="pre">--stop</span></tt></dt>
+<dd>This stops the <tt class="docutils literal">tg update</tt> that's been
+interrupted by the merge conflict by simply
+removing the tg-update-in-progress state.
+Everything else will be <em>left as-is!</em>  In other
+words, if there's a current unresolved merge
+conflict, it will still be present.  The
+<tt class="docutils literal">HEAD</tt> state may be detached, etc. etc.
+Use of <tt class="docutils literal">tg update <span class="pre">--stop</span></tt> is not generally
+helpful except in unusual circumstances.</dd>
+</dl>
+</blockquote>
 <div class="line-block">
 <div class="line">TODO: <tt class="docutils literal">tg update <span class="pre">-a</span> <span class="pre">-c</span></tt> to autoremove (clean) up-to-date branches</div>
 </div>
@@ -2644,10 +2686,10 @@ away by default.</p>
 <tbody valign="top">
 <tr><td class="option-group">
 <kbd><span class="option">-i</span></kbd></td>
-<td>show dependencies based on index instead of branch</td></tr>
+<td>use dependencies from index instead of branch</td></tr>
 <tr><td class="option-group">
 <kbd><span class="option">-w</span></kbd></td>
-<td>show dependencies based on working tree instead of branch</td></tr>
+<td>use dependencies from working tree instead of branch</td></tr>
 <tr><td class="option-group">
 <kbd><span class="option">-n <var>&lt;steps&gt;</var></span></kbd></td>
 <td>take <tt class="docutils literal">&lt;steps&gt;</tt> &quot;previous&quot; steps (default 1)</td></tr>
@@ -2683,10 +2725,10 @@ or named branch.  The &quot;next&quot; branch(es) being one step away by default
 <tbody valign="top">
 <tr><td class="option-group">
 <kbd><span class="option">-i</span></kbd></td>
-<td>show dependencies based on index instead of branch</td></tr>
+<td>use dependencies from index instead of branch</td></tr>
 <tr><td class="option-group">
 <kbd><span class="option">-w</span></kbd></td>
-<td>show dependencies based on working tree instead of branch</td></tr>
+<td>use dependencies from working tree instead of branch</td></tr>
 <tr><td class="option-group">
 <kbd><span class="option">-n <var>&lt;steps&gt;</var></span></kbd></td>
 <td>take <tt class="docutils literal">&lt;steps&gt;</tt> &quot;next&quot; steps (default 1)</td></tr>
@@ -2749,8 +2791,8 @@ namespace (so we recommend distinguishing them with the <tt class="docutils lite
 Apart from that, TopGit also maintains a set of auxiliary refs in
 <tt class="docutils literal"><span class="pre">refs/top-*</span></tt>.  Currently, only <tt class="docutils literal"><span class="pre">refs/top-bases/</span></tt> is used, containing the
 current <em>base</em> of the given topic branch &#x2013; this is basically a merge of
-all the branches the topic branch depends on; it is updated during <tt class="docutils literal">tg
-update</tt> and then merged to the topic branch, and it is the base of a
+all the branches the topic branch depends on; it is updated during <tt class="docutils literal">tg update</tt>
+and then merged to the topic branch, and it is the base of a
 patch generated from the topic branch by <tt class="docutils literal">tg patch</tt>.</p>
 <p>All the metadata is tracked within the source tree and history of the
 topic branch itself, in <tt class="docutils literal">.top*</tt> files; these files are kept isolated
@@ -2813,7 +2855,7 @@ repository</li>
 </ol>
 </blockquote>
 <p>To us, (a) does not appear to be very convincing, while (b) is quite
-desirable for <tt class="docutils literal"><span class="pre">git-log</span> topic</tt> etc. working, and increased conceptual
+desirable for <tt class="docutils literal">git log topic</tt> etc. working, and increased conceptual
 simplicity.</p>
 <p>Thus, we choose to instantiate all the topic branches of given remote
 locally; this is performed by <tt class="docutils literal">tg remote <span class="pre">--populate</span></tt>. <tt class="docutils literal">tg update</tt>
@@ -2835,8 +2877,8 @@ name or passing <tt class="docutils literal"><span class="pre">-u</span></tt> <e
 </div>
 <div class="section" id="testing-topgit">
 <h1>TESTING TOPGIT</h1>
-<p>Running the TopGit test suite only requires POSIX compatibile utilities (just
-a POSIX compatibile <tt class="docutils literal">make</tt> will do) AND a <tt class="docutils literal">perl</tt> binary.</p>
+<p>Running the TopGit test suite only requires POSIX compatible utilities (just
+a POSIX compatible <tt class="docutils literal">make</tt> will do) AND a <tt class="docutils literal">perl</tt> binary.</p>
 <p>It is <em>not</em> necessary to install TopGit in order to run the TopGit test suite.</p>
 <p>To run the TopGit test suite, simply execute this from the top-level of a
 TopGit checkout or expanded release tarball:</p>
@@ -3088,7 +3130,7 @@ if the leading &quot;TopGit&quot; has been left off.</dd>
 <dd><p class="first">A Git branch that records the base upon which a TopGit branch's
 single conceptual &quot;patch&quot; is built.  The name of the Git branch
 is derived from the TopGit branch name by stripping off the
-leading <tt class="docutils literal">refs/heads/</tt> and appending the correct prefix where
+leading <tt class="docutils literal">refs/heads/</tt> and prepending the correct prefix where
 all TopGit bases are stored (typically either
 <tt class="docutils literal"><span class="pre">refs/top-bases/</span></tt> or <tt class="docutils literal"><span class="pre">refs/heads/{top-bases}/</span></tt> &#x2013; the
 prefix for any given repository can be shown by using the
