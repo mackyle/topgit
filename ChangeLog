@@ -4,6 +4,7 @@
 # archive creation to produce a "smudged" ChangeLog file containing the
 # contents of the annotated/signed tags listed below.
 
+topgit-0.19.14	# Typically Tawdry
 topgit-0.19.13	# Infernally Internal
 topgit-0.19.12	# Compatibility Conundrum
 topgit-0.19.11	# Speed Bump
