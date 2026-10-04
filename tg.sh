@@ -330,7 +330,9 @@ git_temp_alt_odb_cmd()
 	fi
 }
 
-git_write_tree() { git_temp_alt_odb_cmd write-tree "$@"; }
+# write-tree updates the index's cache-tree. Those cached object IDs must remain
+# valid after tg's temporary object store is deleted, including on later runs.
+git_write_tree() { git write-tree "$@"; }
 git_mktree() { git_temp_alt_odb_cmd mktree "$@"; }
 
 make_mtblob() {
