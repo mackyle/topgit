@@ -83,10 +83,11 @@ test_expect_success 'setup' '
 test_expect_success GIT_2_9 'relative hookspath' '
 	test_config -C r2 core.hooksPath "" &&
 	bad= &&
-	for rpath in hooks .git/hooks ../_global/hooks ../../_global/hooks; do
+	for rpath in hooks .git/hooks ../_global/hooks ./nested/hooks; do
 		git -C r2 config core.hooksPath "$rpath" &&
 		result="$(set +vx && do_mergesetup r2)" &&
-		matches "$result" "*\"ignoring non-absolute core.hooks\"[Pp]\"ath\"*" || {
+		! matches "$result" "*\" warning: \"*" &&
+		test -x "r2/$rpath/pre-commit" || {
 			bad=1 &&
 			break
 		}
@@ -100,7 +101,8 @@ test_expect_success GIT_2_9 'no such hookspath' '
 	for rpath in hooks .git/hooks ../_global/hooks ../../_global/hooks; do
 		git -C r2 config core.hooksPath "$PWD/ns1/ns2/ns3/ns4/$rpath" &&
 		result="$(set +vx && do_mergesetup r2)" &&
-		matches "$result" "*\"ignoring non-existent core.hooks\"[Pp]\"ath\"*" || {
+		! matches "$result" "*\" warning: \"*" &&
+		test -x "$PWD/ns1/ns2/ns3/ns4/$rpath/pre-commit" || {
 			bad=1 &&
 			break
 		}

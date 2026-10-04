@@ -510,6 +510,7 @@ setup_hook()
 	setup_git_dir_is_bare
 	[ -z "$git_dir_is_bare" ] || return 0
 	setup_git_hooks_dir
+	[ "$git_hooks_dir" != /dev/null ] || return 0
 	tgname="${0##*/}"
 	hook_call="\"\$(\"$tgname\" --hooks-path)\"/$1 \"\$@\""
 	if [ -f "$git_hooks_dir/$1" ] && grep -Fq "$hook_call" "$git_hooks_dir/$1"; then
@@ -2206,27 +2207,20 @@ setup_git_hooks_dir()
 	[ -z "$git_hooks_dir" ] || return 0
 	git_hooks_dir="$git_common_dir/hooks"
 	if vcmp "$git_version" '>=' "2.9" && gchp="$(git config --path --get core.hooksPath 2>/dev/null)" && [ -n "$gchp" ]; then
-		case "$gchp" in
-			/[!/]*)
-				if [ -d "$gchp" ]; then
-					# if core.hooksPath is just another name for
-					# $git_common_dir/hooks, keep referring to it
-					# by $git_common_dir/hooks
-					abscdh="$(cd "$git_common_dir" && pwd -P)/hooks"
-					abshpd="$(cd "$gchp" && pwd -P)"
-					if [ "$abshpd" != "$abscdh" ]; then
-						git_hooks_dir="$gchp"
-						maybe_adjust_friendly_hooks_path "$abshpd"
-					fi
-					unset_ abscdh abshpd
-				else
-					[ -n "$1" ] || warn "ignoring non-existent core.hooksPath: $gchp"
-				fi
-				;;
-			*)
-				[ -n "$1" ] || warn "ignoring non-absolute core.hooksPath: $gchp"
-				;;
-		esac
+		# Ask Git to resolve relative paths against the correct worktree root.
+		# The directory need not exist yet; setup_hook creates it if necessary.
+		git_hooks_dir="$(git rev-parse --git-path hooks)" || die "Cannot resolve Git hooks directory"
+		case "$git_hooks_dir" in /*);;*) git_hooks_dir="$(pwd -P)/$git_hooks_dir";; esac
+		if [ -d "$git_hooks_dir" ]; then
+			abscdh="$(cd "$git_common_dir" && pwd -P)/hooks"
+			abshpd="$(cd "$git_hooks_dir" && pwd -P)"
+			if [ "$abshpd" = "$abscdh" ]; then
+				git_hooks_dir="$git_common_dir/hooks"
+			else
+				maybe_adjust_friendly_hooks_path "$abshpd"
+			fi
+			unset_ abscdh abshpd
+		fi
 		unset_ gchp
 	fi
 }
