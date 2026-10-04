@@ -229,6 +229,13 @@ case "$1" in version|--version|-V)
 	exit 0
 esac
 
+# Git's wrapper needs only this installed path, even on detached HEAD. Avoid
+# repository setup and the Git version check for this informational lookup.
+if [ -z "$tg__include" ] && [ "$1" = "--hooks-path" ]; then
+	printf '%s\n' "${TG_INST_HOOKSDIR:-@hooksdir@}"
+	exit 0
+fi
+
 [ $# -eq 1 ] && [ "$1" = "--make-empty-blob" ] || precheck
 [ $# -ne 1 ] || [ "$1" != "precheck" ] || exit 0
 
