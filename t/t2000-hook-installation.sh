@@ -60,7 +60,7 @@ test_expect_success 'setup_hook pre-commit' '
 	sed -n 1p <r2/.git/hooks/pre-commit | tee "$tgshell" | grep -q "^#!" &&
 	grep -F -q "${0##*/}" r2/.git/hooks/pre-commit &&
 	grep -F -q "/pre-commit" r2/.git/hooks/pre-commit &&
-	test $(wc -l <r2/.git/hooks/pre-commit) -eq 2 &&
+	"$SHELL_PATH" -n r2/.git/hooks/pre-commit &&
 	test ! -e r2/.git/info/attributes &&
 	test_must_fail git -C r2 config merge.ours.name &&
 	test_must_fail git -C r2 config merge.ours.driver &&
